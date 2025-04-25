@@ -1,4 +1,4 @@
-package me.dotto.netmanager
+package it.dotto.netmanager
 
 import android.Manifest
 import android.annotation.SuppressLint

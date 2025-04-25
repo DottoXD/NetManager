@@ -65,7 +65,7 @@ class _MapBodyState extends State<MapBody> {
             children: <Widget>[
               TileLayer(
                 urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-                userAgentPackageName: "me.dotto.netmanager",
+                userAgentPackageName: "it.dotto.netmanager",
               ),
             ]
         );

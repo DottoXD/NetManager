@@ -28,8 +28,8 @@ class _HomeState extends State<Home> {
     super.initState();
 
     _pages = [
-      SettingsBody(platform, widget.sharedPreferences),//HomeBody(platform, widget.sharedPreferences),
-      SettingsBody(platform, widget.sharedPreferences),//MapBody(platform),
+      HomeBody(platform, widget.sharedPreferences),
+      MapBody(platform),
       SettingsBody(platform, widget.sharedPreferences)
     ];
 
