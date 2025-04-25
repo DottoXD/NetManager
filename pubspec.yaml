@@ -5,17 +5,18 @@ publish_to: 'none'
 version: 0.0.1+1
 
 environment:
-  sdk: ^3.6.0
+  sdk: ^3.7.2
+
 
 dependencies:
   flutter:
     sdk: flutter
 
   dynamic_color: ^1.7.0
-  shared_preferences: ^2.3.5
-  flutter_map: ^7.0.2
+  shared_preferences: ^2.5.3
+  flutter_map: ^8.1.1
   latlong2: ^0.9.1
-  geolocator: ^13.0.2
+  geolocator: ^14.0.0
 
 dev_dependencies:
   flutter_test:

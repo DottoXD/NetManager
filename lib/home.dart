@@ -18,7 +18,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  static const platform = MethodChannel('me.dotto.netmanager/telephony');
+  static const platform = MethodChannel('it.dotto.netmanager/telephony');
 
   int _currentPage = 0;
   late List<Widget> _pages;
@@ -28,8 +28,8 @@ class _HomeState extends State<Home> {
     super.initState();
 
     _pages = [
-      HomeBody(platform, widget.sharedPreferences),
-      MapBody(platform),
+      SettingsBody(platform, widget.sharedPreferences),//HomeBody(platform, widget.sharedPreferences),
+      SettingsBody(platform, widget.sharedPreferences),//MapBody(platform),
       SettingsBody(platform, widget.sharedPreferences)
     ];
 

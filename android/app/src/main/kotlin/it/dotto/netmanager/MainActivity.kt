@@ -1,4 +1,5 @@
 package me.dotto.netmanager
+
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -15,10 +16,10 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.util.HashMap
-
+import com.google.gson.Gson
 
 class MainActivity: FlutterActivity() {
-    private val CHANNEL = "me.dotto.netmanager/telephony"
+    private val CHANNEL = "it.dotto.netmanager/telephony"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
