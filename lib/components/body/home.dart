@@ -48,7 +48,7 @@ class _HomeBodyState extends State<HomeBody> {
     super.dispose();
   }
 
-  void update() {
+  void update() { //to remove asap
     try {
       () async {
         final dataList = (await platform.invokeMethod('getNetworkData')).cast<List<dynamic>>();
@@ -89,7 +89,7 @@ class _HomeBodyState extends State<HomeBody> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) { //what on earth is this boilerplate code i made???
     return SingleChildScrollView(
         scrollDirection: Axis.vertical,
         child: Column(
@@ -372,7 +372,7 @@ class _HomeBodyState extends State<HomeBody> {
   }
 }
 
-class NetworkData {
+class NetworkData { //soon to be replaced with new system
   //General data
   String cellId;
   String type;

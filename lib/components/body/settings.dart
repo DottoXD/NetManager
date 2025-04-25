@@ -77,27 +77,31 @@ class _SettingsBodyState extends State<SettingsBody> {
           return AlertDialog(
             title: const Text('Edit precision'),
             content: SingleChildScrollView(
-              child: ListBody(
-                children: <Widget>[
-                  ...positionPrecisions.asMap().entries.map((precision) {
-                    return RadioListTile(
-                      title: Text(precision.value),
-                      value: precision.value,
-                      groupValue: _selection,
-                      onChanged: (value) {
-                        if(value != null) {
-                          setState(() {
-                            _selection = value;
-                          });
+              child: StatefulBuilder(
+                builder: (BuildContext context, StateSetter setState) {
+                  return ListBody(
+                    children: <Widget>[
+                      ...positionPrecisions.asMap().entries.map((precision) {
+                        return RadioListTile(
+                          title: Text(precision.value),
+                          value: precision.value,
+                          groupValue: _selection,
+                          onChanged: (value) {
+                            if(value != null) {
+                              setState(() {
+                                _selection = value;
+                              });
 
-                          setInt("positionPrecision", precision.key);
-                          updateData();
-                        }
-                      },
-                    );
-                  })
-                ],
-              ),
+                              setInt("positionPrecision", precision.key);
+                              updateData();
+                            }
+                          },
+                        );
+                      })
+                    ],
+                  );
+                }
+              )
             ),
             actions: <Widget>[
               TextButton(

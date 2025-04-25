@@ -3,10 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MapBody extends StatefulWidget {
-  const MapBody(this.platform, { super.key });
+  const MapBody(this.platform, this.sharedPreferences, { super.key });
   final MethodChannel platform;
+  final SharedPreferences sharedPreferences;
 
   @override
   State<MapBody> createState() => _MapBodyState();
@@ -15,6 +17,7 @@ class MapBody extends StatefulWidget {
 class _MapBodyState extends State<MapBody> {
   late Widget _map = Row();
   late MethodChannel platform;
+  late SharedPreferences sharedPreferences;
   Widget _progressIndicator = LinearProgressIndicator();
 
   bool disposed = false;
@@ -52,7 +55,14 @@ class _MapBodyState extends State<MapBody> {
   }
 
   void getMap() async {
-    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    List<LocationAccuracy> accuracies = [
+      LocationAccuracy.reduced,
+      LocationAccuracy.low,
+      LocationAccuracy.medium,
+      LocationAccuracy.high
+    ];
+
+    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: accuracies[sharedPreferences.getInt("positionPrecision") ?? 0]);
 
     if(!disposed && context.mounted) {
       setState(() {
@@ -65,7 +75,7 @@ class _MapBodyState extends State<MapBody> {
             children: <Widget>[
               TileLayer(
                 urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-                userAgentPackageName: "it.dotto.netmanager",
+                userAgentPackageName: "pw.dotto.netmanager",
               ),
             ]
         );
