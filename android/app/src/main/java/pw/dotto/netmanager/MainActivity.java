@@ -1,27 +1,32 @@
 package pw.dotto.netmanager;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.os.Build;
+
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
-import com.google.errorprone.annotations.FormatString;
-import com.google.errorprone.annotations.ImmutableTypeParameter;
-import com.google.errorprone.annotations.NoAllocation;
+
+import java.util.ArrayList;
+
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
-import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import pw.dotto.netmanager.Core.Manager;
+import pw.dotto.netmanager.Core.Notification;
 
 public class MainActivity extends FlutterActivity {
   private final String CHANNEL = "pw.dotto.netmanager/telephony";
 
   private final Manager manager = new Manager(this);
+  private final Notification notification = new Notification(this);
 
   @Override
   public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
     super.configureFlutterEngine(flutterEngine);
+
+    notification.setupNotifications();
+
     new MethodChannel(
         flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL)
         .setMethodCallHandler((call, result) -> {
@@ -59,30 +64,54 @@ public class MainActivity extends FlutterActivity {
               result.success(gen);
               break;
 
+            case "sendNotification":
+              notification.send();
+              result.success(true); //eventually return false when it fails due to perms issues
+              break;
+
+            case "cancelNotification":
+              result.success(true);
+              notification.cancel();
+              break;
+
             default:
               result.notImplemented();
               break;
           }
         });
+
+    notification.send();
   }
 
   public boolean checkPermissions() {
-    return ActivityCompat.checkSelfPermission(
+    boolean basePerms = ActivityCompat.checkSelfPermission(
                this, Manifest.permission.ACCESS_FINE_LOCATION)
         == PackageManager.PERMISSION_GRANTED
         && ActivityCompat.checkSelfPermission(
                this, Manifest.permission.READ_PHONE_STATE)
-        == PackageManager.PERMISSION_GRANTED
-        && ActivityCompat.checkSelfPermission(
-               this, Manifest.permission.POST_NOTIFICATIONS)
         == PackageManager.PERMISSION_GRANTED;
+
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+          return basePerms && ActivityCompat.checkSelfPermission(
+                  this,
+                  Manifest.permission.POST_NOTIFICATIONS)
+                  == PackageManager.PERMISSION_GRANTED;
+      } else return basePerms;
   }
 
   private void requestPermissions() {
+    ArrayList<String> permissions = new ArrayList<>();
+    permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+    permissions.add(Manifest.permission.READ_PHONE_STATE);
+
+    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) permissions.add(Manifest.permission.POST_NOTIFICATIONS);
+
     ActivityCompat.requestPermissions(this,
-        new String[] {Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.READ_PHONE_STATE,
-            Manifest.permission.POST_NOTIFICATIONS},
+        permissions.toArray(new String[0]),
         1);
+  }
+
+  public Manager getManager() {
+    return manager;
   }
 }
