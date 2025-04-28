@@ -34,7 +34,7 @@ class _HomeState extends State<Home> {
     ];
 
     try {
-      platform.invokeMethod<bool>('checkPermissions');
+      platform.invokeMethod<bool>("checkPermissions");
     } on PlatformException catch (_) {
       //super error, handle it
     }
@@ -49,7 +49,7 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: TopBar(platform),
+        appBar: TopBar(platform, widget.sharedPreferences),
         bottomNavigationBar: NavBar(updatePage, _currentPage),
         body: _pages[_currentPage],
         floatingActionButton: (_currentPage == 0 ? FloatingButton() : null)

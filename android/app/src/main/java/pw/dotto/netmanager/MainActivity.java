@@ -1,6 +1,8 @@
 package pw.dotto.netmanager;
 
 import android.Manifest;
+import android.content.ComponentName;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 
@@ -13,13 +15,14 @@ import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
 import pw.dotto.netmanager.Core.Manager;
-import pw.dotto.netmanager.Core.Notification;
+import pw.dotto.netmanager.Core.Notifications.MonitorNotification;
 
 public class MainActivity extends FlutterActivity {
   private final String CHANNEL = "pw.dotto.netmanager/telephony";
 
   private final Manager manager = new Manager(this);
-  private final Notification notification = new Notification(this);
+  private final MonitorNotification notification = new MonitorNotification(this);
+  private final int selectedSim = 0;
 
   @Override
   public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
@@ -60,7 +63,7 @@ public class MainActivity extends FlutterActivity {
               break;
 
             case "getNetworkGen":
-              int gen = manager.getNetworkGen();
+              int gen = manager.getSimNetworkGen(selectedSim);
               result.success(gen);
               break;
 
@@ -72,6 +75,11 @@ public class MainActivity extends FlutterActivity {
             case "cancelNotification":
               result.success(true);
               notification.cancel();
+              break;
+
+            case "openRadioInfo":
+              result.success(true);
+              openRadioInfo();
               break;
 
             default:
@@ -109,6 +117,12 @@ public class MainActivity extends FlutterActivity {
     ActivityCompat.requestPermissions(this,
         permissions.toArray(new String[0]),
         1);
+  }
+
+  public void openRadioInfo() {
+    Intent intent = new Intent(Intent.ACTION_MAIN);
+    intent.setComponent(new ComponentName("com.android.phone", "com.android.phone.settings.RadioInfo"));
+    startActivity(intent);
   }
 
   public Manager getManager() {

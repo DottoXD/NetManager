@@ -51,40 +51,40 @@ class _HomeBodyState extends State<HomeBody> {
   void update() { //to remove asap
     try {
       () async {
-        final dataList = (await platform.invokeMethod('getNetworkData')).cast<List<dynamic>>();
-    dataList.forEach((cellInfoData) {
-    final cellInfoMap = Map<String, dynamic>.from(cellInfoData);
-    final cellInfo = NetworkData.fromMap(cellInfoMap);
+        final dataList = (await platform.invokeMethod("getNetworkData")).cast<List<dynamic>>();
+        dataList.forEach((cellInfoData) {
+          final cellInfoMap = Map<String, dynamic>.from(cellInfoData);
+          final cellInfo = NetworkData.fromMap(cellInfoMap);
 
-    if (cellInfo.type == 'LTE') {
-    _cellid = cellInfo.cellId as int;
-    _earfcn = cellInfo.earfcn as int;
-    _pci = cellInfo.pci as int;
-    _tac = cellInfo.tac as int;
-    _bw = cellInfo.bw as int;
-    //_bands = cellInfo.bands;
-    _rsrp = cellInfo.rsrp as int;
-    _ta = cellInfo.ta as int;
-    _dbm = cellInfo.dbm as int;
-    }
-    });
+          if (cellInfo.type == 'LTE') {
+            _cellid = cellInfo.cellId as int;
+            _earfcn = cellInfo.earfcn as int;
+            _pci = cellInfo.pci as int;
+            _tac = cellInfo.tac as int;
+            _bw = cellInfo.bw as int;
+            //_bands = cellInfo.bands;
+            _rsrp = cellInfo.rsrp as int;
+            _ta = cellInfo.ta as int;
+            _dbm = cellInfo.dbm as int;
+          }
+        });
 
-    setState(() {
-    _cellid;
-    _earfcn;
-    _pci;
-    _tac;
-    _bw;
-    //_bands;
-    _rsrp;
-    _ta;
-    _dbm;
+        setState(() {
+          _cellid;
+          _earfcn;
+          _pci;
+          _tac;
+          _bw;
+          //_bands;
+          _rsrp;
+          _ta;
+          _dbm;
 
-    _progressIndicator = Container();
-    });
-    } ();
+          _progressIndicator = Container();
+        });
+      } ();
     } on PlatformException catch (_) {
-    //super error, handle it
+      //super error, handle it
     }
   }
 
