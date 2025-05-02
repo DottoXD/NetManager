@@ -4,7 +4,7 @@ import pw.dotto.netmanager.Core.MobileInfo.CellData;
 
 public class NrCellData extends CellData {
 
-    public NrCellData(long cellIdentifier, int rawSignal, int processedSignal, int channelNumber, int stationIdentity, int areaCode, int signalQuality, int signalNoise, int bandwidth, int band, boolean isRegistered) {
+    public NrCellData(long cellIdentifier, int rawSignal, int processedSignal, int channelNumber, int stationIdentity, int areaCode, int signalQuality, int signalNoise, int timingAdvance, int bandwidth, int band, boolean isRegistered) {
         super(
                 "Cell ID",
                 "RSSI",
@@ -14,6 +14,7 @@ public class NrCellData extends CellData {
                 "TAC",
                 "RSRQ",
                 "SNR",
+                "TA Microseconds",
                 "-",
                 "-",
                 cellIdentifier,
@@ -24,6 +25,7 @@ public class NrCellData extends CellData {
                 areaCode,
                 signalQuality,
                 signalNoise,
+                timingAdvance,
                 bandwidth,
                 band,
                 isRegistered

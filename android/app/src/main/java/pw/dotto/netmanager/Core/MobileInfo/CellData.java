@@ -9,6 +9,7 @@ public abstract class CellData {
     protected final String areaCodeString;
     protected final String signalQualityString;
     protected final String signalNoiseString;
+    protected final String timingAdvanceString;
     protected final String bandwidthString;
     protected final String bandString;
 
@@ -21,6 +22,7 @@ public abstract class CellData {
     private int areaCode;
     private int signalQuality;
     private int signalNoise;
+    private int timingAdvance;
     private int bandwidth;
     private int band;
 
@@ -36,6 +38,7 @@ public abstract class CellData {
             String areaCodeString,
             String signalQualityString,
             String signalNoiseString,
+            String timingAdvanceString,
             String bandwidthString,
             String bandString,
             long cellIdentifier,
@@ -46,6 +49,7 @@ public abstract class CellData {
             int areaCode,
             int signalQuality,
             int signalNoise,
+            int timingAdvance,
             int bandwidth,
             int band,
             boolean isRegistered
@@ -58,6 +62,7 @@ public abstract class CellData {
         this.areaCodeString = areaCodeString;
         this.signalQualityString = signalQualityString;
         this.signalNoiseString = signalNoiseString;
+        this.timingAdvanceString = timingAdvanceString;
         this.bandwidthString = bandwidthString;
         this.bandString = bandString;
 
@@ -69,6 +74,7 @@ public abstract class CellData {
         this.areaCode = areaCode;
         this.signalQuality = signalQuality;
         this.signalNoise = signalNoise;
+        this.timingAdvance = timingAdvance;
         this.bandwidth = bandwidth;
         this.band = band;
 
@@ -105,6 +111,10 @@ public abstract class CellData {
 
     public int getSignalNoise() {
         return signalNoise;
+    }
+
+    public int getTimingAdvance() {
+        return timingAdvance;
     }
 
     public int getBandwidth() {
@@ -149,6 +159,10 @@ public abstract class CellData {
 
     public void setSignalNoise(int signalNoise) {
         this.signalNoise = signalNoise;
+    }
+
+    public void setTimingAdvance(int timingAdvance) {
+        this.timingAdvance = timingAdvance;
     }
 
     public void setBandwidth(int bandwidth) {
