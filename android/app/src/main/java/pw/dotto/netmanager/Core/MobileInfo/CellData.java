@@ -9,6 +9,8 @@ public abstract class CellData {
     protected final String areaCodeString;
     protected final String signalQualityString;
     protected final String signalNoiseString;
+    protected final String bandwidthString;
+    protected final String bandString;
 
     private long cellIdentifier;
 
@@ -19,6 +21,8 @@ public abstract class CellData {
     private int areaCode;
     private int signalQuality;
     private int signalNoise;
+    private int bandwidth;
+    private int band;
 
     private boolean isRegistered;
 
@@ -32,6 +36,8 @@ public abstract class CellData {
             String areaCodeString,
             String signalQualityString,
             String signalNoiseString,
+            String bandwidthString,
+            String bandString,
             long cellIdentifier,
             int rawSignal,
             int processedSignal,
@@ -40,6 +46,8 @@ public abstract class CellData {
             int areaCode,
             int signalQuality,
             int signalNoise,
+            int bandwidth,
+            int band,
             boolean isRegistered
     ) {
         this.cellIdentifierString = cellIdentifierString;
@@ -50,6 +58,8 @@ public abstract class CellData {
         this.areaCodeString = areaCodeString;
         this.signalQualityString = signalQualityString;
         this.signalNoiseString = signalNoiseString;
+        this.bandwidthString = bandwidthString;
+        this.bandString = bandString;
 
         this.cellIdentifier = cellIdentifier;
         this.rawSignal = rawSignal;
@@ -59,6 +69,8 @@ public abstract class CellData {
         this.areaCode = areaCode;
         this.signalQuality = signalQuality;
         this.signalNoise = signalNoise;
+        this.bandwidth = bandwidth;
+        this.band = band;
 
         this.isRegistered = isRegistered;
     }
@@ -95,6 +107,14 @@ public abstract class CellData {
         return signalNoise;
     }
 
+    public int getBandwidth() {
+        return bandwidth;
+    }
+
+    public int getBand() {
+        return band;
+    }
+
     public boolean isRegistered() {
         return isRegistered;
     }
@@ -129,6 +149,14 @@ public abstract class CellData {
 
     public void setSignalNoise(int signalNoise) {
         this.signalNoise = signalNoise;
+    }
+
+    public void setBandwidth(int bandwidth) {
+        this.bandwidth = bandwidth;
+    }
+
+    public void setBand(int band) {
+        this.band = band;
     }
 
     public void setIsRegistered(boolean isRegistered) {

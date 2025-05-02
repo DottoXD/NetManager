@@ -2,8 +2,10 @@ package pw.dotto.netmanager.Core;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.Build;
 import android.telephony.CellIdentityLte;
 import android.telephony.CellIdentityNr;
+import android.telephony.CellIdentityWcdma;
 import android.telephony.CellInfo;
 import android.telephony.CellInfoCdma;
 import android.telephony.CellInfoGsm;
@@ -13,6 +15,7 @@ import android.telephony.CellInfoTdscdma;
 import android.telephony.CellInfoWcdma;
 import android.telephony.CellSignalStrengthLte;
 import android.telephony.CellSignalStrengthNr;
+import android.telephony.CellSignalStrengthWcdma;
 import android.telephony.NeighboringCellInfo;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
@@ -22,8 +25,10 @@ import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.List;
 import pw.dotto.netmanager.Core.CellInfoData;
+import pw.dotto.netmanager.Core.MobileInfo.CellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.LteCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.NrCellData;
+import pw.dotto.netmanager.Core.MobileInfo.CellDatas.WcdmaCellData;
 import pw.dotto.netmanager.Core.MobileInfo.SIMData;
 import pw.dotto.netmanager.MainActivity;
 
@@ -159,7 +164,7 @@ public class Manager {
     if (telephony == null || !context.checkPermissions())
       return -1;
 
-    SIMData data = new SIMData(getSimCarrier(telephony), getSimOperator(telephony), getSimNetworkGen(telephony));
+    SIMData data = new SIMData(getSimCarrier(telephony), getSimOperator(telephony), getSimNetworkGen(telephony), telephony.getSimOperator());
 
     for(CellInfo baseCell : telephony.getAllCellInfo()) {
       switch(baseCell.getCellConnectionStatus()) { //remember to check timestamp and eventually request an update for each band!!
@@ -175,11 +180,35 @@ public class Manager {
 
           } else if(baseCell instanceof CellInfoWcdma) {
             CellInfoWcdma cell = (CellInfoWcdma) baseCell;
+            CellIdentityWcdma identityWcdma = (CellIdentityWcdma) cell.getCellIdentity();
+
+            int band = -1;
+
+            CellSignalStrengthWcdma signalWcdma = (CellSignalStrengthWcdma) cell.getCellSignalStrength();
+            WcdmaCellData wcdmaCellData = new WcdmaCellData(
+                    identityWcdma.getCid(),
+                    -1, //signalWcdma.getDbm(),
+                    signalWcdma.getDbm(),
+                    identityWcdma.getUarfcn(),
+                    identityWcdma.getPsc(),
+                    identityWcdma.getLac(),
+                    -1, //signalWcdma.getRsrq(),
+                    -1, //signalLte.getRssnr(),
+                    -1, //identityWcdma.get(),
+                    band,
+                    cell.isRegistered()
+            );
 
           } else if(baseCell instanceof CellInfoLte) {
             CellInfoLte cell = (CellInfoLte) baseCell;
-
             CellIdentityLte identityLte = (CellIdentityLte) cell.getCellIdentity();
+
+            int band = -1;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+              int[] bands = identityLte.getBands();
+              if(bands.length > 0) band = bands[0];
+            }
+
             CellSignalStrengthLte signalLte = (CellSignalStrengthLte) cell.getCellSignalStrength();
             LteCellData lteCellData = new LteCellData(
                     identityLte.getCi(),
@@ -190,13 +219,22 @@ public class Manager {
                     identityLte.getTac(),
                     signalLte.getRsrq(),
                     signalLte.getRssnr(),
+                    identityLte.getBandwidth(),
+                    band,
                     cell.isRegistered()
             );
 
+            data.setPrimaryCell(lteCellData);
           } else if(baseCell instanceof CellInfoNr) {
             CellInfoNr cell = (CellInfoNr) baseCell;
-
             CellIdentityNr identityNr = (CellIdentityNr) cell.getCellIdentity();
+
+            int band = -1;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+              int[] bands = identityNr.getBands();
+              if(bands.length > 0) band = bands[0];
+            }
+
             CellSignalStrengthNr signalNr = (CellSignalStrengthNr) cell.getCellSignalStrength();
             NrCellData nrCellData = new NrCellData(
                     identityNr.getNci(),
@@ -207,10 +245,12 @@ public class Manager {
                     identityNr.getTac(),
                     signalNr.getSsRsrq(),
                     signalNr.getSsSinr(),
+                    -1,
+                    band,
                     cell.isRegistered()
             );
 
-
+            data.setPrimaryCell(nrCellData);
           }
 
           break;
@@ -231,7 +271,9 @@ public class Manager {
             data.getPrimaryCell() instanceof LteCellData ||
             data.getPrimaryCell() instanceof NrCellData
     ) {
-      //calculate bw
+      for(CellData cellData : data.getActiveCells()) {
+        data.setActiveBw(data.getActiveBw() + cellData.getBandwidth());
+      }
     }
 
     return -1;

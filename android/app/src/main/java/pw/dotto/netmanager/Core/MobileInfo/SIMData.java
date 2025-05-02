@@ -6,15 +6,17 @@ public class SIMData {
     private final String operator;
     private final String network;
     private final int networkGen;
+    private final String mccMnc;
     private CellData primaryCell;
     private float activeBw = 0;
     private final ArrayList<CellData> activeCells = new ArrayList<>();
     private final ArrayList<CellData> neighborCells = new ArrayList<>();
 
-    public SIMData(String operator, String network, int networkGen) {
+    public SIMData(String operator, String network, int networkGen, String mccMnc) {
         this.operator = operator;
         this.network = network;
         this.networkGen = networkGen;
+        this.mccMnc = mccMnc;
     }
 
     public String getOperator() {
@@ -31,6 +33,10 @@ public class SIMData {
 
     public float getActiveBw() {
         return activeBw;
+    }
+
+    public String getMccMnc() {
+        return mccMnc;
     }
 
     public void setPrimaryCell(CellData primaryCell) {
