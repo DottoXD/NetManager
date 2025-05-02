@@ -9,12 +9,15 @@ import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 
+import com.google.gson.Gson;
+
 import java.util.ArrayList;
 
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
 import pw.dotto.netmanager.Core.Manager;
+import pw.dotto.netmanager.Core.MobileInfo.SIMData;
 import pw.dotto.netmanager.Core.Notifications.MonitorNotification;
 
 public class MainActivity extends FlutterActivity {
@@ -22,7 +25,7 @@ public class MainActivity extends FlutterActivity {
 
   private final Manager manager = new Manager(this);
   private final MonitorNotification notification = new MonitorNotification(this);
-  private final int selectedSim = 0;
+  private int selectedSim = 0;
 
   @Override
   public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
@@ -68,8 +71,9 @@ public class MainActivity extends FlutterActivity {
               break;
 
             case "getNetworkData":
-              //String data = manager.getNetworkData();
-              result.success(null);
+              SIMData data = manager.getSimNetworkData(selectedSim);
+              Gson gson = new Gson();
+              result.success(gson.toJson(data));
               break;
 
             case "getNetworkGen":
@@ -83,13 +87,19 @@ public class MainActivity extends FlutterActivity {
               break;
 
             case "cancelNotification":
-              result.success(true);
               notification.cancel();
+              result.success(true);
               break;
 
             case "openRadioInfo":
+              openRadioInfo(); //implement menu to call this
               result.success(true);
-              openRadioInfo();
+              break;
+
+            case "switchSim":
+              if(selectedSim == 0) selectedSim = 1;
+              else selectedSim = 0;
+              result.success(true);
               break;
 
             default:

@@ -22,6 +22,7 @@ import pw.dotto.netmanager.Core.MobileInfo.CellDatas.NrCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.TdscmaCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.WcdmaCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellExtractors;
+import pw.dotto.netmanager.Core.MobileInfo.DataExtractor;
 import pw.dotto.netmanager.Core.MobileInfo.SIMData;
 import pw.dotto.netmanager.MainActivity;
 
@@ -50,7 +51,7 @@ public class Manager {
     if(activeSubscriptionList != null) {
       int networkGen = getSimNetworkGen(getTelephony());
       boolean nrSa = networkGen == 5 && true; //got to replace true with the actual check
-      str.append(getTelephony().getNetworkOperatorName()).append(" ").append(networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G" + (nrSa ? "(SA)" : "")));
+      str.append(getTelephony().getNetworkOperatorName()).append(" ").append(networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G" + (nrSa ? " (SA)" : "")));
 
       if(activeSubscriptionList.size() > 1) {
         SubscriptionInfo info = activeSubscriptionList.get(1);
@@ -58,7 +59,7 @@ public class Manager {
 
         networkGen = getSimNetworkGen(secondManager);
         nrSa = networkGen == 5 && true; //got to replace true with the actual check
-        str.append(" | ").append(secondManager.getNetworkOperatorName()).append(" ").append(networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G" + (nrSa ? "(SA)" : "")));
+        str.append(" | ").append(secondManager.getNetworkOperatorName()).append(" ").append(networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G" + (nrSa ? " (SA)" : "")));
       }
     } else str.append("No service");
 
@@ -106,9 +107,9 @@ public class Manager {
   }
 
   @SuppressLint("MissingPermission")
-  public int getSimNetworkData(TelephonyManager telephony) { //temporarily return an int as i'm working on this
+  public SIMData getSimNetworkData(TelephonyManager telephony) { //temporarily return an int as i'm working on this
     if (telephony == null || !context.checkPermissions())
-      return -1;
+      return null;
 
     SIMData data = new SIMData(getSimCarrier(telephony), getSimOperator(telephony), getSimNetworkGen(telephony), telephony.getSimOperator());
 
@@ -186,6 +187,15 @@ public class Manager {
       }
     }
 
+    data.getPrimaryCell().setBasicCellData(DataExtractor.getBasicData(data.getPrimaryCell()));
+    for(CellData cellData : data.getActiveCells()) {
+      cellData.setBasicCellData(cellData.getBasicCellData());
+    }
+
+    for(CellData cellData : data.getNeighborCells()) {
+      cellData.setBasicCellData(cellData.getBasicCellData());
+    }
+
     if (
             data.getPrimaryCell() != null &&
             data.getPrimaryCell() instanceof LteCellData
@@ -195,18 +205,18 @@ public class Manager {
       }
     }
 
-    return -1;
+    return data;
   }
 
   @SuppressLint("MissingPermission")
-  public int getSimNetworkData(int simId) {
+  public SIMData getSimNetworkData(int simId) {
     switch(simId) {
       case 0:
         return getSimNetworkData(getTelephony());
       case 1:
         return getSimNetworkData(secondManager);
       default:
-        return -1;
+        return null;
     }
   }
 

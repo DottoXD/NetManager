@@ -75,7 +75,7 @@ public class MonitorNotification {
         activeNotification = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
                 .setSmallIcon(R.drawable.launch_background) //got to make an icon as soon as i make an app logo
                 .setContentTitle(context.getManager().getFullHeaderString())
-                .setContentText("NetManager")
+                .setContentText("NetManager - " + context.getManager().getSimNetworkData(0))
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setOngoing(true) //add check to compare with settings
                 .setSilent(true)

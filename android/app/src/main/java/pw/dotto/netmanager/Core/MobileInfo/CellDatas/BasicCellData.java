@@ -2,9 +2,9 @@ package pw.dotto.netmanager.Core.MobileInfo.CellDatas;
 
 public class BasicCellData {
     private final int band;
-    private final double frequency;
+    private final int frequency;
 
-    public BasicCellData(int band, double frequency) {
+    public BasicCellData(int band, int frequency) {
         this.band = band;
         this.frequency = frequency;
     }
@@ -13,7 +13,7 @@ public class BasicCellData {
         return band;
     }
 
-    public double getFrequency() {
+    public int getFrequency() {
         return frequency;
     }
 }

@@ -1,5 +1,7 @@
 package pw.dotto.netmanager.Core.MobileInfo;
 
+import androidx.annotation.NonNull;
+
 import java.util.ArrayList;
 
 public class SIMData {

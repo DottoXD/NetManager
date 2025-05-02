@@ -1,5 +1,7 @@
 package pw.dotto.netmanager.Core.MobileInfo;
 
+import pw.dotto.netmanager.Core.MobileInfo.CellDatas.BasicCellData;
+
 public abstract class CellData {
     protected final String cellIdentifierString;
     protected final String rawSignalString;
@@ -25,6 +27,7 @@ public abstract class CellData {
     private int timingAdvance;
     private int bandwidth;
     private int band;
+    private BasicCellData basicCellData;
 
     private boolean isRegistered;
 
@@ -125,6 +128,10 @@ public abstract class CellData {
         return band;
     }
 
+    public BasicCellData getBasicCellData() {
+        return basicCellData;
+    }
+
     public boolean isRegistered() {
         return isRegistered;
     }
@@ -171,6 +178,10 @@ public abstract class CellData {
 
     public void setBand(int band) {
         this.band = band;
+    }
+
+    public void setBasicCellData(BasicCellData basicCellData) {
+        this.basicCellData = basicCellData;
     }
 
     public void setIsRegistered(boolean isRegistered) {
