@@ -47,8 +47,18 @@ public class MainActivity extends FlutterActivity {
               result.success(true);
               break;
 
+            case "getOperator":
+              String operator = manager.getSimOperator(selectedSim);
+              if (!"NetManager".equals(operator)) {
+                result.success(operator);
+              } else {
+                result.error(
+                        "Unknown", "Unknown", null); // add proper error handling
+              }
+              break;
+
             case "getCarrier":
-              String carrier = manager.getCarrier();
+              String carrier = manager.getSimCarrier(selectedSim);
               if (!"NetManager".equals(carrier)) {
                 result.success(carrier);
               } else {
@@ -58,8 +68,8 @@ public class MainActivity extends FlutterActivity {
               break;
 
             case "getNetworkData":
-              String data = manager.getNetworkData();
-              result.success(data);
+              //String data = manager.getNetworkData();
+              result.success(null);
               break;
 
             case "getNetworkGen":

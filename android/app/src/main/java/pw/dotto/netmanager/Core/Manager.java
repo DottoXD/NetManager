@@ -2,19 +2,29 @@ package pw.dotto.netmanager.Core;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.telephony.CellIdentityLte;
+import android.telephony.CellIdentityNr;
 import android.telephony.CellInfo;
+import android.telephony.CellInfoCdma;
 import android.telephony.CellInfoGsm;
 import android.telephony.CellInfoLte;
 import android.telephony.CellInfoNr;
+import android.telephony.CellInfoTdscdma;
 import android.telephony.CellInfoWcdma;
+import android.telephony.CellSignalStrengthLte;
+import android.telephony.CellSignalStrengthNr;
 import android.telephony.NeighboringCellInfo;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyDisplayInfo;
 import android.telephony.TelephonyManager;
 import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.List;
 import pw.dotto.netmanager.Core.CellInfoData;
+import pw.dotto.netmanager.Core.MobileInfo.CellDatas.LteCellData;
+import pw.dotto.netmanager.Core.MobileInfo.CellDatas.NrCellData;
+import pw.dotto.netmanager.Core.MobileInfo.SIMData;
 import pw.dotto.netmanager.MainActivity;
 
 public class Manager {
@@ -40,24 +50,61 @@ public class Manager {
 
     List<SubscriptionInfo> activeSubscriptionList = getSubscriptionManager().getActiveSubscriptionInfoList();
     if(activeSubscriptionList != null) {
-            int networkGen = getSimNetworkGen(getTelephony());
-            str.append(getTelephony().getNetworkOperatorName()).append(" ").append(networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G"));
+      int networkGen = getSimNetworkGen(getTelephony());
+      boolean nrSa = networkGen == 5 && true; //got to replace true with the actual check
+      str.append(getTelephony().getNetworkOperatorName()).append(" ").append(networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G" + (nrSa ? "(SA)" : "")));
 
-            if(activeSubscriptionList.size() > 1) {
-              SubscriptionInfo info = activeSubscriptionList.get(1);
-              if(secondManager == null) secondManager = getTelephony().createForSubscriptionId(info.getSubscriptionId());
+      if(activeSubscriptionList.size() > 1) {
+        SubscriptionInfo info = activeSubscriptionList.get(1);
+        if(secondManager == null) secondManager = getTelephony().createForSubscriptionId(info.getSubscriptionId());
 
-              networkGen = getSimNetworkGen(secondManager);
-              str.append(" | ").append(secondManager.getNetworkOperatorName()).append(" ").append(networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G"));
-            }
+        networkGen = getSimNetworkGen(secondManager);
+        nrSa = networkGen == 5 && true; //got to replace true with the actual check
+        str.append(" | ").append(secondManager.getNetworkOperatorName()).append(" ").append(networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G" + (nrSa ? "(SA)" : "")));
+      }
     } else str.append("No service");
 
     return str.toString().trim();
   }
 
   @SuppressLint("MissingPermission")
-  public String getCarrier() {
-    return getTelephony().getNetworkOperatorName();
+  public String getSimCarrier(TelephonyManager telephony) {
+    if (telephony == null || !context.checkPermissions())
+      return "NetManager";
+
+    return telephony.getNetworkOperatorName();
+  }
+
+  @SuppressLint("MissingPermission")
+  public String getSimCarrier(int simId) {
+    switch(simId) {
+      case 0:
+        return getSimCarrier(getTelephony());
+      case 1:
+        return getSimCarrier(secondManager);
+      default:
+        return "NetManager";
+    }
+  }
+
+  @SuppressLint("MissingPermission")
+  public String getSimOperator(TelephonyManager telephony) {
+    if (telephony == null || !context.checkPermissions())
+      return "NetManager";
+
+    return telephony.getSimOperatorName();
+  }
+
+  @SuppressLint("MissingPermission")
+  public String getSimOperator(int simId) {
+    switch(simId) {
+      case 0:
+        return getSimOperator(getTelephony());
+      case 1:
+        return getSimOperator(secondManager);
+      default:
+        return "NetManager";
+    }
   }
 
   @SuppressLint("MissingPermission") //deprecated
@@ -112,10 +159,60 @@ public class Manager {
     if (telephony == null || !context.checkPermissions())
       return -1;
 
-    for(CellInfo cell : telephony.getAllCellInfo()) {
-      switch(cell.getCellConnectionStatus()) { //remember to check timestamp and eventually request an update for each band!!
+    SIMData data = new SIMData(getSimCarrier(telephony), getSimOperator(telephony), getSimNetworkGen(telephony));
+
+    for(CellInfo baseCell : telephony.getAllCellInfo()) {
+      switch(baseCell.getCellConnectionStatus()) { //remember to check timestamp and eventually request an update for each band!!
         case CellInfo.CONNECTION_PRIMARY_SERVING:
-          //we found the primary band
+          if(baseCell instanceof CellInfoGsm) {
+            CellInfoGsm cell = (CellInfoGsm) baseCell;
+
+          } else if(baseCell instanceof CellInfoCdma) {
+            CellInfoCdma cell = (CellInfoCdma) baseCell;
+
+          } else if(baseCell instanceof CellInfoTdscdma) {
+            CellInfoTdscdma cell = (CellInfoTdscdma) baseCell;
+
+          } else if(baseCell instanceof CellInfoWcdma) {
+            CellInfoWcdma cell = (CellInfoWcdma) baseCell;
+
+          } else if(baseCell instanceof CellInfoLte) {
+            CellInfoLte cell = (CellInfoLte) baseCell;
+
+            CellIdentityLte identityLte = (CellIdentityLte) cell.getCellIdentity();
+            CellSignalStrengthLte signalLte = (CellSignalStrengthLte) cell.getCellSignalStrength();
+            LteCellData lteCellData = new LteCellData(
+                    identityLte.getCi(),
+                    signalLte.getRssi(),
+                    signalLte.getRsrp(),
+                    identityLte.getEarfcn(),
+                    identityLte.getPci(),
+                    identityLte.getTac(),
+                    signalLte.getRsrq(),
+                    signalLte.getRssnr(),
+                    cell.isRegistered()
+            );
+
+          } else if(baseCell instanceof CellInfoNr) {
+            CellInfoNr cell = (CellInfoNr) baseCell;
+
+            CellIdentityNr identityNr = (CellIdentityNr) cell.getCellIdentity();
+            CellSignalStrengthNr signalNr = (CellSignalStrengthNr) cell.getCellSignalStrength();
+            NrCellData nrCellData = new NrCellData(
+                    identityNr.getNci(),
+                    signalNr.getCsiRsrp(),
+                    signalNr.getSsRsrp(),
+                    identityNr.getNrarfcn(),
+                    identityNr.getPci(),
+                    identityNr.getTac(),
+                    signalNr.getSsRsrq(),
+                    signalNr.getSsSinr(),
+                    cell.isRegistered()
+            );
+
+
+          }
+
           break;
         case CellInfo.CONNECTION_SECONDARY_SERVING:
           //we found (CA bands?)
@@ -127,6 +224,14 @@ public class Manager {
           //i'm not too sure if i'll even use this
           break;
       }
+    }
+
+    if(
+            data.getPrimaryCell() != null &&
+            data.getPrimaryCell() instanceof LteCellData ||
+            data.getPrimaryCell() instanceof NrCellData
+    ) {
+      //calculate bw
     }
 
     return -1;
@@ -173,6 +278,9 @@ public class Manager {
         return 3;
 
       case TelephonyManager.NETWORK_TYPE_LTE:
+        //Check for NR NSA
+        return 4;
+
       case TelephonyManager.NETWORK_TYPE_IWLAN:
         return 4;
 
