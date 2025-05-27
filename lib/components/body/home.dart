@@ -25,7 +25,8 @@ class _HomeBodyState extends State<HomeBody> {
   double cardHeight = 75;
 
   String _debug = "";
-  final List<Widget> _pageData = <Widget>[];
+  final List<Widget> _mainData = <Widget>[];
+  final List<Widget> _neighborData = <Widget>[];
 
   @override
   void initState() {
@@ -65,8 +66,8 @@ class _HomeBodyState extends State<HomeBody> {
           return;
         }
 
-        _pageData.clear();
-        _pageData.add(
+        _mainData.clear();
+        _mainData.add(
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -204,7 +205,7 @@ class _HomeBodyState extends State<HomeBody> {
             i += 2;
           }
 
-          _pageData.add(
+          _mainData.add(
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [leftElement, rightElement],
@@ -212,10 +213,21 @@ class _HomeBodyState extends State<HomeBody> {
           );
         }
 
+        _neighborData.clear(); //experimental
+        for (CellData neighborCell in simData.neighborCells) {
+          _neighborData.add(
+            ListTile(
+              title: Text(neighborCell.bandString),
+              subtitle: Text("${neighborCell.band}"),
+            ),
+          );
+        }
+
         setState(() {
           _debug = jsonStr;
 
-          _pageData;
+          _mainData;
+          _neighborData;
           _progressIndicator = Container();
         });
       }();
@@ -238,7 +250,14 @@ class _HomeBodyState extends State<HomeBody> {
           Row(children: [Expanded(child: _progressIndicator)]),
           Container(
             margin: EdgeInsets.only(top: 10, left: 10, right: 10),
-            child: Column(children: _pageData),
+            child: Column(children: _mainData),
+          ),
+          Container(
+            margin: EdgeInsets.only(top: 10, left: 10, right: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: _neighborData,
+            ),
           ),
         ],
       ),
@@ -340,13 +359,13 @@ class CellData {
   final String bandwidthString;
   final String bandString;
 
-  final int cellIdentifier;
+  final String cellIdentifier;
 
-  final int rawSignal;
-  final int processedSignal;
+  final String rawSignal;
+  final String processedSignal;
   final int channelNumber;
   final int stationIdentity;
-  final int areaCode;
+  final String areaCode;
   final int signalQuality;
   final int signalNoise;
   final int timingAdvance;
@@ -442,12 +461,12 @@ CellData _emptyCellData() => CellData(
   timingAdvanceString: "",
   bandwidthString: "",
   bandString: "",
-  cellIdentifier: -1,
-  rawSignal: -1,
-  processedSignal: -1,
+  cellIdentifier: "-1",
+  rawSignal: "-1",
+  processedSignal: "-1",
   channelNumber: -1,
   stationIdentity: -1,
-  areaCode: -1,
+  areaCode: "-1",
   signalQuality: -1,
   signalNoise: -1,
   timingAdvance: -1,

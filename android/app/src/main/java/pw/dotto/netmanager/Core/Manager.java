@@ -29,6 +29,7 @@ import pw.dotto.netmanager.MainActivity;
 public class Manager {
   private final MainActivity context;
 
+  private TelephonyManager firstManager;
   private TelephonyManager secondManager;
 
   public Manager(MainActivity context) {
@@ -48,20 +49,24 @@ public class Manager {
     StringBuilder str = new StringBuilder();
 
     List<SubscriptionInfo> activeSubscriptionList = getSubscriptionManager().getActiveSubscriptionInfoList();
-    if(activeSubscriptionList != null) {
+    if (activeSubscriptionList != null) {
       int networkGen = getSimNetworkGen(getTelephony());
-      boolean nrSa = networkGen == 5 && true; //got to replace true with the actual check
-      str.append(getTelephony().getNetworkOperatorName()).append(" ").append(networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G" + (nrSa ? " (SA)" : "")));
+      boolean nrSa = networkGen == 5 && true; // got to replace true with the actual check
+      str.append(getTelephony().getNetworkOperatorName()).append(" ").append(
+          networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G" + (nrSa ? " (SA)" : "")));
 
-      if(activeSubscriptionList.size() > 1) {
+      if (activeSubscriptionList.size() > 1) {
         SubscriptionInfo info = activeSubscriptionList.get(1);
-        if(secondManager == null) secondManager = getTelephony().createForSubscriptionId(info.getSubscriptionId());
+        if (secondManager == null)
+          secondManager = getTelephony().createForSubscriptionId(info.getSubscriptionId());
 
         networkGen = getSimNetworkGen(secondManager);
-        nrSa = networkGen == 5 && true; //got to replace true with the actual check
-        str.append(" | ").append(secondManager.getNetworkOperatorName()).append(" ").append(networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G" + (nrSa ? " (SA)" : "")));
+        nrSa = networkGen == 5 && true; // got to replace true with the actual check
+        str.append(" | ").append(secondManager.getNetworkOperatorName()).append(" ").append(
+            networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G" + (nrSa ? " (SA)" : "")));
       }
-    } else str.append("No service");
+    } else
+      str.append("No service");
 
     return str.toString().trim();
   }
@@ -76,7 +81,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public String getSimCarrier(int simId) {
-    switch(simId) {
+    switch (simId) {
       case 0:
         return getSimCarrier(getTelephony());
       case 1:
@@ -96,7 +101,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public String getSimOperator(int simId) {
-    switch(simId) {
+    switch (simId) {
       case 0:
         return getSimOperator(getTelephony());
       case 1:
@@ -111,10 +116,22 @@ public class Manager {
     if (telephony == null || !context.checkPermissions())
       return null;
 
-    SIMData data = new SIMData(getSimCarrier(telephony), getSimOperator(telephony), getSimNetworkGen(telephony), telephony.getSimOperator());
+    List<SubscriptionInfo> activeSubscriptionList = getSubscriptionManager().getActiveSubscriptionInfoList();
+    SubscriptionInfo info = activeSubscriptionList.get(0);
+    if (telephony != secondManager) {
+      if (firstManager == null)
+        firstManager = getTelephony().createForSubscriptionId(info.getSubscriptionId());
+
+      telephony = firstManager;
+    }
+
+    SIMData data = new SIMData(getSimCarrier(telephony), getSimOperator(telephony), getSimNetworkGen(telephony),
+        telephony.getSimOperator());
 
     for (CellInfo baseCell : telephony.getAllCellInfo()) {
-      switch (baseCell.getCellConnectionStatus()) { //remember to check timestamp and eventually request an update for each band!!
+
+      switch (baseCell.getCellConnectionStatus()) { // remember to check timestamp and eventually request an update for
+                                                    // each band!!
         case CellInfo.CONNECTION_PRIMARY_SERVING:
           if (baseCell instanceof CellInfoGsm) {
             GsmCellData gsmCellData = CellExtractors.getGsmCellData((CellInfoGsm) baseCell);
@@ -182,24 +199,22 @@ public class Manager {
 
           break;
         case CellInfo.CONNECTION_UNKNOWN:
-          //i'm not too sure if i'll even use this
+          // i'm not too sure if i'll even use this
           break;
       }
     }
 
     data.getPrimaryCell().setBasicCellData(DataExtractor.getBasicData(data.getPrimaryCell()));
-    for(CellData cellData : data.getActiveCells()) {
+    for (CellData cellData : data.getActiveCells()) {
       cellData.setBasicCellData(cellData.getBasicCellData());
     }
 
-    for(CellData cellData : data.getNeighborCells()) {
+    for (CellData cellData : data.getNeighborCells()) {
       cellData.setBasicCellData(cellData.getBasicCellData());
     }
 
-    if (
-            data.getPrimaryCell() != null &&
-            data.getPrimaryCell() instanceof LteCellData
-    ) {
+    if (data.getPrimaryCell() != null &&
+        data.getPrimaryCell() instanceof LteCellData) {
       for (CellData cellData : data.getActiveCells()) {
         data.setActiveBw(data.getActiveBw() + cellData.getBandwidth());
       }
@@ -210,7 +225,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public SIMData getSimNetworkData(int simId) {
-    switch(simId) {
+    switch (simId) {
       case 0:
         return getSimNetworkData(getTelephony());
       case 1:
@@ -249,7 +264,7 @@ public class Manager {
         return 3;
 
       case TelephonyManager.NETWORK_TYPE_LTE:
-        //Check for NR NSA
+        // Check for NR NSA
         return 4;
 
       case TelephonyManager.NETWORK_TYPE_IWLAN:
@@ -265,7 +280,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public int getSimNetworkGen(int simId) {
-    switch(simId) {
+    switch (simId) {
       case 0:
         return getSimNetworkGen(getTelephony());
       case 1:
