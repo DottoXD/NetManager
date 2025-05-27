@@ -44,13 +44,12 @@ public class CellExtractors {
                 identityGsm.getArfcn(),
                 identityGsm.getBsic(),
                 identityGsm.getLac(),
-                -1, //signalGsm.getRsrq(),
-                -1, //signalGsm.getSnr(),
-                signalGsm.getTimingAdvance(),
-                -1, //identityGsm.getBandwidth(),
+                -1, // signalGsm.getRsrq(),
+                -1, // signalGsm.getSnr(),
+                (signalGsm.getTimingAdvance() == Integer.MAX_VALUE ? -1 : signalGsm.getTimingAdvance()),
+                -1, // identityGsm.getBandwidth(),
                 band,
-                baseCell.isRegistered()
-        );
+                baseCell.isRegistered());
     }
 
     @NonNull
@@ -64,16 +63,15 @@ public class CellExtractors {
                 identityCdma.getBasestationId(),
                 signalCdma.getEvdoDbm(),
                 signalCdma.getCdmaDbm(),
-                -1, //??,
+                -1, // ??,
                 identityCdma.getSystemId(),
-                -1, //identityCdma.getTac(),
-                -1, //signalCdma.getRsrq(),
+                -1, // identityCdma.getTac(),
+                -1, // signalCdma.getRsrq(),
                 signalCdma.getEvdoSnr(),
-                -1, //signalCdma.getTimingAdvance(),
-                -1, //identityCdma.getBandwidth(),
+                -1, // signalCdma.getTimingAdvance(),
+                -1, // identityCdma.getBandwidth(),
                 band,
-                baseCell.isRegistered()
-        );
+                baseCell.isRegistered());
     }
 
     @NonNull
@@ -90,13 +88,12 @@ public class CellExtractors {
                 identityTdscdma.getUarfcn(),
                 identityTdscdma.getCpid(),
                 identityTdscdma.getLac(),
-                -1, //signalTdscdma.getRsrq(),
-                -1, //signalTdscdma.getSnr(),
-                -1, //signalTdscdma.getTimingAdvance(),
-                -1, //identityTdscdma.getBandwidth(),
+                -1, // signalTdscdma.getRsrq(),
+                -1, // signalTdscdma.getSnr(),
+                -1, // signalTdscdma.getTimingAdvance(),
+                -1, // identityTdscdma.getBandwidth(),
                 band,
-                baseCell.isRegistered()
-        );
+                baseCell.isRegistered());
     }
 
     @NonNull
@@ -108,18 +105,17 @@ public class CellExtractors {
         CellSignalStrengthWcdma signalWcdma = (CellSignalStrengthWcdma) baseCell.getCellSignalStrength();
         return new WcdmaCellData(
                 identityWcdma.getCid(),
-                -1, //signalWcdma.getDbm(),
+                -1, // signalWcdma.getDbm(),
                 signalWcdma.getDbm(),
                 identityWcdma.getUarfcn(),
                 identityWcdma.getPsc(),
                 identityWcdma.getLac(),
-                -1, //signalWcdma.getRsrq(),
-                -1, //signalWcdma.getRssnr(),
-                -1, //signalWcdma.getTimingAdvance(),
-                -1, //identityWcdma.getBandwidth(),
+                -1, // signalWcdma.getRsrq(),
+                -1, // signalWcdma.getRssnr(),
+                -1, // signalWcdma.getTimingAdvance(),
+                -1, // identityWcdma.getBandwidth(),
                 band,
-                baseCell.isRegistered()
-        );
+                baseCell.isRegistered());
     }
 
     @NonNull
@@ -129,7 +125,8 @@ public class CellExtractors {
         int band = -1;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             int[] bands = identityLte.getBands();
-            if(bands.length > 0) band = bands[0];
+            if (bands.length > 0)
+                band = bands[0];
         }
 
         CellSignalStrengthLte signalLte = (CellSignalStrengthLte) baseCell.getCellSignalStrength();
@@ -142,11 +139,10 @@ public class CellExtractors {
                 identityLte.getTac(),
                 signalLte.getRsrq(),
                 signalLte.getRssnr(),
-                signalLte.getTimingAdvance(),
-                identityLte.getBandwidth(),
+                (signalLte.getTimingAdvance() == Integer.MAX_VALUE ? -1 : signalLte.getTimingAdvance()),
+                (identityLte.getBandwidth() == Integer.MAX_VALUE ? -1 : identityLte.getBandwidth()),
                 band,
-                baseCell.isRegistered()
-        );
+                baseCell.isRegistered());
     }
 
     @NonNull
@@ -156,11 +152,11 @@ public class CellExtractors {
         int band = -1;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             int[] bands = identityNr.getBands();
-            if(bands.length > 0) band = bands[0];
+            if (bands.length > 0)
+                band = bands[0];
         }
 
         CellSignalStrengthNr signalNr = (CellSignalStrengthNr) baseCell.getCellSignalStrength();
-
         return new NrCellData(
                 identityNr.getNci(),
                 signalNr.getCsiRsrp(),
@@ -170,10 +166,12 @@ public class CellExtractors {
                 identityNr.getTac(),
                 signalNr.getSsRsrq(),
                 signalNr.getSsSinr(),
-                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE ? signalNr.getTimingAdvanceMicros() : -1),
-                -1,
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+                        ? (signalNr.getTimingAdvanceMicros() == Integer.MAX_VALUE ? -1
+                                : signalNr.getTimingAdvanceMicros())
+                        : -1),
+                -1, // identityNr.getBandwidth()
                 band,
-                baseCell.isRegistered()
-        );
+                baseCell.isRegistered());
     }
 }

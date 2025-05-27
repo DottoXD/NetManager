@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MapBody extends StatefulWidget {
-  const MapBody(this.platform, this.sharedPreferences, { super.key });
+  const MapBody(this.platform, this.sharedPreferences, {super.key});
   final MethodChannel platform;
   final SharedPreferences sharedPreferences;
 
@@ -26,7 +23,7 @@ class _MapBodyState extends State<MapBody> {
   void initState() {
     super.initState();
     platform = widget.platform;
-    getMap();
+    //getMap();
   }
 
   @override
@@ -38,49 +35,45 @@ class _MapBodyState extends State<MapBody> {
   @override
   Widget build(BuildContext context) {
     return Column(
-        children: <Widget>[
-          Row(
-              children: [
-                Expanded(
-                    child: _progressIndicator
-                ),
-              ]
-          ),
-          SizedBox(
-              height: 300,
-              child: _map
-          )
-        ]
+      children: <Widget>[
+        Row(children: [Expanded(child: _progressIndicator)]),
+        SizedBox(height: 300, child: _map),
+      ],
     );
   }
 
-  void getMap() async {
+  /*void getMap() async {
     List<LocationAccuracy> accuracies = [
       LocationAccuracy.reduced,
       LocationAccuracy.low,
       LocationAccuracy.medium,
-      LocationAccuracy.high
+      LocationAccuracy.high,
     ];
 
-    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: accuracies[sharedPreferences.getInt("positionPrecision") ?? 0]);
+    Position position = await Geolocator.getCurrentPosition(
+      locationSettings: LocationSettings(
+        accuracy:
+            accuracies[sharedPreferences.getInt("positionPrecision") ?? 0],
+      ),
+    );
 
-    if(!disposed && context.mounted) {
+    if (!disposed && context.mounted) {
       setState(() {
         _progressIndicator = LinearProgressIndicator();
         _map = FlutterMap(
-            options: MapOptions(
-              initialCenter: LatLng(position.latitude, position.longitude),
-              initialZoom: 9.2,
+          options: MapOptions(
+            initialCenter: LatLng(position.latitude, position.longitude),
+            initialZoom: 9.2,
+          ),
+          children: <Widget>[
+            TileLayer(
+              urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+              userAgentPackageName: "pw.dotto.netmanager",
             ),
-            children: <Widget>[
-              TileLayer(
-                urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-                userAgentPackageName: "pw.dotto.netmanager",
-              ),
-            ]
+          ],
         );
         _progressIndicator = Text("");
       });
     }
-  }
+  }*/
 }

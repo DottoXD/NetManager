@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TopBar extends StatefulWidget implements PreferredSizeWidget {
-  const TopBar(this.platform, this.sharedPreferences, { super.key });
+  const TopBar(this.platform, this.sharedPreferences, {super.key});
   final MethodChannel platform;
   final SharedPreferences sharedPreferences;
 
@@ -30,7 +30,10 @@ class _TopBarState extends State<TopBar> {
     platform = widget.platform;
     sharedPreferences = widget.sharedPreferences;
 
-    Timer updateTimer = Timer.periodic(Duration(seconds: sharedPreferences.getInt("updateInterval") ?? 1), (Timer t) => update()); //i should make it so that changing the settings restarts it
+    Timer updateTimer = Timer.periodic(
+      Duration(seconds: sharedPreferences.getInt("updateInterval") ?? 1),
+      (Timer t) => update(),
+    ); //i should make it so that changing the settings restarts it
   }
 
   void update() {
@@ -39,9 +42,9 @@ class _TopBarState extends State<TopBar> {
         _carrier = (await platform.invokeMethod<String>("getCarrier"))!;
         _gen = await platform.invokeMethod<int>("getNetworkGen") as int;
         await platform.invokeMethod<void>("sendNotification");
-      } ();
+      }();
 
-      if(_gen > 0) {
+      if (_gen > 0) {
         _title = "${"$_carrier $_gen"}G";
       } else {
         _title = "No service";
@@ -60,14 +63,8 @@ class _TopBarState extends State<TopBar> {
     return AppBar(
       title: Text(_title),
       actions: [
-        IconButton(
-            onPressed: update,
-            icon: Icon(Icons.info)
-        ),
-        IconButton(
-            onPressed: update,
-            icon: Icon(Icons.menu)
-        )
+        IconButton(onPressed: update, icon: Icon(Icons.info)),
+        IconButton(onPressed: update, icon: Icon(Icons.menu)),
       ],
     );
   }

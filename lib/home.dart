@@ -10,7 +10,7 @@ import 'components/floating_button.dart';
 import 'components/nav_bar.dart';
 
 class Home extends StatefulWidget {
-  const Home(this.sharedPreferences, { super.key });
+  const Home(this.sharedPreferences, {super.key});
   final SharedPreferences sharedPreferences;
 
   @override
@@ -30,7 +30,7 @@ class _HomeState extends State<Home> {
     _pages = [
       HomeBody(platform, widget.sharedPreferences),
       MapBody(platform, widget.sharedPreferences),
-      SettingsBody(platform, widget.sharedPreferences)
+      SettingsBody(platform, widget.sharedPreferences),
     ];
 
     try {
@@ -49,10 +49,10 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: TopBar(platform, widget.sharedPreferences),
-        bottomNavigationBar: NavBar(updatePage, _currentPage),
-        body: _pages[_currentPage],
-        floatingActionButton: (_currentPage == 0 ? FloatingButton() : null)
+      appBar: TopBar(platform, widget.sharedPreferences),
+      bottomNavigationBar: NavBar(updatePage, _currentPage),
+      body: _pages[_currentPage],
+      floatingActionButton: (_currentPage == 0 ? FloatingButton() : null),
     );
   }
 }

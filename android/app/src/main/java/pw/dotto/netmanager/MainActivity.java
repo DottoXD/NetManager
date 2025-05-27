@@ -71,10 +71,10 @@ public class MainActivity extends FlutterActivity {
               break;
 
             case "getNetworkData":
-              SIMData data = manager.getSimNetworkData(selectedSim);
+	      SIMData data = manager.getSimNetworkData(selectedSim);
               Gson gson = new Gson();
               result.success(gson.toJson(data));
-              break;
+	      break;
 
             case "getNetworkGen":
               int gen = manager.getSimNetworkGen(selectedSim);

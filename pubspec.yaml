@@ -1,5 +1,5 @@
 name: netmanager
-description: "A new Flutter project."
+description: "A Material You network monitoring app built with ease-of-use and speed in mind. "
 publish_to: 'none'
 
 version: 0.0.1+1
@@ -14,9 +14,6 @@ dependencies:
 
   dynamic_color: ^1.7.0
   shared_preferences: ^2.5.3
-  flutter_map: ^8.1.1
-  latlong2: ^0.9.1
-  geolocator: ^14.0.0
 
 dev_dependencies:
   flutter_test:
@@ -25,7 +22,6 @@ dev_dependencies:
   flutter_lints: ^5.0.0
 
 flutter:
-
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:

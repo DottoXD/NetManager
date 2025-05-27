@@ -9,11 +9,12 @@ import 'home.dart';
 void main() async {
   runApp(NetManager());
 
-  if(Platform.isAndroid) SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  if (Platform.isAndroid)
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 }
 
 class NetManager extends StatefulWidget {
-  const NetManager({ super.key });
+  const NetManager({super.key});
 
   @override
   State<NetManager> createState() => _NetManagerState();
@@ -33,71 +34,59 @@ class _NetManagerState extends State<NetManager> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-        future: _tempSharedPreferences,
-        builder: (
-            context,
-            snapshot
-            ) {
-          if(snapshot.connectionState == ConnectionState.done) {
-            final sharedPreferences = snapshot.data!;
-            Color color = Color(sharedPreferences.getInt("backgroundColor") ?? 0xFF157F76);
-            bool dynamicTheme = sharedPreferences.getBool("dynamicTheme") ?? true;
+      future: _tempSharedPreferences,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          final sharedPreferences = snapshot.data!;
+          Color color = Color(
+            sharedPreferences.getInt("backgroundColor") ?? 0xFF157F76,
+          );
+          bool dynamicTheme = sharedPreferences.getBool("dynamicTheme") ?? true;
 
-            return DynamicColorBuilder(
-              builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+          return DynamicColorBuilder(
+            builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+              if (lightDynamic == null && darkDynamic == null) {
+                sharedPreferences.setBool("dynamicSupported", false);
+              } else {
+                sharedPreferences.setBool("dynamicSupported", true);
+              }
 
-                if(lightDynamic == null && darkDynamic == null) {
-                  sharedPreferences.setBool("dynamicSupported", false);
-                } else {
-                  sharedPreferences.setBool("dynamicSupported", true);
-                }
-
-                if (lightDynamic != null && darkDynamic != null && dynamicTheme) {
-                  _lightColorScheme = lightDynamic.harmonized();
-                  _darkColorScheme = darkDynamic.harmonized();
-                } else {
-                  _lightColorScheme = ColorScheme.fromSeed(
-                    seedColor: color,
-                  );
-                  _darkColorScheme = ColorScheme.fromSeed(
-                    seedColor: color,
-                    brightness: Brightness.dark,
-                  );
-                }
-
-                return MaterialApp(
-                  theme: ThemeData(
-                    colorScheme: _lightColorScheme,
-                  ),
-                  darkTheme: ThemeData(
-                    colorScheme: _darkColorScheme,
-                  ),
-                  home: Home(sharedPreferences),
-                  debugShowCheckedModeBanner: false,
+              if (lightDynamic != null && darkDynamic != null && dynamicTheme) {
+                _lightColorScheme = lightDynamic.harmonized();
+                _darkColorScheme = darkDynamic.harmonized();
+              } else {
+                _lightColorScheme = ColorScheme.fromSeed(seedColor: color);
+                _darkColorScheme = ColorScheme.fromSeed(
+                  seedColor: color,
+                  brightness: Brightness.dark,
                 );
-              },
-            );
-          } else {
-            return const CircularProgressIndicator();
-          }
+              }
+
+              return MaterialApp(
+                theme: ThemeData(colorScheme: _lightColorScheme),
+                darkTheme: ThemeData(colorScheme: _darkColorScheme),
+                home: Home(sharedPreferences),
+                debugShowCheckedModeBanner: false,
+              );
+            },
+          );
+        } else {
+          return const CircularProgressIndicator();
         }
+      },
     );
   }
 }
 
 @immutable
 class CustomColors extends ThemeExtension<CustomColors> {
-  const CustomColors({
-    required this.danger,
-  });
+  const CustomColors({required this.danger});
 
   final Color? danger;
 
   @override
   CustomColors copyWith({Color? danger}) {
-    return CustomColors(
-      danger: danger ?? this.danger,
-    );
+    return CustomColors(danger: danger ?? this.danger);
   }
 
   @override
@@ -105,9 +94,7 @@ class CustomColors extends ThemeExtension<CustomColors> {
     if (other is! CustomColors) {
       return this;
     }
-    return CustomColors(
-      danger: Color.lerp(danger, other.danger, t),
-    );
+    return CustomColors(danger: Color.lerp(danger, other.danger, t));
   }
 
   CustomColors harmonized(ColorScheme dynamic) {

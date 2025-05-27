@@ -107,7 +107,7 @@ public class Manager {
   }
 
   @SuppressLint("MissingPermission")
-  public SIMData getSimNetworkData(TelephonyManager telephony) { //temporarily return an int as i'm working on this
+  public SIMData getSimNetworkData(TelephonyManager telephony) {
     if (telephony == null || !context.checkPermissions())
       return null;
 

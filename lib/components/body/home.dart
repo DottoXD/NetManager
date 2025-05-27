@@ -1,3 +1,4 @@
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,7 +7,7 @@ import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeBody extends StatefulWidget {
-  const HomeBody(this.platform, this.sharedPreferences, { super.key });
+  const HomeBody(this.platform, this.sharedPreferences, {super.key});
   final MethodChannel platform;
   final SharedPreferences sharedPreferences;
 
@@ -21,17 +22,10 @@ class _HomeBodyState extends State<HomeBody> {
   Widget _progressIndicator = LinearProgressIndicator();
 
   double cardWidth = 185;
-  double cardHeight = 150;
+  double cardHeight = 75;
 
-  int _cellid = 0;
-  int _earfcn = 0;
-  int _pci = 0;
-  int _tac = 0;
-  int _bw = 0;
-  //Array _bands =;
-  int _rsrp = 0;
-  int _ta = 0;
-  int _dbm = 0;
+  String _debug = "";
+  final List<Widget> _pageData = <Widget>[];
 
   @override
   void initState() {
@@ -39,7 +33,10 @@ class _HomeBodyState extends State<HomeBody> {
     platform = widget.platform;
     sharedPreferences = widget.sharedPreferences;
 
-    timer = Timer.periodic(Duration(seconds: sharedPreferences.getInt("updateInterval") ?? 3), (Timer t) => update());
+    timer = Timer.periodic(
+      Duration(seconds: sharedPreferences.getInt("updateInterval") ?? 3),
+      (Timer t) => update(),
+    );
   }
 
   @override
@@ -48,404 +45,403 @@ class _HomeBodyState extends State<HomeBody> {
     super.dispose();
   }
 
-  void update() { //to remove asap
+  void update() {
     try {
       () async {
-        final dataList = (await platform.invokeMethod("getNetworkData")).cast<List<dynamic>>();
-        dataList.forEach((cellInfoData) {
-          final cellInfoMap = Map<String, dynamic>.from(cellInfoData);
-          final cellInfo = NetworkData.fromMap(cellInfoMap);
-
-          if (cellInfo.type == 'LTE') {
-            _cellid = cellInfo.cellId as int;
-            _earfcn = cellInfo.earfcn as int;
-            _pci = cellInfo.pci as int;
-            _tac = cellInfo.tac as int;
-            _bw = cellInfo.bw as int;
-            //_bands = cellInfo.bands;
-            _rsrp = cellInfo.rsrp as int;
-            _ta = cellInfo.ta as int;
-            _dbm = cellInfo.dbm as int;
-          }
+        final String jsonStr = await platform.invokeMethod("getNetworkData");
+        setState(() {
+          _debug = "marmo di carrara";
         });
+        final Map<String, dynamic> map = json.decode(jsonStr);
+        setState(() {
+          _debug = "fanum";
+        });
+        final SIMData simData = SIMData.fromJson(map);
+        setState(() {
+          _debug = jsonStr;
+        });
+
+        _pageData.clear();
+        _pageData.add(
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15.0),
+                ),
+                margin: EdgeInsets.only(bottom: 10),
+                color: Theme.of(context).colorScheme.onSecondary,
+                child: Container(
+                  width: cardWidth * 2 + 10,
+                  height: (cardHeight * 2) - 20,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        simData.primaryCell.cellIdentifierString,
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      SizedBox(height: 3),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Icon(Icons.network_cell_sharp, size: 50),
+                          Text(
+                            simData.primaryCell.cellIdentifier.toString(),
+                            style: TextStyle(fontSize: 24),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+
+        List<String> elements = [
+          simData.primaryCell.rawSignalString,
+          "${simData.primaryCell.rawSignal}dBm",
+          simData.primaryCell.processedSignalString,
+          "${simData.primaryCell.processedSignal}dBm",
+          simData.primaryCell.signalQualityString,
+          "${simData.primaryCell.signalQuality}dBm",
+          simData.primaryCell.signalNoiseString,
+          "${simData.primaryCell.signalNoise}dBm",
+          simData.primaryCell.channelNumberString,
+          simData.primaryCell.channelNumber.toString(),
+          simData.primaryCell.stationIdentityString,
+          simData.primaryCell.stationIdentity.toString(),
+          simData.primaryCell.areaCodeString,
+          simData.primaryCell.areaCode.toString(),
+          simData.primaryCell.timingAdvanceString,
+          simData.primaryCell.timingAdvance.toString(),
+          simData.primaryCell.bandwidthString,
+          "${simData.primaryCell.bandwidth}MHz",
+          simData.primaryCell.bandString,
+          simData.primaryCell.band.toString(),
+        ];
+
+        for (int i = 0; i < elements.length - 1; i += 2) {
+          if (elements[i + 1] == "-1") break;
+
+          Widget leftElement = Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15.0),
+            ),
+            margin: EdgeInsets.only(bottom: 10, right: 5),
+            color: Theme.of(context).colorScheme.onSecondary,
+            child: Container(
+              width: cardWidth,
+              height: cardHeight,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  ListTile(
+                    title: Text(elements[i]),
+                    subtitle: Text(elements[i + 1]),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[getTrailingIcon(simData, elements[i])],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+
+          Widget rightElement;
+
+          if (i + 2 > elements.length) {
+            rightElement = Container(
+              width: cardWidth,
+              height: cardHeight,
+              margin: EdgeInsets.only(bottom: 10, right: 5),
+            );
+          } else {
+            rightElement = Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              margin: EdgeInsets.only(bottom: 10, left: 5),
+              color: Theme.of(context).colorScheme.onSecondary,
+              child: Container(
+                width: cardWidth,
+                height: cardHeight,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    ListTile(
+                      title: Text(elements[i + 2]),
+                      subtitle: Text(elements[i + 3]),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          getTrailingIcon(simData, elements[i + 2]),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+
+            i += 2;
+          }
+
+          _pageData.add(
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [leftElement, rightElement],
+            ),
+          );
+        }
 
         setState(() {
-          _cellid;
-          _earfcn;
-          _pci;
-          _tac;
-          _bw;
-          //_bands;
-          _rsrp;
-          _ta;
-          _dbm;
+          _debug = jsonStr;
 
+          _pageData;
           _progressIndicator = Container();
         });
-      } ();
-    } on PlatformException catch (_) {
-      //super error, handle it
+      }();
+    } on PlatformException catch (err) {
+      _debug = err.toString();
+
+      setState(() {
+        _debug;
+      });
     }
   }
 
   @override
-  Widget build(BuildContext context) { //what on earth is this boilerplate code i made???
+  Widget build(BuildContext context) {
     return SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: Column(
-          children: <Widget>[
-            Row(
-                children: [
-                  Expanded(
-                      child: _progressIndicator
-                  ),
-                ]
-            ),
-            Container(
-                margin: EdgeInsets.only(
-                    top: 10,
-                    left: 10,
-                    right: 10
-                ),
-                child: Column(
-                    children: <Widget>[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          //Text("cellid $_cellid earfcn $_earfcn pci $_pci \ntac $_tac bw $_bw bands  \nrsrp $_rsrp ta $_ta dbm $_dbm")
-                          Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15.0),
-                            ),
-                            margin: EdgeInsets.only(
-                              bottom: 10,
-                            ),
-                            color: Theme.of(context).colorScheme.onSecondary,
-                            child: Container(
-                                width: cardWidth * 2 + 10,
-                                height: cardHeight,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: <Widget>[
-                                    Text(
-                                        "Cell Tower",
-                                        style: TextStyle(
-                                            fontSize: 16
-                                        )
-                                    ),
-                                    SizedBox(height: 3),
-                                    Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: <Widget>[
-                                        Icon(Icons.network_cell_sharp, size: 50),
-                                        Text(
-                                          "$_cellid",
-                                          style: TextStyle(
-                                              fontSize: 24
-                                          ),
-                                        )
-                                      ],
-                                    )
-                                  ],
-                                )
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          //Text("cellid $_cellid earfcn $_earfcn pci $_pci \ntac $_tac bw $_bw bands  \nrsrp $_rsrp ta $_ta dbm $_dbm")
-                          Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15.0),
-                            ),
-                            margin: EdgeInsets.only(
-                              bottom: 10,
-                              right: 5,
-                            ),
-                            color: Theme.of(context).colorScheme.onSecondary,
-                            child: Container(
-                                width: cardWidth,
-                                height: cardHeight,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    ListTile(
-                                      title: Text("LTE Band"),
-                                      subtitle: Text("$_bw"),
-                                    )
-                                  ],
-                                )
-                            ),
-                          ),
-                          Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15.0),
-                            ),
-                            margin: EdgeInsets.only(
-                              bottom: 10,
-                              left: 5,
-                            ),
-                            color: Theme.of(context).colorScheme.onSecondary,
-                            child: Container(
-                                width: cardWidth,
-                                height: cardHeight,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    ListTile(
-                                      title: Text("SNR"),
-                                      subtitle: Text("${_rsrp}dBm"),
-                                    )
-                                  ],
-                                )
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          //Text("cellid $_cellid earfcn $_earfcn pci $_pci \ntac $_tac bw $_bw bands  \nrsrp $_rsrp ta $_ta dbm $_dbm")
-                          Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15.0),
-                            ),
-                            margin: EdgeInsets.only(
-                              bottom: 10,
-                              right: 5,
-                            ),
-                            color: Theme.of(context).colorScheme.onSecondary,
-                            child: Container(
-                                width: cardWidth,
-                                height: cardHeight,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    ListTile(
-                                      title: Text("LTE RSRP"),
-                                      subtitle: Text("${_rsrp}dBm"),
-                                    )
-                                  ],
-                                )
-                            ),
-                          ),
-                          Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15.0),
-                            ),
-                            margin: EdgeInsets.only(
-                              bottom: 10,
-                              left: 5,
-                            ),
-                            color: Theme.of(context).colorScheme.onSecondary,
-                            child: Container(
-                                width: cardWidth,
-                                height: cardHeight,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    ListTile(
-                                      title: Text("LTE SNR"),
-                                      subtitle: Text("${_rsrp}dBm"),
-                                    )
-                                  ],
-                                )
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          //Text("cellid $_cellid earfcn $_earfcn pci $_pci \ntac $_tac bw $_bw bands  \nrsrp $_rsrp ta $_ta dbm $_dbm")
-                          Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15.0),
-                            ),
-                            margin: EdgeInsets.only(
-                              bottom: 10,
-                              right: 5,
-                            ),
-                            color: Theme.of(context).colorScheme.onSecondary,
-                            child: Container(
-                                width: cardWidth,
-                                height: cardHeight,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    ListTile(
-                                      title: Text("LTE CID"),
-                                      subtitle: Text("${_cellid}dBm"),
-                                    )
-                                  ],
-                                )
-                            ),
-                          ),
-                          Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15.0),
-                            ),
-                            margin: EdgeInsets.only(
-                              bottom: 10,
-                              left: 5,
-                            ),
-                            color: Theme.of(context).colorScheme.onSecondary,
-                            child: Container(
-                                width: cardWidth,
-                                height: cardHeight,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    ListTile(
-                                      title: Text("NR Band"),
-                                      subtitle: Text("${_rsrp}dBm"),
-                                    )
-                                  ],
-                                )
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          //Text("cellid $_cellid earfcn $_earfcn pci $_pci \ntac $_tac bw $_bw bands  \nrsrp $_rsrp ta $_ta dbm $_dbm")
-                          Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15.0),
-                            ),
-                            margin: EdgeInsets.only(
-                              bottom: 10,
-                              right: 5,
-                            ),
-                            color: Theme.of(context).colorScheme.onSecondary,
-                            child: Container(
-                                width: cardWidth,
-                                height: cardHeight,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    ListTile(
-                                      title: Text("NR RSRP"),
-                                      subtitle: Text("${_dbm}dBm"),
-                                    )
-                                  ],
-                                )
-                            ),
-                          ),
-                          Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15.0),
-                            ),
-                            margin: EdgeInsets.only(
-                              bottom: 10,
-                              left: 5,
-                            ),
-                            color: Theme.of(context).colorScheme.onSecondary,
-                            child: Container(
-                                width: cardWidth,
-                                height: cardHeight,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    ListTile(
-                                      title: Text("TA"),
-                                      subtitle: Text("$_ta"),
-
-                                    )
-                                  ],
-                                )
-                            ),
-                          ),
-                        ],
-                      )
-                    ]
-                )
-            )
-          ],
-        )
+      scrollDirection: Axis.vertical,
+      child: Column(
+        children: <Widget>[
+          Text(_debug),
+          Row(children: [Expanded(child: _progressIndicator)]),
+          Container(
+            margin: EdgeInsets.only(top: 10, left: 10, right: 10),
+            child: Column(children: _pageData),
+          ),
+        ],
+      ),
     );
+  }
+
+  Icon getTrailingIcon(SIMData simData, String val) {
+    if (val == simData.primaryCell.rawSignalString) {
+      //RSSI
+      return Icon(
+        Icons.signal_cellular_alt,
+      ); //might make this based on the value
+    } else if (val == simData.primaryCell.processedSignalString) {
+      //RSRP
+      return Icon(
+        Icons.signal_cellular_0_bar,
+      ); //might make this based on the value
+    } else if (val == simData.primaryCell.signalQualityString) {
+      //SNR
+      return Icon(Icons.settings_input_antenna_outlined);
+    } else if (val == simData.primaryCell.signalNoiseString) {
+      //RSRQ
+      return Icon(Icons.spatial_tracking);
+    } else if (val == simData.primaryCell.channelNumberString) {
+      //EARFCN
+      return Icon(Icons.wifi_channel);
+    } else if (val == simData.primaryCell.stationIdentityString) {
+      //PCI
+      return Icon(Icons.perm_identity);
+    } else if (val == simData.primaryCell.areaCodeString) {
+      //TAC
+      return Icon(Icons.landscape);
+    } else if (val == simData.primaryCell.timingAdvanceString) {
+      //TA
+      return Icon(Icons.shortcut);
+    } else if (val == simData.primaryCell.bandwidthString) {
+      //BW
+      return Icon(Icons.swap_horiz_rounded);
+    }
+
+    return Icon(Icons.question_mark); //Unknown icon
   }
 }
 
-class NetworkData { //soon to be replaced with new system
-  //General data
-  String cellId;
-  String type;
-  bool registered;
+class SIMData {
+  final String operator;
+  final String network;
+  final int networkGen;
+  final String mccMnc;
+  final CellData primaryCell;
+  final double activeBw;
+  final List<CellData> activeCells;
+  final List<CellData> neighborCells;
 
-  //LTE specific data
-  String? earfcn;
-  String? pci;
-  String? tac;
-  String? bw;
-  String? bands;
-  String? rsrp;
-  String? rsrq;
-  String? rssi;
-  String? snr;
-  String? ta;
-  String? dbm;
-
-  //GSM specific data
-  String? arfcn;
-  String? bsic;
-  String? lac;
-
-  //WCDMA specific data
-  String? uarfcn;
-  String? psc;
-  String? ecno;
-
-  NetworkData({
-    required this.cellId,
-    required this.type,
-    required this.registered,
-    this.earfcn,
-    this.pci,
-    this.tac,
-    this.bw,
-    this.bands,
-    this.rsrp,
-    this.rsrq,
-    this.rssi,
-    this.snr,
-    this.ta,
-    this.dbm,
-    this.arfcn,
-    this.bsic,
-    this.lac,
-    this.uarfcn,
-    this.psc,
-    this.ecno,
+  SIMData({
+    required this.operator,
+    required this.network,
+    required this.networkGen,
+    required this.mccMnc,
+    required this.primaryCell,
+    required this.activeBw,
+    required this.activeCells,
+    required this.neighborCells,
   });
 
-  factory NetworkData.fromMap(Map<String, dynamic> map) {
-    return NetworkData(
-      cellId: map['cellId'] ?? '',
-      type: map['type'] ?? '',
-      registered: map['registered'] ?? false,
-      earfcn: map['earfcn'],
-      pci: map['pci'],
-      tac: map['tac'],
-      bw: map['bw'],
-      bands: map['bands'],
-      rsrp: map['rsrp'],
-      rsrq: map['rsrq'],
-      rssi: map['rssi'],
-      snr: map['snr'],
-      ta: map['ta'],
-      dbm: map['dbm'],
-      arfcn: map['arfcn'],
-      bsic: map['bsic'],
-      lac: map['lac'],
-      uarfcn: map['uarfcn'],
-      psc: map['psc'],
-      ecno: map['ecno'],
+  factory SIMData.fromJson(Map<String, dynamic> json) {
+    return SIMData(
+      operator: json["operator"],
+      network: json["network"],
+      networkGen: json["networkGen"],
+      mccMnc: json["mccMnc"],
+      primaryCell:
+          json["primaryCell"] != null
+              ? CellData.fromJson(json["primaryCell"])
+              : _emptyCellData(),
+      activeBw: json["activeBw"],
+      activeCells:
+          (json["activeCells"] as List)
+              .map((e) => CellData.fromJson(e))
+              .toList(),
+      neighborCells:
+          (json["neighborCells"] as List)
+              .map((e) => CellData.fromJson(e))
+              .toList(),
     );
   }
 }
+
+class CellData {
+  final String cellIdentifierString;
+  final String rawSignalString;
+  final String processedSignalString;
+  final String channelNumberString;
+  final String stationIdentityString;
+  final String areaCodeString;
+  final String signalQualityString;
+  final String signalNoiseString;
+  final String timingAdvanceString;
+  final String bandwidthString;
+  final String bandString;
+
+  final int cellIdentifier;
+
+  final int rawSignal;
+  final int processedSignal;
+  final int channelNumber;
+  final int stationIdentity;
+  final int areaCode;
+  final int signalQuality;
+  final int signalNoise;
+  final int timingAdvance;
+  final int bandwidth;
+  final int band;
+  final BasicCellData basicCellData;
+
+  final bool isRegistered;
+
+  CellData({
+    required this.cellIdentifierString,
+    required this.rawSignalString,
+    required this.processedSignalString,
+    required this.channelNumberString,
+    required this.stationIdentityString,
+    required this.areaCodeString,
+    required this.signalQualityString,
+    required this.signalNoiseString,
+    required this.timingAdvanceString,
+    required this.bandwidthString,
+    required this.bandString,
+
+    required this.cellIdentifier,
+    required this.rawSignal,
+    required this.processedSignal,
+    required this.channelNumber,
+    required this.stationIdentity,
+    required this.areaCode,
+    required this.signalQuality,
+    required this.signalNoise,
+    required this.timingAdvance,
+    required this.bandwidth,
+    required this.band,
+    required this.basicCellData,
+
+    required this.isRegistered,
+  });
+
+  factory CellData.fromJson(Map<String, dynamic> json) {
+    return CellData(
+      cellIdentifierString: json["cellIdentifierString"],
+      rawSignalString: json["rawSignalString"],
+      processedSignalString: json["processedSignalString"],
+      channelNumberString: json["channelNumberString"],
+      stationIdentityString: json["stationIdentityString"],
+      areaCodeString: json["areaCodeString"],
+      signalQualityString: json["signalQualityString"],
+      signalNoiseString: json["signalNoiseString"],
+      timingAdvanceString: json["timingAdvanceString"],
+      bandwidthString: json["bandwidthString"],
+      bandString: json["bandString"],
+
+      cellIdentifier: json["cellIdentifier"],
+      rawSignal: json["rawSignal"],
+      processedSignal: json["processedSignal"],
+      channelNumber: json["channelNumber"],
+      stationIdentity: json["stationIdentity"],
+      areaCode: json["areaCode"],
+      signalQuality: json["signalQuality"],
+      signalNoise: json["signalNoise"],
+      timingAdvance: json["timingAdvance"],
+      bandwidth: json["bandwidth"],
+      band: json["band"],
+      basicCellData:
+          (json["basicCellData"] != null
+              ? BasicCellData.fromJson(json["basicCellData"])
+              : BasicCellData(band: -1, frequency: -1)),
+      isRegistered: json["isRegistered"],
+    );
+  }
+}
+
+class BasicCellData {
+  final int band;
+  final int frequency;
+
+  BasicCellData({required this.band, required this.frequency});
+
+  factory BasicCellData.fromJson(Map<String, dynamic> json) {
+    return BasicCellData(band: json["band"], frequency: json["frequency"]);
+  }
+}
+
+CellData _emptyCellData() => CellData(
+  cellIdentifierString: "",
+  rawSignalString: "",
+  processedSignalString: "",
+  channelNumberString: "",
+  stationIdentityString: "",
+  areaCodeString: "",
+  signalQualityString: "",
+  signalNoiseString: "",
+  timingAdvanceString: "",
+  bandwidthString: "",
+  bandString: "",
+  cellIdentifier: -1,
+  rawSignal: -1,
+  processedSignal: -1,
+  channelNumber: -1,
+  stationIdentity: -1,
+  areaCode: -1,
+  signalQuality: -1,
+  signalNoise: -1,
+  timingAdvance: -1,
+  bandwidth: -1,
+  band: -1,
+  basicCellData: BasicCellData(band: -1, frequency: -1),
+  isRegistered: false,
+);
