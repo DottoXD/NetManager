@@ -133,7 +133,7 @@ class _HomeBodyState extends State<HomeBody> {
 
         for (int i = 0; i < elements.length - 1; i += 2) {
           if (elements[i + 1].contains("-1")) {
-            if (i + 2 > elements.length) {
+            if (i + 2 > elements.length || elements[i + 1].contains("2147483647")) {
               //possibly fix? got to test
               break;
             } else {
@@ -168,7 +168,9 @@ class _HomeBodyState extends State<HomeBody> {
 
           Widget rightElement;
 
-          if (i + 2 > elements.length) {
+          if (i + 2 > elements.length ||
+              elements[i + 3].contains("-1") ||
+              elements[i + 3].contains("2147483647")) {
             rightElement = Container(
               width: cardWidth,
               height: cardHeight,
@@ -218,7 +220,9 @@ class _HomeBodyState extends State<HomeBody> {
           _neighborData.add(
             ListTile(
               title: Text(neighborCell.bandString),
-              subtitle: Text("${neighborCell.band}"),
+              subtitle: Text(
+                "${neighborCell.basicCellData.band} ${neighborCell.bandwidth}MHz ${neighborCell.processedSignal}dBm",
+              ),
             ),
           );
         }
@@ -361,11 +365,11 @@ class CellData {
 
   final String cellIdentifier;
 
-  final String rawSignal;
-  final String processedSignal;
+  final int rawSignal;
+  final int processedSignal;
   final int channelNumber;
   final int stationIdentity;
-  final String areaCode;
+  final int areaCode;
   final int signalQuality;
   final int signalNoise;
   final int timingAdvance;
@@ -462,11 +466,11 @@ CellData _emptyCellData() => CellData(
   bandwidthString: "",
   bandString: "",
   cellIdentifier: "-1",
-  rawSignal: "-1",
-  processedSignal: "-1",
+  rawSignal: -1,
+  processedSignal: -1,
   channelNumber: -1,
   stationIdentity: -1,
-  areaCode: "-1",
+  areaCode: -1,
   signalQuality: -1,
   signalNoise: -1,
   timingAdvance: -1,

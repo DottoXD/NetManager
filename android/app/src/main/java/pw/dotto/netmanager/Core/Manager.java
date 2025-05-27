@@ -133,23 +133,24 @@ public class Manager {
 
     for (CellInfo baseCell : telephony.getAllCellInfo()) {
 
-      switch (baseCell.getCellConnectionStatus()) { // remember to check timestamp and eventually request an update for each band and eventually request an update
-        case CellInfo.CONNECTION_PRIMARY_SERVING: //current checks are temporary and to be improved
+      switch (baseCell.getCellConnectionStatus()) { // remember to check timestamp and eventually request an update for
+                                                    // each band
+        case CellInfo.CONNECTION_PRIMARY_SERVING:
           if (baseCell instanceof CellInfoGsm) {
             GsmCellData gsmCellData = CellExtractors.getGsmCellData((CellInfoGsm) baseCell);
-            if(Objects.equals(((CellInfoGsm) baseCell).getCellIdentity().getMobileNetworkOperator(), telephony.getNetworkOperatorName())) data.setPrimaryCell(gsmCellData);
+            data.setPrimaryCell(gsmCellData);
           } else if (baseCell instanceof CellInfoCdma) {
             CdmaCellData cdmaCellData = CellExtractors.getCdmaCellData((CellInfoCdma) baseCell);
             data.setPrimaryCell(cdmaCellData);
           } else if (baseCell instanceof CellInfoTdscdma) {
             TdscmaCellData tdscdmaCellData = CellExtractors.getTdscmaCellData((CellInfoTdscdma) baseCell);
-            if(Objects.equals(((CellInfoTdscdma) baseCell).getCellIdentity().getMobileNetworkOperator(), telephony.getNetworkOperatorName())) data.setPrimaryCell(tdscdmaCellData);
+            data.setPrimaryCell(tdscdmaCellData);
           } else if (baseCell instanceof CellInfoWcdma) {
             WcdmaCellData wcdmaCellData = CellExtractors.getWcdmaCellData((CellInfoWcdma) baseCell);
-            if(Objects.equals(((CellInfoWcdma) baseCell).getCellIdentity().getMobileNetworkOperator(), telephony.getNetworkOperatorName())) data.setPrimaryCell(wcdmaCellData);
+            data.setPrimaryCell(wcdmaCellData);
           } else if (baseCell instanceof CellInfoLte) {
             LteCellData lteCellData = CellExtractors.getLteCellData((CellInfoLte) baseCell);
-            if(Objects.equals(((CellInfoLte) baseCell).getCellIdentity().getMobileNetworkOperator(), telephony.getNetworkOperatorName())) data.setPrimaryCell(lteCellData);
+            data.setPrimaryCell(lteCellData);
           } else if (baseCell instanceof CellInfoNr) {
             NrCellData nrCellData = CellExtractors.getNrCellData((CellInfoNr) baseCell);
             data.setPrimaryCell(nrCellData);
