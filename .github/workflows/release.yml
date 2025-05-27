@@ -49,7 +49,7 @@ jobs:
         run: echo "${{ secrets.KEY_PROPERTIES }}" > $GITHUB_WORKSPACE/android/key.properties
 
       - name: 🗄️ Upload-keystore.jks
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > $GITHUB_WORKSPACE/android/upload-keystore.jks
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > $GITHUB_WORKSPACE/android/app/upload-keystore.jks
 
       - name: ⛏️ APKs
         run: flutter build apk --release
