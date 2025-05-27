@@ -56,7 +56,7 @@ public class MainActivity extends FlutterActivity {
                 result.success(operator);
               } else {
                 result.error(
-                        "Unknown", "Unknown", null); // add proper error handling
+                    "Unknown", "Unknown", null); // add proper error handling
               }
               break;
 
@@ -71,10 +71,10 @@ public class MainActivity extends FlutterActivity {
               break;
 
             case "getNetworkData":
-	      SIMData data = manager.getSimNetworkData(selectedSim);
+              SIMData data = manager.getSimNetworkData(selectedSim);
               Gson gson = new Gson();
               result.success(gson.toJson(data));
-	      break;
+              break;
 
             case "getNetworkGen":
               int gen = manager.getSimNetworkGen(selectedSim);
@@ -83,7 +83,7 @@ public class MainActivity extends FlutterActivity {
 
             case "sendNotification":
               notification.send();
-              result.success(true); //eventually return false when it fails due to perms issues
+              result.success(true); // eventually return false when it fails due to perms issues
               break;
 
             case "cancelNotification":
@@ -92,13 +92,15 @@ public class MainActivity extends FlutterActivity {
               break;
 
             case "openRadioInfo":
-              openRadioInfo(); //implement menu to call this
+              openRadioInfo(); // implement menu to call this
               result.success(true);
               break;
 
             case "switchSim":
-              if(selectedSim == 0) selectedSim = 1;
-              else selectedSim = 0;
+              if (selectedSim == 0)
+                selectedSim = 1;
+              else
+                selectedSim = 0;
               result.success(true);
               break;
 
@@ -113,18 +115,16 @@ public class MainActivity extends FlutterActivity {
 
   public boolean checkPermissions() {
     boolean basePerms = ActivityCompat.checkSelfPermission(
-               this, Manifest.permission.ACCESS_FINE_LOCATION)
-        == PackageManager.PERMISSION_GRANTED
+        this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
         && ActivityCompat.checkSelfPermission(
-               this, Manifest.permission.READ_PHONE_STATE)
-        == PackageManager.PERMISSION_GRANTED;
+            this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED;
 
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-          return basePerms && ActivityCompat.checkSelfPermission(
-                  this,
-                  Manifest.permission.POST_NOTIFICATIONS)
-                  == PackageManager.PERMISSION_GRANTED;
-      } else return basePerms;
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      return basePerms && ActivityCompat.checkSelfPermission(
+          this,
+          Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
+    } else
+      return basePerms;
   }
 
   private void requestPermissions() {
@@ -132,7 +132,8 @@ public class MainActivity extends FlutterActivity {
     permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
     permissions.add(Manifest.permission.READ_PHONE_STATE);
 
-    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) permissions.add(Manifest.permission.POST_NOTIFICATIONS);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+      permissions.add(Manifest.permission.POST_NOTIFICATIONS);
 
     ActivityCompat.requestPermissions(this,
         permissions.toArray(new String[0]),
