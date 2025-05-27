@@ -17,11 +17,11 @@ public abstract class CellData {
 
     private String cellIdentifier;
 
-    private String rawSignal;
-    private String processedSignal;
+    private int rawSignal;
+    private int processedSignal;
     private int channelNumber;
     private int stationIdentity;
-    private String areaCode;
+    private int areaCode;
     private int signalQuality;
     private int signalNoise;
     private int timingAdvance;
@@ -30,7 +30,6 @@ public abstract class CellData {
     private BasicCellData basicCellData;
 
     private boolean isRegistered;
-
 
     public CellData(
             String cellIdentifierString,
@@ -45,18 +44,17 @@ public abstract class CellData {
             String bandwidthString,
             String bandString,
             String cellIdentifier,
-            String rawSignal,
-            String processedSignal,
+            int rawSignal,
+            int processedSignal,
             int channelNumber,
             int stationIdentity,
-            String areaCode,
+            int areaCode,
             int signalQuality,
             int signalNoise,
             int timingAdvance,
             int bandwidth,
             int band,
-            boolean isRegistered
-    ) {
+            boolean isRegistered) {
         this.cellIdentifierString = cellIdentifierString;
         this.rawSignalString = rawSignalString;
         this.processedSignalString = processedSignalString;
@@ -88,11 +86,11 @@ public abstract class CellData {
         return cellIdentifier;
     }
 
-    public String getRawSignal() {
+    public int getRawSignal() {
         return rawSignal;
     }
 
-    public String getProcessedSignal() {
+    public int getProcessedSignal() {
         return processedSignal;
     }
 
@@ -104,7 +102,7 @@ public abstract class CellData {
         return stationIdentity;
     }
 
-    public String getAreaCode() {
+    public int getAreaCode() {
         return areaCode;
     }
 
@@ -140,11 +138,11 @@ public abstract class CellData {
         this.cellIdentifier = cellIdentifier;
     }
 
-    public void setRawSignal(String rawSignal) {
+    public void setRawSignal(int rawSignal) {
         this.rawSignal = rawSignal;
     }
 
-    public void setProcessedSignal(String processedSignal) {
+    public void setProcessedSignal(int processedSignal) {
         this.processedSignal = processedSignal;
     }
 
@@ -156,7 +154,7 @@ public abstract class CellData {
         this.stationIdentity = stationIdentity;
     }
 
-    public void setAreaCode(String areaCode) {
+    public void setAreaCode(int areaCode) {
         this.areaCode = areaCode;
     }
 

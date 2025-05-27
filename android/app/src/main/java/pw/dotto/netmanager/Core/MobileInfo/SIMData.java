@@ -54,19 +54,23 @@ public class SIMData {
     }
 
     public void addActiveCell(CellData cellData) {
-        if(!activeCells.contains(cellData)) activeCells.add(cellData);
+        if (!activeCells.contains(cellData))
+            activeCells.add(cellData);
     }
 
     public void addNeighborCell(CellData cellData) {
-        if(!neighborCells.contains(cellData)) neighborCells.add(cellData);
+        if (!neighborCells.contains(cellData))
+            neighborCells.add(cellData);
     }
 
     public void removeActiveCell(CellData cellData) {
-        if(activeCells.contains(cellData)) activeCells.remove(cellData);
+        if (activeCells.contains(cellData))
+            activeCells.remove(cellData);
     }
 
     public void removeNeighborCell(CellData cellData) {
-        if(neighborCells.contains(cellData)) neighborCells.remove(cellData);
+        if (neighborCells.contains(cellData))
+            neighborCells.remove(cellData);
     }
 
     public void clearNeighborCells() {

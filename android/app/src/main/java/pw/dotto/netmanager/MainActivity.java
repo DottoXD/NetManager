@@ -96,7 +96,7 @@ public class MainActivity extends FlutterActivity {
               result.success(true);
               break;
 
-            case "switchSim":
+            case "switchSim": //add checks for sim amount
               if (selectedSim == 0)
                 selectedSim = 1;
               else

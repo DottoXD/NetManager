@@ -58,13 +58,19 @@ class _TopBarState extends State<TopBar> {
     }
   }
 
+  void switchSim() {
+    () async {
+      await platform.invokeMethod("switchSim");
+    }();
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppBar(
       title: Text(_title),
       actions: [
         IconButton(onPressed: update, icon: Icon(Icons.info)),
-        IconButton(onPressed: update, icon: Icon(Icons.menu)),
+        IconButton(onPressed: switchSim, icon: Icon(Icons.menu)),
       ],
     );
   }

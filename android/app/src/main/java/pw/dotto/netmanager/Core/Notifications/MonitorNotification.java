@@ -10,6 +10,8 @@ import android.service.notification.StatusBarNotification;
 
 import androidx.core.app.NotificationCompat;
 
+import com.google.gson.Gson;
+
 import java.util.Random;
 
 import pw.dotto.netmanager.MainActivity;
@@ -17,6 +19,7 @@ import pw.dotto.netmanager.R;
 
 public class MonitorNotification {
     private final MainActivity context;
+    private final Gson gson = new Gson();
 
     private NotificationManager notificationManager;
     private NotificationChannel notificationChannel;
@@ -75,7 +78,7 @@ public class MonitorNotification {
         activeNotification = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
                 .setSmallIcon(R.drawable.launch_background) //got to make an icon as soon as i make an app logo
                 .setContentTitle(context.getManager().getFullHeaderString())
-                .setContentText("NetManager - " + context.getManager().getSimNetworkData(0))
+                .setContentText("NetManager - " + gson.toJson(context.getManager().getSimNetworkData(0))) //got to change this
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setOngoing(true) //add check to compare with settings
                 .setSilent(true)

@@ -4,7 +4,9 @@ import pw.dotto.netmanager.Core.MobileInfo.CellData;
 
 public class GsmCellData extends CellData {
 
-    public GsmCellData(String cellIdentifier, String rawSignal, String processedSignal, int channelNumber, int stationIdentity, String areaCode, int signalQuality, int signalNoise, int timingAdvance, int bandwidth, int band, boolean isRegistered) {
+    public GsmCellData(String cellIdentifier, int rawSignal, int processedSignal, int channelNumber,
+            int stationIdentity, int areaCode, int signalQuality, int signalNoise, int timingAdvance, int bandwidth,
+            int band, boolean isRegistered) {
         super(
                 "Cell ID",
                 "-",
@@ -28,7 +30,6 @@ public class GsmCellData extends CellData {
                 timingAdvance,
                 bandwidth,
                 band,
-                isRegistered
-        );
+                isRegistered);
     }
 }

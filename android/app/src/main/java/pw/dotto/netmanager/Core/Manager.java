@@ -14,6 +14,8 @@ import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 
 import java.util.List;
+import java.util.Objects;
+
 import pw.dotto.netmanager.Core.MobileInfo.CellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CdmaCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.GsmCellData;
@@ -117,10 +119,11 @@ public class Manager {
       return null;
 
     List<SubscriptionInfo> activeSubscriptionList = getSubscriptionManager().getActiveSubscriptionInfoList();
-    SubscriptionInfo info = activeSubscriptionList.get(0);
     if (telephony != secondManager) {
-      if (firstManager == null)
+      if (firstManager == null) {
+        SubscriptionInfo info = activeSubscriptionList.get(0);
         firstManager = getTelephony().createForSubscriptionId(info.getSubscriptionId());
+      }
 
       telephony = firstManager;
     }
@@ -130,24 +133,23 @@ public class Manager {
 
     for (CellInfo baseCell : telephony.getAllCellInfo()) {
 
-      switch (baseCell.getCellConnectionStatus()) { // remember to check timestamp and eventually request an update for
-                                                    // each band!!
-        case CellInfo.CONNECTION_PRIMARY_SERVING:
+      switch (baseCell.getCellConnectionStatus()) { // remember to check timestamp and eventually request an update for each band and eventually request an update
+        case CellInfo.CONNECTION_PRIMARY_SERVING: //current checks are temporary and to be improved
           if (baseCell instanceof CellInfoGsm) {
             GsmCellData gsmCellData = CellExtractors.getGsmCellData((CellInfoGsm) baseCell);
-            data.setPrimaryCell(gsmCellData);
+            if(Objects.equals(((CellInfoGsm) baseCell).getCellIdentity().getMobileNetworkOperator(), telephony.getNetworkOperatorName())) data.setPrimaryCell(gsmCellData);
           } else if (baseCell instanceof CellInfoCdma) {
             CdmaCellData cdmaCellData = CellExtractors.getCdmaCellData((CellInfoCdma) baseCell);
             data.setPrimaryCell(cdmaCellData);
           } else if (baseCell instanceof CellInfoTdscdma) {
             TdscmaCellData tdscdmaCellData = CellExtractors.getTdscmaCellData((CellInfoTdscdma) baseCell);
-            data.setPrimaryCell(tdscdmaCellData);
+            if(Objects.equals(((CellInfoTdscdma) baseCell).getCellIdentity().getMobileNetworkOperator(), telephony.getNetworkOperatorName())) data.setPrimaryCell(tdscdmaCellData);
           } else if (baseCell instanceof CellInfoWcdma) {
             WcdmaCellData wcdmaCellData = CellExtractors.getWcdmaCellData((CellInfoWcdma) baseCell);
-            data.setPrimaryCell(wcdmaCellData);
+            if(Objects.equals(((CellInfoWcdma) baseCell).getCellIdentity().getMobileNetworkOperator(), telephony.getNetworkOperatorName())) data.setPrimaryCell(wcdmaCellData);
           } else if (baseCell instanceof CellInfoLte) {
             LteCellData lteCellData = CellExtractors.getLteCellData((CellInfoLte) baseCell);
-            data.setPrimaryCell(lteCellData);
+            if(Objects.equals(((CellInfoLte) baseCell).getCellIdentity().getMobileNetworkOperator(), telephony.getNetworkOperatorName())) data.setPrimaryCell(lteCellData);
           } else if (baseCell instanceof CellInfoNr) {
             NrCellData nrCellData = CellExtractors.getNrCellData((CellInfoNr) baseCell);
             data.setPrimaryCell(nrCellData);
@@ -215,6 +217,8 @@ public class Manager {
 
     if (data.getPrimaryCell() != null &&
         data.getPrimaryCell() instanceof LteCellData) {
+
+      data.setActiveBw(data.getPrimaryCell().getBandwidth());
       for (CellData cellData : data.getActiveCells()) {
         data.setActiveBw(data.getActiveBw() + cellData.getBandwidth());
       }
