@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build_and_release:
+  release:
     runs-on: ubuntu-latest
 
     steps:
@@ -50,9 +50,6 @@ jobs:
 
       - name: 🗄️ Upload-keystore.jks
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > $GITHUB_WORKSPACE/android/upload-keystore.jks
-
-      - name: 🗺️ Map
-        run: flutter run --dart-define=flutter.flutter_map.unblockOSM="_____"
 
       - name: ⛏️ APKs
         run: flutter build apk --release
