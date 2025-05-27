@@ -50,16 +50,20 @@ class _HomeBodyState extends State<HomeBody> {
       () async {
         final String jsonStr = await platform.invokeMethod("getNetworkData");
         setState(() {
-          _debug = "marmo di carrara";
-        });
-        final Map<String, dynamic> map = json.decode(jsonStr);
-        setState(() {
-          _debug = "fanum";
-        });
-        final SIMData simData = SIMData.fromJson(map);
-        setState(() {
           _debug = jsonStr;
         });
+        final Map<String, dynamic> map = json.decode(jsonStr);
+        final SIMData simData;
+
+        try {
+          simData = SIMData.fromJson(map);
+        } catch (e) {
+          setState(() {
+            _debug = "$jsonStr $e";
+          });
+
+          return;
+        }
 
         _pageData.clear();
         _pageData.add(
@@ -127,7 +131,14 @@ class _HomeBodyState extends State<HomeBody> {
         ];
 
         for (int i = 0; i < elements.length - 1; i += 2) {
-          if (elements[i + 1] == "-1") break;
+          if (elements[i + 1].contains("-1")) {
+            if (i + 2 > elements.length) {
+              //possibly fix? got to test
+              break;
+            } else {
+              i += 2;
+            }
+          }
 
           Widget leftElement = Card(
             shape: RoundedRectangleBorder(
@@ -300,16 +311,16 @@ class SIMData {
       networkGen: json["networkGen"],
       mccMnc: json["mccMnc"],
       primaryCell:
-          json["primaryCell"] != null
+          json["primaryCell"] is Map<String, dynamic>
               ? CellData.fromJson(json["primaryCell"])
               : _emptyCellData(),
-      activeBw: json["activeBw"],
+      activeBw: (json["activeBw"] as num?)?.toDouble() ?? 0.0,
       activeCells:
-          (json["activeCells"] as List)
+          (json["activeCells"] as List<dynamic>? ?? [])
               .map((e) => CellData.fromJson(e))
               .toList(),
       neighborCells:
-          (json["neighborCells"] as List)
+          (json["neighborCells"] as List<dynamic>? ?? [])
               .map((e) => CellData.fromJson(e))
               .toList(),
     );
@@ -400,9 +411,9 @@ class CellData {
       bandwidth: json["bandwidth"],
       band: json["band"],
       basicCellData:
-          (json["basicCellData"] != null
+          json["basicCellData"] is Map<String, dynamic>
               ? BasicCellData.fromJson(json["basicCellData"])
-              : BasicCellData(band: -1, frequency: -1)),
+              : BasicCellData(band: -1, frequency: -1),
       isRegistered: json["isRegistered"],
     );
   }
