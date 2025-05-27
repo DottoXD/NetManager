@@ -59,6 +59,12 @@ jobs:
           mkdir -p artifacts
           cp build/app/outputs/flutter-apk/*.apk artifacts/
 
+      - name: 📤 Upload
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        uses: actions/upload-artifact@v4
+        with:
+          path: artifacts/*.apk
+
       - name: 🏷️ Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: ncipollo/release-action@v1.16.0
