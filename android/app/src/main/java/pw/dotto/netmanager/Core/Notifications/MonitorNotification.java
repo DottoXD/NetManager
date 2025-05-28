@@ -14,6 +14,7 @@ import com.google.gson.Gson;
 
 import java.util.Random;
 
+import pw.dotto.netmanager.Core.MobileInfo.SIMData;
 import pw.dotto.netmanager.MainActivity;
 import pw.dotto.netmanager.R;
 
@@ -84,10 +85,18 @@ public class MonitorNotification {
     }
 
     public void buildNotification() {
+        StringBuilder contentText = new StringBuilder();
+        for(int i = 0; i < 1; i++) {
+            SIMData simData = context.getManager().getSimNetworkData(i);
+            if(simData == null || simData.getPrimaryCell() == null) break;
+
+            contentText.append(simData.getPrimaryCell().getProcessedSignal()).append("dBm (SIM ").append(i).append(") -"); //temporary
+        }
+
         activeNotification = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
                 .setSmallIcon(R.drawable.launch_background) // got to make an icon as soon as i make an app logo
                 .setContentTitle(context.getManager().getFullHeaderString())
-                .setContentText("NetManager - " + gson.toJson(context.getManager().getSimNetworkData(0))) // got to
+                .setContentText(contentText.toString())
                                                                                                           // change this
                 .setContentIntent(openPendingIntent)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)

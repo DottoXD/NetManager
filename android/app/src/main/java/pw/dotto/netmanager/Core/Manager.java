@@ -2,6 +2,7 @@ package pw.dotto.netmanager.Core;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.telephony.CellIdentity;
 import android.telephony.CellInfo;
 import android.telephony.CellInfoCdma;
 import android.telephony.CellInfoGsm;
@@ -125,7 +126,9 @@ public class Manager {
 
     SIMData data = new SIMData(getSimCarrier(telephony), getSimOperator(telephony), getSimNetworkGen(telephony),
         telephony.getSimOperator());
+    String simOperator = telephony.getSimOperator();
 
+    //telephony.requestCellInfoUpdate();
     for (CellInfo baseCell : telephony.getAllCellInfo()) {
 
       switch (baseCell.getCellConnectionStatus()) { // remember to check timestamp and eventually request an update for
@@ -133,19 +136,27 @@ public class Manager {
         case CellInfo.CONNECTION_PRIMARY_SERVING:
           if (baseCell instanceof CellInfoGsm) {
             GsmCellData gsmCellData = CellExtractors.getGsmCellData((CellInfoGsm) baseCell);
-            data.setPrimaryCell(gsmCellData);
+            String mccMnc = ((CellInfoGsm)baseCell).getCellIdentity().getMccString() + ((CellInfoGsm)baseCell).getCellIdentity().getMncString();
+
+            if(mccMnc.equals(simOperator)) data.setPrimaryCell(gsmCellData);
           } else if (baseCell instanceof CellInfoCdma) {
             CdmaCellData cdmaCellData = CellExtractors.getCdmaCellData((CellInfoCdma) baseCell);
             data.setPrimaryCell(cdmaCellData);
           } else if (baseCell instanceof CellInfoTdscdma) {
             TdscmaCellData tdscdmaCellData = CellExtractors.getTdscmaCellData((CellInfoTdscdma) baseCell);
-            data.setPrimaryCell(tdscdmaCellData);
+            String mccMnc = ((CellInfoTdscdma)baseCell).getCellIdentity().getMccString() + ((CellInfoTdscdma)baseCell).getCellIdentity().getMncString();
+
+            if(mccMnc.equals(simOperator)) data.setPrimaryCell(tdscdmaCellData);
           } else if (baseCell instanceof CellInfoWcdma) {
             WcdmaCellData wcdmaCellData = CellExtractors.getWcdmaCellData((CellInfoWcdma) baseCell);
-            data.setPrimaryCell(wcdmaCellData);
+            String mccMnc = ((CellInfoWcdma)baseCell).getCellIdentity().getMccString() + ((CellInfoWcdma)baseCell).getCellIdentity().getMncString();
+
+            if(mccMnc.equals(simOperator)) data.setPrimaryCell(wcdmaCellData);
           } else if (baseCell instanceof CellInfoLte) {
             LteCellData lteCellData = CellExtractors.getLteCellData((CellInfoLte) baseCell);
-            data.setPrimaryCell(lteCellData);
+            String mccMnc = ((CellInfoLte)baseCell).getCellIdentity().getMccString() + ((CellInfoLte)baseCell).getCellIdentity().getMncString();
+
+            if(mccMnc.equals(simOperator)) data.setPrimaryCell(lteCellData);
           } else if (baseCell instanceof CellInfoNr) {
             NrCellData nrCellData = CellExtractors.getNrCellData((CellInfoNr) baseCell);
             data.setPrimaryCell(nrCellData);
@@ -292,7 +303,7 @@ public class Manager {
 
   private void updateTelephonyManagers() {
     SubscriptionManager manager = getSubscriptionManager();
-    if (manager == null)
+    if (!context.checkPermissions() || manager == null)
       return;
 
     List<SubscriptionInfo> subscriptions = manager.getActiveSubscriptionInfoList();
@@ -300,7 +311,7 @@ public class Manager {
     if (subscriptions == null)
       return;
 
-    if (subscriptions.size() >= 1) {
+    if (!subscriptions.isEmpty()) {
       int firstId = subscriptions.get(0).getSubscriptionId();
       firstManager = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE))
           .createForSubscriptionId(firstId);
