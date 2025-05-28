@@ -140,13 +140,10 @@ class _HomeBodyState extends State<HomeBody> {
         ];
 
         for (int i = 0; i < elements.length - 1; i += 2) {
-          if (elements[i + 1].contains("-1") ||
+          if (i + 1 >= elements.length ||
+              elements[i + 1].contains("-1") ||
               elements[i + 1].contains("2147483647")) {
-            if (i + 2 > elements.length) {
-              break;
-            } else {
-              i += 2;
-            }
+            continue;
           }
 
           Widget leftElement = Card(
@@ -176,15 +173,9 @@ class _HomeBodyState extends State<HomeBody> {
 
           Widget rightElement;
 
-          if (i + 2 > elements.length ||
-              elements[i + 3].contains("-1") ||
-              elements[i + 3].contains("2147483647")) {
-            rightElement = Container(
-              width: cardWidth,
-              height: cardHeight,
-              margin: EdgeInsets.only(bottom: 10, right: 5),
-            );
-          } else {
+          if (i + 3 < elements.length ||
+              !(elements[i + 3].contains("-1") ||
+                  elements[i + 3].contains("2147483647"))) {
             rightElement = Card(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15.0),
@@ -213,6 +204,12 @@ class _HomeBodyState extends State<HomeBody> {
             );
 
             i += 2;
+          } else {
+            rightElement = Container(
+              width: cardWidth,
+              height: cardHeight,
+              margin: EdgeInsets.only(bottom: 10, right: 5),
+            );
           }
 
           _mainData.add(

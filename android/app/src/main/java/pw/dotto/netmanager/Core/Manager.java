@@ -115,17 +115,12 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public SIMData getSimNetworkData(TelephonyManager telephony) {
-    if (telephony == null || !context.checkPermissions())
+    if (!context.checkPermissions())
       return null;
 
-    List<SubscriptionInfo> activeSubscriptionList = getSubscriptionManager().getActiveSubscriptionInfoList();
-    if (telephony != secondManager) {
-      if (firstManager == null) {
-        SubscriptionInfo info = activeSubscriptionList.get(0);
-        firstManager = getTelephony().createForSubscriptionId(info.getSubscriptionId());
-      }
-
-      telephony = firstManager;
+    if (telephony == null) {
+      updateTelephonyManagers();
+      return null;
     }
 
     SIMData data = new SIMData(getSimCarrier(telephony), getSimOperator(telephony), getSimNetworkGen(telephony),
@@ -232,7 +227,7 @@ public class Manager {
   public SIMData getSimNetworkData(int simId) {
     switch (simId) {
       case 0:
-        return getSimNetworkData(getTelephony());
+        return getSimNetworkData(firstManager);
       case 1:
         return getSimNetworkData(secondManager);
       default:
@@ -292,6 +287,29 @@ public class Manager {
         return getSimNetworkGen(secondManager);
       default:
         return -1;
+    }
+  }
+
+  private void updateTelephonyManagers() {
+    SubscriptionManager manager = getSubscriptionManager();
+    if (manager == null)
+      return;
+
+    List<SubscriptionInfo> subscriptions = manager.getActiveSubscriptionInfoList();
+
+    if (subscriptions == null)
+      return;
+
+    if (subscriptions.size() >= 1) {
+      int firstId = subscriptions.get(0).getSubscriptionId();
+      firstManager = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE))
+          .createForSubscriptionId(firstId);
+    }
+
+    if (subscriptions.size() >= 2) {
+      int secondId = subscriptions.get(1).getSubscriptionId();
+      secondManager = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE))
+          .createForSubscriptionId(secondId);
     }
   }
 }
