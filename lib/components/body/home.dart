@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -24,8 +25,15 @@ class _HomeBodyState extends State<HomeBody> {
   double cardWidth = 185;
   double cardHeight = 75;
 
+  final int minRssi = -113;
+  final int maxRssi = -51;
+
+  final int minRsrp = -140;
+  final int maxRsrp = -43;
+
   String _debug = "";
   final List<Widget> _mainData = <Widget>[];
+  final List<Widget> _activeData = <Widget>[];
   final List<Widget> _neighborData = <Widget>[];
 
   @override
@@ -132,9 +140,9 @@ class _HomeBodyState extends State<HomeBody> {
         ];
 
         for (int i = 0; i < elements.length - 1; i += 2) {
-          if (elements[i + 1].contains("-1")) {
-            if (i + 2 > elements.length || elements[i + 1].contains("2147483647")) {
-              //possibly fix? got to test
+          if (elements[i + 1].contains("-1") ||
+              elements[i + 1].contains("2147483647")) {
+            if (i + 2 > elements.length) {
               break;
             } else {
               i += 2;
@@ -215,16 +223,32 @@ class _HomeBodyState extends State<HomeBody> {
           );
         }
 
+        _activeData.clear(); //experimental
+        for (CellData activeCell in simData.activeCells) {
+          if (activeCell.basicCellData.band != -1) {
+            _activeData.add(
+              ListTile(
+                title: Text(activeCell.bandString),
+                subtitle: Text(
+                  "${activeCell.basicCellData.band} ${activeCell.bandwidth}MHz ${activeCell.processedSignal}dBm",
+                ),
+              ),
+            );
+          }
+        }
+
         _neighborData.clear(); //experimental
         for (CellData neighborCell in simData.neighborCells) {
-          _neighborData.add(
-            ListTile(
-              title: Text(neighborCell.bandString),
-              subtitle: Text(
-                "${neighborCell.basicCellData.band} ${neighborCell.bandwidth}MHz ${neighborCell.processedSignal}dBm",
+          if (neighborCell.basicCellData.band != -1) {
+            _neighborData.add(
+              ListTile(
+                title: Text(neighborCell.bandString),
+                subtitle: Text(
+                  "${neighborCell.basicCellData.band} ${neighborCell.bandwidth}MHz ${neighborCell.processedSignal}dBm",
+                ),
               ),
-            ),
-          );
+            );
+          }
         }
 
         setState(() {
@@ -256,6 +280,15 @@ class _HomeBodyState extends State<HomeBody> {
             margin: EdgeInsets.only(top: 10, left: 10, right: 10),
             child: Column(children: _mainData),
           ),
+          Text("Active Cells"), //temporary
+          Container(
+            margin: EdgeInsets.only(top: 10, left: 10, right: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: _activeData,
+            ),
+          ),
+          Text("Neighbor Cells"), //temporary
           Container(
             margin: EdgeInsets.only(top: 10, left: 10, right: 10),
             child: Row(
@@ -271,14 +304,36 @@ class _HomeBodyState extends State<HomeBody> {
   Icon getTrailingIcon(SIMData simData, String val) {
     if (val == simData.primaryCell.rawSignalString) {
       //RSSI
-      return Icon(
+
+      List<IconData> icons = [
+        Icons.signal_cellular_alt_1_bar,
+        Icons.signal_cellular_alt_2_bar,
         Icons.signal_cellular_alt,
-      ); //might make this based on the value
+      ];
+
+      int index =
+          ((min(max(simData.primaryCell.rawSignal, minRssi), maxRssi) -
+                      minRssi) /
+                  ((maxRssi - minRssi) / 3))
+              .floor();
+
+      return Icon(icons[min(index, 2)]);
     } else if (val == simData.primaryCell.processedSignalString) {
       //RSRP
-      return Icon(
+
+      List<IconData> icons = [
+        Icons.signal_cellular_connected_no_internet_0_bar,
         Icons.signal_cellular_0_bar,
-      ); //might make this based on the value
+        Icons.signal_cellular_4_bar,
+      ];
+
+      int index =
+          ((min(max(simData.primaryCell.rawSignal, minRsrp), maxRsrp) -
+                      minRsrp) /
+                  ((maxRsrp - minRsrp) / 3))
+              .floor();
+
+      return Icon(icons[min(index, 2)]);
     } else if (val == simData.primaryCell.signalQualityString) {
       //SNR
       return Icon(Icons.settings_input_antenna_outlined);
