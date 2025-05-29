@@ -35,6 +35,7 @@ class _HomeState extends State<Home> {
 
     try {
       platform.invokeMethod<bool>("checkPermissions");
+      platform.invokeMethod<void>("sendNotification");
     } on PlatformException catch (_) {
       //super error, handle it
     }

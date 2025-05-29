@@ -3,6 +3,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:netmanager/types/cell_data.dart';
+import 'package:netmanager/types/sim_data.dart';
 import 'dart:async';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,6 +37,8 @@ class _HomeBodyState extends State<HomeBody> {
   final List<Widget> _mainData = <Widget>[];
   final List<Widget> _activeData = <Widget>[];
   final List<Widget> _neighborData = <Widget>[];
+
+  late SIMData oldSimData;
 
   @override
   void initState() {
@@ -140,6 +144,7 @@ class _HomeBodyState extends State<HomeBody> {
         ];
 
         for (int i = 0; i < elements.length - 1; i += 2) {
+          //todo use oldSimData as cache for 1 attempt
           if (i + 1 >= elements.length ||
               elements[i + 1].contains("-1") ||
               elements[i + 1].contains("2147483647")) {
@@ -248,6 +253,8 @@ class _HomeBodyState extends State<HomeBody> {
           }
         }
 
+        oldSimData = simData;
+
         setState(() {
           _debug = jsonStr;
 
@@ -271,7 +278,6 @@ class _HomeBodyState extends State<HomeBody> {
       scrollDirection: Axis.vertical,
       child: Column(
         children: <Widget>[
-          Text(_debug),
           Row(children: [Expanded(child: _progressIndicator)]),
           Container(
             margin: EdgeInsets.only(top: 10, left: 10, right: 10),
@@ -293,6 +299,7 @@ class _HomeBodyState extends State<HomeBody> {
               children: _neighborData,
             ),
           ),
+          Text(_debug),
         ],
       ),
     );
@@ -357,177 +364,3 @@ class _HomeBodyState extends State<HomeBody> {
     return Icon(Icons.question_mark); //Unknown icon
   }
 }
-
-class SIMData {
-  final String operator;
-  final String network;
-  final int networkGen;
-  final String mccMnc;
-  final CellData primaryCell;
-  final double activeBw;
-  final List<CellData> activeCells;
-  final List<CellData> neighborCells;
-
-  SIMData({
-    required this.operator,
-    required this.network,
-    required this.networkGen,
-    required this.mccMnc,
-    required this.primaryCell,
-    required this.activeBw,
-    required this.activeCells,
-    required this.neighborCells,
-  });
-
-  factory SIMData.fromJson(Map<String, dynamic> json) {
-    return SIMData(
-      operator: json["operator"],
-      network: json["network"],
-      networkGen: json["networkGen"],
-      mccMnc: json["mccMnc"],
-      primaryCell:
-          json["primaryCell"] is Map<String, dynamic>
-              ? CellData.fromJson(json["primaryCell"])
-              : _emptyCellData(),
-      activeBw: (json["activeBw"] as num?)?.toDouble() ?? 0.0,
-      activeCells:
-          (json["activeCells"] as List<dynamic>? ?? [])
-              .map((e) => CellData.fromJson(e))
-              .toList(),
-      neighborCells:
-          (json["neighborCells"] as List<dynamic>? ?? [])
-              .map((e) => CellData.fromJson(e))
-              .toList(),
-    );
-  }
-}
-
-class CellData {
-  final String cellIdentifierString;
-  final String rawSignalString;
-  final String processedSignalString;
-  final String channelNumberString;
-  final String stationIdentityString;
-  final String areaCodeString;
-  final String signalQualityString;
-  final String signalNoiseString;
-  final String timingAdvanceString;
-  final String bandwidthString;
-  final String bandString;
-
-  final String cellIdentifier;
-
-  final int rawSignal;
-  final int processedSignal;
-  final int channelNumber;
-  final int stationIdentity;
-  final int areaCode;
-  final int signalQuality;
-  final int signalNoise;
-  final int timingAdvance;
-  final int bandwidth;
-  final int band;
-  final BasicCellData basicCellData;
-
-  final bool isRegistered;
-
-  CellData({
-    required this.cellIdentifierString,
-    required this.rawSignalString,
-    required this.processedSignalString,
-    required this.channelNumberString,
-    required this.stationIdentityString,
-    required this.areaCodeString,
-    required this.signalQualityString,
-    required this.signalNoiseString,
-    required this.timingAdvanceString,
-    required this.bandwidthString,
-    required this.bandString,
-
-    required this.cellIdentifier,
-    required this.rawSignal,
-    required this.processedSignal,
-    required this.channelNumber,
-    required this.stationIdentity,
-    required this.areaCode,
-    required this.signalQuality,
-    required this.signalNoise,
-    required this.timingAdvance,
-    required this.bandwidth,
-    required this.band,
-    required this.basicCellData,
-
-    required this.isRegistered,
-  });
-
-  factory CellData.fromJson(Map<String, dynamic> json) {
-    return CellData(
-      cellIdentifierString: json["cellIdentifierString"],
-      rawSignalString: json["rawSignalString"],
-      processedSignalString: json["processedSignalString"],
-      channelNumberString: json["channelNumberString"],
-      stationIdentityString: json["stationIdentityString"],
-      areaCodeString: json["areaCodeString"],
-      signalQualityString: json["signalQualityString"],
-      signalNoiseString: json["signalNoiseString"],
-      timingAdvanceString: json["timingAdvanceString"],
-      bandwidthString: json["bandwidthString"],
-      bandString: json["bandString"],
-
-      cellIdentifier: json["cellIdentifier"],
-      rawSignal: json["rawSignal"],
-      processedSignal: json["processedSignal"],
-      channelNumber: json["channelNumber"],
-      stationIdentity: json["stationIdentity"],
-      areaCode: json["areaCode"],
-      signalQuality: json["signalQuality"],
-      signalNoise: json["signalNoise"],
-      timingAdvance: json["timingAdvance"],
-      bandwidth: json["bandwidth"],
-      band: json["band"],
-      basicCellData:
-          json["basicCellData"] is Map<String, dynamic>
-              ? BasicCellData.fromJson(json["basicCellData"])
-              : BasicCellData(band: -1, frequency: -1),
-      isRegistered: json["isRegistered"],
-    );
-  }
-}
-
-class BasicCellData {
-  final int band;
-  final int frequency;
-
-  BasicCellData({required this.band, required this.frequency});
-
-  factory BasicCellData.fromJson(Map<String, dynamic> json) {
-    return BasicCellData(band: json["band"], frequency: json["frequency"]);
-  }
-}
-
-CellData _emptyCellData() => CellData(
-  cellIdentifierString: "",
-  rawSignalString: "",
-  processedSignalString: "",
-  channelNumberString: "",
-  stationIdentityString: "",
-  areaCodeString: "",
-  signalQualityString: "",
-  signalNoiseString: "",
-  timingAdvanceString: "",
-  bandwidthString: "",
-  bandString: "",
-  cellIdentifier: "-1",
-  rawSignal: -1,
-  processedSignal: -1,
-  channelNumber: -1,
-  stationIdentity: -1,
-  areaCode: -1,
-  signalQuality: -1,
-  signalNoise: -1,
-  timingAdvance: -1,
-  bandwidth: -1,
-  band: -1,
-  basicCellData: BasicCellData(band: -1, frequency: -1),
-  isRegistered: false,
-);

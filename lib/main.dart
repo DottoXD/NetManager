@@ -9,8 +9,9 @@ import 'home.dart';
 void main() async {
   runApp(NetManager());
 
-  if (Platform.isAndroid)
+  if (Platform.isAndroid) {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  }
 }
 
 class NetManager extends StatefulWidget {

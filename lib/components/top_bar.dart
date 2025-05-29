@@ -31,7 +31,7 @@ class _TopBarState extends State<TopBar> {
     sharedPreferences = widget.sharedPreferences;
 
     Timer updateTimer = Timer.periodic(
-      Duration(seconds: sharedPreferences.getInt("updateInterval") ?? 1),
+      Duration(seconds: sharedPreferences.getInt("updateInterval") ?? 3),
       (Timer t) => update(),
     ); //i should make it so that changing the settings restarts it
   }
@@ -41,7 +41,6 @@ class _TopBarState extends State<TopBar> {
       () async {
         _carrier = (await platform.invokeMethod<String>("getCarrier"))!;
         _gen = await platform.invokeMethod<int>("getNetworkGen") as int;
-        await platform.invokeMethod<void>("sendNotification");
       }();
 
       if (_gen > 0) {
@@ -64,12 +63,18 @@ class _TopBarState extends State<TopBar> {
     }();
   }
 
+  void openRadioInfo() {
+    () async {
+      await platform.invokeMethod("openRadioInfo");
+    }();
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppBar(
       title: Text(_title),
       actions: [
-        IconButton(onPressed: update, icon: Icon(Icons.info)),
+        IconButton(onPressed: openRadioInfo, icon: Icon(Icons.info)),
         IconButton(onPressed: switchSim, icon: Icon(Icons.menu)),
       ],
     );

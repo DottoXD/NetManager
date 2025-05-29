@@ -3,7 +3,6 @@ package pw.dotto.netmanager;
 import android.Manifest;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
@@ -18,27 +17,25 @@ import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
 import pw.dotto.netmanager.Core.Manager;
 import pw.dotto.netmanager.Core.MobileInfo.SIMData;
-import pw.dotto.netmanager.Core.Notifications.MonitorNotification;
+import pw.dotto.netmanager.Core.Notifications.NotificationService;
+import pw.dotto.netmanager.Core.Utils;
 
 public class MainActivity extends FlutterActivity {
   private final String CHANNEL = "pw.dotto.netmanager/telephony";
 
   private final Manager manager = new Manager(this);
-  private final MonitorNotification notification = new MonitorNotification(this);
   private int selectedSim = 0;
 
   @Override
   public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
     super.configureFlutterEngine(flutterEngine);
 
-    notification.setupNotifications();
-
     new MethodChannel(
         flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL)
         .setMethodCallHandler((call, result) -> {
           switch (call.method) {
             case "checkPermissions":
-              boolean perms = checkPermissions();
+              boolean perms = Utils.checkPermissions(this);
               if (!perms) {
                 requestPermissions();
               }
@@ -82,12 +79,12 @@ public class MainActivity extends FlutterActivity {
               break;
 
             case "sendNotification":
-              notification.send();
-              result.success(true); // eventually return false when it fails due to perms issues
+              startForegroundService(new Intent(this, NotificationService.class));
+              result.success(true);
               break;
 
             case "cancelNotification":
-              notification.cancel();
+              stopService(new Intent(this, NotificationService.class));
               result.success(true);
               break;
 
@@ -96,7 +93,7 @@ public class MainActivity extends FlutterActivity {
               result.success(true);
               break;
 
-            case "switchSim": //add checks for sim amount
+            case "switchSim": // add checks for sim amount
               if (selectedSim == 0)
                 selectedSim = 1;
               else
@@ -109,28 +106,13 @@ public class MainActivity extends FlutterActivity {
               break;
           }
         });
-
-    notification.send();
-  }
-
-  public boolean checkPermissions() {
-    boolean basePerms = ActivityCompat.checkSelfPermission(
-        this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        && ActivityCompat.checkSelfPermission(
-            this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED;
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      return basePerms && ActivityCompat.checkSelfPermission(
-          this,
-          Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
-    } else
-      return basePerms;
   }
 
   private void requestPermissions() {
     ArrayList<String> permissions = new ArrayList<>();
     permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
     permissions.add(Manifest.permission.READ_PHONE_STATE);
+    permissions.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION);
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
       permissions.add(Manifest.permission.POST_NOTIFICATIONS);

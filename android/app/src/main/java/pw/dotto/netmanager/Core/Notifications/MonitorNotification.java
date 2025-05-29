@@ -1,5 +1,6 @@
 package pw.dotto.netmanager.Core.Notifications;
 
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -10,17 +11,15 @@ import android.service.notification.StatusBarNotification;
 
 import androidx.core.app.NotificationCompat;
 
-import com.google.gson.Gson;
-
 import java.util.Random;
 
 import pw.dotto.netmanager.Core.MobileInfo.SIMData;
+import pw.dotto.netmanager.Core.Utils;
 import pw.dotto.netmanager.MainActivity;
 import pw.dotto.netmanager.R;
 
 public class MonitorNotification {
-    private final MainActivity context;
-    private final Gson gson = new Gson();
+    private final NotificationService context;
 
     private NotificationManager notificationManager;
     private NotificationChannel notificationChannel;
@@ -32,12 +31,18 @@ public class MonitorNotification {
 
     public static final String NOTIFICATION_CHANNEL = "netmanager-chn";
 
-    public MonitorNotification(MainActivity context) {
+    public MonitorNotification(NotificationService context) {
         this.context = context;
     }
 
     public void setupNotifications() {
+        if (context == null)
+            return;
+
         notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (notificationManager == null)
+            return;
 
         notificationChannel = notificationManager.getNotificationChannel(NOTIFICATION_CHANNEL);
         if (notificationChannel == null) {
@@ -50,6 +55,7 @@ public class MonitorNotification {
             notificationManager.createNotificationChannel(notificationChannel);
         }
 
+        // replace notification id persistence with shared_preferences
         for (StatusBarNotification notification : notificationManager.getActiveNotifications()) {
             if (notification.getNotification().getChannelId().equals(NOTIFICATION_CHANNEL)) {
                 selectedId = notification.getId();
@@ -74,8 +80,9 @@ public class MonitorNotification {
     }
 
     public void send() {
-        if (!context.checkPermissions() || (notificationManager == null || notificationChannel == null))
+        if (!Utils.checkPermissions(context) || (notificationManager == null || notificationChannel == null))
             return;
+
         buildNotification();
         notificationManager.notify(selectedId, activeNotification.build());
     }
@@ -86,23 +93,45 @@ public class MonitorNotification {
 
     public void buildNotification() {
         StringBuilder contentText = new StringBuilder();
-        for(int i = 0; i < 1; i++) {
+        for (int i = 0; i < 1; i++) {
             SIMData simData = context.getManager().getSimNetworkData(i);
-            if(simData == null || simData.getPrimaryCell() == null) break;
+            if (simData == null || simData.getPrimaryCell() == null)
+                break;
 
-            contentText.append(simData.getPrimaryCell().getProcessedSignal()).append("dBm (SIM ").append(i).append(") -"); //temporary
+            String nodeStr;
+
+            try {
+                nodeStr = Integer.parseInt(simData.getPrimaryCell().getCellIdentifier()) / 256 + "/"
+                        + Integer.parseInt(simData.getPrimaryCell().getCellIdentifier()) % 256;
+            } catch (Exception ignored) {
+                nodeStr = "Unavailable";
+            }
+
+            contentText.append("SIM ").append(i).append(": ").append(nodeStr).append(" (")
+                    .append(simData.getPrimaryCell().getProcessedSignal()).append("dBm)\n").append("RSRQ: ")
+                    .append(simData.getPrimaryCell().getSignalNoise()).append("dBm, ").append("SNR: ")
+                    .append(simData.getPrimaryCell().getSignalQuality()).append("dBm\n");
         }
 
         activeNotification = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
-                .setSmallIcon(R.drawable.launch_background) // got to make an icon as soon as i make an app logo
+                .setSmallIcon(android.R.drawable.stat_notify_sync) // got to make an icon as soon as i make an app logo
                 .setContentTitle(context.getManager().getFullHeaderString())
                 .setContentText(contentText.toString())
-                                                                                                          // change this
+                // change this
                 .setContentIntent(openPendingIntent)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setStyle(new NotificationCompat.BigTextStyle())
                 .setOngoing(true) // add check to compare with settings
                 .setSilent(true)
-                .addAction(R.drawable.launch_background, "Close", closingPendingIntent) // same here for the logo
+                .addAction(android.R.drawable.stat_notify_sync, "Close", closingPendingIntent) // same here for the logo
                 .setAllowSystemGeneratedContextualActions(false);
+    }
+
+    public Notification getActiveNotification() {
+        return activeNotification.build();
+    }
+
+    public int getSelectedId() {
+        return selectedId;
     }
 }
