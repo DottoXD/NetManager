@@ -126,6 +126,50 @@ public abstract class CellData {
         return band;
     }
 
+    public String getAreaCodeString() {
+        return areaCodeString;
+    }
+
+    public String getBandString() {
+        return bandString;
+    }
+
+    public String getBandwidthString() {
+        return bandwidthString;
+    }
+
+    public String getCellIdentifierString() {
+        return cellIdentifierString;
+    }
+
+    public String getChannelNumberString() {
+        return channelNumberString;
+    }
+
+    public String getProcessedSignalString() {
+        return processedSignalString;
+    }
+
+    public String getRawSignalString() {
+        return rawSignalString;
+    }
+
+    public String getSignalNoiseString() {
+        return signalNoiseString;
+    }
+
+    public String getSignalQualityString() {
+        return signalQualityString;
+    }
+
+    public String getStationIdentityString() {
+        return stationIdentityString;
+    }
+
+    public String getTimingAdvanceString() {
+        return timingAdvanceString;
+    }
+
     public BasicCellData getBasicCellData() {
         return basicCellData;
     }

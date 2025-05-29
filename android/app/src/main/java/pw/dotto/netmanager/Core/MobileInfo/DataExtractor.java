@@ -25,64 +25,66 @@ public class DataExtractor {
     }
 
     private static BasicCellData getNrBasicData(int nrarfcn) {
-        if (nrarfcn >= 422000 && nrarfcn <= 434000)
-            return new BasicCellData(1, 2100);
-        if (nrarfcn >= 386000 && nrarfcn <= 398000)
-            return new BasicCellData(2, 1900);
-        if (nrarfcn >= 361000 && nrarfcn <= 376000)
-            return new BasicCellData(3, 1800);
-        if (nrarfcn >= 173800 && nrarfcn <= 178800)
-            return new BasicCellData(5, 850);
-        if (nrarfcn >= 524000 && nrarfcn <= 538000)
-            return new BasicCellData(7, 2600);
-        if (nrarfcn >= 185000 && nrarfcn <= 192000)
-            return new BasicCellData(8, 900);
-        if (nrarfcn >= 145800 && nrarfcn <= 149200)
-            return new BasicCellData(12, 700);
-        if (nrarfcn >= 151600 && nrarfcn <= 153600)
-            return new BasicCellData(14, 700);
-        if (nrarfcn >= 172000 && nrarfcn <= 175000)
-            return new BasicCellData(18, 800);
-        if (nrarfcn >= 158200 && nrarfcn <= 164200)
-            return new BasicCellData(20, 800);
-        if (nrarfcn >= 386000 && nrarfcn <= 399000)
-            return new BasicCellData(25, 1900);
-        if (nrarfcn >= 171800 && nrarfcn <= 178800)
-            return new BasicCellData(26, 850);
-        if (nrarfcn >= 151600 && nrarfcn <= 160600)
-            return new BasicCellData(28, 700);
-        if (nrarfcn >= 143400 && nrarfcn <= 145600)
-            return new BasicCellData(29, 700);
-        if (nrarfcn >= 402000 && nrarfcn <= 405000)
-            return new BasicCellData(34, 2000);
-        if (nrarfcn >= 376000 && nrarfcn <= 384000)
-            return new BasicCellData(39, 1900);
-        if (nrarfcn >= 460000 && nrarfcn <= 480000)
-            return new BasicCellData(40, 2300);
-        if (nrarfcn >= 499200 && nrarfcn <= 537999)
-            return new BasicCellData(41, 2500);
-        if (nrarfcn >= 743334 && nrarfcn <= 795000)
-            return new BasicCellData(46, 5200);
+        if (nrarfcn >= 620000 && nrarfcn <= 653333)
+            return new BasicCellData(78, 3500);
+        // n78
         if (nrarfcn >= 636667 && nrarfcn <= 646666)
             return new BasicCellData(48, 3600);
+        if (nrarfcn >= 653334 && nrarfcn <= 680000)
+            return new BasicCellData(77, 3700);
+        if (nrarfcn >= 693334 && nrarfcn <= 733333)
+            return new BasicCellData(79, 4500);
+        if (nrarfcn >= 743334 && nrarfcn <= 795000)
+            return new BasicCellData(46, 5200);
+        if (nrarfcn >= 499200 && nrarfcn <= 537999)
+            return new BasicCellData(41, 2500);
         if (nrarfcn >= 496700 && nrarfcn <= 499000)
             return new BasicCellData(53, 2500);
+        if (nrarfcn >= 460000 && nrarfcn <= 480000)
+            return new BasicCellData(40, 2300);
+        if (nrarfcn >= 422000 && nrarfcn <= 434000)
+            return new BasicCellData(1, 2100);
         if (nrarfcn >= 422000 && nrarfcn <= 440000)
             return new BasicCellData(66, 1700);
         if (nrarfcn >= 399000 && nrarfcn <= 404000)
             return new BasicCellData(70, 1700);
-        if (nrarfcn >= 123400 && nrarfcn <= 130400)
-            return new BasicCellData(71, 600);
+        if (nrarfcn >= 402000 && nrarfcn <= 405000)
+            return new BasicCellData(34, 2000);
+        if (nrarfcn >= 386000 && nrarfcn <= 399000)
+            return new BasicCellData(25, 1900);
+        // n25
+        if (nrarfcn >= 386000 && nrarfcn <= 398000)
+            return new BasicCellData(2, 1900);
+        if (nrarfcn >= 376000 && nrarfcn <= 384000)
+            return new BasicCellData(39, 1900);
+        if (nrarfcn >= 361000 && nrarfcn <= 376000)
+            return new BasicCellData(3, 1800);
+        if (nrarfcn >= 158200 && nrarfcn <= 164200)
+            return new BasicCellData(20, 800);
+        if (nrarfcn >= 151600 && nrarfcn <= 160600)
+            return new BasicCellData(28, 700);
+        // n28
+        if (nrarfcn >= 151600 && nrarfcn <= 153600)
+            return new BasicCellData(14, 700);
+        if (nrarfcn >= 145800 && nrarfcn <= 149200)
+            return new BasicCellData(12, 700);
+        if (nrarfcn >= 143400 && nrarfcn <= 145600)
+            return new BasicCellData(29, 700);
+        if (nrarfcn >= 185000 && nrarfcn <= 192000)
+            return new BasicCellData(8, 900);
+        if (nrarfcn >= 171800 && nrarfcn <= 178800)
+            return new BasicCellData(26, 850);
+        // n26
+        if (nrarfcn >= 173800 && nrarfcn <= 178800)
+            return new BasicCellData(5, 850);
+        if (nrarfcn >= 172000 && nrarfcn <= 175000)
+            return new BasicCellData(18, 800);
         if (nrarfcn >= 295000 && nrarfcn <= 303600)
             return new BasicCellData(74, 1500);
         if (nrarfcn >= 285400 && nrarfcn <= 286400)
             return new BasicCellData(76, 1500);
-        if (nrarfcn >= 653334 && nrarfcn <= 680000)
-            return new BasicCellData(77, 3700);
-        if (nrarfcn >= 620000 && nrarfcn <= 653333)
-            return new BasicCellData(78, 3500);
-        if (nrarfcn >= 693334 && nrarfcn <= 733333)
-            return new BasicCellData(79, 4500);
+        if (nrarfcn >= 123400 && nrarfcn <= 130400)
+            return new BasicCellData(71, 600);
 
         return new BasicCellData(-1, -1);
     }

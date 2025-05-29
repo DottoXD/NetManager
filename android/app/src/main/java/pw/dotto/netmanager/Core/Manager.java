@@ -2,7 +2,9 @@ package pw.dotto.netmanager.Core;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.Build;
 import android.telephony.CellIdentity;
+import android.telephony.CellIdentityNr;
 import android.telephony.CellInfo;
 import android.telephony.CellInfoCdma;
 import android.telephony.CellInfoGsm;
@@ -10,6 +12,8 @@ import android.telephony.CellInfoLte;
 import android.telephony.CellInfoNr;
 import android.telephony.CellInfoTdscdma;
 import android.telephony.CellInfoWcdma;
+import android.telephony.NetworkRegistrationInfo;
+import android.telephony.ServiceState;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
@@ -52,19 +56,42 @@ public class Manager {
     StringBuilder str = new StringBuilder();
 
     List<SubscriptionInfo> activeSubscriptionList = getSubscriptionManager().getActiveSubscriptionInfoList();
-    if (activeSubscriptionList != null) {
-      int networkGen = getSimNetworkGen(getTelephony());
-      boolean nrSa = networkGen == 5 && true; // got to replace true with the actual check
-      str.append(getTelephony().getNetworkOperatorName()).append(" ").append(
+    if (activeSubscriptionList != null) { // always at least 1
+      if (firstManager == null) {
+        SubscriptionInfo firstInfo = activeSubscriptionList.get(0);
+        firstManager = getTelephony().createForSubscriptionId(firstInfo.getSubscriptionId());
+      }
+
+      int networkGen = getSimNetworkGen(firstManager);
+      boolean nrSa = networkGen == 5;
+
+      if (networkGen == 4) {
+        ServiceState state = firstManager.getServiceState();
+
+        if (state != null && (state.toString().contains("nrState=CONNECTED")
+            || state.toString().contains("nrState=NOT_RESTRICTED")))
+          networkGen = 5;
+      }
+
+      str.append(firstManager.getNetworkOperatorName()).append(" ").append(
           networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G" + (nrSa ? " (SA)" : "")));
 
       if (activeSubscriptionList.size() > 1) {
-        SubscriptionInfo info = activeSubscriptionList.get(1);
+        SubscriptionInfo secondInfo = activeSubscriptionList.get(1);
         if (secondManager == null)
-          secondManager = getTelephony().createForSubscriptionId(info.getSubscriptionId());
+          secondManager = getTelephony().createForSubscriptionId(secondInfo.getSubscriptionId());
 
         networkGen = getSimNetworkGen(secondManager);
-        nrSa = networkGen == 5 && true; // got to replace true with the actual check
+        nrSa = networkGen == 5;
+
+        if (networkGen == 4) {
+          ServiceState state = secondManager.getServiceState();
+
+          if (state != null && (state.toString().contains("nrState=CONNECTED")
+              || state.toString().contains("nrState=NOT_RESTRICTED")))
+            networkGen = 5;
+        }
+
         str.append(" | ").append(secondManager.getNetworkOperatorName()).append(" ").append(
             networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G" + (nrSa ? " (SA)" : "")));
       }
@@ -86,7 +113,7 @@ public class Manager {
   public String getSimCarrier(int simId) {
     switch (simId) {
       case 0:
-        return getSimCarrier(getTelephony());
+        return getSimCarrier(firstManager);
       case 1:
         return getSimCarrier(secondManager);
       default:
@@ -106,7 +133,7 @@ public class Manager {
   public String getSimOperator(int simId) {
     switch (simId) {
       case 0:
-        return getSimOperator(getTelephony());
+        return getSimOperator(firstManager);
       case 1:
         return getSimOperator(secondManager);
       default:
@@ -131,8 +158,7 @@ public class Manager {
     // telephony.requestCellInfoUpdate();
     for (CellInfo baseCell : telephony.getAllCellInfo()) {
 
-      switch (baseCell.getCellConnectionStatus()) { // remember to check timestamp and eventually request an update for
-                                                    // each band
+      switch (baseCell.getCellConnectionStatus()) {
         case CellInfo.CONNECTION_PRIMARY_SERVING:
           if (baseCell instanceof CellInfoGsm) {
             GsmCellData gsmCellData = CellExtractors.getGsmCellData((CellInfoGsm) baseCell);
@@ -167,7 +193,15 @@ public class Manager {
               data.setPrimaryCell(lteCellData);
           } else if (baseCell instanceof CellInfoNr) {
             NrCellData nrCellData = CellExtractors.getNrCellData((CellInfoNr) baseCell);
-            data.setPrimaryCell(nrCellData);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+              CellIdentityNr identity = (CellIdentityNr) baseCell.getCellIdentity();
+              String mccMnc = identity.getMccString() + identity.getMncString();
+
+              if (mccMnc.equals(simOperator))
+                data.setPrimaryCell(nrCellData);
+            } else
+              data.setPrimaryCell(nrCellData);
           }
 
           break;
@@ -205,7 +239,15 @@ public class Manager {
               data.addActiveCell(lteCellData);
           } else if (baseCell instanceof CellInfoNr) {
             NrCellData nrCellData = CellExtractors.getNrCellData((CellInfoNr) baseCell);
-            data.addActiveCell(nrCellData);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+              CellIdentityNr identity = (CellIdentityNr) baseCell.getCellIdentity();
+              String mccMnc = identity.getMccString() + identity.getMncString();
+
+              if (mccMnc.equals(simOperator))
+                data.addActiveCell(nrCellData);
+            } else
+              data.addActiveCell(nrCellData);
           }
 
           break;
@@ -243,7 +285,15 @@ public class Manager {
               data.addNeighborCell(lteCellData);
           } else if (baseCell instanceof CellInfoNr) {
             NrCellData nrCellData = CellExtractors.getNrCellData((CellInfoNr) baseCell);
-            data.addNeighborCell(nrCellData);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+              CellIdentityNr identity = (CellIdentityNr) baseCell.getCellIdentity();
+              String mccMnc = identity.getMccString() + identity.getMncString();
+
+              if (mccMnc.equals(simOperator))
+                data.addNeighborCell(nrCellData);
+            } else
+              data.addNeighborCell(nrCellData);
           }
 
           break;
@@ -334,7 +384,7 @@ public class Manager {
   public int getSimNetworkGen(int simId) {
     switch (simId) {
       case 0:
-        return getSimNetworkGen(getTelephony());
+        return getSimNetworkGen(firstManager);
       case 1:
         return getSimNetworkGen(secondManager);
       default:
@@ -347,6 +397,7 @@ public class Manager {
     if (!Utils.checkPermissions(context) || manager == null)
       return;
 
+    @SuppressLint("MissingPermission")
     List<SubscriptionInfo> subscriptions = manager.getActiveSubscriptionInfoList(); // add safety check
 
     if (subscriptions == null)

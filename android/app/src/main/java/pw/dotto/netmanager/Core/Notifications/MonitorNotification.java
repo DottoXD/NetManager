@@ -8,6 +8,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.service.notification.StatusBarNotification;
+import android.telephony.CellInfo;
 
 import androidx.core.app.NotificationCompat;
 
@@ -93,7 +94,7 @@ public class MonitorNotification {
 
     public void buildNotification() {
         StringBuilder contentText = new StringBuilder();
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < 2; i++) {
             SIMData simData = context.getManager().getSimNetworkData(i);
             if (simData == null || simData.getPrimaryCell() == null)
                 break;
@@ -107,10 +108,17 @@ public class MonitorNotification {
                 nodeStr = "Unavailable";
             }
 
-            contentText.append("SIM ").append(i).append(": ").append(nodeStr).append(" (")
-                    .append(simData.getPrimaryCell().getProcessedSignal()).append("dBm)\n").append("RSRQ: ")
-                    .append(simData.getPrimaryCell().getSignalNoise()).append("dBm, ").append("SNR: ")
-                    .append(simData.getPrimaryCell().getSignalQuality()).append("dBm\n");
+            contentText.append("SIM ").append(i + 1).append(" (")
+                    .append(simData.getPrimaryCell().getBasicCellData().getFrequency()).append("MHz)\n").append(nodeStr)
+                    .append(" (")
+                    .append(simData.getPrimaryCell().getProcessedSignal()).append("dBm)\n");
+
+            if (simData.getPrimaryCell().getSignalQuality() != CellInfo.UNAVAILABLE)
+                contentText.append(simData.getPrimaryCell().getSignalQualityString()).append(": ")
+                        .append(simData.getPrimaryCell().getSignalQuality()).append("dBm ");
+            if (simData.getPrimaryCell().getSignalNoise() != CellInfo.UNAVAILABLE)
+                contentText.append(simData.getPrimaryCell().getSignalNoiseString()).append(": ")
+                        .append(simData.getPrimaryCell().getSignalNoise()).append("dBm ");
         }
 
         activeNotification = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
