@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat;
 
 import java.util.Random;
 
+import pw.dotto.netmanager.Core.MobileInfo.CellDatas.NrCellData;
 import pw.dotto.netmanager.Core.MobileInfo.SIMData;
 import pw.dotto.netmanager.Core.Utils;
 import pw.dotto.netmanager.MainActivity;
@@ -109,6 +110,8 @@ public class MonitorNotification {
             }
 
             contentText.append("SIM ").append(i + 1).append(" (")
+                    .append((simData.getPrimaryCell() instanceof NrCellData ? "N" : "B"))
+                    .append(simData.getPrimaryCell().getBasicCellData().getBand()).append(" ")
                     .append(simData.getPrimaryCell().getBasicCellData().getFrequency()).append("MHz)\n").append(nodeStr)
                     .append(" (")
                     .append(simData.getPrimaryCell().getProcessedSignal()).append("dBm)\n");
@@ -119,6 +122,9 @@ public class MonitorNotification {
             if (simData.getPrimaryCell().getSignalNoise() != CellInfo.UNAVAILABLE)
                 contentText.append(simData.getPrimaryCell().getSignalNoiseString()).append(": ")
                         .append(simData.getPrimaryCell().getSignalNoise()).append("dBm ");
+
+            if (!contentText.toString().endsWith("\n"))
+                contentText.append("\n");
         }
 
         activeNotification = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)

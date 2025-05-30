@@ -13,13 +13,21 @@ import android.telephony.CellInfoNr;
 import android.telephony.CellInfoTdscdma;
 import android.telephony.CellInfoWcdma;
 import android.telephony.NetworkRegistrationInfo;
+import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyCallback;
+import android.telephony.TelephonyDisplayInfo;
 import android.telephony.TelephonyManager;
+import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Executor;
 
 import pw.dotto.netmanager.Core.MobileInfo.CellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CdmaCellData;
@@ -30,6 +38,7 @@ import pw.dotto.netmanager.Core.MobileInfo.CellDatas.TdscmaCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.WcdmaCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellExtractors;
 import pw.dotto.netmanager.Core.MobileInfo.DataExtractor;
+import pw.dotto.netmanager.Core.MobileInfo.DisplayInfoListener;
 import pw.dotto.netmanager.Core.MobileInfo.SIMData;
 import pw.dotto.netmanager.MainActivity;
 
@@ -38,6 +47,8 @@ public class Manager {
 
   private TelephonyManager firstManager;
   private TelephonyManager secondManager;
+
+  private DisplayInfoListener[] nsa = { null, null };
 
   public Manager(Context context) {
     this.context = context;
@@ -65,13 +76,8 @@ public class Manager {
       int networkGen = getSimNetworkGen(firstManager);
       boolean nrSa = networkGen == 5;
 
-      if (networkGen == 4) {
-        ServiceState state = firstManager.getServiceState();
-
-        if (state != null && (state.toString().contains("nrState=CONNECTED")
-            || state.toString().contains("nrState=NOT_RESTRICTED")))
-          networkGen = 5;
-      }
+      if (networkGen == 4 && getNsaStatus(0))
+        networkGen = 5;
 
       str.append(firstManager.getNetworkOperatorName()).append(" ").append(
           networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G" + (nrSa ? " (SA)" : "")));
@@ -84,13 +90,8 @@ public class Manager {
         networkGen = getSimNetworkGen(secondManager);
         nrSa = networkGen == 5;
 
-        if (networkGen == 4) {
-          ServiceState state = secondManager.getServiceState();
-
-          if (state != null && (state.toString().contains("nrState=CONNECTED")
-              || state.toString().contains("nrState=NOT_RESTRICTED")))
-            networkGen = 5;
-        }
+        if (networkGen == 4 && getNsaStatus(1))
+          networkGen = 5;
 
         str.append(" | ").append(secondManager.getNetworkOperatorName()).append(" ").append(
             networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G" + (nrSa ? " (SA)" : "")));
@@ -157,7 +158,6 @@ public class Manager {
 
     // telephony.requestCellInfoUpdate();
     for (CellInfo baseCell : telephony.getAllCellInfo()) {
-
       switch (baseCell.getCellConnectionStatus()) {
         case CellInfo.CONNECTION_PRIMARY_SERVING:
           if (baseCell instanceof CellInfoGsm) {
@@ -252,6 +252,7 @@ public class Manager {
 
           break;
         case CellInfo.CONNECTION_NONE:
+        case CellInfo.CONNECTION_UNKNOWN:
           if (baseCell instanceof CellInfoGsm) {
             GsmCellData gsmCellData = CellExtractors.getGsmCellData((CellInfoGsm) baseCell);
             String mccMnc = ((CellInfoGsm) baseCell).getCellIdentity().getMccString()
@@ -297,19 +298,21 @@ public class Manager {
           }
 
           break;
-        case CellInfo.CONNECTION_UNKNOWN:
-          // i'm not too sure if i'll even use this
-          break;
       }
     }
 
-    if (data.getPrimaryCell() != null)
+    if (data.getPrimaryCell() != null) {
+      Log.i("b", data.getPrimaryCell().toString());
       data.getPrimaryCell().setBasicCellData(DataExtractor.getBasicData(data.getPrimaryCell()));
+    }
+
     for (CellData cellData : data.getActiveCells()) {
+      Log.i("b", cellData.toString());
       cellData.setBasicCellData(DataExtractor.getBasicData(cellData));
     }
 
     for (CellData cellData : data.getNeighborCells()) {
+      Log.i("b", cellData.toString());
       cellData.setBasicCellData(DataExtractor.getBasicData(cellData));
     }
 
@@ -318,7 +321,8 @@ public class Manager {
 
       data.setActiveBw(data.getPrimaryCell().getBandwidth());
       for (CellData cellData : data.getActiveCells()) {
-        data.setActiveBw(data.getActiveBw() + cellData.getBandwidth());
+        if (!(cellData.getBandwidth() < 0 || cellData.getBandwidth() == CellInfo.UNAVAILABLE))
+          data.setActiveBw(data.getActiveBw() + cellData.getBandwidth());
       }
     }
 
@@ -366,9 +370,6 @@ public class Manager {
         return 3;
 
       case TelephonyManager.NETWORK_TYPE_LTE:
-        // Check for NR NSA
-        return 4;
-
       case TelephonyManager.NETWORK_TYPE_IWLAN:
         return 4;
 
@@ -414,5 +415,27 @@ public class Manager {
       secondManager = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE))
           .createForSubscriptionId(secondId);
     }
+
+    Executor executor = ContextCompat.getMainExecutor(context);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+      if (firstManager != null) {
+        nsa[0] = new DisplayInfoListener();
+        firstManager.registerTelephonyCallback(executor, nsa[0]);
+      }
+
+      if (secondManager != null) {
+        nsa[1] = new DisplayInfoListener();
+        firstManager.registerTelephonyCallback(executor, nsa[1]);
+      }
+    }
+  }
+
+  public boolean getNsaStatus(int index) {
+    if (nsa[index] == null)
+      return false;
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+      return nsa[index].getNsa();
+    return false;
   }
 }

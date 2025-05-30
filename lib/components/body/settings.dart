@@ -20,6 +20,8 @@ class _SettingsBodyState extends State<SettingsBody> {
   bool _startupMonitoring = false;
   bool _backgroundService = false;
   bool _analytics = false;
+  bool _logEvents = false;
+  int _maximumLogs = 10;
   int _updateInterval = 3;
   int _backgroundUpdateInterval = 3;
   int _positionPrecision = 3;
@@ -47,6 +49,8 @@ class _SettingsBodyState extends State<SettingsBody> {
       _backgroundService =
           sharedPreferences.getBool("backgroundService") ?? _backgroundService;
       _analytics = sharedPreferences.getBool("analytics") ?? _analytics;
+      _logEvents = sharedPreferences.getBool("logEvents") ?? _logEvents;
+      _maximumLogs = sharedPreferences.getInt("maximumLogs") ?? _maximumLogs;
       _updateInterval =
           sharedPreferences.getInt("updateInterval") ?? _updateInterval;
       _backgroundUpdateInterval =
@@ -251,6 +255,38 @@ class _SettingsBodyState extends State<SettingsBody> {
                       ),
                       enabled: (!_dynamicTheme || !_dynamicSupported),
                     ),
+                    Divider(height: 0),
+                    ListTile(
+                      title: Text("Log events"),
+                      subtitle: Text(
+                        "Log various events such as changes between mobile cells and technologies.",
+                      ),
+                      trailing: Switch(
+                        value: _logEvents,
+                        onChanged: (bool value) {
+                          setBool("logEvents", value);
+                          updateData();
+                        },
+                      ),
+                    ),
+                    ListTile(
+                      title: Text("Maximum logs (${_maximumLogs}s)"),
+                      subtitle: Text(
+                        "The maximum amount of events that should be logged and stored.",
+                      ),
+                      enabled: _logEvents,
+                    ),
+                    if (_logEvents)
+                      Slider(
+                        value: _maximumLogs.toDouble(),
+                        max: 100,
+                        min: 10,
+                        label: _maximumLogs.toString(),
+                        onChanged: (double value) {
+                          setInt("maximumLogs", value.toInt());
+                          updateData();
+                        },
+                      ),
                   ],
                 ),
               ),

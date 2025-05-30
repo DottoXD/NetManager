@@ -1,5 +1,7 @@
 package pw.dotto.netmanager.Core.MobileInfo;
 
+import androidx.annotation.NonNull;
+
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.BasicCellData;
 
 public abstract class CellData {
@@ -228,5 +230,10 @@ public abstract class CellData {
 
     public void setIsRegistered(boolean isRegistered) {
         this.isRegistered = isRegistered;
+    }
+
+    @NonNull
+    public String toString() {
+        return cellIdentifierString + ": " + cellIdentifier + ", " + rawSignalString + ": " + rawSignal + ", " + processedSignalString + ": " + processedSignal + ", " + channelNumberString + ": " + channelNumber + ", " + stationIdentityString + ": " + stationIdentity + ", " + areaCodeString + ": " + areaCode + ", " + signalQualityString + ": " + signalQuality + ", " + signalNoiseString + ": " + signalNoise + ", " + timingAdvanceString + ": " + timingAdvance + ", " + bandwidthString + ": " + bandwidth + ", " + bandString + ": " + band;
     }
 }

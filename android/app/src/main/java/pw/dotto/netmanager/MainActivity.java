@@ -75,6 +75,8 @@ public class MainActivity extends FlutterActivity {
 
             case "getNetworkGen":
               int gen = manager.getSimNetworkGen(selectedSim);
+              if (manager.getNsaStatus(selectedSim))
+                gen = 5;
               result.success(gen);
               break;
 

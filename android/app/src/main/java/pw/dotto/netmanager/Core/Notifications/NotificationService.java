@@ -2,6 +2,7 @@ package pw.dotto.netmanager.Core.Notifications;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -16,6 +17,7 @@ public class NotificationService extends Service {
 
     private Handler handler;
     private Runnable notificationRunnable;
+    private SharedPreferences sharedPreferences;
 
     @Nullable
     @Override
@@ -33,18 +35,25 @@ public class NotificationService extends Service {
         super.onCreate();
         manager = new Manager(this);
         notification = new MonitorNotification(this);
+        sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
         notification.setupNotifications();
         notification.send();
 
         startForeground(notification.getSelectedId(), notification.getActiveNotification());
 
         handler = new Handler(Looper.getMainLooper());
+
+        if (sharedPreferences == null /* || !sharedPreferences.getBoolean("backgroundService", false) */) {
+            onDestroy();
+            return;
+        }
+
         notificationRunnable = new Runnable() {
             @Override
             public void run() {
                 if (notification != null)
                     notification.send();
-                handler.postDelayed(this, 1000);
+                handler.postDelayed(this, sharedPreferences.getInt("backgroundUpdateInterval", 3));
             }
         };
 
@@ -54,7 +63,9 @@ public class NotificationService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        handler.removeCallbacks(notificationRunnable);
+
+        if (handler != null)
+            handler.removeCallbacks(notificationRunnable);
         if (notification != null)
             notification.cancel();
     }
