@@ -23,6 +23,7 @@ class _HomeBodyState extends State<HomeBody> {
   late Timer timer;
   late SharedPreferences sharedPreferences;
   Widget _progressIndicator = LinearProgressIndicator();
+  bool _isUpdating = false;
 
   double cardWidth = 185;
   double cardHeight = 75;
@@ -34,9 +35,9 @@ class _HomeBodyState extends State<HomeBody> {
   final int maxRsrp = -43;
 
   String _debug = "";
-  final List<Widget> _mainData = <Widget>[];
-  final List<Widget> _activeData = <Widget>[];
-  final List<Widget> _neighborData = <Widget>[];
+  List<Widget> _mainData = <Widget>[];
+  List<Widget> _activeData = <Widget>[];
+  List<Widget> _neighborData = <Widget>[];
 
   late SIMData oldSimData;
 
@@ -48,7 +49,9 @@ class _HomeBodyState extends State<HomeBody> {
 
     timer = Timer.periodic(
       Duration(seconds: sharedPreferences.getInt("updateInterval") ?? 3),
-      (Timer t) => update(),
+      (Timer t) {
+        if (!_isUpdating) update();
+      },
     );
   }
 
@@ -58,104 +61,107 @@ class _HomeBodyState extends State<HomeBody> {
     super.dispose();
   }
 
-  void update() {
+  Future<void> update() async {
+    if (_isUpdating) return;
+    _isUpdating = true;
+
     try {
-      () async {
-        final String jsonStr = await platform.invokeMethod("getNetworkData");
+      final String jsonStr = await platform.invokeMethod("getNetworkData");
+
+      setState(() {
+        _debug = jsonStr;
+      });
+
+      final Map<String, dynamic> map = json.decode(jsonStr);
+      late final SIMData simData;
+
+      try {
+        simData = SIMData.fromJson(map);
+      } catch (e) {
         setState(() {
-          _debug = jsonStr;
+          _debug = "$jsonStr\nError: $e";
         });
-        final Map<String, dynamic> map = json.decode(jsonStr);
-        final SIMData simData;
+        return;
+      }
 
-        try {
-          simData = SIMData.fromJson(map);
-        } catch (e) {
-          setState(() {
-            _debug = "$jsonStr $e";
-          });
+      final List<Widget> mainData = [];
 
-          return;
-        }
-
-        _mainData.clear();
-        _mainData.add(
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15.0),
-                ),
-                margin: EdgeInsets.only(bottom: 10),
-                color: Theme.of(context).colorScheme.onSecondary,
-                child: Container(
-                  width: cardWidth * 2 + 10,
-                  height: (cardHeight * 2) - 20,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        simData.primaryCell.cellIdentifierString,
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      SizedBox(height: 3),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Icon(Icons.network_cell_sharp, size: 50),
-                          Text(
-                            simData.primaryCell.cellIdentifier.toString(),
-                            style: TextStyle(fontSize: 24),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+      mainData.add(
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              margin: EdgeInsets.only(bottom: 10),
+              color: Theme.of(context).colorScheme.onSecondary,
+              child: Container(
+                width: cardWidth * 2 + 10,
+                height: (cardHeight * 2) - 20,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Text(
+                      simData.primaryCell.cellIdentifierString,
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    SizedBox(height: 3),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Icon(Icons.network_cell_sharp, size: 50),
+                        Text(
+                          simData.primaryCell.cellIdentifier.toString(),
+                          style: TextStyle(fontSize: 24),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        );
+            ),
+          ],
+        ),
+      );
 
-        List<String> elements = [
-          simData.primaryCell.rawSignalString,
-          "${simData.primaryCell.rawSignal}dBm",
-          simData.primaryCell.processedSignalString,
-          "${simData.primaryCell.processedSignal}dBm",
-          simData.primaryCell.signalQualityString,
-          "${simData.primaryCell.signalQuality}dBm",
-          simData.primaryCell.signalNoiseString,
-          "${simData.primaryCell.signalNoise}dBm",
-          simData.primaryCell.channelNumberString,
-          simData.primaryCell.channelNumber.toString(),
-          simData.primaryCell.stationIdentityString,
-          simData.primaryCell.stationIdentity.toString(),
-          simData.primaryCell.areaCodeString,
-          simData.primaryCell.areaCode.toString(),
-          simData.primaryCell.timingAdvanceString,
-          simData.primaryCell.timingAdvance.toString(),
-          simData.primaryCell.bandwidthString,
-          "${simData.primaryCell.bandwidth}MHz",
-          simData.primaryCell.bandString,
-          simData.primaryCell.band.toString(),
-        ];
+      final List<String> elements = [
+        simData.primaryCell.rawSignalString,
+        "${simData.primaryCell.rawSignal}dBm",
+        simData.primaryCell.processedSignalString,
+        "${simData.primaryCell.processedSignal}dBm",
+        simData.primaryCell.signalQualityString,
+        "${simData.primaryCell.signalQuality}dBm",
+        simData.primaryCell.signalNoiseString,
+        "${simData.primaryCell.signalNoise}dBm",
+        simData.primaryCell.channelNumberString,
+        simData.primaryCell.channelNumber.toString(),
+        simData.primaryCell.stationIdentityString,
+        simData.primaryCell.stationIdentity.toString(),
+        simData.primaryCell.areaCodeString,
+        simData.primaryCell.areaCode.toString(),
+        simData.primaryCell.timingAdvanceString,
+        simData.primaryCell.timingAdvance.toString(),
+        simData.primaryCell.bandwidthString,
+        "${simData.primaryCell.bandwidth}MHz",
+        simData.primaryCell.bandString,
+        simData.primaryCell.band.toString(),
+      ];
 
-        for (int i = 0; i < elements.length - 1; i += 2) {
-          //todo use oldSimData as cache for 1 attempt
-          if (i + 1 >= elements.length ||
-              elements[i + 1].contains("-1") ||
-              elements[i + 1].contains("2147483647")) {
-            continue;
-          }
+      final List<Widget> validCards = [];
 
-          Widget leftElement = Card(
+      for (int i = 0; i < elements.length - 1; i += 2) {
+        final String label = elements[i];
+        final String val = elements[i + 1];
+
+        if (val.contains("-1") || val.contains("2147483647")) continue;
+
+        validCards.add(
+          Card(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15.0),
             ),
-            margin: EdgeInsets.only(bottom: 10, right: 5),
+            margin: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
             color: Theme.of(context).colorScheme.onSecondary,
             child: Container(
               width: cardWidth,
@@ -164,111 +170,74 @@ class _HomeBodyState extends State<HomeBody> {
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   ListTile(
-                    title: Text(elements[i]),
-                    subtitle: Text(elements[i + 1]),
+                    title: Text(label),
+                    subtitle: Text(val),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[getTrailingIcon(simData, elements[i])],
+                      children: <Widget>[getTrailingIcon(simData, label)],
                     ),
                   ),
                 ],
               ),
             ),
-          );
+          ),
+        );
+      }
 
-          Widget rightElement;
+      for (int i = 0; i < validCards.length; i += 2) {
+        final Widget leftCard = validCards[i];
+        final Widget rightCard =
+            (i + 1 < validCards.length)
+                ? validCards[i + 1]
+                : Container(
+                  width: cardWidth,
+                  height: cardHeight,
+                  margin: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+                );
 
-          if (i + 3 < elements.length ||
-              !(elements[i + 3].contains("-1") ||
-                  elements[i + 3].contains("2147483647"))) {
-            rightElement = Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15.0),
-              ),
-              margin: EdgeInsets.only(bottom: 10, left: 5),
-              color: Theme.of(context).colorScheme.onSecondary,
-              child: Container(
-                width: cardWidth,
-                height: cardHeight,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    ListTile(
-                      title: Text(elements[i + 2]),
-                      subtitle: Text(elements[i + 3]),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          getTrailingIcon(simData, elements[i + 2]),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+        mainData.add(
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [leftCard, rightCard],
+          ),
+        );
+      }
+
+      final List<Widget> activeData =
+          simData.activeCells.map((cell) {
+            return ListTile(
+              title: Text(cell.bandString),
+              subtitle: Text(
+                "${cell.basicCellData.band} ${cell.bandwidth}MHz ${cell.processedSignal}dBm",
               ),
             );
+          }).toList();
 
-            i += 2;
-          } else {
-            rightElement = Container(
-              width: cardWidth,
-              height: cardHeight,
-              margin: EdgeInsets.only(bottom: 10, right: 5),
-            );
-          }
-
-          _mainData.add(
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [leftElement, rightElement],
-            ),
-          );
-        }
-
-        _activeData.clear(); //experimental
-        for (CellData activeCell in simData.activeCells) {
-          if (activeCell.basicCellData.band != -1) {
-            _activeData.add(
-              ListTile(
-                title: Text(activeCell.bandString),
-                subtitle: Text(
-                  "${activeCell.basicCellData.band} ${activeCell.bandwidth}MHz ${activeCell.processedSignal}dBm",
-                ),
+      final List<Widget> neighborData =
+          simData.neighborCells.map((cell) {
+            return ListTile(
+              title: Text(cell.bandString),
+              subtitle: Text(
+                "${cell.basicCellData.band} ${cell.bandwidth}MHz ${cell.processedSignal}dBm",
               ),
             );
-          }
-        }
-
-        _neighborData.clear(); //experimental
-        for (CellData neighborCell in simData.neighborCells) {
-          if (neighborCell.basicCellData.band != -1) {
-            _neighborData.add(
-              ListTile(
-                title: Text(neighborCell.bandString),
-                subtitle: Text(
-                  "${neighborCell.basicCellData.band} ${neighborCell.bandwidth}MHz ${neighborCell.processedSignal}dBm",
-                ),
-              ),
-            );
-          }
-        }
-
-        oldSimData = simData;
-
-        setState(() {
-          _debug = jsonStr;
-
-          _mainData;
-          _neighborData;
-          _progressIndicator = Container();
-        });
-      }();
-    } on PlatformException catch (err) {
-      _debug = err.toString();
+          }).toList();
 
       setState(() {
-        _debug;
+        _mainData = mainData;
+        _activeData = activeData;
+        _neighborData = neighborData;
+        _progressIndicator = Container();
+        _debug = jsonStr;
       });
+
+      oldSimData = simData;
+    } on PlatformException catch (err) {
+      setState(() {
+        _debug = "PlatformException: ${err.toString()}";
+      });
+    } finally {
+      _isUpdating = false;
     }
   }
 

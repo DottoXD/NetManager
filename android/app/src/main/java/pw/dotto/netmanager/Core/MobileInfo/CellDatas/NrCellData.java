@@ -18,7 +18,7 @@ public class NrCellData extends CellData {
                 "SNR",
                 "TA Microseconds",
                 "-",
-                "-",
+                "Band",
                 cellIdentifier,
                 rawSignal,
                 processedSignal,

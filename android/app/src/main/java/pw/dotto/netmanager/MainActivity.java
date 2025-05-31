@@ -96,11 +96,18 @@ public class MainActivity extends FlutterActivity {
               break;
 
             case "switchSim": // add checks for sim amount
-              if (selectedSim == 0)
-                selectedSim = 1;
-              else
-                selectedSim = 0;
+              if (manager.getSimCount() > 1) {
+                if (selectedSim == 0)
+                  selectedSim = 1;
+                else
+                  selectedSim = 0;
+              }
               result.success(true);
+              break;
+
+            case "getSimCount":
+              int count = manager.getSimCount();
+              result.success(count);
               break;
 
             default:
@@ -128,9 +135,5 @@ public class MainActivity extends FlutterActivity {
     Intent intent = new Intent(Intent.ACTION_MAIN);
     intent.setComponent(new ComponentName("com.android.phone", "com.android.phone.settings.RadioInfo"));
     startActivity(intent);
-  }
-
-  public Manager getManager() {
-    return manager;
   }
 }

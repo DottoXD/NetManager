@@ -1,6 +1,7 @@
 package pw.dotto.netmanager.Core;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
 import android.telephony.CellIdentity;
@@ -25,6 +26,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Executor;
@@ -49,6 +51,8 @@ public class Manager {
   private TelephonyManager secondManager;
 
   private DisplayInfoListener[] nsa = { null, null };
+  private Date lastModemUpdate = null;
+  private final int updateInterval = 30;
 
   public Manager(Context context) {
     this.context = context;
@@ -64,6 +68,9 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public String getFullHeaderString() {
+    if (!Utils.checkPermissions(context))
+      return "UNKNOWN";
+
     StringBuilder str = new StringBuilder();
 
     List<SubscriptionInfo> activeSubscriptionList = getSubscriptionManager().getActiveSubscriptionInfoList();
@@ -93,8 +100,9 @@ public class Manager {
         if (networkGen == 4 && getNsaStatus(1))
           networkGen = 5;
 
-        str.append(" | ").append(secondManager.getNetworkOperatorName()).append(" ").append(
-            networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G" + (nrSa ? " (SA)" : "")));
+        if (secondManager.getNetworkOperatorName() != null && !secondManager.getNetworkOperatorName().trim().isEmpty())
+          str.append(" | ").append(secondManager.getNetworkOperatorName()).append(" ").append(
+              networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G" + (nrSa ? " (SA)" : "")));
       }
     } else
       str.append("No service");
@@ -302,17 +310,17 @@ public class Manager {
     }
 
     if (data.getPrimaryCell() != null) {
-      Log.i("b", data.getPrimaryCell().toString());
+      Log.w("pw.dotto.netmanager", data.getPrimaryCell().toString());
       data.getPrimaryCell().setBasicCellData(DataExtractor.getBasicData(data.getPrimaryCell()));
     }
 
     for (CellData cellData : data.getActiveCells()) {
-      Log.i("b", cellData.toString());
+      Log.w("pw.dotto.netmanager", cellData.toString());
       cellData.setBasicCellData(DataExtractor.getBasicData(cellData));
     }
 
     for (CellData cellData : data.getNeighborCells()) {
-      Log.i("b", cellData.toString());
+      Log.w("pw.dotto.netmanager", cellData.toString());
       cellData.setBasicCellData(DataExtractor.getBasicData(cellData));
     }
 
@@ -324,6 +332,22 @@ public class Manager {
         if (!(cellData.getBandwidth() < 0 || cellData.getBandwidth() == CellInfo.UNAVAILABLE))
           data.setActiveBw(data.getActiveBw() + cellData.getBandwidth());
       }
+    }
+
+    try {
+      if (context instanceof Activity && data.getNeighborCells().length == 0 && data.getActiveCells().length == 0
+          && (lastModemUpdate == null
+              || lastModemUpdate.toInstant().plusSeconds(updateInterval).isBefore(new Date().toInstant()))) {
+        telephony.requestCellInfoUpdate(ContextCompat.getMainExecutor(context),
+            new TelephonyManager.CellInfoCallback() {
+              @Override
+              public void onCellInfo(@NonNull List<CellInfo> cellInfo) {
+                lastModemUpdate = new Date();
+              }
+            });
+      }
+    } catch (Exception e) {
+      Log.w("pw.dotto.netmanager", e.getMessage());
     }
 
     return data;
@@ -393,13 +417,16 @@ public class Manager {
     }
   }
 
+  @SuppressLint("MissingPermission")
   private void updateTelephonyManagers() {
-    SubscriptionManager manager = getSubscriptionManager();
-    if (!Utils.checkPermissions(context) || manager == null)
+    if (!Utils.checkPermissions(context))
       return;
 
-    @SuppressLint("MissingPermission")
-    List<SubscriptionInfo> subscriptions = manager.getActiveSubscriptionInfoList(); // add safety check
+    SubscriptionManager manager = getSubscriptionManager();
+    if (manager == null)
+      return;
+
+    List<SubscriptionInfo> subscriptions = manager.getActiveSubscriptionInfoList();
 
     if (subscriptions == null)
       return;
@@ -425,9 +452,22 @@ public class Manager {
 
       if (secondManager != null) {
         nsa[1] = new DisplayInfoListener();
-        firstManager.registerTelephonyCallback(executor, nsa[1]);
+        secondManager.registerTelephonyCallback(executor, nsa[1]);
       }
     }
+  }
+
+  @SuppressLint("MissingPermission")
+  public int getSimCount() {
+    if (!Utils.checkPermissions(context))
+      return 0;
+
+    SubscriptionManager manager = getSubscriptionManager();
+    if (manager == null)
+      return 0;
+
+    List<SubscriptionInfo> subscriptions = manager.getActiveSubscriptionInfoList();
+    return subscriptions == null ? 0 : subscriptions.size();
   }
 
   public boolean getNsaStatus(int index) {

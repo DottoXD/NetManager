@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
@@ -26,38 +27,53 @@ public class NotificationService extends Service {
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        return START_STICKY;
+    public void onCreate() {
+        super.onCreate();
     }
 
     @Override
-    public void onCreate() {
-        super.onCreate();
-        manager = new Manager(this);
-        notification = new MonitorNotification(this);
-        sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (manager == null) {
+            manager = new Manager(this);
+            notification = new MonitorNotification(this);
+            sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
+        }
         notification.setupNotifications();
         notification.send();
 
         startForeground(notification.getSelectedId(), notification.getActiveNotification());
 
-        handler = new Handler(Looper.getMainLooper());
-
-        if (sharedPreferences == null /* || !sharedPreferences.getBoolean("backgroundService", false) */) {
-            onDestroy();
-            return;
+        if (sharedPreferences == null || !sharedPreferences.getBoolean("flutter.backgroundService", false)) {
+            stopSelf();
+            return START_NOT_STICKY;
         }
 
-        notificationRunnable = new Runnable() {
-            @Override
-            public void run() {
-                if (notification != null)
-                    notification.send();
-                handler.postDelayed(this, sharedPreferences.getInt("backgroundUpdateInterval", 3));
-            }
-        };
+        if (handler == null)
+            handler = new Handler(Looper.getMainLooper());
+
+        if (notificationRunnable == null)
+            notificationRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    if (notification != null)
+                        notification.send();
+
+                    long millis = 3000;
+                    try {
+                        long seconds = sharedPreferences.getLong("flutter.backgroundUpdateInterval", 3);
+                        millis = seconds * 1000;
+                    } catch (ClassCastException e) {
+                        Log.e("pw.dotto.netmanager", "Broken SharedPreferences.", e);
+                    } catch (Exception e) {
+                        Log.w("pw.dotto.netmanager", e.getMessage() == null ? "No info." : e.getMessage());
+                    }
+                    handler.postDelayed(this, millis);
+                }
+            };
 
         handler.post(notificationRunnable);
+
+        return START_STICKY;
     }
 
     @Override

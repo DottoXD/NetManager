@@ -18,7 +18,7 @@ public class BootReceiver extends BroadcastReceiver {
             SharedPreferences sharedPreferences = context.getSharedPreferences("FlutterSharedPreferences",
                     Context.MODE_PRIVATE);
 
-            if (sharedPreferences != null && sharedPreferences.getBoolean("startupMonitoring", false))
+            if (sharedPreferences != null && sharedPreferences.getBoolean("flutter.startupMonitoring", false))
                 context.startForegroundService(notificationIntent);
         }
     }

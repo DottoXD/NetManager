@@ -109,7 +109,7 @@ public class MonitorNotification {
                 nodeStr = "Unavailable";
             }
 
-            contentText.append("SIM ").append(i + 1).append(" (")
+            contentText.append("SIM ").append(i + 1).append(" (").append(simData.getMccMnc()).append(", ")
                     .append((simData.getPrimaryCell() instanceof NrCellData ? "N" : "B"))
                     .append(simData.getPrimaryCell().getBasicCellData().getBand()).append(" ")
                     .append(simData.getPrimaryCell().getBasicCellData().getFrequency()).append("MHz)\n").append(nodeStr)
@@ -123,19 +123,18 @@ public class MonitorNotification {
                 contentText.append(simData.getPrimaryCell().getSignalNoiseString()).append(": ")
                         .append(simData.getPrimaryCell().getSignalNoise()).append("dBm ");
 
-            if (!contentText.toString().endsWith("\n"))
-                contentText.append("\n");
+            if (i == 0)
+                contentText.append("\n\n");
         }
 
         activeNotification = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
                 .setSmallIcon(android.R.drawable.stat_notify_sync) // got to make an icon as soon as i make an app logo
                 .setContentTitle(context.getManager().getFullHeaderString())
                 .setContentText(contentText.toString())
-                // change this
                 .setContentIntent(openPendingIntent)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setStyle(new NotificationCompat.BigTextStyle())
-                .setOngoing(true) // add check to compare with settings
+                .setOngoing(true)
                 .setSilent(true)
                 .addAction(android.R.drawable.stat_notify_sync, "Close", closingPendingIntent) // same here for the logo
                 .setAllowSystemGeneratedContextualActions(false);
