@@ -52,7 +52,7 @@ public class Manager {
 
   private DisplayInfoListener[] nsa = { null, null };
   private Date lastModemUpdate = null;
-  private final int updateInterval = 30;
+  private static final int updateInterval = 10;
 
   public Manager(Context context) {
     this.context = context;
@@ -164,8 +164,26 @@ public class Manager {
         telephony.getSimOperator());
     String simOperator = telephony.getSimOperator();
 
+    try {
+      if (context instanceof Activity && (lastModemUpdate == null || lastModemUpdate.toInstant().plusSeconds(updateInterval).isBefore(new Date().toInstant()))) {
+        Log.w("pw.dotto.netmanager", "Requesting updated cell info.");
+        telephony.requestCellInfoUpdate(ContextCompat.getMainExecutor(context),
+                new TelephonyManager.CellInfoCallback() {
+                  @Override
+                  public void onCellInfo(@NonNull List<CellInfo> cellInfo) {
+                    Log.w("pw.dotto.netmanager", "Found new cell: " + cellInfo);
+                    lastModemUpdate = new Date();
+                  }
+                });
+      }
+    } catch (Exception e) {
+      Log.w("pw.dotto.netmanager", e.getMessage() == null ? "Error." : e.getMessage());
+    }
+
     // telephony.requestCellInfoUpdate();
     for (CellInfo baseCell : telephony.getAllCellInfo()) {
+      Log.w("pw.dotto.netmanager", "Detected cell: " + baseCell.toString());
+
       switch (baseCell.getCellConnectionStatus()) {
         case CellInfo.CONNECTION_PRIMARY_SERVING:
           if (baseCell instanceof CellInfoGsm) {
@@ -243,7 +261,7 @@ public class Manager {
             String mccMnc = ((CellInfoLte) baseCell).getCellIdentity().getMccString()
                 + ((CellInfoLte) baseCell).getCellIdentity().getMncString();
 
-            if (mccMnc.equals(simOperator))
+            /*if (mccMnc.equals(simOperator))*/
               data.addActiveCell(lteCellData);
           } else if (baseCell instanceof CellInfoNr) {
             NrCellData nrCellData = CellExtractors.getNrCellData((CellInfoNr) baseCell);
@@ -252,7 +270,7 @@ public class Manager {
               CellIdentityNr identity = (CellIdentityNr) baseCell.getCellIdentity();
               String mccMnc = identity.getMccString() + identity.getMncString();
 
-              if (mccMnc.equals(simOperator))
+              /*if (mccMnc.equals(simOperator))*/
                 data.addActiveCell(nrCellData);
             } else
               data.addActiveCell(nrCellData);
@@ -290,7 +308,7 @@ public class Manager {
             String mccMnc = ((CellInfoLte) baseCell).getCellIdentity().getMccString()
                 + ((CellInfoLte) baseCell).getCellIdentity().getMncString();
 
-            if (mccMnc.equals(simOperator))
+            /*if (mccMnc.equals(simOperator))*/
               data.addNeighborCell(lteCellData);
           } else if (baseCell instanceof CellInfoNr) {
             NrCellData nrCellData = CellExtractors.getNrCellData((CellInfoNr) baseCell);
@@ -299,7 +317,7 @@ public class Manager {
               CellIdentityNr identity = (CellIdentityNr) baseCell.getCellIdentity();
               String mccMnc = identity.getMccString() + identity.getMncString();
 
-              if (mccMnc.equals(simOperator))
+              /*if (mccMnc.equals(simOperator))*/
                 data.addNeighborCell(nrCellData);
             } else
               data.addNeighborCell(nrCellData);
@@ -332,22 +350,6 @@ public class Manager {
         if (!(cellData.getBandwidth() < 0 || cellData.getBandwidth() == CellInfo.UNAVAILABLE))
           data.setActiveBw(data.getActiveBw() + cellData.getBandwidth());
       }
-    }
-
-    try {
-      if (context instanceof Activity && data.getNeighborCells().length == 0 && data.getActiveCells().length == 0
-          && (lastModemUpdate == null
-              || lastModemUpdate.toInstant().plusSeconds(updateInterval).isBefore(new Date().toInstant()))) {
-        telephony.requestCellInfoUpdate(ContextCompat.getMainExecutor(context),
-            new TelephonyManager.CellInfoCallback() {
-              @Override
-              public void onCellInfo(@NonNull List<CellInfo> cellInfo) {
-                lastModemUpdate = new Date();
-              }
-            });
-      }
-    } catch (Exception e) {
-      Log.w("pw.dotto.netmanager", e.getMessage());
     }
 
     return data;
