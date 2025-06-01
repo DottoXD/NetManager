@@ -3,7 +3,6 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:netmanager/types/cell_data.dart';
 import 'package:netmanager/types/sim_data.dart';
 import 'dart:async';
 
@@ -46,6 +45,8 @@ class _HomeBodyState extends State<HomeBody> {
     super.initState();
     platform = widget.platform;
     sharedPreferences = widget.sharedPreferences;
+
+    update();
 
     timer = Timer.periodic(
       Duration(seconds: sharedPreferences.getInt("updateInterval") ?? 3),

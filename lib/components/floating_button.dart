@@ -8,7 +8,7 @@ class FloatingButton extends StatelessWidget {
     return FloatingActionButton(
       onPressed: null,
       tooltip: 'Update data',
-      child: const Icon(Icons.update),
+      child: const Icon(Icons.update_rounded),
     );
   }
 }

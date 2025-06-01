@@ -17,9 +17,18 @@ class NavBar extends StatelessWidget {
       ),
       child: NavigationBar(
         destinations: [
-          NavigationDestination(icon: Icon(Icons.person), label: "Data"),
-          NavigationDestination(icon: Icon(Icons.location_on), label: "Map"),
-          NavigationDestination(icon: Icon(Icons.settings), label: "Settings"),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            label: "Data",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.location_on_outlined),
+            label: "Map",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            label: "Settings",
+          ),
         ],
         selectedIndex: page,
         onDestinationSelected: (index) {

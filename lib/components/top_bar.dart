@@ -19,9 +19,11 @@ class TopBar extends StatefulWidget implements PreferredSizeWidget {
 class _TopBarState extends State<TopBar> {
   late MethodChannel platform;
   late SharedPreferences sharedPreferences;
+  late Timer timer;
 
   String _title = "NetManager is loading...";
   String _carrier = "NetManager";
+  String _plmn = "00000";
   int _gen = 0;
 
   @override
@@ -30,21 +32,30 @@ class _TopBarState extends State<TopBar> {
     platform = widget.platform;
     sharedPreferences = widget.sharedPreferences;
 
-    Timer updateTimer = Timer.periodic(
+    update();
+
+    timer = Timer.periodic(
       Duration(seconds: sharedPreferences.getInt("updateInterval") ?? 3),
       (Timer t) => update(),
     ); //i should make it so that changing the settings restarts it
+  }
+
+  @override
+  void dispose() {
+    timer.cancel();
+    super.dispose();
   }
 
   void update() {
     try {
       () async {
         _carrier = (await platform.invokeMethod<String>("getCarrier"))!;
+        _plmn = (await platform.invokeMethod<String>("getPlmn"))!;
         _gen = await platform.invokeMethod<int>("getNetworkGen") as int;
       }();
 
       if (_gen > 0) {
-        _title = "${"$_carrier $_gen"}G";
+        _title = "${"$_carrier $_gen"}G ($_plmn)";
       } else {
         _title = "No service";
       }

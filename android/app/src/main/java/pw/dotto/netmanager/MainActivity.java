@@ -80,6 +80,11 @@ public class MainActivity extends FlutterActivity {
               result.success(gen);
               break;
 
+            case "getPlmn":
+              String plmn = manager.getPlmn(selectedSim);
+              result.success(plmn);
+              break;
+
             case "sendNotification":
               startForegroundService(new Intent(this, NotificationService.class));
               result.success(true);

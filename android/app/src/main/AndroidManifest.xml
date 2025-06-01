@@ -44,7 +44,7 @@
                 <action android:name="CLOSE_NOTIFICATION" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".Core.BootReceiver" android:exported="false" android:enabled="true">
+        <receiver android:name=".Core.BootReceiver" android:exported="true" android:enabled="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>

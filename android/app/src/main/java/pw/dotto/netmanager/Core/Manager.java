@@ -86,6 +86,9 @@ public class Manager {
       if (networkGen == 4 && getNsaStatus(0))
         networkGen = 5;
 
+      if (firstManager.getNetworkOperatorName().trim().isEmpty())
+        return "NO SERVICE";
+
       str.append(firstManager.getNetworkOperatorName()).append(" ").append(
           networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G" + (nrSa ? " (SA)" : "")));
 
@@ -105,7 +108,7 @@ public class Manager {
               networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G" + (nrSa ? " (SA)" : "")));
       }
     } else
-      str.append("No service");
+      str.append("NO SERVICE");
 
     return str.toString().trim();
   }
@@ -165,16 +168,17 @@ public class Manager {
     String simOperator = telephony.getSimOperator();
 
     try {
-      if (context instanceof Activity && (lastModemUpdate == null || lastModemUpdate.toInstant().plusSeconds(updateInterval).isBefore(new Date().toInstant()))) {
+      if (lastModemUpdate == null || (context instanceof Activity
+          && lastModemUpdate.toInstant().plusSeconds(updateInterval).isBefore(new Date().toInstant()))) {
         Log.w("pw.dotto.netmanager", "Requesting updated cell info.");
         telephony.requestCellInfoUpdate(ContextCompat.getMainExecutor(context),
-                new TelephonyManager.CellInfoCallback() {
-                  @Override
-                  public void onCellInfo(@NonNull List<CellInfo> cellInfo) {
-                    Log.w("pw.dotto.netmanager", "Found new cell: " + cellInfo);
-                    lastModemUpdate = new Date();
-                  }
-                });
+            new TelephonyManager.CellInfoCallback() {
+              @Override
+              public void onCellInfo(@NonNull List<CellInfo> cellInfo) {
+                Log.w("pw.dotto.netmanager", "Found new cell: " + cellInfo);
+                lastModemUpdate = new Date();
+              }
+            });
       }
     } catch (Exception e) {
       Log.w("pw.dotto.netmanager", e.getMessage() == null ? "Error." : e.getMessage());
@@ -261,8 +265,9 @@ public class Manager {
             String mccMnc = ((CellInfoLte) baseCell).getCellIdentity().getMccString()
                 + ((CellInfoLte) baseCell).getCellIdentity().getMncString();
 
-            /*if (mccMnc.equals(simOperator))*/
-              data.addActiveCell(lteCellData);
+            lteCellData.setCellIdentifier(mccMnc); // test
+            /* if (mccMnc.equals(simOperator)) */
+            data.addActiveCell(lteCellData);
           } else if (baseCell instanceof CellInfoNr) {
             NrCellData nrCellData = CellExtractors.getNrCellData((CellInfoNr) baseCell);
 
@@ -270,8 +275,9 @@ public class Manager {
               CellIdentityNr identity = (CellIdentityNr) baseCell.getCellIdentity();
               String mccMnc = identity.getMccString() + identity.getMncString();
 
-              /*if (mccMnc.equals(simOperator))*/
-                data.addActiveCell(nrCellData);
+              nrCellData.setCellIdentifier(mccMnc); // test
+              /* if (mccMnc.equals(simOperator)) */
+              data.addActiveCell(nrCellData);
             } else
               data.addActiveCell(nrCellData);
           }
@@ -308,8 +314,10 @@ public class Manager {
             String mccMnc = ((CellInfoLte) baseCell).getCellIdentity().getMccString()
                 + ((CellInfoLte) baseCell).getCellIdentity().getMncString();
 
-            /*if (mccMnc.equals(simOperator))*/
-              data.addNeighborCell(lteCellData);
+            lteCellData.setCellIdentifier(mccMnc); // test
+
+            /* if (mccMnc.equals(simOperator)) */
+            data.addNeighborCell(lteCellData);
           } else if (baseCell instanceof CellInfoNr) {
             NrCellData nrCellData = CellExtractors.getNrCellData((CellInfoNr) baseCell);
 
@@ -317,8 +325,9 @@ public class Manager {
               CellIdentityNr identity = (CellIdentityNr) baseCell.getCellIdentity();
               String mccMnc = identity.getMccString() + identity.getMncString();
 
-              /*if (mccMnc.equals(simOperator))*/
-                data.addNeighborCell(nrCellData);
+              nrCellData.setCellIdentifier(mccMnc); // test
+              /* if (mccMnc.equals(simOperator)) */
+              data.addNeighborCell(nrCellData);
             } else
               data.addNeighborCell(nrCellData);
           }
@@ -331,6 +340,9 @@ public class Manager {
       Log.w("pw.dotto.netmanager", data.getPrimaryCell().toString());
       data.getPrimaryCell().setBasicCellData(DataExtractor.getBasicData(data.getPrimaryCell()));
     }
+
+    data.addNeighborCell(data.getPrimaryCell());
+    data.addActiveCell(data.getPrimaryCell());
 
     for (CellData cellData : data.getActiveCells()) {
       Log.w("pw.dotto.netmanager", cellData.toString());
@@ -416,6 +428,26 @@ public class Manager {
         return getSimNetworkGen(secondManager);
       default:
         return -1;
+    }
+  }
+
+  @SuppressLint("MissingPermission")
+  public String getPlmn(TelephonyManager telephony) {
+    if (telephony == null || !Utils.checkPermissions(context))
+      return "00000";
+
+    return telephony.getNetworkOperator();
+  }
+
+  @SuppressLint("MissingPermission")
+  public String getPlmn(int simId) {
+    switch (simId) {
+      case 0:
+        return getPlmn(firstManager);
+      case 1:
+        return getPlmn(secondManager);
+      default:
+        return "00000";
     }
   }
 
