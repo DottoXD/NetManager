@@ -54,7 +54,7 @@ class _TopBarState extends State<TopBar> {
         _gen = await platform.invokeMethod<int>("getNetworkGen") as int;
       }();
 
-      if (_gen > 0) {
+      if (_gen > 0 && _plmn.isNotEmpty) {
         _title = "${"$_carrier $_gen"}G ($_plmn)";
       } else {
         _title = "No service";

@@ -50,7 +50,7 @@ public class MonitorNotification {
         if (notificationChannel == null) {
             notificationChannel = new NotificationChannel(
                     NOTIFICATION_CHANNEL,
-                    "NetManager",
+                    "NetManager", // to be updated
                     NotificationManager.IMPORTANCE_LOW);
 
             notificationChannel.enableVibration(false);
@@ -98,7 +98,7 @@ public class MonitorNotification {
         for (int i = 0; i < 2; i++) {
             SIMData simData = context.getManager().getSimNetworkData(i);
             if (simData == null || simData.getPrimaryCell() == null)
-                break;
+                continue;
 
             String nodeStr;
 
@@ -126,6 +126,9 @@ public class MonitorNotification {
             if (i == 0)
                 contentText.append("\n\n");
         }
+
+        if (contentText.toString().trim().isBlank())
+            contentText.append("No service");
 
         activeNotification = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
                 .setSmallIcon(android.R.drawable.stat_notify_sync) // got to make an icon as soon as i make an app logo

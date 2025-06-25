@@ -25,7 +25,7 @@ class _HomeBodyState extends State<HomeBody> {
   bool _isUpdating = false;
 
   double cardWidth = 185;
-  double cardHeight = 75;
+  double cardHeight = 90;
 
   final int minRssi = -113;
   final int maxRssi = -51;
@@ -34,11 +34,12 @@ class _HomeBodyState extends State<HomeBody> {
   final int maxRsrp = -43;
 
   String _debug = "";
+  String plmn = "";
   List<Widget> _mainData = <Widget>[];
   List<Widget> _activeData = <Widget>[];
   List<Widget> _neighborData = <Widget>[];
 
-  late SIMData oldSimData;
+  late SIMData? oldSimData;
 
   @override
   void initState() {
@@ -78,6 +79,7 @@ class _HomeBodyState extends State<HomeBody> {
 
       try {
         simData = SIMData.fromJson(map);
+        plmn = simData.mccMnc;
       } catch (e) {
         setState(() {
           _debug = "$jsonStr\nError: $e";
@@ -96,7 +98,7 @@ class _HomeBodyState extends State<HomeBody> {
                 borderRadius: BorderRadius.circular(15.0),
               ),
               margin: EdgeInsets.only(bottom: 10),
-              color: Theme.of(context).colorScheme.onSecondary,
+              color: Theme.of(context).colorScheme.primaryContainer,
               child: Container(
                 width: cardWidth * 2 + 10,
                 height: (cardHeight * 2) - 20,
@@ -158,27 +160,32 @@ class _HomeBodyState extends State<HomeBody> {
         if (val.contains("-1") || val.contains("2147483647")) continue;
 
         validCards.add(
-          Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15.0),
-            ),
-            margin: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
-            color: Theme.of(context).colorScheme.onSecondary,
-            child: Container(
-              width: cardWidth,
-              height: cardHeight,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  ListTile(
-                    title: Text(label),
-                    subtitle: Text(val),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[getTrailingIcon(simData, label)],
-                    ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+            child: Expanded(
+              child: Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15.0),
+                ),
+                margin: EdgeInsets.symmetric(vertical: 5),
+                color: Theme.of(context).colorScheme.primaryContainer,
+                child: Container(
+                  width: cardWidth,
+                  height: cardHeight,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      ListTile(
+                        title: Text(label),
+                        subtitle: Text(val),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[getTrailingIcon(simData, label)],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -209,7 +216,7 @@ class _HomeBodyState extends State<HomeBody> {
             return ListTile(
               title: Text(cell.bandString),
               subtitle: Text(
-                "${cell.basicCellData.band} ${cell.bandwidth}MHz ${cell.processedSignal}dBm",
+                "${cell.basicCellData.band}, ${cell.bandwidth}MHz ${cell.processedSignal}dBm. ${cell.areaCode}, ${cell.cellIdentifier}, ${cell.channelNumber}",
               ),
             );
           }).toList();
@@ -219,7 +226,7 @@ class _HomeBodyState extends State<HomeBody> {
             return ListTile(
               title: Text(cell.bandString),
               subtitle: Text(
-                "${cell.basicCellData.band} ${cell.bandwidth}MHz ${cell.processedSignal}dBm",
+                "${cell.basicCellData.band}, ${cell.bandwidth}MHz ${cell.processedSignal}dBm. ${cell.areaCode}, ${cell.cellIdentifier}, ${cell.channelNumber}",
               ),
             );
           }).toList();
@@ -248,28 +255,72 @@ class _HomeBodyState extends State<HomeBody> {
       scrollDirection: Axis.vertical,
       child: Column(
         children: <Widget>[
-          Row(children: [Expanded(child: _progressIndicator)]),
-          Container(
-            margin: EdgeInsets.only(top: 10, left: 10, right: 10),
-            child: Column(children: _mainData),
-          ),
-          Text("Active Cells"), //temporary
-          Container(
-            margin: EdgeInsets.only(top: 10, left: 10, right: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: _activeData,
+          if (oldSimData != null && plmn.isEmpty) //might add a loading screen?
+            Container(
+              height: MediaQuery.of(context).size.height,
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Icon(
+                    Icons.airplanemode_on,
+                    size: 100,
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    "Airplane mode on",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            )
+          else
+            Column(
+              children: <Widget>[
+                Row(children: [Expanded(child: _progressIndicator)]),
+                Container(
+                  margin: EdgeInsets.only(
+                    top: 10,
+                    left: 10,
+                    right: 10,
+                    bottom: 10,
+                  ),
+                  child: Column(children: _mainData),
+                ),
+                (_activeData.isNotEmpty
+                    ? Text("Active Cells")
+                    : Container()), //temporary
+                Container(
+                  margin: EdgeInsets.only(
+                    top: 10,
+                    left: 10,
+                    right: 10,
+                    bottom: 10,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: _activeData,
+                  ),
+                ),
+                (_neighborData.isNotEmpty
+                    ? Text("Neighbor Cells")
+                    : Container()), //temporary
+                Container(
+                  margin: EdgeInsets.only(
+                    top: 10,
+                    left: 10,
+                    right: 10,
+                    bottom: 10,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: _neighborData,
+                  ),
+                ),
+                Text(_debug),
+              ],
             ),
-          ),
-          Text("Neighbor Cells"), //temporary
-          Container(
-            margin: EdgeInsets.only(top: 10, left: 10, right: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: _neighborData,
-            ),
-          ),
-          Text(_debug),
         ],
       ),
     );
