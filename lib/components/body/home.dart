@@ -98,6 +98,7 @@ class _HomeBodyState extends State<HomeBody> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Card(
+              elevation: 3,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15.0),
               ),
@@ -117,7 +118,7 @@ class _HomeBodyState extends State<HomeBody> {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        Icon(Icons.network_cell_sharp, size: 50),
+                        Icon(Icons.signal_cellular_4_bar_rounded, size: 40),
                         Text(
                           simData.primaryCell.cellIdentifier.toString(),
                           style: TextStyle(fontSize: 24),
@@ -150,7 +151,7 @@ class _HomeBodyState extends State<HomeBody> {
         simData.primaryCell.timingAdvanceString,
         simData.primaryCell.timingAdvance.toString(),
         simData.primaryCell.bandwidthString,
-        "${simData.primaryCell.bandwidth}MHz",
+        "${simData.activeBw}MHz",
         simData.primaryCell.bandString,
         simData.primaryCell.band.toString(),
       ];
@@ -161,7 +162,11 @@ class _HomeBodyState extends State<HomeBody> {
         final String label = elements[i];
         final String val = elements[i + 1];
 
-        if (val.contains("-1") || val.contains("2147483647")) continue;
+        if (val.contains("-1") ||
+            val.contains("2147483647") ||
+            val.contains("null")) {
+          continue;
+        }
 
         validCards.add(
           Card(
@@ -224,21 +229,97 @@ class _HomeBodyState extends State<HomeBody> {
 
       final List<Widget> activeData =
           simData.activeCells.map((cell) {
+            String bandContent = "";
+
+            int? cellId = int.tryParse(cell.cellIdentifier);
+            if (cell.cellIdentifier != "null" && cellId != null) {
+              bandContent += "${cellId / 256}/${cellId % 256} ";
+            }
+            if (!(cell.bandwidth == -1 && cell.bandwidth == 2147483647)) {
+              bandContent += "${cell.bandwidthString}: ${cell.bandwidth}MHz ";
+            }
+
+            if (!(cell.areaCode == -1 && cell.areaCode == 2147483647)) {
+              bandContent += "${cell.areaCodeString}: ${cell.areaCode} ";
+            }
+
+            if (!(cell.channelNumber == -1 &&
+                cell.channelNumber == 2147483647)) {
+              bandContent +=
+                  "${cell.channelNumberString}: ${cell.channelNumber} ";
+            }
+
+            if (!(cell.rawSignal == -1 && cell.rawSignal == 2147483647)) {
+              bandContent += "${cell.rawSignal}dBm ";
+            }
+
+            if (!(cell.processedSignal == -1 &&
+                cell.processedSignal == 2147483647)) {
+              bandContent += "${cell.processedSignal}dBm ";
+            }
+
+            if (!(cell.signalQuality == -1 &&
+                cell.signalQuality == 2147483647)) {
+              bandContent += "${cell.signalQuality}dBm ";
+            }
+
+            if (!(cell.signalNoise == -1 && cell.signalNoise == 2147483647)) {
+              bandContent += "${cell.signalNoise}dBm ";
+            }
+
             return ListTile(
-              title: Text(cell.bandString),
-              subtitle: Text(
-                "${cell.basicCellData.band}, ${cell.bandwidth}MHz ${cell.processedSignal}dBm. ${cell.areaCode}, ${cell.cellIdentifier}, ${cell.channelNumber}",
+              title: Text(
+                "${cell.channelNumberString == "ARFCN" ? "N" : "B"}${cell.basicCellData.band} (${cell.basicCellData.frequency}MHz)",
               ),
+              subtitle: Text(bandContent),
             );
           }).toList();
 
       final List<Widget> neighborData =
           simData.neighborCells.map((cell) {
+            String bandContent = "";
+
+            int? cellId = int.tryParse(cell.cellIdentifier);
+            if (cell.cellIdentifier != "null" && cellId != null) {
+              bandContent += "${cellId / 256}/${cellId % 256} ";
+            }
+            if (!(cell.bandwidth == -1 && cell.bandwidth == 2147483647)) {
+              bandContent += "${cell.bandwidthString}: ${cell.bandwidth}MHz ";
+            }
+
+            if (!(cell.areaCode == -1 && cell.areaCode == 2147483647)) {
+              bandContent += "${cell.areaCodeString}: ${cell.areaCode} ";
+            }
+
+            if (!(cell.channelNumber == -1 &&
+                cell.channelNumber == 2147483647)) {
+              bandContent +=
+                  "${cell.channelNumberString}: ${cell.channelNumber} ";
+            }
+
+            if (!(cell.rawSignal == -1 && cell.rawSignal == 2147483647)) {
+              bandContent += "${cell.rawSignal}dBm ";
+            }
+
+            if (!(cell.processedSignal == -1 &&
+                cell.processedSignal == 2147483647)) {
+              bandContent += "${cell.processedSignal}dBm ";
+            }
+
+            if (!(cell.signalQuality == -1 &&
+                cell.signalQuality == 2147483647)) {
+              bandContent += "${cell.signalQuality}dBm ";
+            }
+
+            if (!(cell.signalNoise == -1 && cell.signalNoise == 2147483647)) {
+              bandContent += "${cell.signalNoise}dBm ";
+            }
+
             return ListTile(
-              title: Text(cell.bandString),
-              subtitle: Text(
-                "${cell.basicCellData.band}, ${cell.bandwidth}MHz ${cell.processedSignal}dBm. ${cell.areaCode}, ${cell.cellIdentifier}, ${cell.channelNumber}",
+              title: Text(
+                "${cell.channelNumberString == "ARFCN" ? "N" : "B"}${cell.basicCellData.band} (${cell.basicCellData.frequency}MHz)",
               ),
+              subtitle: Text(bandContent),
             );
           }).toList();
 
@@ -264,7 +345,24 @@ class _HomeBodyState extends State<HomeBody> {
       scrollDirection: Axis.vertical,
       child: Column(
         children: <Widget>[
-          if (started && plmn.isEmpty) //might add a loading screen?
+          if (!started)
+            Container(
+              height: MediaQuery.of(context).size.height,
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Icon(
+                    Icons.refresh,
+                    size: 80,
+                    //color: Theme.of(context).colorScheme.primaryContainer,
+                  ),
+                  SizedBox(height: 20),
+                  Text("Loading data...", style: TextStyle(fontSize: 22)),
+                ],
+              ),
+            )
+          else if (started && plmn.isEmpty)
             Container(
               height: MediaQuery.of(context).size.height,
               alignment: Alignment.center,
@@ -324,7 +422,9 @@ class _HomeBodyState extends State<HomeBody> {
                     ),
                   ),
                 ],
-                (_debug.isNotEmpty ? Text("Debug: $_debug") : Container()),
+                (_debug.isNotEmpty && _debug != "null"
+                    ? Text("Debug: $_debug")
+                    : Container()),
               ],
             ),
         ],

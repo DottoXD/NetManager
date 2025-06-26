@@ -168,8 +168,11 @@ public class Manager {
     String simOperator = telephony.getSimOperator();
 
     try {
-      if (lastModemUpdate == null || (context instanceof Activity
-          && lastModemUpdate.toInstant().plusSeconds(updateInterval).isBefore(new Date().toInstant()))) {
+      if (lastModemUpdate == null
+          || (/*
+               * context instanceof Activity
+               * &&
+               */ lastModemUpdate.toInstant().plusSeconds(updateInterval).isBefore(new Date().toInstant()))) {
         Log.w("pw.dotto.netmanager", "Requesting updated cell info.");
         telephony.requestCellInfoUpdate(ContextCompat.getMainExecutor(context),
             new TelephonyManager.CellInfoCallback() {
@@ -341,11 +344,16 @@ public class Manager {
       data.getPrimaryCell().setBasicCellData(DataExtractor.getBasicData(data.getPrimaryCell()));
     }
 
-    // data.addNeighborCell(data.getPrimaryCell());
     data.addActiveCell(data.getPrimaryCell());
 
     for (CellData cellData : data.getActiveCells()) {
       Log.w("pw.dotto.netmanager", cellData.toString());
+
+      if (!cellData.isRegistered()) {
+        data.addNeighborCell(cellData);
+        data.removeActiveCell(cellData);
+      }
+
       cellData.setBasicCellData(DataExtractor.getBasicData(cellData));
     }
 
@@ -359,7 +367,8 @@ public class Manager {
 
       data.setActiveBw(data.getPrimaryCell().getBandwidth());
       for (CellData cellData : data.getActiveCells()) {
-        if (!(cellData.getBandwidth() < 0 || cellData.getBandwidth() == CellInfo.UNAVAILABLE))
+        if (!(cellData.getBandwidth() < 0 || cellData.getBandwidth() == CellInfo.UNAVAILABLE)
+            && !data.getPrimaryCell().equals(cellData))
           data.setActiveBw(data.getActiveBw() + cellData.getBandwidth());
       }
     }
