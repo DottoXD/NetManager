@@ -1,7 +1,5 @@
 package pw.dotto.netmanager.Core.MobileInfo.CellDatas;
 
-import pw.dotto.netmanager.Core.MobileInfo.CellData;
-
 public class TdscmaCellData extends CellData {
 
     public TdscmaCellData(String cellIdentifier, int rawSignal, int processedSignal, int channelNumber,

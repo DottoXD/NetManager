@@ -26,6 +26,8 @@ class _NetManagerState extends State<NetManager> {
   late ColorScheme _lightColorScheme;
   late ColorScheme _darkColorScheme;
 
+  final ValueNotifier<bool> dynamicThemeNotifier = ValueNotifier<bool>(true);
+
   @override
   void initState() {
     super.initState();
@@ -42,32 +44,40 @@ class _NetManagerState extends State<NetManager> {
           Color color = Color(
             sharedPreferences.getInt("backgroundColor") ?? 0xFF157F76,
           );
-          bool dynamicTheme = sharedPreferences.getBool("dynamicTheme") ?? true;
+          dynamicThemeNotifier.value =
+              sharedPreferences.getBool("dynamicTheme") ?? true;
 
-          return DynamicColorBuilder(
-            builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-              if (lightDynamic == null && darkDynamic == null) {
-                sharedPreferences.setBool("dynamicSupported", false);
-              } else {
-                sharedPreferences.setBool("dynamicSupported", true);
-              }
+          return ValueListenableBuilder(
+            valueListenable: dynamicThemeNotifier,
+            builder: (context, dynamicTheme, _) {
+              return DynamicColorBuilder(
+                builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+                  if (lightDynamic == null && darkDynamic == null) {
+                    sharedPreferences.setBool("dynamicSupported", false);
+                  } else {
+                    sharedPreferences.setBool("dynamicSupported", true);
+                  }
 
-              if (lightDynamic != null && darkDynamic != null && dynamicTheme) {
-                _lightColorScheme = lightDynamic.harmonized();
-                _darkColorScheme = darkDynamic.harmonized();
-              } else {
-                _lightColorScheme = ColorScheme.fromSeed(seedColor: color);
-                _darkColorScheme = ColorScheme.fromSeed(
-                  seedColor: color,
-                  brightness: Brightness.dark,
-                );
-              }
+                  if (lightDynamic != null &&
+                      darkDynamic != null &&
+                      dynamicTheme) {
+                    _lightColorScheme = lightDynamic.harmonized();
+                    _darkColorScheme = darkDynamic.harmonized();
+                  } else {
+                    _lightColorScheme = ColorScheme.fromSeed(seedColor: color);
+                    _darkColorScheme = ColorScheme.fromSeed(
+                      seedColor: color,
+                      brightness: Brightness.dark,
+                    );
+                  }
 
-              return MaterialApp(
-                theme: ThemeData(colorScheme: _lightColorScheme),
-                darkTheme: ThemeData(colorScheme: _darkColorScheme),
-                home: Home(sharedPreferences),
-                debugShowCheckedModeBanner: false,
+                  return MaterialApp(
+                    theme: ThemeData(colorScheme: _lightColorScheme),
+                    darkTheme: ThemeData(colorScheme: _darkColorScheme),
+                    home: Home(sharedPreferences, dynamicThemeNotifier),
+                    debugShowCheckedModeBanner: false,
+                  );
+                },
               );
             },
           );

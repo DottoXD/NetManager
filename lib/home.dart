@@ -10,8 +10,9 @@ import 'components/floating_button.dart';
 import 'components/nav_bar.dart';
 
 class Home extends StatefulWidget {
-  const Home(this.sharedPreferences, {super.key});
+  const Home(this.sharedPreferences, this.dynamicThemeNotifier, {super.key});
   final SharedPreferences sharedPreferences;
+  final ValueNotifier<bool> dynamicThemeNotifier;
 
   @override
   State<Home> createState() => _HomeState();
@@ -27,10 +28,16 @@ class _HomeState extends State<Home> {
   void initState() {
     super.initState();
 
+    bool homeLoaded = false;
+
     _pages = [
-      HomeBody(platform, widget.sharedPreferences),
+      HomeBody(platform, widget.sharedPreferences, homeLoaded),
       MapBody(platform, widget.sharedPreferences),
-      SettingsBody(platform, widget.sharedPreferences),
+      SettingsBody(
+        platform,
+        widget.sharedPreferences,
+        widget.dynamicThemeNotifier,
+      ),
     ];
 
     try {

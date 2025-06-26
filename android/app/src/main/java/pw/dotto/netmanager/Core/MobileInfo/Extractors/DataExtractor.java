@@ -1,7 +1,7 @@
-package pw.dotto.netmanager.Core.MobileInfo;
+package pw.dotto.netmanager.Core.MobileInfo.Extractors;
 
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.BasicCellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CdmaCellData;
+import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.GsmCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.LteCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.NrCellData;

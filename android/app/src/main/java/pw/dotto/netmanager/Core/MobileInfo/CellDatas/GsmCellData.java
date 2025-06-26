@@ -1,7 +1,5 @@
 package pw.dotto.netmanager.Core.MobileInfo.CellDatas;
 
-import pw.dotto.netmanager.Core.MobileInfo.CellData;
-
 public class GsmCellData extends CellData {
 
     public GsmCellData(String cellIdentifier, int rawSignal, int processedSignal, int channelNumber,

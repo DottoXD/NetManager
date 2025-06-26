@@ -3,9 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsBody extends StatefulWidget {
-  const SettingsBody(this.platform, this.sharedPreferences, {super.key});
+  const SettingsBody(
+    this.platform,
+    this.sharedPreferences,
+    this.dynamicThemeNotifier, {
+    super.key,
+  });
   final MethodChannel platform;
   final SharedPreferences sharedPreferences;
+  final ValueNotifier<bool> dynamicThemeNotifier;
 
   @override
   State<SettingsBody> createState() => _SettingsBodyState();
@@ -14,6 +20,7 @@ class SettingsBody extends StatefulWidget {
 class _SettingsBodyState extends State<SettingsBody> {
   late MethodChannel platform;
   late SharedPreferences sharedPreferences;
+  late ValueNotifier<bool> dynamicThemeNotifier;
 
   final List<String> positionPrecisions = ["Off", "Low", "Medium", "High"];
 
@@ -37,6 +44,7 @@ class _SettingsBodyState extends State<SettingsBody> {
     super.initState();
     platform = widget.platform;
     sharedPreferences = widget.sharedPreferences;
+    dynamicThemeNotifier = widget.dynamicThemeNotifier;
 
     updateData();
     _selection = positionPrecisions[_positionPrecision];
@@ -244,6 +252,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                           if (_dynamicSupported) {
                             setBool("dynamicTheme", value);
                             updateData();
+                            dynamicThemeNotifier.value = value;
                           }
                         },
                       ),
@@ -270,7 +279,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                       ),
                     ),
                     ListTile(
-                      title: Text("Maximum logs (${_maximumLogs}s)"),
+                      title: Text("Maximum logs ($_maximumLogs)"),
                       subtitle: Text(
                         "The maximum amount of events that should be logged and stored.",
                       ),
@@ -279,7 +288,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                     if (_logEvents)
                       Slider(
                         value: _maximumLogs.toDouble(),
-                        max: 100,
+                        max: 500,
                         min: 10,
                         label: _maximumLogs.toString(),
                         onChanged: (double value) {

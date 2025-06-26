@@ -1,4 +1,4 @@
-package pw.dotto.netmanager.Core.MobileInfo;
+package pw.dotto.netmanager.Core.MobileInfo.Extractors;
 
 import android.os.Build;
 import android.telephony.CellIdentityCdma;
@@ -29,7 +29,7 @@ import pw.dotto.netmanager.Core.MobileInfo.CellDatas.NrCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.TdscmaCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.WcdmaCellData;
 
-public class CellExtractors {
+public class CellExtractor {
     @NonNull
     public static GsmCellData getGsmCellData(CellInfoGsm baseCell) {
         CellIdentityGsm identityGsm = (CellIdentityGsm) baseCell.getCellIdentity();

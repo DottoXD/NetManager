@@ -16,10 +16,7 @@ public class Utils {
                                                 Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED
                                 && ActivityCompat.checkSelfPermission(
                                                 context,
-                                                Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
-                                && ActivityCompat.checkSelfPermission(
-                                                context,
-                                                Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED;
+                                                Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED;
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         return basePerms && ActivityCompat.checkSelfPermission(

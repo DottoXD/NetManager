@@ -26,18 +26,53 @@ class _TopBarState extends State<TopBar> {
   String _plmn = "00000";
   int _gen = 0;
 
+  Widget _switchSimButton = Container();
+  int simCount = 0;
+
+  Widget _logsButton = Container();
+
   @override
   void initState() {
     super.initState();
     platform = widget.platform;
     sharedPreferences = widget.sharedPreferences;
 
-    update();
+    bool? logEvents = sharedPreferences.getBool(
+      "logEvents",
+    ); //still gotta make it update with settings
+    if (logEvents != null && logEvents) {
+      setState(() {
+        _logsButton = IconButton(
+          onPressed: openLogs,
+          icon: Icon(Icons.my_library_books_outlined),
+          tooltip: "Event logs",
+        ); //temporarily like that
+      });
+    }
 
-    timer = Timer.periodic(
-      Duration(seconds: sharedPreferences.getInt("updateInterval") ?? 3),
-      (Timer t) => update(),
-    ); //i should make it so that changing the settings restarts it
+    platform.setMethodCallHandler((call) {
+      if (call.method == "restartTimer") {
+        restartTimer();
+        return Future.value();
+      }
+
+      return Future.value();
+    });
+
+    startTimer();
+
+    () async {
+      simCount = await platform.invokeMethod("getSimCount");
+      if (simCount > 1) {
+        setState(() {
+          _switchSimButton = IconButton(
+            onPressed: switchSim,
+            icon: Icon(Icons.sim_card_outlined),
+            tooltip: "Switch SIM card",
+          );
+        });
+      }
+    }();
   }
 
   @override
@@ -80,14 +115,35 @@ class _TopBarState extends State<TopBar> {
     }();
   }
 
+  void openLogs() {}
+
   @override
   Widget build(BuildContext context) {
     return AppBar(
       title: Text(_title),
       actions: [
-        IconButton(onPressed: openRadioInfo, icon: Icon(Icons.info)),
-        IconButton(onPressed: switchSim, icon: Icon(Icons.menu)),
+        IconButton(
+          onPressed: openRadioInfo,
+          icon: Icon(Icons.info_outline_rounded),
+          tooltip: "Radio info settings",
+        ),
+        _switchSimButton,
+        _logsButton,
       ],
     );
+  }
+
+  void startTimer() {
+    update();
+
+    timer = Timer.periodic(
+      Duration(seconds: sharedPreferences.getInt("updateInterval") ?? 3),
+      (Timer t) => update(),
+    );
+  }
+
+  void restartTimer() {
+    timer.cancel();
+    startTimer();
   }
 }

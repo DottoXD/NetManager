@@ -1,8 +1,6 @@
-package pw.dotto.netmanager.Core.MobileInfo;
+package pw.dotto.netmanager.Core.MobileInfo.CellDatas;
 
 import androidx.annotation.NonNull;
-
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.BasicCellData;
 
 public abstract class CellData {
     protected final String cellIdentifierString;
