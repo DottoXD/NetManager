@@ -3,6 +3,7 @@ package pw.dotto.netmanager.Core.Notifications;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ServiceInfo;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -41,7 +42,7 @@ public class NotificationService extends Service {
         notification.setupNotifications();
         notification.send();
 
-        startForeground(notification.getSelectedId(), notification.getActiveNotification());
+        startForeground(notification.getSelectedId(), notification.getActiveNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL);
 
         if (sharedPreferences == null || !sharedPreferences.getBoolean("flutter.backgroundService", false)) {
             stopSelf();

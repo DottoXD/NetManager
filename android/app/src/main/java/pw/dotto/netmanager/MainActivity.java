@@ -127,6 +127,7 @@ public class MainActivity extends FlutterActivity {
     permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
     permissions.add(Manifest.permission.READ_PHONE_STATE);
     permissions.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION);
+    permissions.add(Manifest.permission.READ_PHONE_STATE);
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
       permissions.add(Manifest.permission.POST_NOTIFICATIONS);

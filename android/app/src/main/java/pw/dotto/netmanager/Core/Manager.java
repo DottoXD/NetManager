@@ -87,10 +87,10 @@ public class Manager {
         networkGen = 5;
 
       if (firstManager.getNetworkOperatorName().trim().isEmpty())
-        return "NO SERVICE";
+        return "No service";
 
       str.append(firstManager.getNetworkOperatorName()).append(" ").append(
-          networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G" + (nrSa ? " (SA)" : "")));
+          networkGen == 0 ? "Unknown" : (networkGen < 0 ? "No service" : networkGen + "G" + (nrSa ? " (SA)" : "")));
 
       if (activeSubscriptionList.size() > 1) {
         SubscriptionInfo secondInfo = activeSubscriptionList.get(1);
@@ -105,10 +105,10 @@ public class Manager {
 
         if (secondManager.getNetworkOperatorName() != null && !secondManager.getNetworkOperatorName().trim().isEmpty())
           str.append(" | ").append(secondManager.getNetworkOperatorName()).append(" ").append(
-              networkGen == 0 ? "UNKNOWN" : (networkGen < 0 ? "NO SERVICE" : networkGen + "G" + (nrSa ? " (SA)" : "")));
+              networkGen == 0 ? "Unknown" : (networkGen < 0 ? "No service" : networkGen + "G" + (nrSa ? " (SA)" : "")));
       }
     } else
-      str.append("NO SERVICE");
+      str.append("No service");
 
     return str.toString().trim();
   }
@@ -341,7 +341,7 @@ public class Manager {
       data.getPrimaryCell().setBasicCellData(DataExtractor.getBasicData(data.getPrimaryCell()));
     }
 
-    data.addNeighborCell(data.getPrimaryCell());
+    // data.addNeighborCell(data.getPrimaryCell());
     data.addActiveCell(data.getPrimaryCell());
 
     for (CellData cellData : data.getActiveCells()) {
@@ -478,15 +478,17 @@ public class Manager {
     }
 
     Executor executor = ContextCompat.getMainExecutor(context);
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+    if (executor != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
       if (firstManager != null) {
         nsa[0] = new DisplayInfoListener();
-        firstManager.registerTelephonyCallback(executor, nsa[0]);
+        if (nsa[0] != null)
+          firstManager.registerTelephonyCallback(executor, nsa[0]);
       }
 
       if (secondManager != null) {
         nsa[1] = new DisplayInfoListener();
-        secondManager.registerTelephonyCallback(executor, nsa[1]);
+        if (nsa[1] != null)
+          secondManager.registerTelephonyCallback(executor, nsa[1]);
       }
     }
   }

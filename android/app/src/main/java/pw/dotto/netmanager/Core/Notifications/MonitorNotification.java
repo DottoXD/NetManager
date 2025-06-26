@@ -50,7 +50,7 @@ public class MonitorNotification {
         if (notificationChannel == null) {
             notificationChannel = new NotificationChannel(
                     NOTIFICATION_CHANNEL,
-                    "NetManager", // to be updated
+                    "NetManager Cell Updates", // to be updated
                     NotificationManager.IMPORTANCE_LOW);
 
             notificationChannel.enableVibration(false);
@@ -86,6 +86,8 @@ public class MonitorNotification {
             return;
 
         buildNotification();
+        if (activeNotification == null)
+            return;
         notificationManager.notify(selectedId, activeNotification.build());
     }
 
@@ -95,6 +97,8 @@ public class MonitorNotification {
 
     public void buildNotification() {
         StringBuilder contentText = new StringBuilder();
+
+        int size = 0;
         for (int i = 0; i < 2; i++) {
             SIMData simData = context.getManager().getSimNetworkData(i);
             if (simData == null || simData.getPrimaryCell() == null)
@@ -125,15 +129,22 @@ public class MonitorNotification {
 
             if (i == 0)
                 contentText.append("\n\n");
+
+            size++;
         }
 
-        if (contentText.toString().trim().isBlank())
-            contentText.append("No service");
+        String text = contentText.toString();
+
+        if (text.trim().isBlank())
+            text = "No service";
+
+        if (size == 1)
+            text = text.replace("\n\n", "");
 
         activeNotification = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
                 .setSmallIcon(android.R.drawable.stat_notify_sync) // got to make an icon as soon as i make an app logo
                 .setContentTitle(context.getManager().getFullHeaderString())
-                .setContentText(contentText.toString())
+                .setContentText(text)
                 .setContentIntent(openPendingIntent)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setStyle(new NotificationCompat.BigTextStyle())
@@ -144,6 +155,8 @@ public class MonitorNotification {
     }
 
     public Notification getActiveNotification() {
+        if (activeNotification == null)
+            return null;
         return activeNotification.build();
     }
 

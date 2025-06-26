@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 
-import pw.dotto.netmanager.Core.Notifications.NotificationService;
+import pw.dotto.netmanager.Core.Notifications.DelayedServiceStarter;
 
 public class BootReceiver extends BroadcastReceiver {
     @Override
@@ -14,7 +14,7 @@ public class BootReceiver extends BroadcastReceiver {
             return;
 
         if (intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED)) {
-            Intent notificationIntent = new Intent(context, NotificationService.class);
+            Intent notificationIntent = new Intent(context, DelayedServiceStarter.class);
             SharedPreferences sharedPreferences = context.getSharedPreferences("FlutterSharedPreferences",
                     Context.MODE_PRIVATE);
 
