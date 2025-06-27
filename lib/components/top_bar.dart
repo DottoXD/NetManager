@@ -5,9 +5,15 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TopBar extends StatefulWidget implements PreferredSizeWidget {
-  const TopBar(this.platform, this.sharedPreferences, {super.key});
+  const TopBar(
+    this.platform,
+    this.sharedPreferences,
+    this.platformSignalNotifier, {
+    super.key,
+  });
   final MethodChannel platform;
   final SharedPreferences sharedPreferences;
+  final ValueNotifier<int> platformSignalNotifier;
 
   @override
   State<TopBar> createState() => _TopBarState();
@@ -20,6 +26,7 @@ class _TopBarState extends State<TopBar> {
   late MethodChannel platform;
   late SharedPreferences sharedPreferences;
   late Timer timer;
+  late ValueNotifier<int> platformSignalNotifier;
 
   String _title = "NetManager is loading...";
   String _carrier = "NetManager";
@@ -50,16 +57,11 @@ class _TopBarState extends State<TopBar> {
       });
     }
 
-    platform.setMethodCallHandler((call) {
-      if (call.method == "restartTimer") {
-        restartTimer();
-        return Future.value();
-      }
-
-      return Future.value();
-    });
-
     startTimer();
+
+    widget.platformSignalNotifier.addListener(() {
+      restartTimer();
+    });
 
     () async {
       simCount = await platform.invokeMethod("getSimCount");
@@ -124,7 +126,7 @@ class _TopBarState extends State<TopBar> {
       actions: [
         IconButton(
           onPressed: openRadioInfo,
-          icon: Icon(Icons.info_outline_rounded),
+          icon: Icon(Icons.perm_device_info_rounded),
           tooltip: "Radio info settings",
         ),
         _switchSimButton,

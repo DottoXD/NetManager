@@ -26,12 +26,15 @@ public class MainActivity extends FlutterActivity {
   private final Manager manager = new Manager(this);
   private int selectedSim = 0;
 
+  private MethodChannel chn;
+
   @Override
   public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
     super.configureFlutterEngine(flutterEngine);
 
-    MethodChannel chn = new MethodChannel(
+    chn = new MethodChannel(
         flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL);
+
     chn.setMethodCallHandler((call, result) -> {
       switch (call.method) {
         case "checkPermissions":
@@ -100,7 +103,7 @@ public class MainActivity extends FlutterActivity {
           result.success(true);
           break;
 
-        case "switchSim": // add checks for sim amount
+        case "switchSim":
           if (manager.getSimCount() > 1) {
             if (selectedSim == 0)
               selectedSim = 1;

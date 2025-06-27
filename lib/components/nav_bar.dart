@@ -18,8 +18,9 @@ class NavBar extends StatelessWidget {
       child: NavigationBar(
         destinations: [
           NavigationDestination(
-            icon: Icon(Icons.person_outline),
+            icon: Icon(Icons.person_outline_rounded),
             label: "Data",
+            //tooltip: "Cell data info", - i wanna make tooltips for the other pages too first
           ),
           NavigationDestination(
             icon: Icon(Icons.location_on_outlined),

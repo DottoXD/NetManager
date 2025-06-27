@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsBody extends StatefulWidget {
   const SettingsBody(
@@ -296,6 +297,42 @@ class _SettingsBodyState extends State<SettingsBody> {
                           updateData();
                         },
                       ),
+                    Divider(height: 0),
+                    ListTile(
+                      title: Text("Contribute"),
+                      subtitle: Text("Contribute to NetManager on GitHub."),
+                      trailing: IconButton(
+                        onPressed: () {
+                          Uri url = Uri.parse(
+                            'https://github.com/DottoXD/NetManager',
+                          );
+                          launchUrl(url);
+                        },
+                        icon: Icon(Icons.open_in_new),
+                        tooltip: "Open in a browser",
+                      ),
+                    ),
+                    ListTile(
+                      title: Text("About"),
+                      subtitle: Text(
+                        "View some info about NetManager. Open source licenses and credits are included in this page.",
+                      ),
+                      trailing: IconButton(
+                        onPressed:
+                            () => showDialog(
+                              context: context,
+                              builder:
+                                  (BuildContext context) => AboutDialog(
+                                    applicationLegalese:
+                                        "${DateTime.now().year} @ DottoXD",
+                                    applicationName: "NetManager",
+                                    //applicationIcon as soon as i make an icon
+                                    //applicationVersio maybe?
+                                  ),
+                            ),
+                        icon: Icon(Icons.info_outline_rounded),
+                      ),
+                    ),
                   ],
                 ),
               ),

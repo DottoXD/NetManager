@@ -52,7 +52,7 @@ jobs:
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > $GITHUB_WORKSPACE/android/app/upload-keystore.jks
 
       - name: ⛏️ APKs
-        run: flutter build apk --release
+        run: flutter build apk --release --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN }}
 
       - name: 📦 Artifacts
         run: |

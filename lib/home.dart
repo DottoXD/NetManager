@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/body/map.dart';
@@ -23,15 +25,29 @@ class _HomeState extends State<Home> {
 
   int _currentPage = 0;
   late List<Widget> _pages;
+  final ValueNotifier<bool> homeLoadedNotifier = ValueNotifier(false);
+  final ValueNotifier<int> platformSignalNotifier = ValueNotifier(0);
 
   @override
   void initState() {
     super.initState();
 
-    bool homeLoaded = false;
+    platform.setMethodCallHandler((call) {
+      if (call.method == "restartTimer") {
+        platformSignalNotifier.value = Random().nextInt(100000);
+        return Future.value();
+      }
+
+      return Future.value();
+    });
 
     _pages = [
-      HomeBody(platform, widget.sharedPreferences, homeLoaded),
+      HomeBody(
+        platform,
+        widget.sharedPreferences,
+        homeLoadedNotifier,
+        platformSignalNotifier,
+      ),
       MapBody(platform, widget.sharedPreferences),
       SettingsBody(
         platform,
@@ -57,7 +73,11 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: TopBar(platform, widget.sharedPreferences),
+      appBar: TopBar(
+        platform,
+        widget.sharedPreferences,
+        platformSignalNotifier,
+      ),
       bottomNavigationBar: NavBar(updatePage, _currentPage),
       body: _pages[_currentPage],
       floatingActionButton: (_currentPage == 0 ? FloatingButton() : null),

@@ -13,12 +13,14 @@ class HomeBody extends StatefulWidget {
   const HomeBody(
     this.platform,
     this.sharedPreferences,
-    this.homeLoaded, {
+    this.homeLoadedNotifier,
+    this.platformSignalNotifier, {
     super.key,
   });
   final MethodChannel platform;
   final SharedPreferences sharedPreferences;
-  final bool homeLoaded;
+  final ValueNotifier<bool> homeLoadedNotifier;
+  final ValueNotifier<int> platformSignalNotifier;
 
   @override
   State<HomeBody> createState() => _HomeBodyState();
@@ -28,7 +30,8 @@ class _HomeBodyState extends State<HomeBody> {
   late MethodChannel platform;
   late Timer timer;
   late SharedPreferences sharedPreferences;
-  late bool homeLoaded;
+  late ValueNotifier<bool> homeLoadedNotifier;
+  late ValueNotifier<int> platformSignalNotifier;
   Widget _progressIndicator = LinearProgressIndicator();
   bool _isUpdating = false;
 
@@ -43,6 +46,7 @@ class _HomeBodyState extends State<HomeBody> {
 
   String _debug = "";
   String plmn = "";
+  bool pageLoaded = false;
 
   List<Widget> _mainData = <Widget>[];
   List<Widget> _activeData = <Widget>[];
@@ -53,18 +57,13 @@ class _HomeBodyState extends State<HomeBody> {
     super.initState();
     platform = widget.platform;
     sharedPreferences = widget.sharedPreferences;
-    homeLoaded = widget.homeLoaded;
-
-    platform.setMethodCallHandler((call) {
-      if (call.method == "restartTimer") {
-        restartTimer();
-        return Future.value();
-      }
-
-      return Future.value();
-    });
+    homeLoadedNotifier = widget.homeLoadedNotifier;
 
     startTimer();
+
+    widget.platformSignalNotifier.addListener(() {
+      restartTimer();
+    });
   }
 
   @override
@@ -258,8 +257,13 @@ class _HomeBodyState extends State<HomeBody> {
 
       int? eNodeB = int.tryParse(simData.primaryCell.cellIdentifier);
 
+      final List<CellData> tempActiveData = simData.activeCells;
+      tempActiveData.sort(
+        (a, b) => (b.isRegistered ? 1 : 0).compareTo(a.isRegistered ? 1 : 0),
+      );
+
       final List<Widget> activeData =
-          simData.activeCells.map((cell) {
+          tempActiveData.map((cell) {
             int i = simData.activeCells.indexOf(cell);
 
             String cellContent = createCellContent(cell).replaceAll(
@@ -270,10 +274,10 @@ class _HomeBodyState extends State<HomeBody> {
             );
 
             List<IconData> icons = [
-              Icons.signal_cellular_connected_no_internet_0_bar_rounded,
-              Icons.signal_cellular_connected_no_internet_4_bar_rounded,
               Icons.signal_cellular_0_bar_rounded,
               Icons.signal_cellular_4_bar_rounded,
+              Icons.auto_awesome_outlined,
+              Icons.auto_awesome_rounded,
               Icons.question_mark,
             ];
 
@@ -286,16 +290,19 @@ class _HomeBodyState extends State<HomeBody> {
                                   simData.primaryCell.processedSignal,
                                   minRsrp,
                                 ),
-                                maxRsrp,
+                                (maxRsrp - 10),
                               ) -
                               minRsrp) /
-                          ((maxRsrp - minRsrp) / 2))
+                          (((maxRsrp - 10) - minRsrp) / 2))
                       .floor();
             } else if (isValidInt(cell.rawSignal)) {
               index =
-                  ((min(max(simData.primaryCell.rawSignal, minRssi), maxRssi) -
+                  ((min(
+                                max(simData.primaryCell.rawSignal, minRssi),
+                                (maxRssi - 10),
+                              ) -
                               minRssi) /
-                          ((maxRssi - minRssi) / 2))
+                          (((maxRssi - 10) - minRssi) / 2))
                       .floor();
             }
 
@@ -335,8 +342,11 @@ class _HomeBodyState extends State<HomeBody> {
                   ),
                   subtitle: Text(cellContent),
                 ),
-                if (i != 0 && i != simData.neighborCells.length - 1)
-                  Divider(height: 0),
+                if (i != simData.neighborCells.length - 1)
+                  Container(
+                    margin: EdgeInsets.only(left: 5, right: 5),
+                    child: Divider(height: 0),
+                  ),
               ],
             );
           }).toList();
@@ -363,33 +373,36 @@ class _HomeBodyState extends State<HomeBody> {
       scrollDirection: Axis.vertical,
       child: Column(
         children: <Widget>[
-          if (!homeLoaded)
-            Container(
-              height: MediaQuery.of(context).size.height,
-              alignment: Alignment.center,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  CircularProgressIndicator(),
-                  SizedBox(height: 20),
-                ],
+          if (!homeLoadedNotifier.value)
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height,
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[CircularProgressIndicator()],
+                ),
               ),
             )
-          else if (homeLoaded && plmn.isEmpty)
-            Container(
-              height: MediaQuery.of(context).size.height,
-              alignment: Alignment.center,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Icon(
-                    Icons.airplanemode_on,
-                    size: 80,
-                    //color: Theme.of(context).colorScheme.primaryContainer,
-                  ),
-                  SizedBox(height: 20),
-                  Text("Airplane mode on", style: TextStyle(fontSize: 22)),
-                ],
+          else if (homeLoadedNotifier.value && plmn.isEmpty && pageLoaded)
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height,
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Icon(
+                      Icons.airplanemode_on,
+                      size: 80,
+                      //color: Theme.of(context).colorScheme.primaryContainer,
+                    ),
+                    SizedBox(height: 20),
+                    Text("Airplane mode on", style: TextStyle(fontSize: 22)),
+                  ],
+                ),
               ),
             )
           else
@@ -597,7 +610,8 @@ class _HomeBodyState extends State<HomeBody> {
       Duration(seconds: sharedPreferences.getInt("updateInterval") ?? 3),
       (Timer t) {
         update();
-        homeLoaded = true;
+        pageLoaded = true;
+        homeLoadedNotifier.value = true;
       },
     );
   }

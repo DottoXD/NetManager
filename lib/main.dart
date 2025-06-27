@@ -1,12 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/services.dart';
+//import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 
 import 'home.dart';
 
 void main() async {
+  /*SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+  bool? analytics = sharedPreferences.getBool("analytics");
+  String sentryDsn = String.fromEnvironment("SENTRY_DSN", defaultValue: "");
+
+  if (analytics == null || !analytics || sentryDsn.isEmpty) {
+    runApp(NetManager());
+  } else {
+    await SentryFlutter.init((options) {
+      options.dsn = sentryDsn;
+      options.sendDefaultPii = false;
+    }, appRunner: () => runApp(NetManager()));
+  }*/
+
   runApp(NetManager());
 
   if (Platform.isAndroid) {
