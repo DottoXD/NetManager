@@ -127,6 +127,12 @@ public class MainActivity extends FlutterActivity {
     });
   }
 
+  @Override
+  public void onStop() {
+    manager.unregisterStateReceiver();
+    super.onStop();
+  }
+
   private void requestPermissions() {
     ArrayList<String> permissions = new ArrayList<>();
     permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);

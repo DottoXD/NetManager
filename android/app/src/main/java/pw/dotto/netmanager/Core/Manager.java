@@ -1,7 +1,10 @@
 package pw.dotto.netmanager.Core;
 
 import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Build;
 import android.telephony.CellIdentityNr;
 import android.telephony.CellInfo;
@@ -39,6 +42,7 @@ import pw.dotto.netmanager.Core.MobileInfo.SIMData;
 
 public class Manager {
   private final Context context;
+  // private final BroadcastReceiver simReceiver;
 
   private TelephonyManager firstManager;
   private TelephonyManager secondManager;
@@ -49,6 +53,22 @@ public class Manager {
 
   public Manager(Context context) {
     this.context = context;
+
+    /*
+     * simReceiver = new BroadcastReceiver() {
+     * 
+     * @Override
+     * public void onReceive(Context context, Intent intent) {
+     * if
+     * (TelephonyManager.ACTION_SUBSCRIPTION_CARRIER_IDENTITY_CHANGED.equals(intent.
+     * getAction()) ||
+     * TelephonyManager.ACTION_MULTI_SIM_CONFIG_CHANGED.equals(intent.getAction()))
+     * updateTelephonyManagers();
+     * }
+     * };
+     * 
+     * registerStateReceiver();
+     */
   }
 
   private TelephonyManager getTelephony() {
@@ -162,7 +182,10 @@ public class Manager {
 
     SIMData data = new SIMData(getSimCarrier(telephony), getSimOperator(telephony), getSimNetworkGen(telephony),
         telephony.getSimOperator());
-    String simOperator = telephony.getSimOperator();
+    String simOperator = telephony.getNetworkOperator();
+    if ((simOperator == null || simOperator.isEmpty()) && telephony.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA)
+      simOperator = telephony.getSimOperator();
+
     if (simOperator == null || simOperator.isEmpty())
       simOperator = "00000";
 
@@ -268,11 +291,11 @@ public class Manager {
               String mccMnc = ((CellInfoLte) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoLte) baseCell).getCellIdentity().getMncString();
 
-              /*
-               * if(!mccMnc.contains("null")) {
-               * if (mccMnc.equals(simOperator)) data.addActiveCell(lteCellData);
-               * } else data.addActiveCell(lteCellData);
-               */ // to be tested!
+              if (!mccMnc.contains("null")) {
+                if (mccMnc.equals(simOperator))
+                  data.addActiveCell(lteCellData);
+              } else
+                data.addActiveCell(lteCellData); // to be tested! i might add that to other technologies
 
               data.addActiveCell(lteCellData);
             } else if (baseCell instanceof CellInfoNr) {
@@ -282,9 +305,11 @@ public class Manager {
                 CellIdentityNr identity = (CellIdentityNr) baseCell.getCellIdentity();
                 String mccMnc = identity.getMccString() + identity.getMncString();
 
-                // nrCellData.setCellIdentifier(mccMnc); // test
-                /* if (mccMnc.equals(simOperator)) */
-                data.addActiveCell(nrCellData);
+                if (!mccMnc.contains("null")) {
+                  if (mccMnc.equals(simOperator))
+                    data.addActiveCell(nrCellData);
+                } else
+                  data.addActiveCell(nrCellData); // to be tested! i might add that to other technologies
               } else
                 data.addActiveCell(nrCellData);
             }
@@ -321,10 +346,11 @@ public class Manager {
               String mccMnc = ((CellInfoLte) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoLte) baseCell).getCellIdentity().getMncString();
 
-              // lteCellData.setCellIdentifier(mccMnc); // test
-
-              /* if (mccMnc.equals(simOperator)) */
-              data.addNeighborCell(lteCellData);
+              if (!mccMnc.contains("null")) {
+                if (mccMnc.equals(simOperator))
+                  data.addActiveCell(lteCellData);
+              } else
+                data.addActiveCell(lteCellData); // to be tested! i might add that to other technologies
             } else if (baseCell instanceof CellInfoNr) {
               NrCellData nrCellData = CellExtractor.getNrCellData((CellInfoNr) baseCell);
 
@@ -332,9 +358,11 @@ public class Manager {
                 CellIdentityNr identity = (CellIdentityNr) baseCell.getCellIdentity();
                 String mccMnc = identity.getMccString() + identity.getMncString();
 
-                // nrCellData.setCellIdentifier(mccMnc); // test
-                /* if (mccMnc.equals(simOperator)) */
-                data.addNeighborCell(nrCellData);
+                if (!mccMnc.contains("null")) {
+                  if (mccMnc.equals(simOperator))
+                    data.addActiveCell(nrCellData);
+                } else
+                  data.addActiveCell(nrCellData); // to be tested! i might add that to other technologies
               } else
                 data.addNeighborCell(nrCellData);
             }
@@ -581,5 +609,33 @@ public class Manager {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
       return nsa[index].getNsa();
     return false;
+  }
+
+  private void registerStateReceiver() {
+    /*
+     * IntentFilter filter = new IntentFilter();
+     * filter.addAction(TelephonyManager.
+     * ACTION_SUBSCRIPTION_CARRIER_IDENTITY_CHANGED);
+     * 
+     * if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+     * filter.addAction(TelephonyManager.ACTION_MULTI_SIM_CONFIG_CHANGED);
+     * }
+     * 
+     * try {
+     * context.registerReceiver(simReceiver, filter);
+     * } catch (IllegalArgumentException ignored) {
+     * // todo add sentry
+     * }
+     */
+  }
+
+  public void unregisterStateReceiver() {
+    /*
+     * try {
+     * context.unregisterReceiver(simReceiver);
+     * } catch (IllegalArgumentException ignored) {
+     * // todo add sentry
+     * }
+     */
   }
 }

@@ -283,19 +283,19 @@ public class DataExtractor {
 
     private static BasicCellData getGsmBasicData(int arfcn) {
         if (arfcn >= 0 && arfcn <= 124)
-            return new BasicCellData(900, 900);
+            return new BasicCellData(8, 900);
         if (arfcn >= 128 && arfcn <= 251)
-            return new BasicCellData(850, 850);
+            return new BasicCellData(5, 850);
         if (arfcn >= 259 && arfcn <= 293)
-            return new BasicCellData(450, 450);
+            return new BasicCellData(31, 450);
         if (arfcn >= 306 && arfcn <= 340)
-            return new BasicCellData(480, 480);
+            return new BasicCellData(72, 480);
         if (arfcn >= 512 && arfcn <= 810)
-            return new BasicCellData(1900, 1900);
+            return new BasicCellData(2, 1900);
         if (arfcn >= 811 && arfcn <= 885)
-            return new BasicCellData(1800, 1800);
+            return new BasicCellData(3, 1800);
         if (arfcn >= 955 && arfcn <= 1023)
-            return new BasicCellData(900, 900);
+            return new BasicCellData(8, 900);
 
         return new BasicCellData(-1, -1);
     }

@@ -114,9 +114,12 @@ class _HomeBodyState extends State<HomeBody> {
                 padding: EdgeInsets.symmetric(horizontal: 7.5, vertical: 7.5),
                 child: Tooltip(
                   message:
-                      (altCellView
-                          ? "${simData.primaryCell.cellIdentifierString} (${simData.primaryCell.cellIdentifier})"
-                          : "eNodeB/CID (${(int.tryParse(simData.primaryCell.cellIdentifier)! / 256).floor()}/${int.tryParse(simData.primaryCell.cellIdentifier)! % 256})"),
+                      (simData.primaryCell.cellIdentifier.contains("-1") ||
+                              simData.primaryCell.cellIdentifier == "0"
+                          ? "Unknown"
+                          : (altCellView
+                              ? "${simData.primaryCell.cellIdentifierString} (${simData.primaryCell.cellIdentifier})"
+                              : "eNodeB/CID (${(int.tryParse(simData.primaryCell.cellIdentifier)! / 256).floor()}/${int.tryParse(simData.primaryCell.cellIdentifier)! % 256})")),
                   child: FilledButton(
                     style: FilledButton.styleFrom(
                       elevation: 1,
@@ -167,9 +170,15 @@ class _HomeBodyState extends State<HomeBody> {
                               ),
                               SizedBox(width: 6),
                               Text(
-                                (altCellView
-                                    ? simData.primaryCell.cellIdentifier
-                                    : "${(int.tryParse(simData.primaryCell.cellIdentifier)! / 256).floor()}/${int.tryParse(simData.primaryCell.cellIdentifier)! % 256}"),
+                                (simData.primaryCell.cellIdentifier.contains(
+                                          "-1",
+                                        ) ||
+                                        simData.primaryCell.cellIdentifier ==
+                                            "0"
+                                    ? "Unknown"
+                                    : (altCellView
+                                        ? simData.primaryCell.cellIdentifier
+                                        : "${(int.tryParse(simData.primaryCell.cellIdentifier)! / 256).floor()}/${int.tryParse(simData.primaryCell.cellIdentifier)! % 256}")),
                                 style: TextStyle(
                                   fontSize: 24,
                                   color:
@@ -220,7 +229,7 @@ class _HomeBodyState extends State<HomeBody> {
         final String label = elements[i];
         final String val = elements[i + 1];
 
-        if (!isValidString(val)) {
+        if (!isValidString(val) || !isValidString(label)) {
           continue;
         }
 
@@ -344,7 +353,9 @@ class _HomeBodyState extends State<HomeBody> {
               children: [
                 ListTile(
                   title: Text(
-                    "${cell.channelNumberString == "ARFCN" ? "N" : "B"}${cell.basicCellData.band} (${cell.basicCellData.frequency}MHz)",
+                    (cell.basicCellData.band > 0
+                        ? "${cell.channelNumberString == "ARFCN" ? "N" : "B"}${cell.basicCellData.band} (${cell.basicCellData.frequency}MHz)"
+                        : "Unknown band"),
                   ),
                   subtitle: Text(cellContent),
                   trailing: Icon(icons[index]),
@@ -365,7 +376,7 @@ class _HomeBodyState extends State<HomeBody> {
 
             String cellContent = createCellContent(cell).replaceAll(
               "%enodeb%",
-              (eNodeB != null
+              (eNodeB != null && eNodeB != 0
                   ? "Likely ${(eNodeB / 256).floor()}"
                   : "Unknown cell"),
             );
@@ -545,9 +556,12 @@ class _HomeBodyState extends State<HomeBody> {
       ];
 
       int index =
-          ((min(max(simData.primaryCell.processedSignal, minRsrp), maxRsrp) -
+          ((min(
+                        max(simData.primaryCell.processedSignal, minRsrp),
+                        (maxRsrp - 15),
+                      ) -
                       minRsrp) /
-                  ((maxRsrp - minRsrp) / 3))
+                  (((maxRsrp - 15) - minRsrp) / 3))
               .floor();
 
       return Icon(icons[min(index, 2)]);
@@ -572,6 +586,9 @@ class _HomeBodyState extends State<HomeBody> {
     } else if (val == simData.primaryCell.bandwidthString) {
       //BW
       return Icon(Icons.swap_horiz_rounded);
+    } else if (val == simData.primaryCell.bandString) {
+      //Band
+      return Icon(Icons.numbers_rounded);
     }
 
     return Icon(Icons.question_mark); //Unknown icon
@@ -581,7 +598,7 @@ class _HomeBodyState extends State<HomeBody> {
     String cellContent = "";
 
     int? cellId = int.tryParse(cell.cellIdentifier);
-    if (cellId != null && isValidString(cell.cellIdentifier)) {
+    if (cellId != null && isValidString(cell.cellIdentifier) && cellId != 0) {
       cellContent += "${(cellId / 256).floor()}/${cellId % 256}, ";
     } else if (cell.isRegistered) {
       cellContent += "%enodeb%, ";
@@ -589,7 +606,7 @@ class _HomeBodyState extends State<HomeBody> {
       cellContent += "Unknown cell, ";
     }
 
-    if (isValidInt(cell.bandwidth)) {
+    if (isValidInt(cell.bandwidth) && isValidString(cell.bandwidthString)) {
       cellContent += "${cell.bandwidthString}: ${cell.bandwidth}MHz";
     } else {
       cellContent += "Unknown bandwidth";
@@ -597,19 +614,22 @@ class _HomeBodyState extends State<HomeBody> {
 
     cellContent += ".\n";
 
-    if (isValidInt(cell.areaCode)) {
+    if (isValidInt(cell.areaCode) && isValidString(cell.areaCodeString)) {
       cellContent += "${cell.areaCodeString}: ${cell.areaCode}, ";
     }
 
-    if (isValidInt(cell.channelNumber)) {
+    if (isValidInt(cell.channelNumber) &&
+        isValidString(cell.channelNumberString)) {
       cellContent += "${cell.channelNumberString}: ${cell.channelNumber}, ";
     }
 
-    if (isValidInt(cell.stationIdentity)) {
+    if (isValidInt(cell.stationIdentity) &&
+        isValidString(cell.stationIdentityString)) {
       cellContent += "${cell.stationIdentityString}: ${cell.stationIdentity}, ";
     }
 
-    if (isValidInt(cell.timingAdvance)) {
+    if (isValidInt(cell.timingAdvance) &&
+        isValidString(cell.timingAdvanceString)) {
       cellContent += "${cell.timingAdvanceString}: ${cell.timingAdvance}";
     }
 
@@ -620,18 +640,21 @@ class _HomeBodyState extends State<HomeBody> {
     cellContent += ".\n";
     cellContent.replaceAll("\n.\n", "\n");
 
-    if (isValidInt(cell.processedSignal)) {
+    if (isValidInt(cell.processedSignal) &&
+        isValidString(cell.processedSignalString)) {
       cellContent +=
           "${cell.processedSignalString} ${cell.processedSignal}dBm, ";
-    } else if (isValidInt(cell.rawSignal)) {
+    } else if (isValidInt(cell.rawSignal) &&
+        isValidString(cell.rawSignalString)) {
       cellContent += "${cell.rawSignalString} ${cell.rawSignal}dBm, ";
     }
 
-    if (isValidInt(cell.signalQuality)) {
+    if (isValidInt(cell.signalQuality) &&
+        isValidString(cell.signalQualityString)) {
       cellContent += "${cell.signalQualityString} ${cell.signalQuality}dB, ";
     }
 
-    if (isValidInt(cell.signalNoise)) {
+    if (isValidInt(cell.signalNoise) && isValidString(cell.signalNoiseString)) {
       cellContent += "${cell.signalNoiseString} ${cell.signalNoise}dB";
     }
 
@@ -653,7 +676,9 @@ class _HomeBodyState extends State<HomeBody> {
   bool isValidString(String val) {
     return !(val.contains("-1") ||
         val.contains("2147483647") ||
-        val.contains("null"));
+        val.contains("null") ||
+        val.trim() == "0.0" ||
+        val.trim() == "-");
   }
 
   void startTimer() {

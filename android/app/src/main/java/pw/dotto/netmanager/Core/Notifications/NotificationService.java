@@ -81,6 +81,8 @@ public class NotificationService extends Service {
     public void onDestroy() {
         super.onDestroy();
 
+        manager.unregisterStateReceiver();
+
         if (handler != null)
             handler.removeCallbacks(notificationRunnable);
         if (notification != null)

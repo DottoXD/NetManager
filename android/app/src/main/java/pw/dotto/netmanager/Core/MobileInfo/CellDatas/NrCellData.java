@@ -14,7 +14,7 @@ public class NrCellData extends CellData {
                 "TAC",
                 "RSRQ",
                 "SNR",
-                "TA Microseconds",
+                "TA (µs)",
                 "-",
                 "Band",
                 cellIdentifier,
