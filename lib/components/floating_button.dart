@@ -6,7 +6,7 @@ class FloatingButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FloatingActionButton(
-      elevation: 3,
+      elevation: 1,
       onPressed: null,
       tooltip: 'Update data',
       child: const Icon(Icons.update_rounded),

@@ -27,6 +27,7 @@ class _HomeState extends State<Home> {
   late List<Widget> _pages;
   final ValueNotifier<bool> homeLoadedNotifier = ValueNotifier(false);
   final ValueNotifier<int> platformSignalNotifier = ValueNotifier(0);
+  final ValueNotifier<bool> debugNotifier = ValueNotifier(false);
 
   @override
   void initState() {
@@ -41,18 +42,22 @@ class _HomeState extends State<Home> {
       return Future.value();
     });
 
+    debugNotifier.value = widget.sharedPreferences.getBool("debug") ?? false;
+
     _pages = [
       HomeBody(
         platform,
         widget.sharedPreferences,
         homeLoadedNotifier,
         platformSignalNotifier,
+        debugNotifier,
       ),
       MapBody(platform, widget.sharedPreferences),
       SettingsBody(
         platform,
         widget.sharedPreferences,
         widget.dynamicThemeNotifier,
+        debugNotifier,
       ),
     ];
 

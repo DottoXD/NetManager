@@ -122,10 +122,10 @@ public class MonitorNotification {
 
             if (simData.getPrimaryCell().getSignalQuality() != CellInfo.UNAVAILABLE)
                 contentText.append(simData.getPrimaryCell().getSignalQualityString()).append(": ")
-                        .append(simData.getPrimaryCell().getSignalQuality()).append("dBm ");
+                        .append(simData.getPrimaryCell().getSignalQuality()).append("dB ");
             if (simData.getPrimaryCell().getSignalNoise() != CellInfo.UNAVAILABLE)
                 contentText.append(simData.getPrimaryCell().getSignalNoiseString()).append(": ")
-                        .append(simData.getPrimaryCell().getSignalNoise()).append("dBm ");
+                        .append(simData.getPrimaryCell().getSignalNoise()).append("dB ");
 
             if (i == 0)
                 contentText.append("\n\n");

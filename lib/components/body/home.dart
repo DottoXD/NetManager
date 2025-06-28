@@ -14,13 +14,15 @@ class HomeBody extends StatefulWidget {
     this.platform,
     this.sharedPreferences,
     this.homeLoadedNotifier,
-    this.platformSignalNotifier, {
+    this.platformSignalNotifier,
+    this.debugNotifier, {
     super.key,
   });
   final MethodChannel platform;
   final SharedPreferences sharedPreferences;
   final ValueNotifier<bool> homeLoadedNotifier;
   final ValueNotifier<int> platformSignalNotifier;
+  final ValueNotifier<bool> debugNotifier;
 
   @override
   State<HomeBody> createState() => _HomeBodyState();
@@ -32,6 +34,7 @@ class _HomeBodyState extends State<HomeBody> {
   late SharedPreferences sharedPreferences;
   late ValueNotifier<bool> homeLoadedNotifier;
   late ValueNotifier<int> platformSignalNotifier;
+  late ValueNotifier<bool> debugNotifier;
   Widget _progressIndicator = LinearProgressIndicator();
   bool _isUpdating = false;
 
@@ -48,6 +51,8 @@ class _HomeBodyState extends State<HomeBody> {
   String plmn = "";
   bool pageLoaded = false;
 
+  bool altCellView = false;
+
   List<Widget> _mainData = <Widget>[];
   List<Widget> _activeData = <Widget>[];
   List<Widget> _neighborData = <Widget>[];
@@ -58,6 +63,7 @@ class _HomeBodyState extends State<HomeBody> {
     platform = widget.platform;
     sharedPreferences = widget.sharedPreferences;
     homeLoadedNotifier = widget.homeLoadedNotifier;
+    debugNotifier = widget.debugNotifier;
 
     startTimer();
 
@@ -105,46 +111,76 @@ class _HomeBodyState extends State<HomeBody> {
           children: [
             Expanded(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 5.0, vertical: 2.5),
+                padding: EdgeInsets.symmetric(horizontal: 7.5, vertical: 7.5),
                 child: Tooltip(
                   message:
-                      "${simData.primaryCell.cellIdentifierString} (${simData.primaryCell.cellIdentifier})",
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      child: Card(
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(17.5),
-                        ),
-                        margin: EdgeInsets.only(bottom: 5),
-                        color: Theme.of(context).colorScheme.primaryContainer,
-                        child: Container(
-                          width: cardWidth * 2 + 10,
-                          height: (cardHeight * 2) - 20,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                      (altCellView
+                          ? "${simData.primaryCell.cellIdentifierString} (${simData.primaryCell.cellIdentifier})"
+                          : "eNodeB/CID (${(int.tryParse(simData.primaryCell.cellIdentifier)! / 256).floor()}/${int.tryParse(simData.primaryCell.cellIdentifier)! % 256})"),
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      elevation: 1,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20.0),
+                      ),
+                      //margin: EdgeInsets.only(bottom: 5),
+                      padding: EdgeInsets.zero,
+                      backgroundColor:
+                          Theme.of(context).colorScheme.primaryContainer,
+                    ),
+                    onPressed: () {
+                      altCellView = !altCellView; //might add an animation?
+
+                      /*setState(() { //gotta find a way to make this instant
+                        _mainData = mainData;
+                      });*/
+                    },
+                    child: Container(
+                      width: cardWidth * 2,
+                      height: (cardHeight * 2) - 20,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Text(
+                            (altCellView
+                                ? simData.primaryCell.cellIdentifierString
+                                : "eNodeB/CID"),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color:
+                                  Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                          SizedBox(height: 3),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
-                              Text(
-                                simData.primaryCell.cellIdentifierString,
-                                style: TextStyle(fontSize: 16),
+                              Icon(
+                                Icons.cell_tower_rounded,
+                                size: 40,
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimaryContainer,
                               ),
-                              SizedBox(height: 3),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: <Widget>[
-                                  Icon(Icons.cell_tower_rounded, size: 40),
-                                  SizedBox(width: 6),
-                                  Text(
-                                    simData.primaryCell.cellIdentifier
-                                        .toString(),
-                                    style: TextStyle(fontSize: 24),
-                                  ),
-                                ],
+                              SizedBox(width: 6),
+                              Text(
+                                (altCellView
+                                    ? simData.primaryCell.cellIdentifier
+                                    : "${(int.tryParse(simData.primaryCell.cellIdentifier)! / 256).floor()}/${int.tryParse(simData.primaryCell.cellIdentifier)! % 256}"),
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  color:
+                                      Theme.of(
+                                        context,
+                                      ).colorScheme.onPrimaryContainer,
+                                ),
                               ),
                             ],
                           ),
-                        ),
+                        ],
                       ),
                     ),
                   ),
@@ -161,9 +197,9 @@ class _HomeBodyState extends State<HomeBody> {
         simData.primaryCell.processedSignalString,
         "${simData.primaryCell.processedSignal}dBm",
         simData.primaryCell.signalQualityString,
-        "${simData.primaryCell.signalQuality}dBm",
+        "${simData.primaryCell.signalQuality}dB",
         simData.primaryCell.signalNoiseString,
-        "${simData.primaryCell.signalNoise}dBm",
+        "${simData.primaryCell.signalNoise}dB",
         simData.primaryCell.channelNumberString,
         simData.primaryCell.channelNumber.toString(),
         simData.primaryCell.stationIdentityString,
@@ -191,31 +227,27 @@ class _HomeBodyState extends State<HomeBody> {
         validCards.add(
           Tooltip(
             message: label,
-            child: InkWell(
-              child: Material(
-                child: Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(17.5),
-                  ),
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  child: Container(
-                    width: cardWidth,
-                    height: cardHeight,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        ListTile(
-                          title: Text(label),
-                          subtitle: Text(val),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[getTrailingIcon(simData, label)],
-                          ),
-                        ),
-                      ],
+            child: Card(
+              elevation: 1,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20.0),
+              ),
+              color: Theme.of(context).colorScheme.primaryContainer,
+              child: Container(
+                width: cardWidth,
+                height: cardHeight,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    ListTile(
+                      title: Text(label),
+                      subtitle: Text(val),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[getTrailingIcon(simData, label)],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
@@ -290,19 +322,19 @@ class _HomeBodyState extends State<HomeBody> {
                                   simData.primaryCell.processedSignal,
                                   minRsrp,
                                 ),
-                                (maxRsrp - 10),
+                                (maxRsrp - 15),
                               ) -
                               minRsrp) /
-                          (((maxRsrp - 10) - minRsrp) / 2))
+                          (((maxRsrp - 15) - minRsrp) / 2))
                       .floor();
             } else if (isValidInt(cell.rawSignal)) {
               index =
                   ((min(
                                 max(simData.primaryCell.rawSignal, minRssi),
-                                (maxRssi - 10),
+                                (maxRssi - 15),
                               ) -
                               minRssi) /
-                          (((maxRssi - 10) - minRssi) / 2))
+                          (((maxRssi - 15) - minRssi) / 2))
                       .floor();
             }
 
@@ -317,8 +349,12 @@ class _HomeBodyState extends State<HomeBody> {
                   subtitle: Text(cellContent),
                   trailing: Icon(icons[index]),
                 ),
-                if (i != 0 && i != simData.activeCells.length - 1)
-                  Divider(height: 0),
+                /*if (i != 0 && i != simData.activeCells.length - 1)
+                  Divider(
+                    height: 0,
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),*/
+                //not too sure if this looks nice on the active cells
               ],
             );
           }).toList();
@@ -345,7 +381,10 @@ class _HomeBodyState extends State<HomeBody> {
                 if (i != simData.neighborCells.length - 1)
                   Container(
                     margin: EdgeInsets.only(left: 5, right: 5),
-                    child: Divider(height: 0),
+                    child: Divider(
+                      height: 0,
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
                   ),
               ],
             );
@@ -419,7 +458,13 @@ class _HomeBodyState extends State<HomeBody> {
                   child: Column(children: _mainData),
                 ),
                 if (_activeData.isNotEmpty) ...[
-                  Text("Active Cells"),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
+                    child: Text(
+                      "Active Cells",
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
                   Container(
                     margin: EdgeInsets.only(
                       top: 10,
@@ -434,7 +479,13 @@ class _HomeBodyState extends State<HomeBody> {
                   ),
                 ],
                 if (_neighborData.isNotEmpty) ...[
-                  Text("Neighbor Cells"),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
+                    child: Text(
+                      "Neighbor Cells",
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
                   Container(
                     margin: EdgeInsets.only(
                       top: 10,
@@ -448,7 +499,9 @@ class _HomeBodyState extends State<HomeBody> {
                     ),
                   ),
                 ],
-                if (_debug.isNotEmpty && _debug != "null")
+                if (debugNotifier.value &&
+                    _debug.isNotEmpty &&
+                    _debug != "null")
                   Container(
                     margin: EdgeInsets.only(
                       top: 10,
@@ -575,11 +628,11 @@ class _HomeBodyState extends State<HomeBody> {
     }
 
     if (isValidInt(cell.signalQuality)) {
-      cellContent += "${cell.signalQualityString} ${cell.signalQuality}dBm, ";
+      cellContent += "${cell.signalQualityString} ${cell.signalQuality}dB, ";
     }
 
     if (isValidInt(cell.signalNoise)) {
-      cellContent += "${cell.signalNoiseString} ${cell.signalNoise}dBm";
+      cellContent += "${cell.signalNoiseString} ${cell.signalNoise}dB";
     }
 
     if (cellContent.endsWith(", ")) {
@@ -618,6 +671,7 @@ class _HomeBodyState extends State<HomeBody> {
 
   void restartTimer() {
     timer.cancel();
+    altCellView = false;
     startTimer();
   }
 }

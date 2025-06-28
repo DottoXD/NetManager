@@ -83,13 +83,12 @@ class _TopBarState extends State<TopBar> {
     super.dispose();
   }
 
-  void update() {
+  Future<void> update() async {
     try {
-      () async {
-        _carrier = (await platform.invokeMethod<String>("getCarrier"))!;
-        _plmn = (await platform.invokeMethod<String>("getPlmn"))!;
-        _gen = await platform.invokeMethod<int>("getNetworkGen") as int;
-      }();
+      _carrier =
+          (await platform.invokeMethod<String>("getCarrier")) ?? "Unknown";
+      _plmn = (await platform.invokeMethod<String>("getPlmn")) ?? "";
+      _gen = await platform.invokeMethod<int>("getNetworkGen") as int;
 
       if (_gen > 0 && _plmn.isNotEmpty) {
         _title = "${"$_carrier $_gen"}G ($_plmn)";

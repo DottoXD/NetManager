@@ -7,12 +7,14 @@ class SettingsBody extends StatefulWidget {
   const SettingsBody(
     this.platform,
     this.sharedPreferences,
-    this.dynamicThemeNotifier, {
+    this.dynamicThemeNotifier,
+    this.debugNotifier, {
     super.key,
   });
   final MethodChannel platform;
   final SharedPreferences sharedPreferences;
   final ValueNotifier<bool> dynamicThemeNotifier;
+  final ValueNotifier<bool> debugNotifier;
 
   @override
   State<SettingsBody> createState() => _SettingsBodyState();
@@ -22,6 +24,7 @@ class _SettingsBodyState extends State<SettingsBody> {
   late MethodChannel platform;
   late SharedPreferences sharedPreferences;
   late ValueNotifier<bool> dynamicThemeNotifier;
+  late ValueNotifier<bool> debugNotifier;
 
   final List<String> positionPrecisions = ["Off", "Low", "Medium", "High"];
 
@@ -38,6 +41,8 @@ class _SettingsBodyState extends State<SettingsBody> {
   bool _dynamicSupported = true;
   bool _dynamicTheme = true;
 
+  bool _debug = false;
+
   late String _selection;
 
   @override
@@ -46,6 +51,7 @@ class _SettingsBodyState extends State<SettingsBody> {
     platform = widget.platform;
     sharedPreferences = widget.sharedPreferences;
     dynamicThemeNotifier = widget.dynamicThemeNotifier;
+    debugNotifier = widget.debugNotifier;
 
     updateData();
     _selection = positionPrecisions[_positionPrecision];
@@ -75,6 +81,7 @@ class _SettingsBodyState extends State<SettingsBody> {
           sharedPreferences.getBool("dynamicSupported") ?? _dynamicSupported;
       _dynamicTheme =
           sharedPreferences.getBool("dynamicTheme") ?? _dynamicTheme;
+      _debug = sharedPreferences.getBool("debug") ?? _debug;
     });
   }
 
@@ -163,7 +170,10 @@ class _SettingsBodyState extends State<SettingsBody> {
                         },
                       ),
                     ),
-                    Divider(height: 0),
+                    Divider(
+                      height: 0,
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
                     ListTile(
                       title: Text(
                         "Position precision (${positionPrecisions[_positionPrecision]})",
@@ -240,7 +250,10 @@ class _SettingsBodyState extends State<SettingsBody> {
                           updateData();
                         },
                       ),
-                    Divider(height: 0),
+                    Divider(
+                      height: 0,
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
                     ListTile(
                       title: Text("Dynamic theme"),
                       subtitle: Text(
@@ -265,7 +278,10 @@ class _SettingsBodyState extends State<SettingsBody> {
                       ),
                       enabled: (!_dynamicTheme || !_dynamicSupported),
                     ),
-                    Divider(height: 0),
+                    Divider(
+                      height: 0,
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
                     ListTile(
                       title: Text("Log events"),
                       subtitle: Text(
@@ -297,7 +313,10 @@ class _SettingsBodyState extends State<SettingsBody> {
                           updateData();
                         },
                       ),
-                    Divider(height: 0),
+                    Divider(
+                      height: 0,
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
                     ListTile(
                       title: Text("Contribute"),
                       subtitle: Text("Contribute to NetManager on GitHub."),
@@ -331,6 +350,24 @@ class _SettingsBodyState extends State<SettingsBody> {
                                   ),
                             ),
                         icon: Icon(Icons.info_outline_rounded),
+                      ),
+                    ),
+                    Divider(
+                      height: 0,
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                    ListTile(
+                      title: Text("Debug"),
+                      subtitle: Text(
+                        "Manage NetManager's debug mode. Enabling this setting will show raw debug data in some parts of the app.",
+                      ),
+                      trailing: Switch(
+                        value: _debug,
+                        onChanged: (bool value) {
+                          setBool("debug", value);
+                          updateData();
+                          debugNotifier.value = value;
+                        },
                       ),
                     ),
                   ],
