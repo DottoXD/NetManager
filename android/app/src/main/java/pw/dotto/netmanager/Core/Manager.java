@@ -1,10 +1,7 @@
 package pw.dotto.netmanager.Core;
 
 import android.annotation.SuppressLint;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Build;
 import android.telephony.CellIdentityNr;
 import android.telephony.CellInfo;
@@ -39,13 +36,14 @@ import pw.dotto.netmanager.Core.MobileInfo.Extractors.CellExtractor;
 import pw.dotto.netmanager.Core.MobileInfo.Extractors.DataExtractor;
 import pw.dotto.netmanager.Core.MobileInfo.DisplayInfoListener;
 import pw.dotto.netmanager.Core.MobileInfo.SIMData;
+import pw.dotto.netmanager.Core.MobileInfo.SimReceiverManager;
 
 public class Manager {
   private final Context context;
-  // private final BroadcastReceiver simReceiver;
 
   private TelephonyManager firstManager;
   private TelephonyManager secondManager;
+  private final SimReceiverManager simReceiverManager;
 
   private DisplayInfoListener[] nsa = { null, null };
   private Date lastModemUpdate = null;
@@ -54,21 +52,8 @@ public class Manager {
   public Manager(Context context) {
     this.context = context;
 
-    /*
-     * simReceiver = new BroadcastReceiver() {
-     * 
-     * @Override
-     * public void onReceive(Context context, Intent intent) {
-     * if
-     * (TelephonyManager.ACTION_SUBSCRIPTION_CARRIER_IDENTITY_CHANGED.equals(intent.
-     * getAction()) ||
-     * TelephonyManager.ACTION_MULTI_SIM_CONFIG_CHANGED.equals(intent.getAction()))
-     * updateTelephonyManagers();
-     * }
-     * };
-     * 
-     * registerStateReceiver();
-     */
+    simReceiverManager = SimReceiverManager.getInstance(context);
+    simReceiverManager.registerStateReceiver(this::updateTelephonyManagers);
   }
 
   private TelephonyManager getTelephony() {
@@ -296,8 +281,6 @@ public class Manager {
                   data.addActiveCell(lteCellData);
               } else
                 data.addActiveCell(lteCellData); // to be tested! i might add that to other technologies
-
-              data.addActiveCell(lteCellData);
             } else if (baseCell instanceof CellInfoNr) {
               NrCellData nrCellData = CellExtractor.getNrCellData((CellInfoNr) baseCell);
 
@@ -348,9 +331,9 @@ public class Manager {
 
               if (!mccMnc.contains("null")) {
                 if (mccMnc.equals(simOperator))
-                  data.addActiveCell(lteCellData);
+                  data.addNeighborCell(lteCellData);
               } else
-                data.addActiveCell(lteCellData); // to be tested! i might add that to other technologies
+                data.addNeighborCell(lteCellData); // to be tested! i might add that to other technologies
             } else if (baseCell instanceof CellInfoNr) {
               NrCellData nrCellData = CellExtractor.getNrCellData((CellInfoNr) baseCell);
 
@@ -360,9 +343,9 @@ public class Manager {
 
                 if (!mccMnc.contains("null")) {
                   if (mccMnc.equals(simOperator))
-                    data.addActiveCell(nrCellData);
+                    data.addNeighborCell(nrCellData);
                 } else
-                  data.addActiveCell(nrCellData); // to be tested! i might add that to other technologies
+                  data.addNeighborCell(nrCellData); // to be tested! i might add that to other technologies
               } else
                 data.addNeighborCell(nrCellData);
             }
@@ -611,31 +594,7 @@ public class Manager {
     return false;
   }
 
-  private void registerStateReceiver() {
-    /*
-     * IntentFilter filter = new IntentFilter();
-     * filter.addAction(TelephonyManager.
-     * ACTION_SUBSCRIPTION_CARRIER_IDENTITY_CHANGED);
-     * 
-     * if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-     * filter.addAction(TelephonyManager.ACTION_MULTI_SIM_CONFIG_CHANGED);
-     * }
-     * 
-     * try {
-     * context.registerReceiver(simReceiver, filter);
-     * } catch (IllegalArgumentException ignored) {
-     * // todo add sentry
-     * }
-     */
-  }
-
-  public void unregisterStateReceiver() {
-    /*
-     * try {
-     * context.unregisterReceiver(simReceiver);
-     * } catch (IllegalArgumentException ignored) {
-     * // todo add sentry
-     * }
-     */
+  public SimReceiverManager getSimReceiverManager() {
+    return simReceiverManager;
   }
 }

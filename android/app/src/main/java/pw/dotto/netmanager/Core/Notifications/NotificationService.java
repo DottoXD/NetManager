@@ -12,6 +12,7 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 
 import pw.dotto.netmanager.Core.Manager;
+import pw.dotto.netmanager.Core.MobileInfo.SimReceiverManager;
 
 public class NotificationService extends Service {
     private Manager manager;
@@ -42,7 +43,8 @@ public class NotificationService extends Service {
         notification.setupNotifications();
         notification.send();
 
-        startForeground(notification.getSelectedId(), notification.getActiveNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL);
+        startForeground(notification.getSelectedId(), notification.getActiveNotification(),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL);
 
         if (sharedPreferences == null || !sharedPreferences.getBoolean("flutter.backgroundService", false)) {
             stopSelf();
@@ -81,7 +83,9 @@ public class NotificationService extends Service {
     public void onDestroy() {
         super.onDestroy();
 
-        manager.unregisterStateReceiver();
+        SimReceiverManager simReceiverManager = manager.getSimReceiverManager();
+        if (simReceiverManager != null)
+            simReceiverManager.unregisterStateReceiver();
 
         if (handler != null)
             handler.removeCallbacks(notificationRunnable);

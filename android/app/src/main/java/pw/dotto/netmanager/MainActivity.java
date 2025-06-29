@@ -3,7 +3,9 @@ package pw.dotto.netmanager;
 import android.Manifest;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
+import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -17,20 +19,24 @@ import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
 import pw.dotto.netmanager.Core.Manager;
 import pw.dotto.netmanager.Core.MobileInfo.SIMData;
+import pw.dotto.netmanager.Core.MobileInfo.SimReceiverManager;
 import pw.dotto.netmanager.Core.Notifications.NotificationService;
 import pw.dotto.netmanager.Core.Utils;
 
 public class MainActivity extends FlutterActivity {
   private final String CHANNEL = "pw.dotto.netmanager/telephony";
 
-  private final Manager manager = new Manager(this);
+  private Manager manager;
   private int selectedSim = 0;
 
   private MethodChannel chn;
+  private SharedPreferences sharedPreferences;
 
   @Override
   public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
     super.configureFlutterEngine(flutterEngine);
+
+    sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
 
     chn = new MethodChannel(
         flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL);
@@ -128,8 +134,19 @@ public class MainActivity extends FlutterActivity {
   }
 
   @Override
+  public void onCreate(Bundle savedInstanceState) {
+      super.onCreate(savedInstanceState);
+      manager = new Manager(this);
+  }
+
+  @Override
   public void onStop() {
-    manager.unregisterStateReceiver();
+    if (sharedPreferences == null || !sharedPreferences.getBoolean("flutter.backgroundService", false)) {
+      SimReceiverManager simReceiverManager = manager.getSimReceiverManager();
+      if (simReceiverManager != null)
+        simReceiverManager.unregisterStateReceiver();
+    }
+
     super.onStop();
   }
 

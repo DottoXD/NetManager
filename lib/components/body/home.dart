@@ -200,6 +200,11 @@ class _HomeBodyState extends State<HomeBody> {
         ),
       );
 
+      int timingAdvanceDistance = 0;
+      if (simData.primaryCell.channelNumberString == "EARFCN") {
+        timingAdvanceDistance = simData.primaryCell.timingAdvance * 78;
+      }
+
       final List<String> elements = [
         simData.primaryCell.rawSignalString,
         "${simData.primaryCell.rawSignal}dBm",
@@ -216,7 +221,9 @@ class _HomeBodyState extends State<HomeBody> {
         simData.primaryCell.areaCodeString,
         simData.primaryCell.areaCode.toString(),
         simData.primaryCell.timingAdvanceString,
-        simData.primaryCell.timingAdvance.toString(),
+        (timingAdvanceDistance <= 0
+            ? simData.primaryCell.timingAdvance.toString()
+            : "${simData.primaryCell.timingAdvance} (${timingAdvanceDistance}m)"),
         simData.primaryCell.bandwidthString,
         "${simData.activeBw}MHz",
         simData.primaryCell.bandString,
