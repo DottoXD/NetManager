@@ -1,5 +1,7 @@
 package pw.dotto.netmanager.Core.Events;
 
+import androidx.annotation.Nullable;
+
 import java.time.LocalDateTime;
 
 public abstract class NetmanagerEvent {
@@ -29,5 +31,18 @@ public abstract class NetmanagerEvent {
 
     public LocalDateTime getDateTime() {
         return dateTime;
+    }
+
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        if (obj instanceof NetmanagerEvent) {
+            NetmanagerEvent event = (NetmanagerEvent) obj;
+
+            return event.getEventType().equals(eventType)
+                    && (event.getOldValue().equals(oldValue) && event.getNewValue().equals(newValue)
+                            || event.getOldValue().equals(event.getNewValue()));
+        }
+
+        return false;
     }
 }

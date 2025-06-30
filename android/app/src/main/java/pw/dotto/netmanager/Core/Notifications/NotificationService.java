@@ -40,6 +40,7 @@ public class NotificationService extends Service {
             notification = new MonitorNotification(this);
             sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
         }
+
         notification.setupNotifications();
         notification.send();
 

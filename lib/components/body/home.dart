@@ -306,6 +306,11 @@ class _HomeBodyState extends State<HomeBody> {
       int? eNodeB = int.tryParse(simData.primaryCell.cellIdentifier);
 
       final List<CellData> tempActiveData = simData.activeCells;
+      if (simData.primaryCell.cellIdentifier.contains("-1") ||
+          simData.primaryCell.cellIdentifier == "0") {
+        tempActiveData.clear();
+      }
+
       tempActiveData.sort(
         (a, b) => (b.isRegistered ? 1 : 0).compareTo(a.isRegistered ? 1 : 0),
       );
@@ -677,14 +682,17 @@ class _HomeBodyState extends State<HomeBody> {
   }
 
   bool isValidInt(int val) {
-    return !(val == -1 || val == 2147483647);
+    return !(val == -1 || val == 2147483647 || val == 268435455);
   }
 
   bool isValidString(String val) {
-    return !(val.contains("-1") ||
+    return !((val.contains("-1") &&
+            (!val.endsWith("dB") && !val.contains("dB"))) ||
         val.contains("2147483647") ||
+        val.contains("268435455") ||
         val.contains("null") ||
         val.trim() == "0.0" ||
+        val.trim() == "0.0MHz" ||
         val.trim() == "-");
   }
 

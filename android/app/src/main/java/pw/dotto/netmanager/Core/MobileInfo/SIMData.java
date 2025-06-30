@@ -1,6 +1,7 @@
 package pw.dotto.netmanager.Core.MobileInfo;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CellData;
 
@@ -79,6 +80,11 @@ public class SIMData {
 
     public CellData[] getActiveCells() {
         return activeCells.toArray(new CellData[0]);
+    }
+
+    public void setActiveCells(CellData[] activeCells) {
+        this.activeCells.clear();
+        Collections.addAll(this.activeCells, activeCells);
     }
 
     public CellData[] getNeighborCells() {

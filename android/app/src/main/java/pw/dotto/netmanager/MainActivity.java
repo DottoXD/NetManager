@@ -13,10 +13,13 @@ import androidx.core.app.ActivityCompat;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
+import pw.dotto.netmanager.Core.Events.EventManager;
+import pw.dotto.netmanager.Core.Events.NetmanagerEvent;
 import pw.dotto.netmanager.Core.Manager;
 import pw.dotto.netmanager.Core.MobileInfo.SIMData;
 import pw.dotto.netmanager.Core.MobileInfo.SimReceiverManager;
@@ -35,6 +38,7 @@ public class MainActivity extends FlutterActivity {
   @Override
   public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
     super.configureFlutterEngine(flutterEngine);
+    Gson gson = new Gson();
 
     sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
 
@@ -77,9 +81,8 @@ public class MainActivity extends FlutterActivity {
           break;
 
         case "getNetworkData":
-          SIMData data = manager.getSimNetworkData(selectedSim);
-          Gson gson = new Gson();
-          result.success(gson.toJson(data));
+          SIMData simData = manager.getSimNetworkData(selectedSim);
+          result.success(gson.toJson(simData));
           break;
 
         case "getNetworkGen":
@@ -126,6 +129,17 @@ public class MainActivity extends FlutterActivity {
           result.success(count);
           break;
 
+        case "getEvents":
+          EventManager eventManager = manager.getEventManager();
+          if (eventManager == null) {
+            result.success(gson.toJson(List.of()));
+            break;
+          }
+
+          NetmanagerEvent[] events = eventManager.getEvents();
+          result.success(gson.toJson(events));
+          break;
+
         default:
           result.notImplemented();
           break;
@@ -135,8 +149,8 @@ public class MainActivity extends FlutterActivity {
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
-      super.onCreate(savedInstanceState);
-      manager = new Manager(this);
+    super.onCreate(savedInstanceState);
+    manager = new Manager(this);
   }
 
   @Override

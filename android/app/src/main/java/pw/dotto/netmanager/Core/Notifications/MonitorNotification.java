@@ -12,6 +12,7 @@ import android.telephony.CellInfo;
 
 import androidx.core.app.NotificationCompat;
 
+import java.util.Objects;
 import java.util.Random;
 
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.NrCellData;
@@ -121,13 +122,16 @@ public class MonitorNotification {
                     .append(simData.getPrimaryCell().getProcessedSignal()).append("dBm)\n");
 
             if (simData.getPrimaryCell().getSignalQuality() != CellInfo.UNAVAILABLE
-                    && simData.getPrimaryCell().getSignalQualityString() != "-")
+                    && !Objects.equals(simData.getPrimaryCell().getSignalQualityString().trim(), "-"))
                 contentText.append(simData.getPrimaryCell().getSignalQualityString()).append(": ")
                         .append(simData.getPrimaryCell().getSignalQuality()).append("dB ");
             if (simData.getPrimaryCell().getSignalNoise() != CellInfo.UNAVAILABLE
-                    && simData.getPrimaryCell().getSignalNoiseString() != "-")
+                    && !Objects.equals(simData.getPrimaryCell().getSignalNoiseString().trim(), "-"))
                 contentText.append(simData.getPrimaryCell().getSignalNoiseString()).append(": ")
                         .append(simData.getPrimaryCell().getSignalNoise()).append("dB ");
+
+            if (contentText.charAt(contentText.length() - 1) == '\n')
+                contentText.deleteCharAt(contentText.length() - 1);
 
             if (i == 0)
                 contentText.append("\n\n");

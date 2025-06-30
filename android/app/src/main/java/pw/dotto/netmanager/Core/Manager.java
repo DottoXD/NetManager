@@ -21,10 +21,13 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Executor;
 
+import pw.dotto.netmanager.Core.Events.EventManager;
+import pw.dotto.netmanager.Core.Events.MobileNetmanagerEvent;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CdmaCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.GsmCellData;
@@ -44,6 +47,7 @@ public class Manager {
   private TelephonyManager firstManager;
   private TelephonyManager secondManager;
   private final SimReceiverManager simReceiverManager;
+  private final EventManager eventManager;
 
   private DisplayInfoListener[] nsa = { null, null };
   private Date lastModemUpdate = null;
@@ -54,6 +58,8 @@ public class Manager {
 
     simReceiverManager = SimReceiverManager.getInstance(context);
     simReceiverManager.registerStateReceiver(this::updateTelephonyManagers);
+
+    eventManager = EventManager.getInstance(context);
   }
 
   private TelephonyManager getTelephony() {
@@ -174,12 +180,11 @@ public class Manager {
     if (simOperator == null || simOperator.isEmpty())
       simOperator = "00000";
 
+    String networkOperatorName = telephony.getNetworkOperatorName();
+
     try {
       if (lastModemUpdate == null
-          || (/*
-               * context instanceof Activity
-               * &&
-               */ lastModemUpdate.toInstant().plusSeconds(updateInterval).isBefore(new Date().toInstant()))) {
+          || (lastModemUpdate.toInstant().plusSeconds(updateInterval).isBefore(new Date().toInstant()))) {
         Log.w("pw.dotto.netmanager", "Requesting updated cell info.");
         telephony.requestCellInfoUpdate(ContextCompat.getMainExecutor(context),
             new TelephonyManager.CellInfoCallback() {
@@ -252,8 +257,10 @@ public class Manager {
               String mccMnc = ((CellInfoGsm) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoGsm) baseCell).getCellIdentity().getMncString();
 
-              if (mccMnc.equals(simOperator))
-                data.addActiveCell(gsmCellData);
+              if (!mccMnc.contains("null")) {
+                if (mccMnc.equals(simOperator))
+                  data.addActiveCell(gsmCellData);
+              }
             } else if (baseCell instanceof CellInfoCdma) {
               CdmaCellData cdmaCellData = CellExtractor.getCdmaCellData((CellInfoCdma) baseCell);
               data.addActiveCell(cdmaCellData);
@@ -262,25 +269,39 @@ public class Manager {
               String mccMnc = ((CellInfoTdscdma) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoTdscdma) baseCell).getCellIdentity().getMncString();
 
-              if (mccMnc.equals(simOperator))
-                data.addActiveCell(tdscdmaCellData);
+              if (!mccMnc.contains("null")) {
+                if (mccMnc.equals(simOperator))
+                  data.addActiveCell(tdscdmaCellData);
+              }
             } else if (baseCell instanceof CellInfoWcdma) {
               WcdmaCellData wcdmaCellData = CellExtractor.getWcdmaCellData((CellInfoWcdma) baseCell);
               String mccMnc = ((CellInfoWcdma) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoWcdma) baseCell).getCellIdentity().getMncString();
 
-              if (mccMnc.equals(simOperator))
-                data.addActiveCell(wcdmaCellData);
+              if (!mccMnc.contains("null")) {
+                if (mccMnc.equals(simOperator))
+                  data.addActiveCell(wcdmaCellData);
+              }
             } else if (baseCell instanceof CellInfoLte) {
               LteCellData lteCellData = CellExtractor.getLteCellData((CellInfoLte) baseCell);
               String mccMnc = ((CellInfoLte) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoLte) baseCell).getCellIdentity().getMncString();
 
+              String operatorAlpha = null;
+              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                CharSequence seq = baseCell.getCellIdentity().getOperatorAlphaLong();
+                if (seq != null)
+                  operatorAlpha = seq.toString();
+              }
+
               if (!mccMnc.contains("null")) {
                 if (mccMnc.equals(simOperator))
-                  data.addActiveCell(lteCellData);
-              } else
-                data.addActiveCell(lteCellData); // to be tested! i might add that to other technologies
+                  if (operatorAlpha != null)
+                    if (operatorAlpha.equals(networkOperatorName))
+                      data.addActiveCell(lteCellData);
+                    else
+                      data.addActiveCell(lteCellData); // terrible code to be tested to actually fix a bug!
+              }
             } else if (baseCell instanceof CellInfoNr) {
               NrCellData nrCellData = CellExtractor.getNrCellData((CellInfoNr) baseCell);
 
@@ -291,8 +312,7 @@ public class Manager {
                 if (!mccMnc.contains("null")) {
                   if (mccMnc.equals(simOperator))
                     data.addActiveCell(nrCellData);
-                } else
-                  data.addActiveCell(nrCellData); // to be tested! i might add that to other technologies
+                }
               } else
                 data.addActiveCell(nrCellData);
             }
@@ -305,8 +325,12 @@ public class Manager {
               String mccMnc = ((CellInfoGsm) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoGsm) baseCell).getCellIdentity().getMncString();
 
-              if (mccMnc.equals(simOperator))
+              if (!mccMnc.contains("null")) {
+                if (mccMnc.equals(simOperator))
+                  data.addNeighborCell(gsmCellData);
+              } else
                 data.addNeighborCell(gsmCellData);
+              ;
             } else if (baseCell instanceof CellInfoCdma) {
               CdmaCellData cdmaCellData = CellExtractor.getCdmaCellData((CellInfoCdma) baseCell);
               data.addNeighborCell(cdmaCellData);
@@ -315,14 +339,20 @@ public class Manager {
               String mccMnc = ((CellInfoTdscdma) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoTdscdma) baseCell).getCellIdentity().getMncString();
 
-              if (mccMnc.equals(simOperator))
+              if (!mccMnc.contains("null")) {
+                if (mccMnc.equals(simOperator))
+                  data.addNeighborCell(tdscdmaCellData);
+              } else
                 data.addNeighborCell(tdscdmaCellData);
             } else if (baseCell instanceof CellInfoWcdma) {
               WcdmaCellData wcdmaCellData = CellExtractor.getWcdmaCellData((CellInfoWcdma) baseCell);
               String mccMnc = ((CellInfoWcdma) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoWcdma) baseCell).getCellIdentity().getMncString();
 
-              if (mccMnc.equals(simOperator))
+              if (!mccMnc.contains("null")) {
+                if (mccMnc.equals(simOperator))
+                  data.addNeighborCell(wcdmaCellData);
+              } else
                 data.addNeighborCell(wcdmaCellData);
             } else if (baseCell instanceof CellInfoLte) {
               LteCellData lteCellData = CellExtractor.getLteCellData((CellInfoLte) baseCell);
@@ -333,7 +363,7 @@ public class Manager {
                 if (mccMnc.equals(simOperator))
                   data.addNeighborCell(lteCellData);
               } else
-                data.addNeighborCell(lteCellData); // to be tested! i might add that to other technologies
+                data.addNeighborCell(lteCellData);
             } else if (baseCell instanceof CellInfoNr) {
               NrCellData nrCellData = CellExtractor.getNrCellData((CellInfoNr) baseCell);
 
@@ -345,7 +375,7 @@ public class Manager {
                   if (mccMnc.equals(simOperator))
                     data.addNeighborCell(nrCellData);
                 } else
-                  data.addNeighborCell(nrCellData); // to be tested! i might add that to other technologies
+                  data.addNeighborCell(nrCellData);
               } else
                 data.addNeighborCell(nrCellData);
             }
@@ -359,7 +389,7 @@ public class Manager {
       ServiceState state = telephony.getServiceState();
       if (state != null) {
         for (int bw : state.getCellBandwidths()) {
-          cellBandwidths.add(bw);
+          cellBandwidths.add(bw / 1000);
         }
       }
     } catch (Exception e) {
@@ -375,13 +405,6 @@ public class Manager {
     for (CellData cellData : data.getActiveCells()) {
       Log.w("pw.dotto.netmanager", cellData.toString());
 
-      /*
-       * if (!cellData.isRegistered()) {
-       * data.addNeighborCell(cellData);
-       * data.removeActiveCell(cellData);
-       * }
-       */
-
       cellData.setBasicCellData(DataExtractor.getBasicData(cellData));
     }
 
@@ -392,6 +415,18 @@ public class Manager {
 
     // after pretty buch everything, just before setting general bandwidth. might
     // confuse between multiple NR bands...
+    CellData[] activeCells = data.getActiveCells();
+    Arrays.sort(activeCells, (a, b) -> {
+      int bwA = a.getBandwidth();
+      int bwB = b.getBandwidth();
+
+      boolean invalidA = bwA <= 0;
+      boolean invalidB = bwB <= 0;
+      return Boolean.compare(invalidA, invalidB);
+    });
+
+    data.setActiveCells(activeCells);
+
     if (cellBandwidths.size() == data.getActiveCells().length) {
       int i = 0;
       List<Integer> usedBandwidths = new ArrayList<>();
@@ -585,16 +620,48 @@ public class Manager {
     return subscriptions == null ? 0 : subscriptions.size();
   }
 
-  public boolean getNsaStatus(int index) {
-    if (nsa[index] == null)
+  @SuppressLint("MissingPermission")
+  public boolean getNsaStatus(TelephonyManager telephony) {
+    if (telephony == null || !Utils.checkPermissions(context))
       return false;
 
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-      return nsa[index].getNsa();
+    ServiceState state = telephony.getServiceState();
+
+    if (state != null) {
+      String s = state.toString();
+
+      if (s.contains("nrState=CONNECTED") || s.contains("nsaState=5") || s.contains("EnDc=true"))
+        return true;
+    }
+
     return false;
+  }
+
+  public boolean getNsaStatus(int index) {
+    boolean result = false;
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+      result = nsa[index].getNsa();
+
+    if (!result) {
+      switch (index) {
+        case 0:
+          result = getNsaStatus(firstManager);
+          break;
+        case 1:
+          result = getNsaStatus(secondManager);
+          break;
+      }
+    }
+
+    return result;
   }
 
   public SimReceiverManager getSimReceiverManager() {
     return simReceiverManager;
+  }
+
+  public EventManager getEventManager() {
+    return eventManager;
   }
 }

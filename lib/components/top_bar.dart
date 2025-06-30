@@ -104,19 +104,43 @@ class _TopBarState extends State<TopBar> {
     }
   }
 
-  void switchSim() {
-    () async {
-      await platform.invokeMethod("switchSim");
-    }();
+  void switchSim() async {
+    await platform.invokeMethod("switchSim");
   }
 
-  void openRadioInfo() {
-    () async {
-      await platform.invokeMethod("openRadioInfo");
-    }();
+  void openRadioInfo() async {
+    await platform.invokeMethod("openRadioInfo");
   }
 
-  void openLogs() {}
+  void openLogs() async {
+    try {
+      if (!mounted) return;
+
+      final String logs = await platform.invokeMethod("getEvents") ?? "No logs";
+
+      //Temporary
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Event logs"),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Scrollbar(child: Text(logs)),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text("Close"),
+              ),
+            ],
+          );
+        },
+      );
+    } on PlatformException catch (_) {
+      //super error, handle it
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

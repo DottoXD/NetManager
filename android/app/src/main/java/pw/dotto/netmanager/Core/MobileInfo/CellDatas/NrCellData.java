@@ -7,15 +7,15 @@ public class NrCellData extends CellData {
             int band, boolean isRegistered) {
         super(
                 "Cell ID",
-                "RSSI",
-                "RSRP",
+                "CSI RSRP",
+                "SS RSRP",
                 "ARFCN",
                 "PCI",
                 "TAC",
                 "RSRQ",
                 "SNR",
                 "TA (µs)",
-                "-",
+                "Bandwidth",
                 "Band",
                 cellIdentifier,
                 rawSignal,
