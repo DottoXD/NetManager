@@ -15,6 +15,7 @@ import androidx.core.app.NotificationCompat;
 import java.util.Objects;
 import java.util.Random;
 
+import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.NrCellData;
 import pw.dotto.netmanager.Core.MobileInfo.SIMData;
 import pw.dotto.netmanager.Core.Utils;
@@ -114,21 +115,35 @@ public class MonitorNotification {
                 nodeStr = "Unavailable";
             }
 
-            contentText.append("SIM ").append(i + 1).append(" (").append(simData.getMccMnc()).append(", ")
-                    .append((simData.getPrimaryCell() instanceof NrCellData ? "N" : "B"))
-                    .append(simData.getPrimaryCell().getBasicCellData().getBand()).append(" ")
-                    .append(simData.getPrimaryCell().getBasicCellData().getFrequency()).append("MHz)\n").append(nodeStr)
-                    .append(" (")
-                    .append(simData.getPrimaryCell().getProcessedSignal()).append("dBm)\n");
+            CellData selectedCell = simData.getPrimaryCell();
+            if (!(selectedCell instanceof NrCellData)) {
+                for (CellData cell : simData.getActiveCells()) {
+                    if (cell instanceof NrCellData) {
+                        NrCellData nrCell = (NrCellData) cell;
+                        if (nrCell.getProcessedSignal() <= 0 || nrCell.getProcessedSignal() == CellInfo.UNAVAILABLE)
+                            continue;
 
-            if (simData.getPrimaryCell().getSignalQuality() != CellInfo.UNAVAILABLE
-                    && !Objects.equals(simData.getPrimaryCell().getSignalQualityString().trim(), "-"))
-                contentText.append(simData.getPrimaryCell().getSignalQualityString()).append(": ")
-                        .append(simData.getPrimaryCell().getSignalQuality()).append("dB ");
-            if (simData.getPrimaryCell().getSignalNoise() != CellInfo.UNAVAILABLE
-                    && !Objects.equals(simData.getPrimaryCell().getSignalNoiseString().trim(), "-"))
-                contentText.append(simData.getPrimaryCell().getSignalNoiseString()).append(": ")
-                        .append(simData.getPrimaryCell().getSignalNoise()).append("dB ");
+                        selectedCell = nrCell;
+                        break;
+                    }
+                }
+            }
+
+            contentText.append("SIM ").append(i + 1).append(" (").append(simData.getMccMnc()).append(", ")
+                    .append((selectedCell instanceof NrCellData ? "N" : "B"))
+                    .append(selectedCell.getBasicCellData().getBand()).append(" ")
+                    .append(selectedCell.getBasicCellData().getFrequency()).append("MHz)\n").append(nodeStr)
+                    .append(" (")
+                    .append(selectedCell.getProcessedSignal()).append("dBm)\n");
+
+            if (selectedCell.getSignalQuality() != CellInfo.UNAVAILABLE
+                    && !Objects.equals(selectedCell.getSignalQualityString().trim(), "-"))
+                contentText.append(selectedCell.getSignalQualityString()).append(": ")
+                        .append(selectedCell.getSignalQuality()).append("dB ");
+            if (selectedCell.getSignalNoise() != CellInfo.UNAVAILABLE
+                    && !Objects.equals(selectedCell.getSignalNoiseString().trim(), "-"))
+                contentText.append(selectedCell.getSignalNoiseString()).append(": ")
+                        .append(selectedCell.getSignalNoise()).append("dB ");
 
             if (contentText.charAt(contentText.length() - 1) == '\n')
                 contentText.deleteCharAt(contentText.length() - 1);

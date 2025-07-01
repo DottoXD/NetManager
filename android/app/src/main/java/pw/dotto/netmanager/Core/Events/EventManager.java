@@ -4,6 +4,7 @@ import static android.content.Context.MODE_PRIVATE;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -17,6 +18,7 @@ public class EventManager {
 
     public EventManager(Context context) {
         sharedPreferences = context.getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
+        loadEvents();
     }
 
     public static synchronized EventManager getInstance(Context context) {
@@ -25,7 +27,6 @@ public class EventManager {
 
         if (instance == null) {
             instance = new EventManager(context.getApplicationContext());
-            instance.loadEvents();
         }
 
         return instance;
@@ -40,12 +41,31 @@ public class EventManager {
             MobileNetmanagerEvent lastEvent = (MobileNetmanagerEvent) getLastEventByType(
                     mobileNetmanagerEvent.getEventType());
 
+            if (lastEvent != null) {
+                mobileNetmanagerEvent.setOldValue(lastEvent.getNewValue());
+            } else
+                mobileNetmanagerEvent.setOldValue("N/A");
+
             if (mobileNetmanagerEvent.equals(lastEvent))
                 return;
 
             events.add(mobileNetmanagerEvent);
-            if (events.size() > sharedPreferences.getInt("flutter.maximumLogs", 10))
-                events.remove(0);
+
+            int maxLogs = 10;
+            try {
+                maxLogs = sharedPreferences.getInt("flutter.maximumLogs", 10);
+            } catch (Exception e) {
+                // todo
+            }
+
+            if (maxLogs <= 0)
+                maxLogs = 10;
+
+            if (events != null && !events.isEmpty()) {
+                if (events.size() > maxLogs)
+                    events.remove(0);
+            }
+
             saveEvents();
         }
     }
@@ -69,7 +89,8 @@ public class EventManager {
 
         SharedPreferences.Editor sharedEditor = sharedPreferences.edit();
         String json = new Gson().toJson(events);
-        sharedEditor.putString("flutter.loggedEvents", json);
+        sharedEditor.putString("loggedEvents", json);
+        Log.w("pw.dotto.netmanager", "Saved " + json);
         sharedEditor.apply();
     }
 
@@ -77,7 +98,8 @@ public class EventManager {
         if (sharedPreferences == null)
             return;
 
-        String json = sharedPreferences.getString("flutter.loggedEvents", "");
+        String json = sharedPreferences.getString("loggedEvents", "[]");
+        Log.w("pw.dotto.netmanager", "Retrieved " + json);
         if (json.trim().isEmpty())
             return;
 

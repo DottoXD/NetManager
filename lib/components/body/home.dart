@@ -3,8 +3,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:netmanager/types/cell_data.dart';
-import 'package:netmanager/types/sim_data.dart';
+import 'package:netmanager/types/cell/cell_data.dart';
+import 'package:netmanager/types/cell/sim_data.dart';
 import 'dart:async';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -88,7 +88,6 @@ class _HomeBodyState extends State<HomeBody> {
 
       setState(() {
         _progressIndicator = LinearProgressIndicator();
-        _debug = jsonStr;
       });
 
       final Map<String, dynamic> map = json.decode(jsonStr);
@@ -122,6 +121,9 @@ class _HomeBodyState extends State<HomeBody> {
                               : "eNodeB/CID (${(int.tryParse(simData.primaryCell.cellIdentifier)! / 256).floor()}/${int.tryParse(simData.primaryCell.cellIdentifier)! % 256})")),
                   child: FilledButton(
                     style: FilledButton.styleFrom(
+                      overlayColor: Theme.of(
+                        context,
+                      ).colorScheme.onPrimaryContainer.withAlpha(35),
                       elevation: 1,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20.0),
@@ -138,7 +140,7 @@ class _HomeBodyState extends State<HomeBody> {
                         _mainData = mainData;
                       });*/
                     },
-                    child: Container(
+                    child: Ink(
                       width: cardWidth * 2,
                       height: (cardHeight * 2) - 20,
                       child: Column(
@@ -248,7 +250,9 @@ class _HomeBodyState extends State<HomeBody> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20.0),
               ),
-              color: Theme.of(context).colorScheme.primaryContainer,
+              color: Theme.of(
+                context,
+              ).colorScheme.primaryContainer.withAlpha(230),
               child: Container(
                 width: cardWidth,
                 height: cardHeight,
@@ -370,7 +374,10 @@ class _HomeBodyState extends State<HomeBody> {
                         : "Unknown band"),
                   ),
                   subtitle: Text(cellContent),
-                  trailing: Icon(icons[index]),
+                  trailing: Icon(
+                    icons[index],
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
                 /*if (i != 0 && i != simData.activeCells.length - 1)
                   Divider(
@@ -431,15 +438,19 @@ class _HomeBodyState extends State<HomeBody> {
 
   @override
   Widget build(BuildContext context) {
+    final widgetsHeight =
+        MediaQuery.of(context).size.height -
+        kToolbarHeight -
+        kBottomNavigationBarHeight -
+        MediaQuery.of(context).padding.top;
+
     return SingleChildScrollView(
       scrollDirection: Axis.vertical,
       child: Column(
         children: <Widget>[
           if (!homeLoadedNotifier.value)
             ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height,
-              ),
+              constraints: BoxConstraints(minHeight: widgetsHeight),
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -449,9 +460,7 @@ class _HomeBodyState extends State<HomeBody> {
             )
           else if (homeLoadedNotifier.value && plmn.isEmpty && pageLoaded)
             ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height,
-              ),
+              constraints: BoxConstraints(minHeight: widgetsHeight),
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -691,6 +700,7 @@ class _HomeBodyState extends State<HomeBody> {
         val.contains("2147483647") ||
         val.contains("268435455") ||
         val.contains("null") ||
+        val.contains("-1dBm") ||
         val.trim() == "0.0" ||
         val.trim() == "0.0MHz" ||
         val.trim() == "-");

@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:netmanager/types/events/mobile_netmanager_event.dart';
+import 'package:netmanager/types/events/netmanager_event.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TopBar extends StatefulWidget implements PreferredSizeWidget {
@@ -116,7 +119,18 @@ class _TopBarState extends State<TopBar> {
     try {
       if (!mounted) return;
 
-      final String logs = await platform.invokeMethod("getEvents") ?? "No logs";
+      final String logs = await platform.invokeMethod("getEvents");
+      if (logs.trim().isEmpty) return;
+
+      final List<dynamic> jsonList = json.decode(logs);
+      final List<NetmanagerEvent> events =
+          jsonList.map<NetmanagerEvent>((e) {
+            if (e.containsKey("simSlot") && e.containsKey("network")) {
+              return MobileNetmanagerEvent.fromJson(e);
+            } else {
+              return NetmanagerEvent.fromJson(e);
+            }
+          }).toList();
 
       //Temporary
       showDialog(
@@ -126,7 +140,43 @@ class _TopBarState extends State<TopBar> {
             title: Text("Event logs"),
             content: SizedBox(
               width: double.maxFinite,
-              child: Scrollbar(child: Text(logs)),
+              child: Scrollbar(
+                child: ListView.builder(
+                  itemCount: events.length,
+                  itemBuilder: (context, i) {
+                    final event = events[i];
+
+                    return ListTile(
+                      title: Text(event.eventType.name),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(event.oldValue),
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 5),
+                                child: Icon(Icons.arrow_right_rounded),
+                              ),
+                              Text(event.newValue),
+                            ],
+                          ),
+                          Text(event.dateTime.toLocal().toString()),
+                          if (event is MobileNetmanagerEvent) ...[
+                            Text(
+                              "SIM ${event.simSlot}, Network: ${event.network}",
+                            ),
+                          ],
+                          Divider(
+                            height: 0,
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
             actions: [
               TextButton(

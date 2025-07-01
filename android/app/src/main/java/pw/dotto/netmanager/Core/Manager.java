@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.concurrent.Executor;
 
 import pw.dotto.netmanager.Core.Events.EventManager;
+import pw.dotto.netmanager.Core.Events.EventTypes;
 import pw.dotto.netmanager.Core.Events.MobileNetmanagerEvent;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CdmaCellData;
@@ -296,11 +297,11 @@ public class Manager {
 
               if (!mccMnc.contains("null")) {
                 if (mccMnc.equals(simOperator))
-                  if (operatorAlpha != null)
+                  if (operatorAlpha != null) {
                     if (operatorAlpha.equals(networkOperatorName))
                       data.addActiveCell(lteCellData);
-                    else
-                      data.addActiveCell(lteCellData); // terrible code to be tested to actually fix a bug!
+                  } else
+                    data.addActiveCell(lteCellData); // terrible code to be tested to actually fix a bug!
               }
             } else if (baseCell instanceof CellInfoNr) {
               NrCellData nrCellData = CellExtractor.getNrCellData((CellInfoNr) baseCell);
@@ -466,11 +467,23 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public SIMData getSimNetworkData(int simId) {
+    SIMData simData;
+
     switch (simId) {
       case 0:
-        return getSimNetworkData(firstManager);
+        simData = getSimNetworkData(firstManager);
+        if (simData != null && simData.getPrimaryCell() != null)
+          saveEvent(EventTypes.MOBILE_BAND_CHANGED, 0,
+              (simData.getPrimaryCell().getChannelNumberString().equals("ARFCN") ? "N" : "B")
+                  + simData.getPrimaryCell().getBand());
+        return simData;
       case 1:
-        return getSimNetworkData(secondManager);
+        simData = getSimNetworkData(secondManager);
+        if (simData != null && simData.getPrimaryCell() != null)
+          saveEvent(EventTypes.MOBILE_BAND_CHANGED, 1,
+              (simData.getPrimaryCell().getChannelNumberString().equals("ARFCN") ? "N" : "B")
+                  + simData.getPrimaryCell().getBand());
+        return simData;
       default:
         return null;
     }
@@ -526,11 +539,19 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public int getSimNetworkGen(int simId) {
+    int gen;
+
     switch (simId) {
       case 0:
-        return getSimNetworkGen(firstManager);
+        gen = getSimNetworkGen(firstManager);
+        saveEvent(EventTypes.MOBILE_TECHNOLOGY_CHANGED, 0,
+            (getNsaStatus(firstManager) ? "5G" : (gen > 0 ? gen + "G" : "Unknown")));
+        return gen;
       case 1:
-        return getSimNetworkGen(secondManager);
+        gen = getSimNetworkGen(secondManager);
+        saveEvent(EventTypes.MOBILE_TECHNOLOGY_CHANGED, 1,
+            (getNsaStatus(secondManager) ? "5G" : (gen > 0 ? gen + "G" : "Unknown")));
+        return gen;
       default:
         return -1;
     }
@@ -546,13 +567,39 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public String getPlmn(int simId) {
+    String plmn;
+
     switch (simId) {
       case 0:
-        return getPlmn(firstManager);
+        plmn = getPlmn(firstManager);
+        saveEvent(EventTypes.MOBILE_PLMN_CHANGED, 0, plmn);
+        return plmn;
       case 1:
-        return getPlmn(secondManager);
+        plmn = getPlmn(secondManager);
+        saveEvent(EventTypes.MOBILE_PLMN_CHANGED, 1, plmn);
+        return plmn;
       default:
         return "00000";
+    }
+  }
+
+  @SuppressLint("MissingPermission")
+  public String getNetwork(TelephonyManager telephony) {
+    if (telephony == null || !Utils.checkPermissions(context))
+      return "NetManager";
+
+    return telephony.getNetworkOperatorName();
+  }
+
+  @SuppressLint("MissingPermission")
+  public String getNetwork(int simId) {
+    switch (simId) {
+      case 0:
+        return getNetwork(firstManager);
+      case 1:
+        return getNetwork(secondManager);
+      default:
+        return "NetManager";
     }
   }
 
@@ -655,6 +702,15 @@ public class Manager {
     }
 
     return result;
+  }
+
+  private void saveEvent(EventTypes type, int simId, String value) {
+    if (eventManager == null || value == null)
+      return;
+
+    if (type.toString().startsWith("MOBILE")) {
+      eventManager.addEvent(new MobileNetmanagerEvent(type, value, simId, getNetwork(simId)));
+    }
   }
 
   public SimReceiverManager getSimReceiverManager() {

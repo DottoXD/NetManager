@@ -1,4 +1,4 @@
-import 'package:netmanager/types/basic_cell_data.dart';
+import 'package:netmanager/types/cell/basic_cell_data.dart';
 
 class CellData {
   final String cellIdentifierString;

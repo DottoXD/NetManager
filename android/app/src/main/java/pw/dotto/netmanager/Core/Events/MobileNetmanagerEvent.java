@@ -5,15 +5,12 @@ import androidx.annotation.Nullable;
 public class MobileNetmanagerEvent extends NetmanagerEvent {
     private final int simSlot;
     private final String network;
-    private final String mccMnc;
 
-    public MobileNetmanagerEvent(EventTypes eventType, String oldValue, String newValue, int simSlot, String network,
-            String mccMnc) {
-        super(eventType, oldValue, newValue);
+    public MobileNetmanagerEvent(EventTypes eventType, String newValue, int simSlot, String network) {
+        super(eventType, newValue);
 
         this.simSlot = simSlot;
         this.network = network;
-        this.mccMnc = mccMnc;
     }
 
     public int getSimSlot() {
@@ -24,9 +21,6 @@ public class MobileNetmanagerEvent extends NetmanagerEvent {
         return network;
     }
 
-    public String getMccMnc() {
-        return mccMnc;
-    }
 
     @Override
     public boolean equals(@Nullable Object obj) {
