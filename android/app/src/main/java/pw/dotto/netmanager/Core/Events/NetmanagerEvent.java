@@ -8,12 +8,12 @@ public abstract class NetmanagerEvent {
     private final EventTypes eventType;
     private String oldValue;
     private final String newValue;
-    private final LocalDateTime dateTime;
+    private final String dateTime;
 
     public NetmanagerEvent(EventTypes eventType, String newValue) {
         this.eventType = eventType;
         this.newValue = newValue;
-        dateTime = LocalDateTime.now();
+        dateTime = LocalDateTime.now().toString();
     }
 
     public void setOldValue(String oldValue) {
@@ -32,7 +32,7 @@ public abstract class NetmanagerEvent {
         return newValue;
     }
 
-    public LocalDateTime getDateTime() {
+    public String getDateTime() {
         return dateTime;
     }
 
@@ -42,8 +42,7 @@ public abstract class NetmanagerEvent {
             NetmanagerEvent event = (NetmanagerEvent) obj;
 
             return event.getEventType().equals(eventType)
-                    && (event.getOldValue().equals(oldValue) && event.getNewValue().equals(newValue)
-                            || event.getOldValue().equals(event.getNewValue()));
+                    && (event.getOldValue().equals(oldValue) && event.getNewValue().equals(newValue));
         }
 
         return false;

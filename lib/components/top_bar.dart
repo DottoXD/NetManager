@@ -132,7 +132,6 @@ class _TopBarState extends State<TopBar> {
             }
           }).toList();
 
-      //Temporary
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -161,15 +160,19 @@ class _TopBarState extends State<TopBar> {
                               Text(event.newValue),
                             ],
                           ),
-                          Text(event.dateTime.toLocal().toString()),
+                          Text(event.dateTime.toLocal().toIso8601String()),
                           if (event is MobileNetmanagerEvent) ...[
                             Text(
-                              "SIM ${event.simSlot}, Network: ${event.network}",
+                              "SIM ${event.simSlot + 1}, Network: ${event.network}",
                             ),
                           ],
-                          Divider(
-                            height: 0,
-                            color: Theme.of(context).colorScheme.outlineVariant,
+                          Padding(
+                            padding: EdgeInsets.only(top: 10.0),
+                            child: Divider(
+                              height: 0,
+                              color:
+                                  Theme.of(context).colorScheme.outlineVariant,
+                            ),
                           ),
                         ],
                       ),
@@ -187,8 +190,26 @@ class _TopBarState extends State<TopBar> {
           );
         },
       );
-    } on PlatformException catch (_) {
-      //super error, handle it
+    } catch (e) {
+      showDialog(
+        //temporary?
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Error"),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Scrollbar(child: Text(e.toString())),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text("Close"),
+              ),
+            ],
+          );
+        },
+      );
     }
   }
 

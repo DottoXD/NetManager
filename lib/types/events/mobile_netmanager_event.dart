@@ -19,7 +19,7 @@ class MobileNetmanagerEvent extends NetmanagerEvent {
       eventType: eventTypeFromString(json['eventType']),
       oldValue: json['oldValue'],
       newValue: json['newValue'],
-      dateTime: json['dateTime'],
+      dateTime: DateTime.parse(json['dateTime']),
       simSlot: json['simSlot'],
       network: json['network'],
     );

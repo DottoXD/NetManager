@@ -18,7 +18,7 @@ class NetmanagerEvent {
       eventType: eventTypeFromString(json['eventType']),
       oldValue: json['oldValue'],
       newValue: json['newValue'],
-      dateTime: json['dateTime'],
+      dateTime: DateTime.parse(json['dateTime']),
     );
   }
 }

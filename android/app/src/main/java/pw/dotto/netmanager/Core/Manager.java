@@ -297,7 +297,7 @@ public class Manager {
 
               if (!mccMnc.contains("null")) {
                 if (mccMnc.equals(simOperator))
-                  if (operatorAlpha != null) {
+                  if (operatorAlpha != null && !operatorAlpha.trim().isEmpty()) {
                     if (operatorAlpha.equals(networkOperatorName))
                       data.addActiveCell(lteCellData);
                   } else

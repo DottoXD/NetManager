@@ -7,6 +7,10 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 
 import java.util.ArrayList;
@@ -15,8 +19,10 @@ public class EventManager {
     private static EventManager instance;
     private final ArrayList<NetmanagerEvent> events = new ArrayList<>();
     private final SharedPreferences sharedPreferences;
+    private final Gson gson;
 
     public EventManager(Context context) {
+        gson = new Gson();
         sharedPreferences = context.getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
         loadEvents();
     }
@@ -46,7 +52,8 @@ public class EventManager {
             } else
                 mobileNetmanagerEvent.setOldValue("N/A");
 
-            if (mobileNetmanagerEvent.equals(lastEvent))
+            if (mobileNetmanagerEvent.equals(lastEvent)
+                    || mobileNetmanagerEvent.getOldValue().equals(mobileNetmanagerEvent.getNewValue()))
                 return;
 
             events.add(mobileNetmanagerEvent);
@@ -88,7 +95,7 @@ public class EventManager {
             return;
 
         SharedPreferences.Editor sharedEditor = sharedPreferences.edit();
-        String json = new Gson().toJson(events);
+        String json = gson.toJson(events);
         sharedEditor.putString("loggedEvents", json);
         Log.w("pw.dotto.netmanager", "Saved " + json);
         sharedEditor.apply();
@@ -103,9 +110,26 @@ public class EventManager {
         if (json.trim().isEmpty())
             return;
 
-        ArrayList<NetmanagerEvent> loaded = new Gson().fromJson(json, new TypeToken<ArrayList<NetmanagerEvent>>() {
-        }.getType());
         events.clear();
-        events.addAll(loaded);
+
+        try {
+            JsonArray arr = JsonParser.parseString(json).getAsJsonArray();
+
+            for (JsonElement elem : arr) {
+                JsonObject obj = elem.getAsJsonObject();
+                NetmanagerEvent event = null;
+
+                if (obj.has("simSlot") && obj.has("network")) {
+                    event = gson.fromJson(obj, MobileNetmanagerEvent.class);
+                } else {
+                    event = gson.fromJson(obj, NetmanagerEvent.class);
+                }
+
+                if (event != null)
+                    events.add(event);
+            }
+        } catch (Exception e) {
+            // todo add sentry
+        }
     }
 }
