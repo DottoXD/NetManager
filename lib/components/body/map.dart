@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MapBody extends StatefulWidget {
   const MapBody(this.platform, this.sharedPreferences, {super.key});
@@ -43,7 +44,7 @@ class _MapBodyState extends State<MapBody> {
   }
 
   /*void getMap() async {
-    List<LocationAccuracy> accuracies = [
+    /*List<LocationAccuracy> accuracies = [
       LocationAccuracy.reduced,
       LocationAccuracy.low,
       LocationAccuracy.medium,
@@ -55,14 +56,14 @@ class _MapBodyState extends State<MapBody> {
         accuracy:
             accuracies[sharedPreferences.getInt("positionPrecision") ?? 0],
       ),
-    );
+    );*/
 
     if (!disposed && context.mounted) {
       setState(() {
         _progressIndicator = LinearProgressIndicator();
         _map = FlutterMap(
           options: MapOptions(
-            initialCenter: LatLng(position.latitude, position.longitude),
+            //initialCenter: LatLng(position.latitude, position.longitude),
             initialZoom: 9.2,
           ),
           children: <Widget>[
@@ -70,9 +71,22 @@ class _MapBodyState extends State<MapBody> {
               urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
               userAgentPackageName: "pw.dotto.netmanager",
             ),
+            RichAttributionWidget(
+              // Include a stylish prebuilt attribution widget that meets all requirments
+              attributions: [
+                TextSourceAttribution(
+                  "OpenStreetMap contributors",
+                  onTap:
+                      () => launchUrl(
+                        Uri.parse("https://openstreetmap.org/copyright"),
+                      ),
+                ),
+                // Also add images...
+              ],
+            ),
           ],
         );
-        _progressIndicator = Text("");
+        _progressIndicator = Container();
       });
     }
   }*/

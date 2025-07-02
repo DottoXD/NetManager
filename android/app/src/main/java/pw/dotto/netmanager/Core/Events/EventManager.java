@@ -11,7 +11,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.gson.reflect.TypeToken;
 
 import java.util.ArrayList;
 
@@ -45,7 +44,7 @@ public class EventManager {
         if (event instanceof MobileNetmanagerEvent) {
             MobileNetmanagerEvent mobileNetmanagerEvent = (MobileNetmanagerEvent) event;
             MobileNetmanagerEvent lastEvent = (MobileNetmanagerEvent) getLastEventByType(
-                    mobileNetmanagerEvent.getEventType());
+                    mobileNetmanagerEvent.getEventType(), mobileNetmanagerEvent.getSimSlot());
 
             if (lastEvent != null) {
                 mobileNetmanagerEvent.setOldValue(lastEvent.getNewValue());
@@ -77,10 +76,18 @@ public class EventManager {
         }
     }
 
-    public NetmanagerEvent getLastEventByType(EventTypes type) {
+    public NetmanagerEvent getLastEventByType(EventTypes type, int simSlot) { // add new method with same name when i'll
+                                                                              // add more types
         for (int i = events.size() - 1; i > 0; i--) {
-            if (events.get(i).getEventType().equals(type))
-                return events.get(i);
+            if (events.get(i).getEventType().equals(type)) {
+                NetmanagerEvent checkedEvent = events.get(i);
+
+                if (checkedEvent instanceof MobileNetmanagerEvent) {
+                    MobileNetmanagerEvent mobileNetmanagerEvent = (MobileNetmanagerEvent) checkedEvent;
+                    if (mobileNetmanagerEvent.getSimSlot() == simSlot)
+                        return checkedEvent;
+                }
+            }
         }
 
         return null;

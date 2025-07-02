@@ -1,4 +1,4 @@
-package pw.dotto.netmanager.Core.MobileInfo;
+package pw.dotto.netmanager.Core.Listeners;
 
 import android.os.Build;
 import android.telephony.TelephonyCallback;
