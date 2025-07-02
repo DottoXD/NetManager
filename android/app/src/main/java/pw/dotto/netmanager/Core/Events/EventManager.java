@@ -138,5 +138,7 @@ public class EventManager {
         } catch (Exception e) {
             // todo add sentry
         }
+
+        Log.w("pw.dotto.netmanager", "Loaded: " + events.size());
     }
 }

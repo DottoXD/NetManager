@@ -162,18 +162,19 @@ class _TopBarState extends State<TopBar> {
                           ),
                           Text(event.dateTime.toLocal().toIso8601String()),
                           if (event is MobileNetmanagerEvent) ...[
-                            Text(
-                              "SIM ${event.simSlot + 1}, Network: ${event.network}",
-                            ),
+                            Text("SIM ${event.simSlot + 1} (${event.network})"),
                           ],
-                          Padding(
-                            padding: EdgeInsets.only(top: 10.0),
-                            child: Divider(
-                              height: 0,
-                              color:
-                                  Theme.of(context).colorScheme.outlineVariant,
+                          if (i < events.length - 1)
+                            Padding(
+                              padding: EdgeInsets.only(top: 10.0),
+                              child: Divider(
+                                height: 0,
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).colorScheme.outlineVariant,
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     );

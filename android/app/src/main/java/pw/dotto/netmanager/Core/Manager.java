@@ -262,7 +262,8 @@ public class Manager {
               if (!mccMnc.contains("null")) {
                 if (mccMnc.equals(simOperator))
                   data.addActiveCell(gsmCellData);
-              }
+              } else
+                data.addActiveCell(gsmCellData);
             } else if (baseCell instanceof CellInfoCdma) {
               CdmaCellData cdmaCellData = CellExtractor.getCdmaCellData((CellInfoCdma) baseCell);
               data.addActiveCell(cdmaCellData);
@@ -274,7 +275,8 @@ public class Manager {
               if (!mccMnc.contains("null")) {
                 if (mccMnc.equals(simOperator))
                   data.addActiveCell(tdscdmaCellData);
-              }
+              } else
+                data.addActiveCell(tdscdmaCellData);
             } else if (baseCell instanceof CellInfoWcdma) {
               WcdmaCellData wcdmaCellData = CellExtractor.getWcdmaCellData((CellInfoWcdma) baseCell);
               String mccMnc = ((CellInfoWcdma) baseCell).getCellIdentity().getMccString()
@@ -283,7 +285,8 @@ public class Manager {
               if (!mccMnc.contains("null")) {
                 if (mccMnc.equals(simOperator))
                   data.addActiveCell(wcdmaCellData);
-              }
+              } else
+                data.addActiveCell(wcdmaCellData);
             } else if (baseCell instanceof CellInfoLte) {
               LteCellData lteCellData = CellExtractor.getLteCellData((CellInfoLte) baseCell);
               String mccMnc = ((CellInfoLte) baseCell).getCellIdentity().getMccString()
@@ -292,7 +295,8 @@ public class Manager {
               if (!mccMnc.contains("null")) {
                 if (mccMnc.equals(simOperator))
                   data.addActiveCell(lteCellData);
-              }
+              } else
+                data.addActiveCell(lteCellData);
             } else if (baseCell instanceof CellInfoNr) {
               NrCellData nrCellData = CellExtractor.getNrCellData((CellInfoNr) baseCell);
 
@@ -433,15 +437,7 @@ public class Manager {
               data.removeActiveCell(cellData);
           }
         case 3: // filter out bands
-          if (data.getPrimaryCell() instanceof CdmaCellData || data.getPrimaryCell() instanceof TdscmaCellData) { // remove
-                                                                                                                  // all
-                                                                                                                  // active
-                                                                                                                  // cells
-                                                                                                                  // except
-                                                                                                                  // for
-                                                                                                                  // the
-                                                                                                                  // primary
-                                                                                                                  // one
+          if (data.getPrimaryCell() instanceof CdmaCellData || data.getPrimaryCell() instanceof TdscmaCellData) {
             for (CellData cellData : data.getActiveCells()) {
               if (cellData != data.getPrimaryCell())
                 data.removeActiveCell(cellData);
@@ -646,7 +642,7 @@ public class Manager {
     if (telephony == null || !Utils.checkPermissions(context))
       return "NetManager";
 
-    return telephony.getSimOperatorName();
+    return telephony.getNetworkOperatorName();
   }
 
   @SuppressLint("MissingPermission")

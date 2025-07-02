@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:latlong2/latlong.dart';
 
 class MapBody extends StatefulWidget {
   const MapBody(this.platform, this.sharedPreferences, {super.key});
@@ -24,7 +25,7 @@ class _MapBodyState extends State<MapBody> {
   void initState() {
     super.initState();
     platform = widget.platform;
-    //getMap();
+    getMap();
   }
 
   @override
@@ -43,7 +44,7 @@ class _MapBodyState extends State<MapBody> {
     );
   }
 
-  /*void getMap() async {
+  void getMap() async {
     /*List<LocationAccuracy> accuracies = [
       LocationAccuracy.reduced,
       LocationAccuracy.low,
@@ -63,7 +64,10 @@ class _MapBodyState extends State<MapBody> {
         _progressIndicator = LinearProgressIndicator();
         _map = FlutterMap(
           options: MapOptions(
-            //initialCenter: LatLng(position.latitude, position.longitude),
+            initialCenter: LatLng(
+              45.464664,
+              9.188540,
+            ), //to be replaced with the user's position...
             initialZoom: 9.2,
           ),
           children: <Widget>[
@@ -71,23 +75,11 @@ class _MapBodyState extends State<MapBody> {
               urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
               userAgentPackageName: "pw.dotto.netmanager",
             ),
-            RichAttributionWidget(
-              // Include a stylish prebuilt attribution widget that meets all requirments
-              attributions: [
-                TextSourceAttribution(
-                  "OpenStreetMap contributors",
-                  onTap:
-                      () => launchUrl(
-                        Uri.parse("https://openstreetmap.org/copyright"),
-                      ),
-                ),
-                // Also add images...
-              ],
-            ),
+            SimpleAttributionWidget(source: Text('OpenStreetMap contributors')),
           ],
         );
         _progressIndicator = Container();
       });
     }
-  }*/
+  }
 }
