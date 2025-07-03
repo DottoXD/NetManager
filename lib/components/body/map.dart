@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:netmanager/components/utils/map_tile_builder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -25,7 +26,6 @@ class _MapBodyState extends State<MapBody> {
   void initState() {
     super.initState();
     platform = widget.platform;
-    getMap();
   }
 
   @override
@@ -39,12 +39,12 @@ class _MapBodyState extends State<MapBody> {
     return Column(
       children: <Widget>[
         Row(children: [Expanded(child: _progressIndicator)]),
-        Expanded(child: _map),
+        Expanded(child: getMap(context)),
       ],
     );
   }
 
-  void getMap() async {
+  Widget getMap(BuildContext context) {
     /*List<LocationAccuracy> accuracies = [
       LocationAccuracy.reduced,
       LocationAccuracy.low,
@@ -59,27 +59,39 @@ class _MapBodyState extends State<MapBody> {
       ),
     );*/
 
-    if (!disposed && context.mounted) {
-      setState(() {
-        _progressIndicator = LinearProgressIndicator();
-        _map = FlutterMap(
-          options: MapOptions(
-            initialCenter: LatLng(
-              45.464664,
-              9.188540,
-            ), //to be replaced with the user's position...
-            initialZoom: 9.2,
-          ),
-          children: <Widget>[
-            TileLayer(
-              urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-              userAgentPackageName: "pw.dotto.netmanager",
-            ),
-            SimpleAttributionWidget(source: Text('OpenStreetMap contributors')),
-          ],
-        );
-        _progressIndicator = Container();
-      });
-    }
+    return FlutterMap(
+      options: MapOptions(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        initialCenter: LatLng(
+          45.464664,
+          9.188540,
+        ), //to be replaced with the user's position...
+        minZoom: 5.0,
+        initialZoom: 10.0,
+        onMapReady: () {
+          setState(() {
+            _progressIndicator = Container();
+          });
+        },
+        onMapEvent: (p0) {
+          setState(() {
+            _progressIndicator = Container();
+          });
+        },
+        onPositionChanged: (camera, hasGesture) {
+          setState(() {
+            _progressIndicator = LinearProgressIndicator();
+          });
+        },
+      ),
+      children: <Widget>[
+        TileLayer(
+          urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+          tileBuilder: mapTileBuilder,
+          userAgentPackageName: "pw.dotto.netmanager",
+        ),
+        SimpleAttributionWidget(source: Text('OpenStreetMap contributors')),
+      ],
+    );
   }
 }

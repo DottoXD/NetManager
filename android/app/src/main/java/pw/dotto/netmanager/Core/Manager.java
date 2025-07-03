@@ -307,7 +307,8 @@ public class Manager {
                 if (!mccMnc.contains("null")) {
                   if (mccMnc.equals(simOperator))
                     data.addActiveCell(nrCellData);
-                }
+                } else
+                  data.addActiveCell(nrCellData);
               } else
                 data.addActiveCell(nrCellData);
             }
@@ -430,7 +431,7 @@ public class Manager {
 
     boolean activeData = true;
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-        activeData = !(SubscriptionManager.getActiveDataSubscriptionId() == telephony.getSubscriptionId());
+      activeData = !(SubscriptionManager.getActiveDataSubscriptionId() == telephony.getSubscriptionId());
     }
 
     // attempt to filter out wrong bands
@@ -460,7 +461,7 @@ public class Manager {
 
           boolean isNsa;
           if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-              isNsa = getNsaStatus(telephony.getSubscriptionId());
+            isNsa = getNsaStatus(telephony.getSubscriptionId());
           } else {
             isNsa = getNsaStatus(telephony);
           }

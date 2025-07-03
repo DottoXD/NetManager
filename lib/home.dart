@@ -5,12 +5,12 @@ import 'package:flutter/services.dart';
 import 'package:netmanager/components/body/map.dart';
 import 'package:netmanager/components/body/settings.dart';
 import 'package:netmanager/components/floating/position_button.dart';
-import 'package:netmanager/components/top_bar.dart';
+import 'package:netmanager/components/base/top_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'components/body/home.dart';
 import 'components/floating/update_button.dart';
-import 'components/nav_bar.dart';
+import 'components/base/nav_bar.dart';
 
 class Home extends StatefulWidget {
   const Home(this.sharedPreferences, this.dynamicThemeNotifier, {super.key});

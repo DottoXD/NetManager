@@ -90,6 +90,7 @@ class _HomeBodyState extends State<HomeBody> {
         _progressIndicator = LinearProgressIndicator();
       });
 
+      //jsonStr is null at start - todo fix.
       final Map<String, dynamic> map = json.decode(jsonStr);
       late final SIMData simData;
 
@@ -451,9 +452,12 @@ class _HomeBodyState extends State<HomeBody> {
           if (!homeLoadedNotifier.value)
             ConstrainedBox(
               constraints: BoxConstraints(minHeight: widgetsHeight),
-              child: Expanded(
+              child: Center(
                 //test
-                child: Center(child: CircularProgressIndicator()),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[CircularProgressIndicator()],
+                ),
               ),
             )
           else if (homeLoadedNotifier.value && plmn.isEmpty && pageLoaded)
