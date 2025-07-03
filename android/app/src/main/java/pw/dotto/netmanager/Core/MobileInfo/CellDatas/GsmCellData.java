@@ -7,10 +7,10 @@ public class GsmCellData extends CellData {
             int band, boolean isRegistered) {
         super(
                 "Cell ID",
-                "-",
-                "RSCP",
+                "RSSI",
+                "RXL",
                 "UARFCN",
-                "PSC",
+                "BSIC",
                 "LAC",
                 "-",
                 "-",

@@ -4,11 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/body/map.dart';
 import 'package:netmanager/components/body/settings.dart';
+import 'package:netmanager/components/floating/position_button.dart';
 import 'package:netmanager/components/top_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'components/body/home.dart';
-import 'components/floating_button.dart';
+import 'components/floating/update_button.dart';
 import 'components/nav_bar.dart';
 
 class Home extends StatefulWidget {
@@ -85,7 +86,10 @@ class _HomeState extends State<Home> {
       ),
       bottomNavigationBar: NavBar(updatePage, _currentPage),
       body: _pages[_currentPage],
-      floatingActionButton: (_currentPage == 0 ? FloatingButton() : null),
+      floatingActionButton:
+          (_currentPage == 0
+              ? UpdateButton()
+              : (_currentPage == 1 ? PositionButton() : null)),
     );
   }
 }

@@ -26,7 +26,7 @@ import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CdmaCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.GsmCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.LteCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.NrCellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.TdscmaCellData;
+import pw.dotto.netmanager.Core.MobileInfo.CellDatas.TdscdmaCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.WcdmaCellData;
 
 public class CellExtractor {
@@ -61,8 +61,8 @@ public class CellExtractor {
         CellSignalStrengthCdma signalCdma = (CellSignalStrengthCdma) baseCell.getCellSignalStrength();
         return new CdmaCellData(
                 String.valueOf(identityCdma.getBasestationId()),
-                signalCdma.getEvdoDbm(),
                 signalCdma.getCdmaDbm(),
+                -1, //signalCdma.getCdmaEcio(),
                 -1, // ??,
                 identityCdma.getSystemId(),
                 -1, // identityCdma.getTac(),
@@ -75,13 +75,13 @@ public class CellExtractor {
     }
 
     @NonNull
-    public static TdscmaCellData getTdscmaCellData(CellInfoTdscdma baseCell) {
+    public static TdscdmaCellData getTdscdmaCellData(CellInfoTdscdma baseCell) {
         CellIdentityTdscdma identityTdscdma = (CellIdentityTdscdma) baseCell.getCellIdentity();
 
         int band = -1;
 
         CellSignalStrengthTdscdma signalTdscdma = (CellSignalStrengthTdscdma) baseCell.getCellSignalStrength();
-        return new TdscmaCellData(
+        return new TdscdmaCellData(
                 String.valueOf(identityTdscdma.getCid()),
                 signalTdscdma.getDbm(),
                 signalTdscdma.getRscp(),

@@ -5,7 +5,7 @@ import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.GsmCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.LteCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.NrCellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.TdscmaCellData;
+import pw.dotto.netmanager.Core.MobileInfo.CellDatas.TdscdmaCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.WcdmaCellData;
 
 public class DataExtractor {
@@ -14,7 +14,7 @@ public class DataExtractor {
             return getNrBasicData(cellData.getChannelNumber());
         } else if (cellData instanceof LteCellData) {
             return getLteBasicData(cellData.getChannelNumber());
-        } else if (cellData instanceof WcdmaCellData || cellData instanceof TdscmaCellData) {
+        } else if (cellData instanceof WcdmaCellData || cellData instanceof TdscdmaCellData) {
             return getUmtsBasicData(cellData.getChannelNumber());
             // } else if(cellData instanceof CdmaCellData) {
         } else if (cellData instanceof GsmCellData) {

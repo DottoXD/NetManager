@@ -35,7 +35,7 @@ import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CdmaCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.GsmCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.LteCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.NrCellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.TdscmaCellData;
+import pw.dotto.netmanager.Core.MobileInfo.CellDatas.TdscdmaCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.WcdmaCellData;
 import pw.dotto.netmanager.Core.MobileInfo.Extractors.CellExtractor;
 import pw.dotto.netmanager.Core.MobileInfo.Extractors.DataExtractor;
@@ -219,7 +219,7 @@ public class Manager {
               CdmaCellData cdmaCellData = CellExtractor.getCdmaCellData((CellInfoCdma) baseCell);
               data.setPrimaryCell(cdmaCellData);
             } else if (baseCell instanceof CellInfoTdscdma) {
-              TdscmaCellData tdscdmaCellData = CellExtractor.getTdscmaCellData((CellInfoTdscdma) baseCell);
+              TdscdmaCellData tdscdmaCellData = CellExtractor.getTdscdmaCellData((CellInfoTdscdma) baseCell);
               String mccMnc = ((CellInfoTdscdma) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoTdscdma) baseCell).getCellIdentity().getMncString();
 
@@ -268,7 +268,7 @@ public class Manager {
               CdmaCellData cdmaCellData = CellExtractor.getCdmaCellData((CellInfoCdma) baseCell);
               data.addActiveCell(cdmaCellData);
             } else if (baseCell instanceof CellInfoTdscdma) {
-              TdscmaCellData tdscdmaCellData = CellExtractor.getTdscmaCellData((CellInfoTdscdma) baseCell);
+              TdscdmaCellData tdscdmaCellData = CellExtractor.getTdscdmaCellData((CellInfoTdscdma) baseCell);
               String mccMnc = ((CellInfoTdscdma) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoTdscdma) baseCell).getCellIdentity().getMncString();
 
@@ -330,7 +330,7 @@ public class Manager {
               CdmaCellData cdmaCellData = CellExtractor.getCdmaCellData((CellInfoCdma) baseCell);
               data.addNeighborCell(cdmaCellData);
             } else if (baseCell instanceof CellInfoTdscdma) {
-              TdscmaCellData tdscdmaCellData = CellExtractor.getTdscmaCellData((CellInfoTdscdma) baseCell);
+              TdscdmaCellData tdscdmaCellData = CellExtractor.getTdscdmaCellData((CellInfoTdscdma) baseCell);
               String mccMnc = ((CellInfoTdscdma) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoTdscdma) baseCell).getCellIdentity().getMncString();
 
@@ -428,8 +428,13 @@ public class Manager {
       cellData.setBasicCellData(DataExtractor.getBasicData(cellData));
     }
 
+    boolean activeData = true;
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        activeData = !(SubscriptionManager.getActiveDataSubscriptionId() == telephony.getSubscriptionId());
+    }
+
     // attempt to filter out wrong bands
-    if (data.getPrimaryCell() != null && cellBandwidths.size() < data.getActiveCells().length) {
+    if (activeData && data.getPrimaryCell() != null && cellBandwidths.size() < data.getActiveCells().length) {
       switch (data.getNetworkGen()) {
         case 2: // 2G cannot use multiple bands at the same time
           for (CellData cellData : data.getActiveCells()) {
@@ -437,7 +442,7 @@ public class Manager {
               data.removeActiveCell(cellData);
           }
         case 3: // filter out bands
-          if (data.getPrimaryCell() instanceof CdmaCellData || data.getPrimaryCell() instanceof TdscmaCellData) {
+          if (data.getPrimaryCell() instanceof CdmaCellData || data.getPrimaryCell() instanceof TdscdmaCellData) {
             for (CellData cellData : data.getActiveCells()) {
               if (cellData != data.getPrimaryCell())
                 data.removeActiveCell(cellData);
@@ -453,7 +458,12 @@ public class Manager {
           if (cellBandwidths.isEmpty())
             break; // might as well be the wrong amount of cell bandwidths
 
-          boolean isNsa = getNsaStatus(telephony);
+          boolean isNsa;
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+              isNsa = getNsaStatus(telephony.getSubscriptionId());
+          } else {
+            isNsa = getNsaStatus(telephony);
+          }
 
           if (!isNsa) {
             for (CellData cellData : data.getActiveCells()) {
@@ -599,12 +609,12 @@ public class Manager {
       case 0:
         gen = getSimNetworkGen(firstManager);
         saveEvent(EventTypes.MOBILE_TECHNOLOGY_CHANGED, 0,
-            (getNsaStatus(firstManager) ? "5G" : (gen > 0 ? gen + "G" : "Unknown")));
+            (getNsaStatus(simId) ? "5G" : (gen > 0 ? gen + "G" : "Unknown")));
         return gen;
       case 1:
         gen = getSimNetworkGen(secondManager);
         saveEvent(EventTypes.MOBILE_TECHNOLOGY_CHANGED, 1,
-            (getNsaStatus(secondManager) ? "5G" : (gen > 0 ? gen + "G" : "Unknown")));
+            (getNsaStatus(simId) ? "5G" : (gen > 0 ? gen + "G" : "Unknown")));
         return gen;
       default:
         return -1;

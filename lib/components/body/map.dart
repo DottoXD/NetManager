@@ -39,7 +39,7 @@ class _MapBodyState extends State<MapBody> {
     return Column(
       children: <Widget>[
         Row(children: [Expanded(child: _progressIndicator)]),
-        SizedBox(height: 300, child: _map),
+        Expanded(child: _map),
       ],
     );
   }

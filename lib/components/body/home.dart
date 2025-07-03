@@ -451,11 +451,9 @@ class _HomeBodyState extends State<HomeBody> {
           if (!homeLoadedNotifier.value)
             ConstrainedBox(
               constraints: BoxConstraints(minHeight: widgetsHeight),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[CircularProgressIndicator()],
-                ),
+              child: Expanded(
+                //test
+                child: Center(child: CircularProgressIndicator()),
               ),
             )
           else if (homeLoadedNotifier.value && plmn.isEmpty && pageLoaded)
@@ -695,6 +693,7 @@ class _HomeBodyState extends State<HomeBody> {
   }
 
   bool isValidString(String val) {
+    //todo: add check for -1dB
     return !((val.contains("-1") &&
             (!val.endsWith("dB") && !val.contains("dB"))) ||
         val.contains("2147483647") ||

@@ -59,7 +59,8 @@ public class EventManager {
 
             int maxLogs = 10;
             try {
-                maxLogs = sharedPreferences.getInt("flutter.maximumLogs", 10);
+                String value = sharedPreferences.getString("flutter.maximumLogs", "10");
+                maxLogs = Integer.parseInt(value);
             } catch (Exception e) {
                 // todo
             }
