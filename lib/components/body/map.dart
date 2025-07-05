@@ -66,8 +66,12 @@ class _MapBodyState extends State<MapBody> {
           45.464664,
           9.188540,
         ), //to be replaced with the user's position...
-        minZoom: 5.0,
+        minZoom: 7.0,
+        maxZoom: 15.0,
         initialZoom: 10.0,
+        interactionOptions: InteractionOptions(
+          flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
+        ),
         onMapReady: () {
           setState(() {
             _progressIndicator = Container();

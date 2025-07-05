@@ -57,10 +57,9 @@ public class EventManager {
 
             events.add(mobileNetmanagerEvent);
 
-            int maxLogs = 10;
+            long maxLogs = 10;
             try {
-                String value = sharedPreferences.getString("flutter.maximumLogs", "10");
-                maxLogs = Integer.parseInt(value);
+                maxLogs = sharedPreferences.getLong("flutter.maximumLogs", 10);
             } catch (Exception e) {
                 // todo
             }

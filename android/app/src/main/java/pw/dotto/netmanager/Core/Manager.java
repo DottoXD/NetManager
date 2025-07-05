@@ -102,7 +102,7 @@ public class Manager {
         return "No service";
 
       str.append(firstManager.getNetworkOperatorName()).append(" ").append(
-          networkGen == 0 ? "Unknown" : (networkGen < 0 ? "No service" : networkGen + "G" + (nrSa ? " (SA)" : "")));
+          networkGen == 0 ? "Unknown" : (networkGen < 0 ? "No service" : networkGen + "G" + (networkGen == 5 ? (nrSa ? " SA" : " NSA") : "")));
 
       if (activeSubscriptionList.size() > 1) {
         SubscriptionInfo secondInfo = activeSubscriptionList.get(1);
@@ -117,7 +117,7 @@ public class Manager {
 
         if (secondManager.getNetworkOperatorName() != null && !secondManager.getNetworkOperatorName().trim().isEmpty())
           str.append(" | ").append(secondManager.getNetworkOperatorName()).append(" ").append(
-              networkGen == 0 ? "Unknown" : (networkGen < 0 ? "No service" : networkGen + "G" + (nrSa ? " (SA)" : "")));
+                  networkGen == 0 ? "Unknown" : (networkGen < 0 ? "No service" : networkGen + "G" + (networkGen == 5 ? (nrSa ? " SA" : " NSA") : "")));
       }
     } else
       str.append("No service");
@@ -429,13 +429,13 @@ public class Manager {
       cellData.setBasicCellData(DataExtractor.getBasicData(cellData));
     }
 
-    boolean activeData = true;
+    boolean inactiveData = true;
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-      activeData = !(SubscriptionManager.getActiveDataSubscriptionId() == telephony.getSubscriptionId());
+      inactiveData = !(SubscriptionManager.getActiveDataSubscriptionId() == telephony.getSubscriptionId());
     }
 
     // attempt to filter out wrong bands
-    if (activeData && data.getPrimaryCell() != null && cellBandwidths.size() < data.getActiveCells().length) {
+    if (inactiveData && data.getPrimaryCell() != null) {
       switch (data.getNetworkGen()) {
         case 2: // 2G cannot use multiple bands at the same time
           for (CellData cellData : data.getActiveCells()) {
@@ -493,25 +493,32 @@ public class Manager {
 
     data.setActiveCells(activeCells);
 
-    if (cellBandwidths.size() == data.getActiveCells().length) {
+    List<Integer> usedBandwidths = new ArrayList<>();
+    List<Integer> availableBandwidths = new ArrayList<>(cellBandwidths);
+
+    for (CellData cell : data.getActiveCells()) {
+      int bw = cell.getBandwidth();
+      if (bw > 0) {
+        usedBandwidths.add(bw);
+        availableBandwidths.remove(Integer.valueOf(bw));
+      }
+    }
+
+    if (availableBandwidths.size() > 0) {
       int i = 0;
-      List<Integer> usedBandwidths = new ArrayList<>();
 
       for (CellData cell : data.getActiveCells()) {
         int bw = cell.getBandwidth();
 
         if (bw <= 0) {
-          while (i < cellBandwidths.size()) {
+          while (i < availableBandwidths.size()) {
             int possibleBw = cellBandwidths.get(i);
-            if (!usedBandwidths.contains(possibleBw)) {
-              cell.setBandwidth(possibleBw);
-              usedBandwidths.add(possibleBw);
-              break;
-            }
-            i++;
+            cell.setBandwidth(possibleBw);
+            usedBandwidths.add(possibleBw);
+            break;
           }
-        } else {
-          usedBandwidths.add(bw);
+
+          i++;
         }
       }
     }
