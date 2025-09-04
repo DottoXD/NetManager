@@ -1,7 +1,11 @@
 package pw.dotto.netmanager.Core;
 
+import static android.content.Context.MODE_PRIVATE;
+
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.telephony.CellIdentityNr;
 import android.telephony.CellInfo;
@@ -16,6 +20,7 @@ import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -24,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 
 import pw.dotto.netmanager.Core.Events.EventManager;
@@ -99,7 +105,7 @@ public class Manager {
         networkGen = 5;
 
       if (firstManager.getNetworkOperatorName().trim().isEmpty())
-        return "No service";
+        str.append("No service");
 
       str.append(firstManager.getNetworkOperatorName()).append(" ").append(
           networkGen == 0 ? "Unknown" : (networkGen < 0 ? "No service" : networkGen + "G" + (networkGen == 5 ? (nrSa ? " SA" : " NSA") : "")));
@@ -408,6 +414,20 @@ public class Manager {
         }
 
       }
+
+      SharedPreferences sharedPreferences = context.getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
+      boolean debug = sharedPreferences.getBoolean("flutter.debug", false);
+      if(debug && context instanceof Activity) {
+        StringBuilder sb = new StringBuilder("BW: ");
+        for(int i : cellBandwidths) {
+          sb.append(i).append(",");
+        }
+
+        sb.deleteCharAt(sb.length() - 1);
+
+        Toast toast = Toast.makeText(context, sb.toString(), Toast.LENGTH_SHORT);
+        toast.show();
+      }
     } catch (Exception e) {
       // todo add sentry
     }
@@ -473,7 +493,7 @@ public class Manager {
             }
           }
 
-          // add a check for dual sim (break if single sim)
+          data.clearActiveCells(); //test (idle sim = no CA)
 
           break;
       }
@@ -493,32 +513,31 @@ public class Manager {
 
     data.setActiveCells(activeCells);
 
-    List<Integer> usedBandwidths = new ArrayList<>();
     List<Integer> availableBandwidths = new ArrayList<>(cellBandwidths);
 
     for (CellData cell : data.getActiveCells()) {
       int bw = cell.getBandwidth();
       if (bw > 0) {
-        usedBandwidths.add(bw);
         availableBandwidths.remove(Integer.valueOf(bw));
       }
     }
 
-    if (availableBandwidths.size() > 0) {
-      int i = 0;
+    for(CellData cell : data.getActiveCells()) {
+      int bw = cell.getBandwidth();
+      if(bw <= 0) {
+        if(cell instanceof NrCellData) {
+          Optional<Integer> possibleBw = availableBandwidths.stream().filter(b -> b > 20).findFirst();
 
-      for (CellData cell : data.getActiveCells()) {
-        int bw = cell.getBandwidth();
-
-        if (bw <= 0) {
-          while (i < availableBandwidths.size()) {
-            int possibleBw = cellBandwidths.get(i);
-            cell.setBandwidth(possibleBw);
-            usedBandwidths.add(possibleBw);
-            break;
+          if(possibleBw.isPresent()) {
+            int nrBw = possibleBw.get();
+            cell.setBandwidth(nrBw);
+            availableBandwidths.remove(Integer.valueOf(nrBw));
           }
-
-          i++;
+        } else {
+          if(!availableBandwidths.isEmpty()) {
+            int lteBw = availableBandwidths.remove(0);
+            cell.setBandwidth(lteBw);
+          }
         }
       }
     }

@@ -115,11 +115,11 @@ class _HomeBodyState extends State<HomeBody> {
                 child: Tooltip(
                   message:
                       (simData.primaryCell.cellIdentifier.contains("-1") ||
-                              simData.primaryCell.cellIdentifier == "0"
-                          ? "Unknown"
-                          : (altCellView
-                              ? "${simData.primaryCell.cellIdentifierString} (${simData.primaryCell.cellIdentifier})"
-                              : "eNodeB/CID (${(int.tryParse(simData.primaryCell.cellIdentifier)! / 256).floor()}/${int.tryParse(simData.primaryCell.cellIdentifier)! % 256})")),
+                          simData.primaryCell.cellIdentifier == "0"
+                      ? "Unknown"
+                      : (altCellView
+                            ? "${simData.primaryCell.cellIdentifierString} (${simData.primaryCell.cellIdentifier})"
+                            : "eNodeB/CID (${(int.tryParse(simData.primaryCell.cellIdentifier)! / 256).floor()}/${int.tryParse(simData.primaryCell.cellIdentifier)! % 256})")),
                   child: FilledButton(
                     style: FilledButton.styleFrom(
                       overlayColor: Theme.of(
@@ -131,8 +131,9 @@ class _HomeBodyState extends State<HomeBody> {
                       ),
                       //margin: EdgeInsets.only(bottom: 5),
                       padding: EdgeInsets.zero,
-                      backgroundColor:
-                          Theme.of(context).colorScheme.primaryContainer,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.primaryContainer,
                     ),
                     onPressed: () {
                       altCellView = !altCellView; //might add an animation?
@@ -153,10 +154,9 @@ class _HomeBodyState extends State<HomeBody> {
                                 : "eNodeB/CID"),
                             style: TextStyle(
                               fontSize: 16,
-                              color:
-                                  Theme.of(
-                                    context,
-                                  ).colorScheme.onPrimaryContainer,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onPrimaryContainer,
                             ),
                           ),
                           SizedBox(height: 3),
@@ -166,10 +166,9 @@ class _HomeBodyState extends State<HomeBody> {
                               Icon(
                                 Icons.cell_tower_rounded,
                                 size: 40,
-                                color:
-                                    Theme.of(
-                                      context,
-                                    ).colorScheme.onPrimaryContainer,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimaryContainer,
                               ),
                               SizedBox(width: 6),
                               Text(
@@ -180,14 +179,13 @@ class _HomeBodyState extends State<HomeBody> {
                                             "0"
                                     ? "Unknown"
                                     : (altCellView
-                                        ? simData.primaryCell.cellIdentifier
-                                        : "${(int.tryParse(simData.primaryCell.cellIdentifier)! / 256).floor()}/${int.tryParse(simData.primaryCell.cellIdentifier)! % 256}")),
+                                          ? simData.primaryCell.cellIdentifier
+                                          : "${(int.tryParse(simData.primaryCell.cellIdentifier)! / 256).floor()}/${int.tryParse(simData.primaryCell.cellIdentifier)! % 256}")),
                                 style: TextStyle(
                                   fontSize: 24,
-                                  color:
-                                      Theme.of(
-                                        context,
-                                      ).colorScheme.onPrimaryContainer,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimaryContainer,
                                 ),
                               ),
                             ],
@@ -261,7 +259,11 @@ class _HomeBodyState extends State<HomeBody> {
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     ListTile(
-                      title: Text(label),
+                      title: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       subtitle: Text(val),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -278,14 +280,13 @@ class _HomeBodyState extends State<HomeBody> {
 
       for (int i = 0; i < validCards.length; i += 2) {
         final Widget leftCard = validCards[i];
-        final Widget rightCard =
-            (i + 1 < validCards.length)
-                ? validCards[i + 1]
-                : Container(
-                  width: cardWidth,
-                  height: cardHeight,
-                  margin: EdgeInsets.symmetric(vertical: 5),
-                );
+        final Widget rightCard = (i + 1 < validCards.length)
+            ? validCards[i + 1]
+            : Container(
+                width: cardWidth,
+                height: cardHeight,
+                margin: EdgeInsets.symmetric(vertical: 5),
+              );
 
         mainData.add(
           Row(
@@ -320,106 +321,101 @@ class _HomeBodyState extends State<HomeBody> {
         (a, b) => (b.isRegistered ? 1 : 0).compareTo(a.isRegistered ? 1 : 0),
       );
 
-      final List<Widget> activeData =
-          tempActiveData.map((cell) {
-            int i = simData.activeCells.indexOf(cell);
+      final List<Widget> activeData = tempActiveData.map((cell) {
+        int i = simData.activeCells.indexOf(cell);
 
-            String cellContent = createCellContent(cell).replaceAll(
-              "%enodeb%",
-              (eNodeB != null
-                  ? "Likely ${(eNodeB / 256).floor()}"
-                  : "Unknown cell"),
-            );
+        String cellContent = createCellContent(cell).replaceAll(
+          "%enodeb%",
+          (eNodeB != null
+              ? "Likely ${(eNodeB / 256).floor()}"
+              : "Unknown cell"),
+        );
 
-            List<IconData> icons = [
-              Icons.signal_cellular_0_bar_rounded,
-              Icons.signal_cellular_4_bar_rounded,
-              Icons.auto_awesome_outlined,
-              Icons.auto_awesome_rounded,
-              Icons.question_mark,
-            ];
+        List<IconData> icons = [
+          Icons.signal_cellular_0_bar_rounded,
+          Icons.signal_cellular_4_bar_rounded,
+          Icons.auto_awesome_outlined,
+          Icons.auto_awesome_rounded,
+          Icons.question_mark,
+        ];
 
-            int index = 4;
+        int index = 4;
 
-            if (isValidInt(cell.processedSignal)) {
-              index =
-                  ((min(
-                                max(
-                                  simData.primaryCell.processedSignal,
-                                  minRsrp,
-                                ),
-                                (maxRsrp - 15),
-                              ) -
-                              minRsrp) /
-                          (((maxRsrp - 15) - minRsrp) / 2))
-                      .floor();
-            } else if (isValidInt(cell.rawSignal)) {
-              index =
-                  ((min(
-                                max(simData.primaryCell.rawSignal, minRssi),
-                                (maxRssi - 15),
-                              ) -
-                              minRssi) /
-                          (((maxRssi - 15) - minRssi) / 2))
-                      .floor();
-            }
+        if (isValidInt(cell.processedSignal)) {
+          index =
+              ((min(
+                            max(simData.primaryCell.processedSignal, minRsrp),
+                            (maxRsrp - 15),
+                          ) -
+                          minRsrp) /
+                      (((maxRsrp - 15) - minRsrp) / 2))
+                  .floor();
+        } else if (isValidInt(cell.rawSignal)) {
+          index =
+              ((min(
+                            max(simData.primaryCell.rawSignal, minRssi),
+                            (maxRssi - 15),
+                          ) -
+                          minRssi) /
+                      (((maxRssi - 15) - minRssi) / 2))
+                  .floor();
+        }
 
-            if (index != 4 && cell.isRegistered) index += 2;
+        if (index != 4 && cell.isRegistered) index += 2;
 
-            return Column(
-              children: [
-                ListTile(
-                  title: Text(
-                    (cell.basicCellData.band > 0
-                        ? "${cell.channelNumberString == "ARFCN" ? "N" : "B"}${cell.basicCellData.band} (${cell.basicCellData.frequency}MHz)"
-                        : "Unknown band"),
-                  ),
-                  subtitle: Text(cellContent),
-                  trailing: Icon(
-                    icons[index],
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                /*if (i != 0 && i != simData.activeCells.length - 1)
+        return Column(
+          children: [
+            ListTile(
+              title: Text(
+                (cell.basicCellData.band > 0
+                    ? "${cell.channelNumberString == "ARFCN" ? "N" : "B"}${cell.basicCellData.band} (${cell.basicCellData.frequency}MHz)"
+                    : "Unknown band"),
+              ),
+              subtitle: Text(cellContent),
+              trailing: Icon(
+                icons[index],
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            /*if (i != 0 && i != simData.activeCells.length - 1)
                   Divider(
                     height: 0,
                     color: Theme.of(context).colorScheme.outlineVariant,
                   ),*/
-                //not too sure if this looks nice on the active cells
-              ],
-            );
-          }).toList();
+            //not too sure if this looks nice on the active cells
+          ],
+        );
+      }).toList();
 
-      final List<Widget> neighborData =
-          simData.neighborCells.map((cell) {
-            int i = simData.neighborCells.indexOf(cell);
+      final List<Widget> neighborData = simData.neighborCells.map((cell) {
+        int i = simData.neighborCells.indexOf(cell);
 
-            String cellContent = createCellContent(cell).replaceAll(
-              "%enodeb%",
-              (eNodeB != null && eNodeB != 0
-                  ? "Likely ${(eNodeB / 256).floor()}"
-                  : "Unknown cell"),
-            );
+        String cellContent = createCellContent(cell).replaceAll(
+          "%enodeb%",
+          (eNodeB != null && eNodeB != 0
+              ? "Likely ${(eNodeB / 256).floor()}"
+              : "Unknown cell"),
+        );
 
-            return Column(
-              children: [
-                ListTile(
-                  title: Text(
-                    "${cell.channelNumberString == "ARFCN" ? "N" : "B"}${cell.basicCellData.band} (${cell.basicCellData.frequency}MHz)",
-                  ),
-                  subtitle: Text(cellContent),
+        return Column(
+          children: [
+            ListTile(
+              title: Text(
+                "${cell.channelNumberString == "ARFCN" ? "N" : "B"}${cell.basicCellData.band} (${cell.basicCellData.frequency}MHz)",
+              ),
+              subtitle: Text(cellContent),
+            ),
+            if (i != simData.neighborCells.length - 1)
+              Container(
+                margin: EdgeInsets.only(left: 5, right: 5),
+                child: Divider(
+                  height: 0,
+                  color: Theme.of(context).colorScheme.outlineVariant,
                 ),
-                if (i != simData.neighborCells.length - 1)
-                  Container(
-                    margin: EdgeInsets.only(left: 5, right: 5),
-                    child: Divider(
-                      height: 0,
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
-                  ),
-              ],
-            );
-          }).toList();
+              ),
+          ],
+        );
+      }).toList();
 
       setState(() {
         _mainData = mainData;

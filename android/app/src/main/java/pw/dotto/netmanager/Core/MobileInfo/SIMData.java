@@ -74,6 +74,10 @@ public class SIMData {
             neighborCells.remove(cellData);
     }
 
+    public void clearActiveCells() {
+        activeCells.clear();
+    }
+
     public void clearNeighborCells() {
         neighborCells.clear();
     }
@@ -83,7 +87,7 @@ public class SIMData {
     }
 
     public void setActiveCells(CellData[] activeCells) {
-        this.activeCells.clear();
+        clearActiveCells();
         Collections.addAll(this.activeCells, activeCells);
     }
 

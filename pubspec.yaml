@@ -5,17 +5,17 @@ publish_to: 'none'
 version: 0.0.1+1
 
 environment:
-  sdk: ^3.7.2
+  sdk: ^3.9.0
 
 
 dependencies:
   flutter:
     sdk: flutter
 
-  dynamic_color: ^1.7.0
+  dynamic_color: ^1.8.1
   shared_preferences: ^2.5.3
-  url_launcher: ^6.3.1
-  flutter_map: ^8.1.1
+  url_launcher: ^6.3.2
+  flutter_map: ^8.2.1
   latlong2: ^0.9.1
   # sentry_flutter: ^9.1.0
 
@@ -23,7 +23,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true

@@ -36,7 +36,7 @@ class _SettingsBodyState extends State<SettingsBody> {
   int _updateInterval = 3;
   int _backgroundUpdateInterval = 3;
   int _positionPrecision = 3;
-  int _themeColor = 0xFF157F76;
+  int _themeColor = 0xFFCFB082;
 
   bool _dynamicSupported = true;
   bool _dynamicTheme = true;
@@ -337,18 +337,16 @@ class _SettingsBodyState extends State<SettingsBody> {
                         "View some info about NetManager. Open source licenses and credits are included in this page.",
                       ),
                       trailing: IconButton(
-                        onPressed:
-                            () => showDialog(
-                              context: context,
-                              builder:
-                                  (BuildContext context) => AboutDialog(
-                                    applicationLegalese:
-                                        "${DateTime.now().year} @ DottoXD",
-                                    applicationName: "NetManager",
-                                    //applicationIcon as soon as i make an icon
-                                    //applicationVersio maybe?
-                                  ),
-                            ),
+                        onPressed: () => showDialog(
+                          context: context,
+                          builder: (BuildContext context) => AboutDialog(
+                            applicationLegalese:
+                                "${DateTime.now().year} @ DottoXD",
+                            applicationName: "NetManager",
+                            //applicationIcon as soon as i make an icon
+                            //applicationVersio maybe?
+                          ),
+                        ),
                         icon: Icon(Icons.info_outline_rounded),
                       ),
                     ),

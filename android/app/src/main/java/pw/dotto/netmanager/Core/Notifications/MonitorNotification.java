@@ -52,7 +52,7 @@ public class MonitorNotification {
         if (notificationChannel == null) {
             notificationChannel = new NotificationChannel(
                     NOTIFICATION_CHANNEL,
-                    "NetManager Cell Updates", // to be updated
+                    "NetManager Cell Updates",
                     NotificationManager.IMPORTANCE_LOW);
 
             notificationChannel.enableVibration(false);
@@ -129,12 +129,31 @@ public class MonitorNotification {
                 }
             }
 
-            contentText.append("SIM ").append(i + 1).append(" (").append(simData.getMccMnc()).append(", ")
-                    .append((selectedCell instanceof NrCellData ? "N" : "B"))
-                    .append(selectedCell.getBasicCellData().getBand()).append(" ")
-                    .append(selectedCell.getBasicCellData().getFrequency()).append("MHz)\n").append(nodeStr)
-                    .append(" (")
-                    .append(selectedCell.getProcessedSignal()).append("dBm)\n");
+            contentText.append("SIM ").append(i + 1).append(" (").append(simData.getMccMnc());
+
+            if(selectedCell.getBasicCellData().getBand() > 0 && selectedCell.getBasicCellData().getFrequency() > 0)
+                contentText.append(",");
+
+            if(selectedCell.getBasicCellData().getBand() > 0)
+                contentText.append((selectedCell instanceof NrCellData ? " N" : " B"))
+                        .append(selectedCell.getBasicCellData().getBand());
+
+            if(selectedCell.getBasicCellData().getFrequency() > 0)
+                contentText.append(" ")
+                    .append(selectedCell.getBasicCellData().getFrequency())
+                        .append("MHz");
+
+            contentText.append(")\n")
+                    .append(nodeStr)
+                    .append(" (");
+
+            if (selectedCell.getProcessedSignal() == CellInfo.UNAVAILABLE)
+                contentText.append("N/A");
+            else
+                contentText.append(selectedCell.getProcessedSignal())
+                        .append("dBm");
+
+            contentText.append(")\n");
 
             if (selectedCell.getSignalQuality() != CellInfo.UNAVAILABLE
                     && !Objects.equals(selectedCell.getSignalQualityString().trim(), "-"))
