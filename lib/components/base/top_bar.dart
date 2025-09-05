@@ -86,6 +86,15 @@ class _TopBarState extends State<TopBar> {
     super.dispose();
   }
 
+  String formatEventName(String name) {
+    String finalName = name
+        .replaceFirst("MOBILE_", "")
+        .replaceAll("_", " ")
+        .toUpperCase();
+
+    return finalName;
+  }
+
   Future<void> update() async {
     try {
       _carrier =
@@ -123,20 +132,19 @@ class _TopBarState extends State<TopBar> {
       if (logs.trim().isEmpty) return;
 
       final List<dynamic> jsonList = json.decode(logs);
-      final List<NetmanagerEvent> events =
-          jsonList.map<NetmanagerEvent>((e) {
-            if (e.containsKey("simSlot") && e.containsKey("network")) {
-              return MobileNetmanagerEvent.fromJson(e);
-            } else {
-              return NetmanagerEvent.fromJson(e);
-            }
-          }).toList();
+      final List<NetmanagerEvent> events = jsonList.map<NetmanagerEvent>((e) {
+        if (e.containsKey("simSlot") && e.containsKey("network")) {
+          return MobileNetmanagerEvent.fromJson(e);
+        } else {
+          return NetmanagerEvent.fromJson(e);
+        }
+      }).toList();
 
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text("Event logs"),
+            title: Text("Event Logs"),
             content: SizedBox(
               width: double.maxFinite,
               child: Scrollbar(
@@ -145,8 +153,10 @@ class _TopBarState extends State<TopBar> {
                   itemBuilder: (context, i) {
                     final event = events[i];
 
+                    DateTime dt = event.dateTime.toLocal();
+
                     return ListTile(
-                      title: Text(event.eventType.name),
+                      title: Text(formatEventName(event.eventType.name)),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -160,7 +170,9 @@ class _TopBarState extends State<TopBar> {
                               Text(event.newValue),
                             ],
                           ),
-                          Text(event.dateTime.toLocal().toIso8601String()),
+                          Text(
+                            "${dt.day}/${dt.month}/${dt.year} ${dt.hour}:${dt.minute}:${dt.second}",
+                          ),
                           if (event is MobileNetmanagerEvent) ...[
                             Text("SIM ${event.simSlot + 1} (${event.network})"),
                           ],
@@ -169,10 +181,9 @@ class _TopBarState extends State<TopBar> {
                               padding: EdgeInsets.only(top: 10.0),
                               child: Divider(
                                 height: 0,
-                                color:
-                                    Theme.of(
-                                      context,
-                                    ).colorScheme.outlineVariant,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.outlineVariant,
                               ),
                             ),
                         ],

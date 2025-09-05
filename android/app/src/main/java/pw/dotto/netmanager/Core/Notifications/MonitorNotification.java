@@ -15,7 +15,9 @@ import androidx.core.app.NotificationCompat;
 import java.util.Objects;
 import java.util.Random;
 
+import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CdmaCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CellData;
+import pw.dotto.netmanager.Core.MobileInfo.CellDatas.GsmCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.NrCellData;
 import pw.dotto.netmanager.Core.MobileInfo.SIMData;
 import pw.dotto.netmanager.Core.Utils;
@@ -109,8 +111,21 @@ public class MonitorNotification {
             String nodeStr;
 
             try {
-                nodeStr = Integer.parseInt(simData.getPrimaryCell().getCellIdentifier()) / 256 + "/"
-                        + Integer.parseInt(simData.getPrimaryCell().getCellIdentifier()) % 256;
+                long firstPart, secondPart;
+
+                CellData primaryCell = simData.getPrimaryCell();
+                if (primaryCell instanceof GsmCellData) {
+                    firstPart = Long.parseLong(primaryCell.getCellIdentifier()) / 64;
+                    secondPart = Long.parseLong(primaryCell.getCellIdentifier()) % 64;
+                } else if (primaryCell instanceof CdmaCellData) {
+                    firstPart = Long.parseLong(primaryCell.getCellIdentifier());
+                    secondPart = Long.parseLong(primaryCell.getCellIdentifier());
+                } else {
+                    firstPart = Long.parseLong(primaryCell.getCellIdentifier()) / 256;
+                    secondPart = Long.parseLong(primaryCell.getCellIdentifier()) % 256;
+                }
+
+                nodeStr = firstPart + "/" + secondPart;
             } catch (Exception ignored) {
                 nodeStr = "Unavailable";
             }
@@ -120,7 +135,7 @@ public class MonitorNotification {
                 for (CellData cell : simData.getActiveCells()) {
                     if (cell instanceof NrCellData) {
                         NrCellData nrCell = (NrCellData) cell;
-                        if (nrCell.getProcessedSignal() <= 0 || nrCell.getProcessedSignal() == CellInfo.UNAVAILABLE)
+                        if (nrCell.getProcessedSignal() == CellInfo.UNAVAILABLE)
                             continue;
 
                         selectedCell = nrCell;
@@ -131,16 +146,16 @@ public class MonitorNotification {
 
             contentText.append("SIM ").append(i + 1).append(" (").append(simData.getMccMnc());
 
-            if(selectedCell.getBasicCellData().getBand() > 0 && selectedCell.getBasicCellData().getFrequency() > 0)
+            if (selectedCell.getBasicCellData().getBand() > 0 && selectedCell.getBasicCellData().getFrequency() > 0)
                 contentText.append(",");
 
-            if(selectedCell.getBasicCellData().getBand() > 0)
+            if (selectedCell.getBasicCellData().getBand() > 0)
                 contentText.append((selectedCell instanceof NrCellData ? " N" : " B"))
                         .append(selectedCell.getBasicCellData().getBand());
 
-            if(selectedCell.getBasicCellData().getFrequency() > 0)
+            if (selectedCell.getBasicCellData().getFrequency() > 0)
                 contentText.append(" ")
-                    .append(selectedCell.getBasicCellData().getFrequency())
+                        .append(selectedCell.getBasicCellData().getFrequency())
                         .append("MHz");
 
             contentText.append(")\n")

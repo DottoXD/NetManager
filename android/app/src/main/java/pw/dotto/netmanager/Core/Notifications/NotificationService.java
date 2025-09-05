@@ -48,9 +48,9 @@ public class NotificationService extends Service {
         int attempts = 0;
         Notification activeNotification = null;
 
-        while(activeNotification == null && attempts < 3) {
+        while (activeNotification == null && attempts < 3) {
             activeNotification = notification.getActiveNotification();
-            if(activeNotification != null) {
+            if (activeNotification != null) {
                 startForeground(notification.getSelectedId(), notification.getActiveNotification(),
                         ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL);
             }
@@ -58,7 +58,7 @@ public class NotificationService extends Service {
             attempts++;
         }
 
-        if(activeNotification == null) {
+        if (activeNotification == null) {
             stopSelf();
             return START_NOT_STICKY;
         }

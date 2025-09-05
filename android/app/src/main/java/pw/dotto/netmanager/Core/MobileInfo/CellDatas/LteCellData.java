@@ -7,6 +7,7 @@ public class LteCellData extends CellData {
             int band, boolean isRegistered) {
         super(
                 "Cell ID",
+                "eNodeB",
                 "RSSI",
                 "RSRP",
                 "EARFCN",

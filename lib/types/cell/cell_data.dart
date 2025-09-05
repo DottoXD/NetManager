@@ -2,6 +2,7 @@ import 'package:netmanager/types/cell/basic_cell_data.dart';
 
 class CellData {
   final String cellIdentifierString;
+  final String nodeIdentifierString;
   final String rawSignalString;
   final String processedSignalString;
   final String channelNumberString;
@@ -31,6 +32,7 @@ class CellData {
 
   CellData({
     required this.cellIdentifierString,
+    required this.nodeIdentifierString,
     required this.rawSignalString,
     required this.processedSignalString,
     required this.channelNumberString,
@@ -61,6 +63,7 @@ class CellData {
   factory CellData.fromJson(Map<String, dynamic> json) {
     return CellData(
       cellIdentifierString: json["cellIdentifierString"],
+      nodeIdentifierString: json["nodeIdentifierString"],
       rawSignalString: json["rawSignalString"],
       processedSignalString: json["processedSignalString"],
       channelNumberString: json["channelNumberString"],
@@ -83,10 +86,9 @@ class CellData {
       timingAdvance: json["timingAdvance"],
       bandwidth: json["bandwidth"],
       band: json["band"],
-      basicCellData:
-          json["basicCellData"] is Map<String, dynamic>
-              ? BasicCellData.fromJson(json["basicCellData"])
-              : BasicCellData(band: -1, frequency: -1),
+      basicCellData: json["basicCellData"] is Map<String, dynamic>
+          ? BasicCellData.fromJson(json["basicCellData"])
+          : BasicCellData(band: -1, frequency: -1),
       isRegistered: json["isRegistered"],
     );
   }

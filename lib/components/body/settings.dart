@@ -36,7 +36,7 @@ class _SettingsBodyState extends State<SettingsBody> {
   int _updateInterval = 3;
   int _backgroundUpdateInterval = 3;
   int _positionPrecision = 3;
-  int _themeColor = 0xFFCFB082;
+  int _themeColor = 0xFFE6F0F2;
 
   bool _dynamicSupported = true;
   bool _dynamicTheme = true;

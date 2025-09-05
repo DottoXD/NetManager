@@ -7,6 +7,7 @@ public class WcdmaCellData extends CellData {
             int band, boolean isRegistered) {
         super(
                 "Cell ID",
+                "NodeB",
                 "-",
                 "RSCP",
                 "UARFCN",

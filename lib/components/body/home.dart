@@ -105,6 +105,8 @@ class _HomeBodyState extends State<HomeBody> {
 
       final List<Widget> mainData = [];
 
+      int factor = conversionFactor(simData.primaryCell);
+
       mainData.add(
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -119,7 +121,7 @@ class _HomeBodyState extends State<HomeBody> {
                       ? "Unknown"
                       : (altCellView
                             ? "${simData.primaryCell.cellIdentifierString} (${simData.primaryCell.cellIdentifier})"
-                            : "eNodeB/CID (${(int.tryParse(simData.primaryCell.cellIdentifier)! / 256).floor()}/${int.tryParse(simData.primaryCell.cellIdentifier)! % 256})")),
+                            : "${simData.primaryCell.nodeIdentifierString}/CID (${(int.tryParse(simData.primaryCell.cellIdentifier)! / factor).floor()}/${int.tryParse(simData.primaryCell.cellIdentifier)! % factor})")),
                   child: FilledButton(
                     style: FilledButton.styleFrom(
                       overlayColor: Theme.of(
@@ -151,7 +153,7 @@ class _HomeBodyState extends State<HomeBody> {
                           Text(
                             (altCellView
                                 ? simData.primaryCell.cellIdentifierString
-                                : "eNodeB/CID"),
+                                : "${simData.primaryCell.nodeIdentifierString}/CID"),
                             style: TextStyle(
                               fontSize: 16,
                               color: Theme.of(
@@ -180,7 +182,7 @@ class _HomeBodyState extends State<HomeBody> {
                                     ? "Unknown"
                                     : (altCellView
                                           ? simData.primaryCell.cellIdentifier
-                                          : "${(int.tryParse(simData.primaryCell.cellIdentifier)! / 256).floor()}/${int.tryParse(simData.primaryCell.cellIdentifier)! % 256}")),
+                                          : "${(int.tryParse(simData.primaryCell.cellIdentifier)! / factor).floor()}/${int.tryParse(simData.primaryCell.cellIdentifier)! % factor}")),
                                 style: TextStyle(
                                   fontSize: 24,
                                   color: Theme.of(
@@ -202,8 +204,11 @@ class _HomeBodyState extends State<HomeBody> {
       );
 
       int timingAdvanceDistance = 0;
-      if (simData.primaryCell.channelNumberString == "EARFCN") {
-        timingAdvanceDistance = simData.primaryCell.timingAdvance * 78;
+      if (simData.primaryCell.channelNumberString == "ARFCN") {
+        // terrible (yet working) way of detecting gsm...
+        timingAdvanceDistance = simData.primaryCell.timingAdvance * 550;
+      } else {
+        timingAdvanceDistance = simData.primaryCell.timingAdvance * 78; // 78.12
       }
 
       final List<String> elements = [
@@ -309,7 +314,7 @@ class _HomeBodyState extends State<HomeBody> {
         );
       }
 
-      int? eNodeB = int.tryParse(simData.primaryCell.cellIdentifier);
+      int? node = int.tryParse(simData.primaryCell.cellIdentifier);
 
       final List<CellData> tempActiveData = simData.activeCells;
       if (simData.primaryCell.cellIdentifier.contains("-1") ||
@@ -325,10 +330,8 @@ class _HomeBodyState extends State<HomeBody> {
         int i = simData.activeCells.indexOf(cell);
 
         String cellContent = createCellContent(cell).replaceAll(
-          "%enodeb%",
-          (eNodeB != null
-              ? "Likely ${(eNodeB / 256).floor()}"
-              : "Unknown cell"),
+          "%node%",
+          (node != null ? "Likely ${(node / factor).floor()}" : "Unknown cell"),
         );
 
         List<IconData> icons = [
@@ -368,7 +371,7 @@ class _HomeBodyState extends State<HomeBody> {
             ListTile(
               title: Text(
                 (cell.basicCellData.band > 0
-                    ? "${cell.channelNumberString == "ARFCN" ? "N" : "B"}${cell.basicCellData.band} (${cell.basicCellData.frequency}MHz)"
+                    ? "${cell.channelNumberString == "NR-ARFCN" ? "N" : "B"}${cell.basicCellData.band} ${isValidInt(cell.basicCellData.frequency) ? "(${cell.basicCellData.frequency}MHz)" : ""}"
                     : "Unknown band"),
               ),
               subtitle: Text(cellContent),
@@ -377,12 +380,6 @@ class _HomeBodyState extends State<HomeBody> {
                 color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
-            /*if (i != 0 && i != simData.activeCells.length - 1)
-                  Divider(
-                    height: 0,
-                    color: Theme.of(context).colorScheme.outlineVariant,
-                  ),*/
-            //not too sure if this looks nice on the active cells
           ],
         );
       }).toList();
@@ -391,9 +388,9 @@ class _HomeBodyState extends State<HomeBody> {
         int i = simData.neighborCells.indexOf(cell);
 
         String cellContent = createCellContent(cell).replaceAll(
-          "%enodeb%",
-          (eNodeB != null && eNodeB != 0
-              ? "Likely ${(eNodeB / 256).floor()}"
+          "%node%",
+          (node != null && node != 0
+              ? "Likely ${(node / factor).floor()}"
               : "Unknown cell"),
         );
 
@@ -401,7 +398,7 @@ class _HomeBodyState extends State<HomeBody> {
           children: [
             ListTile(
               title: Text(
-                "${cell.channelNumberString == "ARFCN" ? "N" : "B"}${cell.basicCellData.band} (${cell.basicCellData.frequency}MHz)",
+                "${cell.channelNumberString == "NR-ARFCN" ? "N" : "B"}${cell.basicCellData.band} ${isValidInt(cell.basicCellData.frequency) ? "(${cell.basicCellData.frequency}MHz)" : ""}",
               ),
               subtitle: Text(cellContent),
             ),
@@ -615,12 +612,13 @@ class _HomeBodyState extends State<HomeBody> {
 
   String createCellContent(CellData cell) {
     String cellContent = "";
+    int factor = conversionFactor(cell);
 
     int? cellId = int.tryParse(cell.cellIdentifier);
     if (cellId != null && isValidString(cell.cellIdentifier) && cellId != 0) {
-      cellContent += "${(cellId / 256).floor()}/${cellId % 256}, ";
+      cellContent += "${(cellId / factor).floor()}/${cellId % factor}, ";
     } else if (cell.isRegistered) {
-      cellContent += "%enodeb%, ";
+      cellContent += "%node%, ";
     } else {
       cellContent += "Unknown cell, ";
     }
@@ -689,11 +687,12 @@ class _HomeBodyState extends State<HomeBody> {
   }
 
   bool isValidInt(int val) {
+    // todo: find a better way to sanitise data
     return !(val == -1 || val == 2147483647 || val == 268435455);
   }
 
   bool isValidString(String val) {
-    //todo: add check for -1dB
+    // todo: find a better way to sanitise data
     return !((val.contains("-1") &&
             (!val.endsWith("dB") && !val.contains("dB"))) ||
         val.contains("2147483647") ||
@@ -702,7 +701,23 @@ class _HomeBodyState extends State<HomeBody> {
         val.contains("-1dBm") ||
         val.trim() == "0.0" ||
         val.trim() == "0.0MHz" ||
-        val.trim() == "-");
+        val.trim() == "-1MHz" ||
+        val.trim() == "-1.0MHz" ||
+        val.trim() == "-" ||
+        val.trim().isEmpty);
+  }
+
+  int conversionFactor(CellData cellData) {
+    // to be improved
+    int factor = 256; // wcdma, tdscdma, lte, nr
+
+    if (cellData.channelNumberString == "ARFCN") {
+      factor = 64; // gsm
+    } else if (cellData.stationIdentityString == "PN") {
+      factor = 1; // cdma
+    }
+
+    return factor;
   }
 
   void startTimer() {

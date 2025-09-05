@@ -69,7 +69,8 @@ public class EventManager {
 
             if (events != null && !events.isEmpty()) {
                 if (events.size() > maxLogs)
-                    events.remove(0);
+                    events.subList(0, Math.toIntExact(events.size() - maxLogs)).clear(); // maxLogs shouldn't be bigger
+                                                                                         // than an int?
             }
 
             saveEvents();

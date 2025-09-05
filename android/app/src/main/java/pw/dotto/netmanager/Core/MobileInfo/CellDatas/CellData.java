@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 
 public abstract class CellData {
     protected final String cellIdentifierString;
+    protected final String nodeIdentifierString;
     protected final String rawSignalString;
     protected final String processedSignalString;
     protected final String channelNumberString;
@@ -33,6 +34,7 @@ public abstract class CellData {
 
     public CellData(
             String cellIdentifierString,
+            String nodeIdentifierString,
             String rawSignalString,
             String processedSignalString,
             String channelNumberString,
@@ -56,6 +58,7 @@ public abstract class CellData {
             int band,
             boolean isRegistered) {
         this.cellIdentifierString = cellIdentifierString;
+        this.nodeIdentifierString = nodeIdentifierString;
         this.rawSignalString = rawSignalString;
         this.processedSignalString = processedSignalString;
         this.channelNumberString = channelNumberString;
@@ -140,6 +143,10 @@ public abstract class CellData {
 
     public String getCellIdentifierString() {
         return cellIdentifierString;
+    }
+
+    public String getNodeIdentifierString() {
+        return nodeIdentifierString;
     }
 
     public String getChannelNumberString() {

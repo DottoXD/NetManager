@@ -29,7 +29,7 @@ import pw.dotto.netmanager.Core.MobileInfo.CellDatas.NrCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.TdscdmaCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.WcdmaCellData;
 
-public class CellExtractor {
+public class CellExtractor { // to be improved!
     @NonNull
     public static GsmCellData getGsmCellData(CellInfoGsm baseCell) {
         CellIdentityGsm identityGsm = (CellIdentityGsm) baseCell.getCellIdentity();

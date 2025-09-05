@@ -8,10 +8,18 @@ import pw.dotto.netmanager.Core.MobileInfo.CellDatas.NrCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.TdscdmaCellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.WcdmaCellData;
 
+import android.telephony.CellInfo;
+
 public class DataExtractor {
     public static BasicCellData getBasicData(CellData cellData) {
         if (cellData instanceof NrCellData) {
-            return getNrBasicData(cellData.getChannelNumber());
+            BasicCellData basicCellData = getNrBasicData(cellData.getChannelNumber());
+            if (basicCellData.getBand() == -1
+                    && (cellData.getBand() != -1 && cellData.getBand() != CellInfo.UNAVAILABLE)) {
+                return new BasicCellData(cellData.getBand(), -1); // temporary solution to get at least the band
+            }
+
+            return basicCellData;
         } else if (cellData instanceof LteCellData) {
             return getLteBasicData(cellData.getChannelNumber());
         } else if (cellData instanceof WcdmaCellData || cellData instanceof TdscdmaCellData) {
@@ -36,6 +44,9 @@ public class DataExtractor {
             return new BasicCellData(79, 4500);
         if (nrarfcn >= 743334 && nrarfcn <= 795000)
             return new BasicCellData(46, 5200);
+        if (nrarfcn >= 514000 && nrarfcn <= 524000)
+            return new BasicCellData(38, 2600);
+        // n38
         if (nrarfcn >= 499200 && nrarfcn <= 537999)
             return new BasicCellData(41, 2500);
         if (nrarfcn >= 496700 && nrarfcn <= 499000)

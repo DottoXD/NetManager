@@ -35,6 +35,7 @@ import java.util.concurrent.Executor;
 import pw.dotto.netmanager.Core.Events.EventManager;
 import pw.dotto.netmanager.Core.Events.EventTypes;
 import pw.dotto.netmanager.Core.Events.MobileNetmanagerEvent;
+import pw.dotto.netmanager.Core.Listeners.DataStateListener;
 import pw.dotto.netmanager.Core.Listeners.ServiceStateListener;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CellData;
 import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CdmaCellData;
@@ -59,6 +60,7 @@ public class Manager {
 
   private DisplayInfoListener[] nsa = { null, null };
   private ServiceStateListener[] serviceStates = { null, null };
+  private DataStateListener[] dataStates = { null, null };
 
   private Date lastModemUpdate = null;
   private static final int updateInterval = 10;
@@ -104,11 +106,9 @@ public class Manager {
       if (networkGen == 4 && getNsaStatus(0))
         networkGen = 5;
 
-      if (firstManager.getNetworkOperatorName().trim().isEmpty())
-        str.append("No service");
-
       str.append(firstManager.getNetworkOperatorName()).append(" ").append(
-          networkGen == 0 ? "Unknown" : (networkGen < 0 ? "No service" : networkGen + "G" + (networkGen == 5 ? (nrSa ? " SA" : " NSA") : "")));
+          networkGen == 0 ? "Unknown"
+              : (networkGen < 0 ? "No service" : networkGen + "G" + (networkGen == 5 ? (nrSa ? " SA" : " NSA") : "")));
 
       if (activeSubscriptionList.size() > 1) {
         SubscriptionInfo secondInfo = activeSubscriptionList.get(1);
@@ -123,7 +123,9 @@ public class Manager {
 
         if (secondManager.getNetworkOperatorName() != null && !secondManager.getNetworkOperatorName().trim().isEmpty())
           str.append(" | ").append(secondManager.getNetworkOperatorName()).append(" ").append(
-                  networkGen == 0 ? "Unknown" : (networkGen < 0 ? "No service" : networkGen + "G" + (networkGen == 5 ? (nrSa ? " SA" : " NSA") : "")));
+              networkGen == 0 ? "Unknown"
+                  : (networkGen < 0 ? "No service"
+                      : networkGen + "G" + (networkGen == 5 ? (nrSa ? " SA" : " NSA") : "")));
       }
     } else
       str.append("No service");
@@ -417,19 +419,20 @@ public class Manager {
 
       SharedPreferences sharedPreferences = context.getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
       boolean debug = sharedPreferences.getBoolean("flutter.debug", false);
-      if(debug && context instanceof Activity) {
+      if (debug && context instanceof Activity) {
         StringBuilder sb = new StringBuilder("BW: ");
-        for(int i : cellBandwidths) {
+        for (int i : cellBandwidths) {
           sb.append(i).append(",");
         }
 
         sb.deleteCharAt(sb.length() - 1);
 
-        Toast toast = Toast.makeText(context, sb.toString(), Toast.LENGTH_SHORT);
+        Toast toast = Toast.makeText(context.getApplicationContext(), sb.toString(), Toast.LENGTH_SHORT);
         toast.show();
       }
     } catch (Exception e) {
       // todo add sentry
+      Log.w("pw.dotto.netmanager", "temp: " + e.getMessage());
     }
 
     if (data.getPrimaryCell() != null) {
@@ -449,13 +452,8 @@ public class Manager {
       cellData.setBasicCellData(DataExtractor.getBasicData(cellData));
     }
 
-    boolean inactiveData = true;
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-      inactiveData = !(SubscriptionManager.getActiveDataSubscriptionId() == telephony.getSubscriptionId());
-    }
-
     // attempt to filter out wrong bands
-    if (inactiveData && data.getPrimaryCell() != null) {
+    if (data.getPrimaryCell() != null) {
       switch (data.getNetworkGen()) {
         case 2: // 2G cannot use multiple bands at the same time
           for (CellData cellData : data.getActiveCells()) {
@@ -493,7 +491,22 @@ public class Manager {
             }
           }
 
-          data.clearActiveCells(); //test (idle sim = no CA)
+          boolean clearActiveCells = false; // possibly port this to 5G SA in future
+
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            int status = getDataStatus(telephony);
+
+            switch (status) {
+              case TelephonyManager.DATA_DISCONNECTED:
+              case TelephonyManager.DATA_DISCONNECTING:
+                clearActiveCells = true;
+            }
+          } else if (Build.VERSION.SDK_INT == Build.VERSION_CODES.R) {
+            clearActiveCells = !(SubscriptionManager.getActiveDataSubscriptionId() == telephony.getSubscriptionId());
+          }
+
+          if (clearActiveCells)
+            data.clearActiveCells(); // (idle sim = no CA)
 
           break;
       }
@@ -522,19 +535,19 @@ public class Manager {
       }
     }
 
-    for(CellData cell : data.getActiveCells()) {
+    for (CellData cell : data.getActiveCells()) {
       int bw = cell.getBandwidth();
-      if(bw <= 0) {
-        if(cell instanceof NrCellData) {
+      if (bw <= 0) {
+        if (cell instanceof NrCellData) {
           Optional<Integer> possibleBw = availableBandwidths.stream().filter(b -> b > 20).findFirst();
 
-          if(possibleBw.isPresent()) {
+          if (possibleBw.isPresent()) {
             int nrBw = possibleBw.get();
             cell.setBandwidth(nrBw);
             availableBandwidths.remove(Integer.valueOf(nrBw));
           }
         } else {
-          if(!availableBandwidths.isEmpty()) {
+          if (!availableBandwidths.isEmpty()) {
             int lteBw = availableBandwidths.remove(0);
             cell.setBandwidth(lteBw);
           }
@@ -565,14 +578,14 @@ public class Manager {
         simData = getSimNetworkData(firstManager);
         if (simData != null && simData.getPrimaryCell() != null)
           saveEvent(EventTypes.MOBILE_BAND_CHANGED, 0,
-              (simData.getPrimaryCell().getChannelNumberString().equals("ARFCN") ? "N" : "B")
+              (simData.getPrimaryCell() instanceof NrCellData ? "N" : "B")
                   + simData.getPrimaryCell().getBand());
         return simData;
       case 1:
         simData = getSimNetworkData(secondManager);
         if (simData != null && simData.getPrimaryCell() != null)
           saveEvent(EventTypes.MOBILE_BAND_CHANGED, 1,
-              (simData.getPrimaryCell().getChannelNumberString().equals("ARFCN") ? "N" : "B")
+              (simData.getPrimaryCell() instanceof NrCellData ? "N" : "B")
                   + simData.getPrimaryCell().getBand());
         return simData;
       default:
@@ -730,14 +743,19 @@ public class Manager {
           firstManager.unregisterTelephonyCallback(nsa[0]);
         if (serviceStates[0] != null)
           firstManager.unregisterTelephonyCallback(serviceStates[0]);
+        if (dataStates[0] != null)
+          firstManager.unregisterTelephonyCallback(dataStates[0]);
 
         nsa[0] = new DisplayInfoListener();
         serviceStates[0] = new ServiceStateListener();
+        dataStates[0] = new DataStateListener();
 
         if (nsa[0] != null)
           firstManager.registerTelephonyCallback(executor, nsa[0]);
         if (serviceStates[0] != null)
           firstManager.registerTelephonyCallback(executor, serviceStates[0]);
+        if (dataStates[0] != null)
+          firstManager.registerTelephonyCallback(executor, dataStates[0]);
       }
 
       if (secondManager != null && getSimCount() > 1) {
@@ -745,14 +763,19 @@ public class Manager {
           secondManager.unregisterTelephonyCallback(nsa[1]);
         if (serviceStates[1] != null)
           secondManager.unregisterTelephonyCallback(serviceStates[1]);
+        if (dataStates[1] != null)
+          secondManager.unregisterTelephonyCallback(dataStates[1]);
 
         nsa[1] = new DisplayInfoListener();
         serviceStates[1] = new ServiceStateListener();
+        dataStates[1] = new DataStateListener();
 
         if (nsa[1] != null)
           secondManager.registerTelephonyCallback(executor, nsa[1]);
         if (serviceStates[1] != null)
           secondManager.registerTelephonyCallback(executor, serviceStates[1]);
+        if (dataStates[1] != null)
+          secondManager.registerTelephonyCallback(executor, dataStates[1]);
       }
     }
   }
@@ -786,6 +809,7 @@ public class Manager {
     return false;
   }
 
+  @SuppressLint("MissingPermission")
   public boolean getNsaStatus(int index) {
     boolean result = false;
 
@@ -807,6 +831,38 @@ public class Manager {
     }
 
     return result;
+  }
+
+  @SuppressLint("MissingPermission")
+  public int getDataStatus(TelephonyManager telephony) {
+    if (telephony == null || !Utils.checkPermissions(context))
+      return -1;
+
+    return telephony.getDataState();
+  }
+
+  @SuppressLint("MissingPermission")
+  public int getDataStatus(int index) {
+    int status = -1;
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+      DataStateListener dataStateListener = dataStates[index];
+      if (dataStateListener != null)
+        status = dataStateListener.getState();
+    }
+
+    if (status == -1) {
+      switch (index) {
+        case 0:
+          status = getDataStatus(firstManager);
+          break;
+        case 1:
+          status = getDataStatus(secondManager);
+          break;
+      }
+    }
+
+    return status;
   }
 
   private void saveEvent(EventTypes type, int simId, String value) {

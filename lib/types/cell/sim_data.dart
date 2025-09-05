@@ -28,25 +28,23 @@ class SIMData {
       network: json["network"],
       networkGen: json["networkGen"],
       mccMnc: json["mccMnc"],
-      primaryCell:
-          json["primaryCell"] is Map<String, dynamic>
-              ? CellData.fromJson(json["primaryCell"])
-              : _emptyCellData(),
+      primaryCell: json["primaryCell"] is Map<String, dynamic>
+          ? CellData.fromJson(json["primaryCell"])
+          : _emptyCellData(),
       activeBw: (json["activeBw"] as num?)?.toDouble() ?? 0.0,
-      activeCells:
-          (json["activeCells"] as List<dynamic>? ?? [])
-              .map((e) => CellData.fromJson(e))
-              .toList(),
-      neighborCells:
-          (json["neighborCells"] as List<dynamic>? ?? [])
-              .map((e) => CellData.fromJson(e))
-              .toList(),
+      activeCells: (json["activeCells"] as List<dynamic>? ?? [])
+          .map((e) => CellData.fromJson(e))
+          .toList(),
+      neighborCells: (json["neighborCells"] as List<dynamic>? ?? [])
+          .map((e) => CellData.fromJson(e))
+          .toList(),
     );
   }
 }
 
 CellData _emptyCellData() => CellData(
   cellIdentifierString: "",
+  nodeIdentifierString: "",
   rawSignalString: "",
   processedSignalString: "",
   channelNumberString: "",

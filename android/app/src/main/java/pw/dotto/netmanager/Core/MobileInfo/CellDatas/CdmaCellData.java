@@ -7,10 +7,11 @@ public class CdmaCellData extends CellData {
             int band, boolean isRegistered) {
         super(
                 "Cell ID",
+                "BTS",
                 "-",
                 "RSCP",
-                "UARFCN",
-                "PSC",
+                "-",
+                "PN",
                 "LAC",
                 "-",
                 "-",

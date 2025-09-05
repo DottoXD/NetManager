@@ -56,7 +56,7 @@ class _NetManagerState extends State<NetManager> {
         if (snapshot.connectionState == ConnectionState.done) {
           final sharedPreferences = snapshot.data!;
           Color color = Color(
-            sharedPreferences.getInt("backgroundColor") ?? 0xFFCFB082,
+            sharedPreferences.getInt("backgroundColor") ?? 0xFFE6F0F2,
           );
           dynamicThemeNotifier.value =
               sharedPreferences.getBool("dynamicTheme") ?? true;
