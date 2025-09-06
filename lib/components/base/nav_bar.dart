@@ -23,7 +23,7 @@ class NavBar extends StatelessWidget {
             //tooltip: "Cell data info", - i wanna make tooltips for the other pages too first
           ),
           NavigationDestination(
-            icon: Icon(Icons.location_on_outlined),
+            icon: Icon(Icons.location_searching_outlined),
             label: "Map",
           ),
           NavigationDestination(

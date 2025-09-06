@@ -21,10 +21,11 @@ import io.flutter.plugin.common.MethodChannel;
 import pw.dotto.netmanager.Core.Events.EventManager;
 import pw.dotto.netmanager.Core.Events.NetmanagerEvent;
 import pw.dotto.netmanager.Core.Manager;
-import pw.dotto.netmanager.Core.MobileInfo.SIMData;
-import pw.dotto.netmanager.Core.MobileInfo.SimReceiverManager;
+import pw.dotto.netmanager.Core.Mobile.SIMData;
+import pw.dotto.netmanager.Core.Mobile.SimReceiverManager;
 import pw.dotto.netmanager.Core.Notifications.NotificationService;
-import pw.dotto.netmanager.Core.Utils;
+import pw.dotto.netmanager.Utils.Permissions;
+import pw.dotto.netmanager.Utils.DebugLogger;
 
 public class MainActivity extends FlutterActivity {
   private final String CHANNEL = "pw.dotto.netmanager/telephony";
@@ -48,7 +49,7 @@ public class MainActivity extends FlutterActivity {
     chn.setMethodCallHandler((call, result) -> {
       switch (call.method) {
         case "checkPermissions":
-          boolean perms = Utils.checkPermissions(this);
+          boolean perms = Permissions.check(this);
           if (!perms) {
             requestPermissions();
           }
@@ -139,6 +140,10 @@ public class MainActivity extends FlutterActivity {
           NetmanagerEvent[] events = eventManager.getEvents();
           result.success(gson.toJson(events));
           break;
+
+        case "getDebugLogs":
+          String[] logs = DebugLogger.getLogs();
+          result.success(gson.toJson(logs));
 
         default:
           result.notImplemented();

@@ -1,4 +1,4 @@
-package pw.dotto.netmanager.Core.MobileInfo.CellDatas;
+package pw.dotto.netmanager.Core.Mobile.CellDatas;
 
 public class LteCellData extends CellData {
 

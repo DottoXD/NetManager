@@ -1,9 +1,9 @@
-package pw.dotto.netmanager.Core.MobileInfo;
+package pw.dotto.netmanager.Core.Mobile;
 
 import java.util.ArrayList;
 import java.util.Collections;
 
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.CellData;
 
 public class SIMData {
     private final String operator;

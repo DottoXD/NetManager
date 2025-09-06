@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -91,6 +93,83 @@ class _SettingsBodyState extends State<SettingsBody> {
 
   void setInt(String key, int value) {
     sharedPreferences.setInt(key, value);
+  }
+
+  void openDebugLogs() async {
+    try {
+      if (!mounted) return;
+
+      final String debugLogs = await platform.invokeMethod("getDebugLogs");
+      if (debugLogs.trim().isEmpty) return;
+
+      final List<String> debugLogsList =
+          (json.decode(debugLogs) as List<dynamic>)
+              .map((e) => e.toString())
+              .toList();
+
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Debug Logs"),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Scrollbar(
+                child: ListView.builder(
+                  itemCount: debugLogsList.length,
+                  itemBuilder: (context, i) {
+                    return ListTile(
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(debugLogsList[i]),
+                          if (i < debugLogsList.length - 1)
+                            Padding(
+                              padding: EdgeInsets.only(top: 10.0),
+                              child: Divider(
+                                height: 0,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.outlineVariant,
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text("Close"),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      showDialog(
+        //temporary?
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Error"),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Scrollbar(child: Text(e.toString())),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text("Close"),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 
   Future<dynamic> _showDialog(BuildContext context) {
@@ -368,6 +447,19 @@ class _SettingsBodyState extends State<SettingsBody> {
                         },
                       ),
                     ),
+                    if (_debug)
+                      ListTile(
+                        title: Text("Debug Logs"),
+                        subtitle: Text(
+                          "View NetManager's debug logs. Useful for debugging issues or viewing additional info.",
+                        ),
+                        enabled: _debug,
+                        trailing: IconButton(
+                          onPressed: openDebugLogs,
+                          icon: Icon(Icons.pageview_outlined),
+                          tooltip: "View",
+                        ),
+                      ),
                   ],
                 ),
               ),

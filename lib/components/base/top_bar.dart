@@ -232,7 +232,7 @@ class _TopBarState extends State<TopBar> {
       actions: [
         IconButton(
           onPressed: openRadioInfo,
-          icon: Icon(Icons.perm_device_info_rounded),
+          icon: Icon(Icons.info_outline_rounded),
           tooltip: "Radio info settings",
         ),
         _switchSimButton,

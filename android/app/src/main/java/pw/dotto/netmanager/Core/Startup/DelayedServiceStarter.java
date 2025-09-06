@@ -1,22 +1,19 @@
-package pw.dotto.netmanager.Core.Notifications;
+package pw.dotto.netmanager.Core.Startup;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
-import androidx.core.content.ContextCompat;
 
-import pw.dotto.netmanager.Core.Utils;
+import pw.dotto.netmanager.Core.Notifications.NotificationService;
+import pw.dotto.netmanager.Utils.Permissions;
 
 public class DelayedServiceStarter extends Service {
     private static final String TEMP_NOTIFICATION_CHANNEL = "netmanager-tmp";
@@ -47,15 +44,15 @@ public class DelayedServiceStarter extends Service {
             notificationManager.createNotificationChannel(notificationChannel);
         }
 
-        if (!Utils.checkPermissions(this)) {
+        if (!Permissions.check(this)) {
             stopSelf();
             return START_NOT_STICKY;
         }
 
         Notification tempNotification = new NotificationCompat.Builder(this, TEMP_NOTIFICATION_CHANNEL)
-                .setContentTitle("NetManager is starting...")
+                .setContentTitle("NetManager is starting!")
                 .setSmallIcon(android.R.drawable.stat_notify_sync) // got to make an icon as soon as i make an app logo
-                .setContentText("Preparing NetManager Cell Update's service...")
+                .setContentText("Preparing NetManager's Cell Updates service..")
                 .setPriority(NotificationCompat.PRIORITY_MIN)
                 .setStyle(new NotificationCompat.BigTextStyle())
                 .setOngoing(true)
@@ -67,10 +64,10 @@ public class DelayedServiceStarter extends Service {
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             Intent serviceIntent = new Intent(this, NotificationService.class);
-            ContextCompat.startForegroundService(this, serviceIntent);
+            startForegroundService(serviceIntent);
 
             stopSelf();
-        }, 10000);
+        }, 5000);
 
         return START_NOT_STICKY;
     }

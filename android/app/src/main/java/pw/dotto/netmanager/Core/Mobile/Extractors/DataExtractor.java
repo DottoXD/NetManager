@@ -1,12 +1,12 @@
-package pw.dotto.netmanager.Core.MobileInfo.Extractors;
+package pw.dotto.netmanager.Core.Mobile.Extractors;
 
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.BasicCellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.GsmCellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.LteCellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.NrCellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.TdscdmaCellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.WcdmaCellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.BasicCellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.CellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.GsmCellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.LteCellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.NrCellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.TdscdmaCellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.WcdmaCellData;
 
 import android.telephony.CellInfo;
 

@@ -13,7 +13,7 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 
 import pw.dotto.netmanager.Core.Manager;
-import pw.dotto.netmanager.Core.MobileInfo.SimReceiverManager;
+import pw.dotto.netmanager.Core.Mobile.SimReceiverManager;
 
 public class NotificationService extends Service {
     private Manager manager;

@@ -1,21 +1,21 @@
-package pw.dotto.netmanager.Core.MobileInfo.CellDatas;
+package pw.dotto.netmanager.Core.Mobile.CellDatas;
 
-public class WcdmaCellData extends CellData {
+public class GsmCellData extends CellData {
 
-    public WcdmaCellData(String cellIdentifier, int rawSignal, int processedSignal, int channelNumber,
+    public GsmCellData(String cellIdentifier, int rawSignal, int processedSignal, int channelNumber,
             int stationIdentity, int areaCode, int signalQuality, int signalNoise, int timingAdvance, int bandwidth,
             int band, boolean isRegistered) {
         super(
                 "Cell ID",
-                "NodeB",
-                "-",
-                "RSCP",
-                "UARFCN",
-                "PSC",
+                "BTS",
+                "RSSI",
+                "RXL",
+                "ARFCN",
+                "BSIC",
                 "LAC",
                 "-",
                 "-",
-                "-",
+                "TA",
                 "-",
                 "-",
                 cellIdentifier,

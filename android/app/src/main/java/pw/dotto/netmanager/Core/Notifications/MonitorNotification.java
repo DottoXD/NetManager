@@ -4,7 +4,6 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.service.notification.StatusBarNotification;
@@ -15,14 +14,13 @@ import androidx.core.app.NotificationCompat;
 import java.util.Objects;
 import java.util.Random;
 
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CdmaCellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.GsmCellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.NrCellData;
-import pw.dotto.netmanager.Core.MobileInfo.SIMData;
-import pw.dotto.netmanager.Core.Utils;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.CdmaCellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.CellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.GsmCellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.NrCellData;
+import pw.dotto.netmanager.Core.Mobile.SIMData;
+import pw.dotto.netmanager.Utils.Permissions;
 import pw.dotto.netmanager.MainActivity;
-import pw.dotto.netmanager.R;
 
 public class MonitorNotification {
     private final NotificationService context;
@@ -86,7 +84,7 @@ public class MonitorNotification {
     }
 
     public void send() {
-        if (!Utils.checkPermissions(context) || (notificationManager == null || notificationChannel == null))
+        if (!Permissions.check(context) || (notificationManager == null || notificationChannel == null))
             return;
 
         buildNotification();

@@ -1,4 +1,4 @@
-package pw.dotto.netmanager.Core;
+package pw.dotto.netmanager.Utils;
 
 import android.Manifest;
 import android.content.Context;
@@ -7,8 +7,8 @@ import android.os.Build;
 
 import androidx.core.app.ActivityCompat;
 
-public class Utils {
-        public static boolean checkPermissions(Context context) {
+public class Permissions {
+        public static boolean check(Context context) {
                 boolean basePerms = ActivityCompat.checkSelfPermission(
                                 context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
                                 && ActivityCompat.checkSelfPermission(

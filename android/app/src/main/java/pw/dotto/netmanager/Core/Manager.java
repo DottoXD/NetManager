@@ -20,7 +20,6 @@ import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -37,18 +36,21 @@ import pw.dotto.netmanager.Core.Events.EventTypes;
 import pw.dotto.netmanager.Core.Events.MobileNetmanagerEvent;
 import pw.dotto.netmanager.Core.Listeners.DataStateListener;
 import pw.dotto.netmanager.Core.Listeners.ServiceStateListener;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CdmaCellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.GsmCellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.LteCellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.NrCellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.TdscdmaCellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.WcdmaCellData;
-import pw.dotto.netmanager.Core.MobileInfo.Extractors.CellExtractor;
-import pw.dotto.netmanager.Core.MobileInfo.Extractors.DataExtractor;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.CellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.CdmaCellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.GsmCellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.LteCellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.NrCellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.TdscdmaCellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.WcdmaCellData;
+import pw.dotto.netmanager.Core.Mobile.Extractors.CellExtractor;
+import pw.dotto.netmanager.Core.Mobile.Extractors.DataExtractor;
 import pw.dotto.netmanager.Core.Listeners.DisplayInfoListener;
-import pw.dotto.netmanager.Core.MobileInfo.SIMData;
-import pw.dotto.netmanager.Core.MobileInfo.SimReceiverManager;
+import pw.dotto.netmanager.Core.Mobile.PhysicalChannelDumper;
+import pw.dotto.netmanager.Core.Mobile.SIMData;
+import pw.dotto.netmanager.Core.Mobile.SimReceiverManager;
+import pw.dotto.netmanager.Utils.DebugLogger;
+import pw.dotto.netmanager.Utils.Permissions;
 
 public class Manager {
   private final Context context;
@@ -84,7 +86,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public String getFullHeaderString() {
-    if (!Utils.checkPermissions(context))
+    if (!Permissions.check(context))
       return "Unknown";
 
     StringBuilder str = new StringBuilder();
@@ -135,7 +137,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public String getSimCarrier(TelephonyManager telephony) {
-    if (telephony == null || !Utils.checkPermissions(context))
+    if (telephony == null || !Permissions.check(context))
       return "NetManager";
 
     return telephony.getNetworkOperatorName();
@@ -155,7 +157,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public String getSimOperator(TelephonyManager telephony) {
-    if (telephony == null || !Utils.checkPermissions(context))
+    if (telephony == null || !Permissions.check(context))
       return "NetManager";
 
     return telephony.getSimOperatorName();
@@ -175,7 +177,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public SIMData getSimNetworkData(TelephonyManager telephony) {
-    if (!Utils.checkPermissions(context))
+    if (!Permissions.check(context))
       return null;
 
     if (telephony == null) {
@@ -195,12 +197,12 @@ public class Manager {
     try {
       if (lastModemUpdate == null
           || (lastModemUpdate.toInstant().plusSeconds(updateInterval).isBefore(new Date().toInstant()))) {
-        Log.w("pw.dotto.netmanager", "Requesting updated cell info.");
+        DebugLogger.add("Requesting updated cell info.");
         telephony.requestCellInfoUpdate(ContextCompat.getMainExecutor(context),
             new TelephonyManager.CellInfoCallback() {
               @Override
               public void onCellInfo(@NonNull List<CellInfo> cellInfo) {
-                Log.w("pw.dotto.netmanager", "Found new cell: " + cellInfo);
+                DebugLogger.add("Found new cell: " + cellInfo);
                 lastModemUpdate = new Date();
               }
             });
@@ -212,7 +214,7 @@ public class Manager {
     List<CellInfo> cellInfo = telephony.getAllCellInfo();
     if (cellInfo != null)
       for (CellInfo baseCell : cellInfo) {
-        Log.w("pw.dotto.netmanager", "Detected cell: " + baseCell.toString());
+        DebugLogger.add("Detected cell: " + baseCell.toString());
 
         switch (baseCell.getCellConnectionStatus()) {
           case CellInfo.CONNECTION_PRIMARY_SERVING:
@@ -388,6 +390,9 @@ public class Manager {
         }
       }
 
+    List<String> dump = PhysicalChannelDumper.dump(telephony); // test
+    DebugLogger.add("PhysicalChannelDumper dump: " + dump);
+
     List<Integer> cellBandwidths = new ArrayList<>();
     try {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -426,29 +431,22 @@ public class Manager {
         }
 
         sb.deleteCharAt(sb.length() - 1);
-
-        Toast toast = Toast.makeText(context.getApplicationContext(), sb.toString(), Toast.LENGTH_SHORT);
-        toast.show();
+        DebugLogger.add("Detected bandwidth: " + sb);
       }
     } catch (Exception e) {
       // todo add sentry
-      Log.w("pw.dotto.netmanager", "temp: " + e.getMessage());
     }
 
     if (data.getPrimaryCell() != null) {
-      Log.w("pw.dotto.netmanager", data.getPrimaryCell().toString());
       data.getPrimaryCell().setBasicCellData(DataExtractor.getBasicData(data.getPrimaryCell()));
       data.addActiveCell(data.getPrimaryCell());
     }
 
     for (CellData cellData : data.getActiveCells()) {
-      Log.w("pw.dotto.netmanager", cellData.toString());
-
       cellData.setBasicCellData(DataExtractor.getBasicData(cellData));
     }
 
     for (CellData cellData : data.getNeighborCells()) {
-      Log.w("pw.dotto.netmanager", cellData.toString());
       cellData.setBasicCellData(DataExtractor.getBasicData(cellData));
     }
 
@@ -499,7 +497,10 @@ public class Manager {
             switch (status) {
               case TelephonyManager.DATA_DISCONNECTED:
               case TelephonyManager.DATA_DISCONNECTING:
+              case TelephonyManager.DATA_SUSPENDED:
+              case TelephonyManager.DATA_UNKNOWN:
                 clearActiveCells = true;
+                break;
             }
           } else if (Build.VERSION.SDK_INT == Build.VERSION_CODES.R) {
             clearActiveCells = !(SubscriptionManager.getActiveDataSubscriptionId() == telephony.getSubscriptionId());
@@ -595,7 +596,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public int getSimNetworkGen(TelephonyManager telephony) {
-    if (telephony == null || !Utils.checkPermissions(context))
+    if (telephony == null || !Permissions.check(context))
       return -1;
 
     int networkType = 0;
@@ -663,7 +664,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public String getPlmn(TelephonyManager telephony) {
-    if (telephony == null || !Utils.checkPermissions(context))
+    if (telephony == null || !Permissions.check(context))
       return "00000";
 
     return telephony.getNetworkOperator();
@@ -689,7 +690,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public String getNetwork(TelephonyManager telephony) {
-    if (telephony == null || !Utils.checkPermissions(context))
+    if (telephony == null || !Permissions.check(context))
       return "NetManager";
 
     return telephony.getNetworkOperatorName();
@@ -709,7 +710,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   private void updateTelephonyManagers() {
-    if (!Utils.checkPermissions(context))
+    if (!Permissions.check(context))
       return;
 
     SubscriptionManager manager = getSubscriptionManager();
@@ -782,7 +783,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public int getSimCount() {
-    if (!Utils.checkPermissions(context))
+    if (!Permissions.check(context))
       return 0;
 
     SubscriptionManager manager = getSubscriptionManager();
@@ -795,7 +796,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public boolean getNsaStatus(TelephonyManager telephony) { // fallback
-    if (telephony == null || !Utils.checkPermissions(context))
+    if (telephony == null || !Permissions.check(context))
       return false;
 
     ServiceState state = telephony.getServiceState(); // no serviceStates[] since if nsa[] is null it will be null too
@@ -835,7 +836,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public int getDataStatus(TelephonyManager telephony) {
-    if (telephony == null || !Utils.checkPermissions(context))
+    if (telephony == null || !Permissions.check(context))
       return -1;
 
     return telephony.getDataState();

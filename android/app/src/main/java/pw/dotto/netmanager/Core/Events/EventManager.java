@@ -14,6 +14,8 @@ import com.google.gson.JsonParser;
 
 import java.util.ArrayList;
 
+import pw.dotto.netmanager.Utils.DebugLogger;
+
 public class EventManager {
     private static EventManager instance;
     private final ArrayList<NetmanagerEvent> events = new ArrayList<>();
@@ -105,7 +107,6 @@ public class EventManager {
         SharedPreferences.Editor sharedEditor = sharedPreferences.edit();
         String json = gson.toJson(events);
         sharedEditor.putString("loggedEvents", json);
-        Log.w("pw.dotto.netmanager", "Saved " + json);
         sharedEditor.apply();
     }
 
@@ -114,7 +115,6 @@ public class EventManager {
             return;
 
         String json = sharedPreferences.getString("loggedEvents", "[]");
-        Log.w("pw.dotto.netmanager", "Retrieved " + json);
         if (json.trim().isEmpty())
             return;
 
@@ -140,6 +140,6 @@ public class EventManager {
             // todo add sentry
         }
 
-        Log.w("pw.dotto.netmanager", "Loaded: " + events.size());
+        DebugLogger.add("Loaded: " + events.size() + " events.");
     }
 }

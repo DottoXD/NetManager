@@ -1,4 +1,4 @@
-package pw.dotto.netmanager.Core.MobileInfo.CellDatas;
+package pw.dotto.netmanager.Core.Mobile.CellDatas;
 
 import androidx.annotation.NonNull;
 
@@ -239,6 +239,11 @@ public abstract class CellData {
 
     @NonNull
     public String toString() {
-        return cellIdentifierString + ": " + cellIdentifier + ", " + rawSignalString + ": " + rawSignal + ", " + processedSignalString + ": " + processedSignal + ", " + channelNumberString + ": " + channelNumber + ", " + stationIdentityString + ": " + stationIdentity + ", " + areaCodeString + ": " + areaCode + ", " + signalQualityString + ": " + signalQuality + ", " + signalNoiseString + ": " + signalNoise + ", " + timingAdvanceString + ": " + timingAdvance + ", " + bandwidthString + ": " + bandwidth + ", " + bandString + ": " + band;
+        return cellIdentifierString + ": " + cellIdentifier + ", " + rawSignalString + ": " + rawSignal + ", "
+                + processedSignalString + ": " + processedSignal + ", " + channelNumberString + ": " + channelNumber
+                + ", " + stationIdentityString + ": " + stationIdentity + ", " + areaCodeString + ": " + areaCode + ", "
+                + signalQualityString + ": " + signalQuality + ", " + signalNoiseString + ": " + signalNoise + ", "
+                + timingAdvanceString + ": " + timingAdvance + ", " + bandwidthString + ": " + bandwidth + ", "
+                + bandString + ": " + band;
     }
 }

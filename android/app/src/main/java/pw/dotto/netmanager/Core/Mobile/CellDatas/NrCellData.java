@@ -1,23 +1,23 @@
-package pw.dotto.netmanager.Core.MobileInfo.CellDatas;
+package pw.dotto.netmanager.Core.Mobile.CellDatas;
 
-public class CdmaCellData extends CellData {
+public class NrCellData extends CellData {
 
-    public CdmaCellData(String cellIdentifier, int rawSignal, int processedSignal, int channelNumber,
+    public NrCellData(String cellIdentifier, int rawSignal, int processedSignal, int channelNumber,
             int stationIdentity, int areaCode, int signalQuality, int signalNoise, int timingAdvance, int bandwidth,
             int band, boolean isRegistered) {
         super(
                 "Cell ID",
-                "BTS",
-                "-",
-                "RSCP",
-                "-",
-                "PN",
-                "LAC",
-                "-",
-                "-",
-                "-",
-                "-",
-                "-",
+                "gNodeB",
+                "CSI RSRP",
+                "SS RSRP",
+                "NR-ARFCN",
+                "PCI",
+                "TAC",
+                "RSRQ",
+                "SNR",
+                "TA (µs)",
+                "Bandwidth",
+                "Band",
                 cellIdentifier,
                 rawSignal,
                 processedSignal,

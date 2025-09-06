@@ -1,4 +1,4 @@
-package pw.dotto.netmanager.Core.MobileInfo;
+package pw.dotto.netmanager.Core.Mobile;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

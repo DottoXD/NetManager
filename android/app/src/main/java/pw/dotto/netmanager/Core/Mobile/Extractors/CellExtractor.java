@@ -1,4 +1,4 @@
-package pw.dotto.netmanager.Core.MobileInfo.Extractors;
+package pw.dotto.netmanager.Core.Mobile.Extractors;
 
 import android.os.Build;
 import android.telephony.CellIdentityCdma;
@@ -22,12 +22,12 @@ import android.telephony.CellSignalStrengthWcdma;
 
 import androidx.annotation.NonNull;
 
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.CdmaCellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.GsmCellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.LteCellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.NrCellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.TdscdmaCellData;
-import pw.dotto.netmanager.Core.MobileInfo.CellDatas.WcdmaCellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.CdmaCellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.GsmCellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.LteCellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.NrCellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.TdscdmaCellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.WcdmaCellData;
 
 public class CellExtractor { // to be improved!
     @NonNull
@@ -62,7 +62,7 @@ public class CellExtractor { // to be improved!
         return new CdmaCellData(
                 String.valueOf(identityCdma.getBasestationId()),
                 signalCdma.getCdmaDbm(),
-                -1, //signalCdma.getCdmaEcio(),
+                -1, // signalCdma.getCdmaEcio(),
                 -1, // ??,
                 identityCdma.getSystemId(),
                 -1, // identityCdma.getTac(),
