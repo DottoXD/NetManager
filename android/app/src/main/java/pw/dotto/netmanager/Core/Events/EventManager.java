@@ -139,7 +139,5 @@ public class EventManager {
         } catch (Exception e) {
             // todo add sentry
         }
-
-        DebugLogger.add("Loaded: " + events.size() + " events.");
     }
 }

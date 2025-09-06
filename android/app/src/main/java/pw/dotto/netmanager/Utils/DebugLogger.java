@@ -5,7 +5,7 @@ import java.util.List;
 
 public class DebugLogger {
     private static final List<String> logs = new ArrayList<>();
-    private static final int MAX_SIZE = 100;
+    private static final int MAX_SIZE = 75;
 
     public static void add(String msg) {
         logs.add(msg);

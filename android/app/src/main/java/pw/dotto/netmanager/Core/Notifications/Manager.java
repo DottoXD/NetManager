@@ -22,8 +22,8 @@ import pw.dotto.netmanager.Core.Mobile.SIMData;
 import pw.dotto.netmanager.Utils.Permissions;
 import pw.dotto.netmanager.MainActivity;
 
-public class MonitorNotification {
-    private final NotificationService context;
+public class Manager {
+    private final Service context;
 
     private NotificationManager notificationManager;
     private NotificationChannel notificationChannel;
@@ -35,11 +35,11 @@ public class MonitorNotification {
 
     public static final String NOTIFICATION_CHANNEL = "netmanager-chn";
 
-    public MonitorNotification(NotificationService context) {
+    public Manager(Service context) {
         this.context = context;
     }
 
-    public void setupNotifications() {
+    public void setupChannel() {
         if (context == null)
             return;
 
@@ -59,7 +59,6 @@ public class MonitorNotification {
             notificationManager.createNotificationChannel(notificationChannel);
         }
 
-        // replace notification id persistence with shared_preferences
         for (StatusBarNotification notification : notificationManager.getActiveNotifications()) {
             if (notification.getNotification().getChannelId().equals(NOTIFICATION_CHANNEL)) {
                 selectedId = notification.getId();
@@ -87,7 +86,7 @@ public class MonitorNotification {
         if (!Permissions.check(context) || (notificationManager == null || notificationChannel == null))
             return;
 
-        buildNotification();
+        build();
         if (activeNotification == null)
             return;
         notificationManager.notify(selectedId, activeNotification.build());
@@ -97,7 +96,7 @@ public class MonitorNotification {
         notificationManager.cancel(selectedId);
     }
 
-    public void buildNotification() {
+    public void build() { // to be optimised and refactored
         StringBuilder contentText = new StringBuilder();
 
         int size = 0;

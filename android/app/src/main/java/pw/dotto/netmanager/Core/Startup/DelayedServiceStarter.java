@@ -3,7 +3,6 @@ package pw.dotto.netmanager.Core.Startup;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.Service;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
@@ -12,10 +11,10 @@ import android.os.Looper;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
-import pw.dotto.netmanager.Core.Notifications.NotificationService;
+import pw.dotto.netmanager.Core.Notifications.Service;
 import pw.dotto.netmanager.Utils.Permissions;
 
-public class DelayedServiceStarter extends Service {
+public class DelayedServiceStarter extends android.app.Service {
     private static final String TEMP_NOTIFICATION_CHANNEL = "netmanager-tmp";
     private static final int TEMP_NOTIFICATION_ID = 1;
 
@@ -63,7 +62,7 @@ public class DelayedServiceStarter extends Service {
         startForeground(TEMP_NOTIFICATION_ID, tempNotification);
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            Intent serviceIntent = new Intent(this, NotificationService.class);
+            Intent serviceIntent = new Intent(this, Service.class);
             startForegroundService(serviceIntent);
 
             stopSelf();

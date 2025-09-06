@@ -8,6 +8,10 @@ import android.telephony.TelephonyDisplayInfo;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
+import java.util.Arrays;
+
+import pw.dotto.netmanager.Utils.DebugLogger;
+
 @RequiresApi(api = Build.VERSION_CODES.S)
 public class ServiceStateListener extends TelephonyCallback implements TelephonyCallback.ServiceStateListener {
     private int[] updatedCellBandwidths = {};
@@ -18,6 +22,7 @@ public class ServiceStateListener extends TelephonyCallback implements Telephony
     }
 
     public int[] getUpdatedCellBandwidths() {
+        DebugLogger.add("Bandwidth: " + Arrays.toString(updatedCellBandwidths));
         return updatedCellBandwidths;
     }
 }

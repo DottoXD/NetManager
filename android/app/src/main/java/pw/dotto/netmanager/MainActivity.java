@@ -1,18 +1,13 @@
 package pw.dotto.netmanager;
 
-import android.Manifest;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
 
 import com.google.gson.Gson;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import io.flutter.embedding.android.FlutterActivity;
@@ -23,14 +18,15 @@ import pw.dotto.netmanager.Core.Events.NetmanagerEvent;
 import pw.dotto.netmanager.Core.Manager;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
 import pw.dotto.netmanager.Core.Mobile.SimReceiverManager;
-import pw.dotto.netmanager.Core.Notifications.NotificationService;
+import pw.dotto.netmanager.Core.Notifications.Service;
+import pw.dotto.netmanager.Utils.Activities;
 import pw.dotto.netmanager.Utils.Permissions;
 import pw.dotto.netmanager.Utils.DebugLogger;
 
 public class MainActivity extends FlutterActivity {
-  private final String CHANNEL = "pw.dotto.netmanager/telephony";
+  private static final String CHANNEL = "pw.dotto.netmanager/telephony";
 
-  private Manager manager;
+  private Manager core;
   private int selectedSim = 0;
 
   private MethodChannel chn;
@@ -51,18 +47,18 @@ public class MainActivity extends FlutterActivity {
         case "checkPermissions":
           boolean perms = Permissions.check(this);
           if (!perms) {
-            requestPermissions();
+            Permissions.request(this);
           }
           result.success(perms);
           break;
 
         case "requestPermissions":
-          requestPermissions();
+          Permissions.request(this);
           result.success(true);
           break;
 
         case "getOperator":
-          String operator = manager.getSimOperator(selectedSim);
+          String operator = core.getSimOperator(selectedSim);
           if (!"NetManager".equals(operator)) {
             result.success(operator);
           } else {
@@ -72,7 +68,7 @@ public class MainActivity extends FlutterActivity {
           break;
 
         case "getCarrier":
-          String carrier = manager.getSimCarrier(selectedSim);
+          String carrier = core.getSimCarrier(selectedSim);
           if (!"NetManager".equals(carrier)) {
             result.success(carrier);
           } else {
@@ -82,39 +78,39 @@ public class MainActivity extends FlutterActivity {
           break;
 
         case "getNetworkData":
-          SIMData simData = manager.getSimNetworkData(selectedSim);
+          SIMData simData = core.getSimNetworkData(selectedSim);
           result.success(gson.toJson(simData));
           break;
 
         case "getNetworkGen":
-          int gen = manager.getSimNetworkGen(selectedSim);
-          if (manager.getNsaStatus(selectedSim))
+          int gen = core.getSimNetworkGen(selectedSim);
+          if (core.getNsaStatus(selectedSim))
             gen = 5;
           result.success(gen);
           break;
 
         case "getPlmn":
-          String plmn = manager.getPlmn(selectedSim);
+          String plmn = core.getPlmn(selectedSim);
           result.success(plmn);
           break;
 
         case "sendNotification":
-          startForegroundService(new Intent(this, NotificationService.class));
+          startForegroundService(new Intent(this, Service.class));
           result.success(true);
           break;
 
         case "cancelNotification":
-          stopService(new Intent(this, NotificationService.class));
+          stopService(new Intent(this, Service.class));
           result.success(true);
           break;
 
         case "openRadioInfo":
-          openRadioInfo();
+          Activities.openRadioInfo(this);
           result.success(true);
           break;
 
         case "switchSim":
-          if (manager.getSimCount() > 1) {
+          if (core.getSimCount() > 1) {
             if (selectedSim == 0)
               selectedSim = 1;
             else
@@ -126,12 +122,12 @@ public class MainActivity extends FlutterActivity {
           break;
 
         case "getSimCount":
-          int count = manager.getSimCount();
+          int count = core.getSimCount();
           result.success(count);
           break;
 
         case "getEvents":
-          EventManager eventManager = manager.getEventManager();
+          EventManager eventManager = core.getEventManager();
           if (eventManager == null) {
             result.success(gson.toJson(List.of()));
             break;
@@ -155,37 +151,17 @@ public class MainActivity extends FlutterActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    manager = new Manager(this);
+    core = new Manager(this);
   }
 
   @Override
   public void onStop() {
     if (sharedPreferences == null || !sharedPreferences.getBoolean("flutter.backgroundService", false)) {
-      SimReceiverManager simReceiverManager = manager.getSimReceiverManager();
+      SimReceiverManager simReceiverManager = core.getSimReceiverManager();
       if (simReceiverManager != null)
         simReceiverManager.unregisterStateReceiver();
     }
 
     super.onStop();
-  }
-
-  private void requestPermissions() {
-    ArrayList<String> permissions = new ArrayList<>();
-    permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
-    permissions.add(Manifest.permission.READ_PHONE_STATE);
-    permissions.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION);
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-      permissions.add(Manifest.permission.POST_NOTIFICATIONS);
-
-    ActivityCompat.requestPermissions(this,
-        permissions.toArray(new String[0]),
-        1);
-  }
-
-  public void openRadioInfo() {
-    Intent intent = new Intent(Intent.ACTION_MAIN);
-    intent.setComponent(new ComponentName("com.android.phone", "com.android.phone.settings.RadioInfo"));
-    startActivity(intent);
   }
 }

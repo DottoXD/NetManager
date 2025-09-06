@@ -1,7 +1,6 @@
 package pw.dotto.netmanager.Core.Notifications;
 
 import android.app.Notification;
-import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
@@ -12,12 +11,11 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
-import pw.dotto.netmanager.Core.Manager;
 import pw.dotto.netmanager.Core.Mobile.SimReceiverManager;
 
-public class NotificationService extends Service {
-    private Manager manager;
-    private MonitorNotification notification;
+public class Service extends android.app.Service {
+    private pw.dotto.netmanager.Core.Manager manager;
+    private Manager notification;
 
     private Handler handler;
     private Runnable notificationRunnable;
@@ -37,12 +35,12 @@ public class NotificationService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (manager == null) {
-            manager = new Manager(this);
-            notification = new MonitorNotification(this);
+            manager = new pw.dotto.netmanager.Core.Manager(this);
+            notification = new Manager(this);
             sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
         }
 
-        notification.setupNotifications();
+        notification.setupChannel();
         notification.send();
 
         int attempts = 0;
@@ -110,7 +108,7 @@ public class NotificationService extends Service {
             notification.cancel();
     }
 
-    public Manager getManager() {
+    public pw.dotto.netmanager.Core.Manager getManager() {
         return manager;
     }
 }

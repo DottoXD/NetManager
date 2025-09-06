@@ -1,11 +1,7 @@
 package pw.dotto.netmanager.Core;
 
-import static android.content.Context.MODE_PRIVATE;
-
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Build;
 import android.telephony.CellIdentityNr;
 import android.telephony.CellInfo;
@@ -15,7 +11,10 @@ import android.telephony.CellInfoLte;
 import android.telephony.CellInfoNr;
 import android.telephony.CellInfoTdscdma;
 import android.telephony.CellInfoWcdma;
+import android.telephony.CellSignalStrength;
+import android.telephony.CellSignalStrengthNr;
 import android.telephony.ServiceState;
+import android.telephony.SignalStrength;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
@@ -36,6 +35,7 @@ import pw.dotto.netmanager.Core.Events.EventTypes;
 import pw.dotto.netmanager.Core.Events.MobileNetmanagerEvent;
 import pw.dotto.netmanager.Core.Listeners.DataStateListener;
 import pw.dotto.netmanager.Core.Listeners.ServiceStateListener;
+import pw.dotto.netmanager.Core.Listeners.SignalStrengthsListener;
 import pw.dotto.netmanager.Core.Mobile.CellDatas.CellData;
 import pw.dotto.netmanager.Core.Mobile.CellDatas.CdmaCellData;
 import pw.dotto.netmanager.Core.Mobile.CellDatas.GsmCellData;
@@ -63,6 +63,7 @@ public class Manager {
   private DisplayInfoListener[] nsa = { null, null };
   private ServiceStateListener[] serviceStates = { null, null };
   private DataStateListener[] dataStates = { null, null };
+  private SignalStrengthsListener[] signalStrengths = { null, null };
 
   private Date lastModemUpdate = null;
   private static final int updateInterval = 10;
@@ -197,12 +198,11 @@ public class Manager {
     try {
       if (lastModemUpdate == null
           || (lastModemUpdate.toInstant().plusSeconds(updateInterval).isBefore(new Date().toInstant()))) {
-        DebugLogger.add("Requesting updated cell info.");
         telephony.requestCellInfoUpdate(ContextCompat.getMainExecutor(context),
             new TelephonyManager.CellInfoCallback() {
               @Override
               public void onCellInfo(@NonNull List<CellInfo> cellInfo) {
-                DebugLogger.add("Found new cell: " + cellInfo);
+                DebugLogger.add("Detected new cell: " + cellInfo.toString());
                 lastModemUpdate = new Date();
               }
             });
@@ -421,18 +421,6 @@ public class Manager {
         }
 
       }
-
-      SharedPreferences sharedPreferences = context.getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
-      boolean debug = sharedPreferences.getBoolean("flutter.debug", false);
-      if (debug && context instanceof Activity) {
-        StringBuilder sb = new StringBuilder("BW: ");
-        for (int i : cellBandwidths) {
-          sb.append(i).append(",");
-        }
-
-        sb.deleteCharAt(sb.length() - 1);
-        DebugLogger.add("Detected bandwidth: " + sb);
-      }
     } catch (Exception e) {
       // todo add sentry
     }
@@ -551,6 +539,26 @@ public class Manager {
           if (!availableBandwidths.isEmpty()) {
             int lteBw = availableBandwidths.remove(0);
             cell.setBandwidth(lteBw);
+          }
+        }
+      }
+    }
+
+    // to be filtered for only nsa + moved to another file + rsrp/frequency
+    // difference with multiple nr bands + optimisation
+    for (CellData cellData : data.getActiveCells()) {
+      if (cellData instanceof NrCellData) {
+        NrCellData nrCellData = (NrCellData) cellData;
+
+        if (nrCellData.getProcessedSignal() == CellInfo.UNAVAILABLE) {
+          CellSignalStrength[] cellSignalStrengths = getSignalStrengths(telephony);
+
+          for (CellSignalStrength cellSignalStrength : cellSignalStrengths) {
+            if (cellSignalStrength instanceof CellSignalStrengthNr) {
+              int ssRsrp = ((CellSignalStrengthNr) cellSignalStrength).getSsRsrp();
+              if (ssRsrp != CellInfo.UNAVAILABLE)
+                cellData.setProcessedSignal(ssRsrp);
+            }
           }
         }
       }
@@ -746,10 +754,13 @@ public class Manager {
           firstManager.unregisterTelephonyCallback(serviceStates[0]);
         if (dataStates[0] != null)
           firstManager.unregisterTelephonyCallback(dataStates[0]);
+        if (signalStrengths[0] != null)
+          firstManager.unregisterTelephonyCallback(signalStrengths[0]);
 
         nsa[0] = new DisplayInfoListener();
         serviceStates[0] = new ServiceStateListener();
         dataStates[0] = new DataStateListener();
+        signalStrengths[0] = new SignalStrengthsListener();
 
         if (nsa[0] != null)
           firstManager.registerTelephonyCallback(executor, nsa[0]);
@@ -757,6 +768,8 @@ public class Manager {
           firstManager.registerTelephonyCallback(executor, serviceStates[0]);
         if (dataStates[0] != null)
           firstManager.registerTelephonyCallback(executor, dataStates[0]);
+        if (signalStrengths[0] != null)
+          firstManager.registerTelephonyCallback(executor, signalStrengths[0]);
       }
 
       if (secondManager != null && getSimCount() > 1) {
@@ -766,10 +779,13 @@ public class Manager {
           secondManager.unregisterTelephonyCallback(serviceStates[1]);
         if (dataStates[1] != null)
           secondManager.unregisterTelephonyCallback(dataStates[1]);
+        if (signalStrengths[1] != null)
+          secondManager.unregisterTelephonyCallback(signalStrengths[1]);
 
         nsa[1] = new DisplayInfoListener();
         serviceStates[1] = new ServiceStateListener();
         dataStates[1] = new DataStateListener();
+        signalStrengths[1] = new SignalStrengthsListener();
 
         if (nsa[1] != null)
           secondManager.registerTelephonyCallback(executor, nsa[1]);
@@ -777,6 +793,8 @@ public class Manager {
           secondManager.registerTelephonyCallback(executor, serviceStates[1]);
         if (dataStates[1] != null)
           secondManager.registerTelephonyCallback(executor, dataStates[1]);
+        if (signalStrengths[1] != null)
+          secondManager.registerTelephonyCallback(executor, signalStrengths[1]);
       }
     }
   }
@@ -864,6 +882,42 @@ public class Manager {
     }
 
     return status;
+  }
+
+  @SuppressLint("MissingPermission")
+  public CellSignalStrength[] getSignalStrengths(TelephonyManager telephony) {
+    if (telephony == null || !Permissions.check(context))
+      return null;
+
+    SignalStrength signalStrength = telephony.getSignalStrength();
+    if (signalStrength == null)
+      return null;
+
+    return signalStrength.getCellSignalStrengths().toArray(new CellSignalStrength[0]);
+  }
+
+  @SuppressLint("MissingPermission")
+  public CellSignalStrength[] getSignalStrengths(int index) {
+    CellSignalStrength[] cellSignalStrength = null;
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+      SignalStrengthsListener signalStrengthsListener = signalStrengths[index];
+      if (signalStrengthsListener != null)
+        cellSignalStrength = signalStrengthsListener.getLatestSignalStrengths();
+    }
+
+    if (cellSignalStrength == null) {
+      switch (index) {
+        case 0:
+          cellSignalStrength = getSignalStrengths(firstManager);
+          break;
+        case 1:
+          cellSignalStrength = getSignalStrengths(secondManager);
+          break;
+      }
+    }
+
+    return cellSignalStrength;
   }
 
   private void saveEvent(EventTypes type, int simId, String value) {
