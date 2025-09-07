@@ -2,6 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:netmanager/components/dialogs/about.dart';
+import 'package:netmanager/components/dialogs/debug_log.dart';
+import 'package:netmanager/components/dialogs/error.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -110,43 +113,7 @@ class _SettingsBodyState extends State<SettingsBody> {
       showDialog(
         context: context,
         builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text("Debug Logs"),
-            content: SizedBox(
-              width: double.maxFinite,
-              child: Scrollbar(
-                child: ListView.builder(
-                  itemCount: debugLogsList.length,
-                  itemBuilder: (context, i) {
-                    return ListTile(
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(debugLogsList[i]),
-                          if (i < debugLogsList.length - 1)
-                            Padding(
-                              padding: EdgeInsets.only(top: 10.0),
-                              child: Divider(
-                                height: 0,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.outlineVariant,
-                              ),
-                            ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text("Close"),
-              ),
-            ],
-          );
+          return debugLogDialog(context, debugLogsList);
         },
       );
     } catch (e) {
@@ -154,19 +121,7 @@ class _SettingsBodyState extends State<SettingsBody> {
         //temporary?
         context: context,
         builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text("Error"),
-            content: SizedBox(
-              width: double.maxFinite,
-              child: Scrollbar(child: Text(e.toString())),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text("Close"),
-              ),
-            ],
-          );
+          return errorDialog(context, e);
         },
       );
     }
@@ -177,6 +132,7 @@ class _SettingsBodyState extends State<SettingsBody> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          // to be put in "dialogs"
           title: const Text('Edit precision'),
           content: SingleChildScrollView(
             child: StatefulBuilder(
@@ -301,7 +257,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                     ),
                     Slider(
                       value: _updateInterval.toDouble(),
-                      max: 60,
+                      max: 30,
                       min: 1,
                       label: _updateInterval.toString(),
                       onChanged: (double value) {
@@ -321,7 +277,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                     if (_backgroundService || _startupMonitoring)
                       Slider(
                         value: _backgroundUpdateInterval.toDouble(),
-                        max: 60,
+                        max: 30,
                         min: 1,
                         label: _backgroundUpdateInterval.toString(),
                         onChanged: (double value) {
@@ -418,15 +374,9 @@ class _SettingsBodyState extends State<SettingsBody> {
                       trailing: IconButton(
                         onPressed: () => showDialog(
                           context: context,
-                          builder: (BuildContext context) => AboutDialog(
-                            applicationLegalese:
-                                "${DateTime.now().year} @ DottoXD",
-                            applicationName: "NetManager",
-                            //applicationIcon as soon as i make an icon
-                            //applicationVersio maybe?
-                          ),
+                          builder: (BuildContext context) => aboutDialog(),
                         ),
-                        icon: Icon(Icons.info_outline_rounded),
+                        icon: Icon(Icons.question_mark_rounded),
                       ),
                     ),
                     Divider(

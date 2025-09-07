@@ -19,6 +19,8 @@ import pw.dotto.netmanager.Core.Manager;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
 import pw.dotto.netmanager.Core.Mobile.SimReceiverManager;
 import pw.dotto.netmanager.Core.Notifications.Service;
+import pw.dotto.netmanager.Fetchers.Location;
+import pw.dotto.netmanager.Fetchers.Sensors;
 import pw.dotto.netmanager.Utils.Activities;
 import pw.dotto.netmanager.Utils.Permissions;
 import pw.dotto.netmanager.Utils.DebugLogger;
@@ -140,6 +142,31 @@ public class MainActivity extends FlutterActivity {
         case "getDebugLogs":
           String[] logs = DebugLogger.getLogs();
           result.success(gson.toJson(logs));
+          break;
+
+        case "getLocation":
+          Location locationFetcher = Location.getInstance(this);
+
+          if (locationFetcher == null) {
+            result.success(gson.toJson(new double[] { 0.000000, 0.000000 })); // hopefully nobody will ever use
+                                                                              // netmanager there...
+            break;
+          }
+
+          android.location.Location location = locationFetcher.getLastLocation();
+          result.success(gson.toJson(new double[] { location.getLatitude(), location.getLongitude() }));
+          break;
+
+        case "getAccelerometerData":
+          Sensors sensors = Sensors.getInstance(this);
+
+          if (sensors == null) {
+            result.success(gson.toJson(new float[] { 0.0F, 0.0F, 0.0F }));
+            break;
+          }
+
+          result.success(gson.toJson(sensors.getAccelerometerData()));
+          break;
 
         default:
           result.notImplemented();

@@ -50,6 +50,7 @@ import pw.dotto.netmanager.Core.Mobile.PhysicalChannelDumper;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
 import pw.dotto.netmanager.Core.Mobile.SimReceiverManager;
 import pw.dotto.netmanager.Utils.DebugLogger;
+import pw.dotto.netmanager.Utils.Mobile;
 import pw.dotto.netmanager.Utils.Permissions;
 
 public class Manager {
@@ -390,8 +391,9 @@ public class Manager {
         }
       }
 
-    List<String> dump = PhysicalChannelDumper.dump(telephony); // test
-    DebugLogger.add("PhysicalChannelDumper dump: " + dump);
+    // temporarily disabled until caching is added
+    // List<String> dump = PhysicalChannelDumper.dump(telephony);
+    // DebugLogger.add("PhysicalChannelDumper dump: " + dump);
 
     List<Integer> cellBandwidths = new ArrayList<>();
     try {
@@ -544,28 +546,28 @@ public class Manager {
       }
     }
 
-    // to be filtered for only nsa + moved to another file + rsrp/frequency
-    // difference with multiple nr bands + optimisation
-    for (CellData cellData : data.getActiveCells()) {
-      if (cellData instanceof NrCellData) {
-        NrCellData nrCellData = (NrCellData) cellData;
+    if (data.getPrimaryCell() != null &&
+        data.getPrimaryCell() instanceof LteCellData) {
 
-        if (nrCellData.getProcessedSignal() == CellInfo.UNAVAILABLE) {
-          CellSignalStrength[] cellSignalStrengths = getSignalStrengths(telephony);
+      // to be filtered for only nsa + moved to another file + rsrp/frequency
+      // difference with multiple nr bands + optimisation
+      for (CellData cellData : data.getActiveCells()) {
+        if (cellData instanceof NrCellData) {
+          NrCellData nrCellData = (NrCellData) cellData;
 
-          for (CellSignalStrength cellSignalStrength : cellSignalStrengths) {
-            if (cellSignalStrength instanceof CellSignalStrengthNr) {
-              int ssRsrp = ((CellSignalStrengthNr) cellSignalStrength).getSsRsrp();
-              if (ssRsrp != CellInfo.UNAVAILABLE)
-                cellData.setProcessedSignal(ssRsrp);
+          if (nrCellData.getProcessedSignal() == CellInfo.UNAVAILABLE) {
+            CellSignalStrength[] cellSignalStrengths = getSignalStrengths(telephony);
+
+            for (CellSignalStrength cellSignalStrength : cellSignalStrengths) {
+              if (cellSignalStrength instanceof CellSignalStrengthNr) {
+                int ssRsrp = ((CellSignalStrengthNr) cellSignalStrength).getSsRsrp();
+                if (ssRsrp != CellInfo.UNAVAILABLE)
+                  cellData.setProcessedSignal(ssRsrp);
+              }
             }
           }
         }
       }
-    }
-
-    if (data.getPrimaryCell() != null &&
-        data.getPrimaryCell() instanceof LteCellData) {
 
       data.setActiveBw(data.getPrimaryCell().getBandwidth());
       for (CellData cellData : data.getActiveCells()) {
@@ -585,17 +587,38 @@ public class Manager {
     switch (simId) {
       case 0:
         simData = getSimNetworkData(firstManager);
-        if (simData != null && simData.getPrimaryCell() != null)
+
+        if (simData != null && simData.getPrimaryCell() != null) {
+          CellData primaryCell = simData.getPrimaryCell();
+
           saveEvent(EventTypes.MOBILE_BAND_CHANGED, 0,
-              (simData.getPrimaryCell() instanceof NrCellData ? "N" : "B")
-                  + simData.getPrimaryCell().getBand());
+              (primaryCell instanceof NrCellData ? "N" : "B")
+                  + primaryCell.getBand());
+
+          try {
+            long node = Long.parseLong(primaryCell.getCellIdentifierString()) / Mobile.getFactor(primaryCell);
+            saveEvent(EventTypes.MOBILE_NODE_CHANGED, 0, String.valueOf(node));
+          } catch (Exception ignored) {
+            saveEvent(EventTypes.MOBILE_NODE_CHANGED, 0, "N/A");
+          }
+        }
         return simData;
       case 1:
         simData = getSimNetworkData(secondManager);
-        if (simData != null && simData.getPrimaryCell() != null)
+        if (simData != null && simData.getPrimaryCell() != null) {
+          CellData primaryCell = simData.getPrimaryCell();
+
           saveEvent(EventTypes.MOBILE_BAND_CHANGED, 1,
-              (simData.getPrimaryCell() instanceof NrCellData ? "N" : "B")
-                  + simData.getPrimaryCell().getBand());
+              (primaryCell instanceof NrCellData ? "N" : "B")
+                  + primaryCell.getBand());
+
+          try {
+            long node = Long.parseLong(primaryCell.getCellIdentifierString()) / Mobile.getFactor(primaryCell);
+            saveEvent(EventTypes.MOBILE_NODE_CHANGED, 1, String.valueOf(node));
+          } catch (Exception ignored) {
+            saveEvent(EventTypes.MOBILE_NODE_CHANGED, 1, "N/A");
+          }
+        }
         return simData;
       default:
         return null;

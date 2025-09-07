@@ -45,27 +45,12 @@ class _MapBodyState extends State<MapBody> {
   }
 
   Widget getMap(BuildContext context) {
-    /*List<LocationAccuracy> accuracies = [
-      LocationAccuracy.reduced,
-      LocationAccuracy.low,
-      LocationAccuracy.medium,
-      LocationAccuracy.high,
-    ];
-
-    Position position = await Geolocator.getCurrentPosition(
-      locationSettings: LocationSettings(
-        accuracy:
-            accuracies[sharedPreferences.getInt("positionPrecision") ?? 0],
-      ),
-    );*/
+    // getLocation..
 
     return FlutterMap(
       options: MapOptions(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        initialCenter: LatLng(
-          45.464664,
-          9.188540,
-        ), //to be replaced with the user's position...
+        initialCenter: LatLng(45.464664, 9.188540),
         minZoom: 7.0,
         maxZoom: 15.0,
         initialZoom: 10.0,

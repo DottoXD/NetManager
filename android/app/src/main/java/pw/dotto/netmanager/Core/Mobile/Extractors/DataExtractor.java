@@ -10,13 +10,20 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.WcdmaCellData;
 
 import android.telephony.CellInfo;
 
-public class DataExtractor {
+public class DataExtractor { // data to be moved out of here
     public static BasicCellData getBasicData(CellData cellData) {
         if (cellData instanceof NrCellData) {
             BasicCellData basicCellData = getNrBasicData(cellData.getChannelNumber());
             if (basicCellData.getBand() == -1
                     && (cellData.getBand() != -1 && cellData.getBand() != CellInfo.UNAVAILABLE)) {
-                return new BasicCellData(cellData.getBand(), -1); // temporary solution to get at least the band
+                int freq;
+
+                if (cellData.getChannelNumber() <= 599999)
+                    freq = (int) (0.005 * cellData.getChannelNumber());
+                else
+                    freq = 3000 + (int) (0.015 * (cellData.getChannelNumber() - 600000));
+
+                return new BasicCellData(cellData.getBand(), freq);
             }
 
             return basicCellData;
@@ -32,10 +39,42 @@ public class DataExtractor {
         return new BasicCellData(-1, -1);
     }
 
-    private static BasicCellData getNrBasicData(int nrarfcn) {
+    private static BasicCellData getNrBasicData(int nrarfcn) { // currently might return inaccurate data
+        if (nrarfcn >= 422000 && nrarfcn <= 434000)
+            return new BasicCellData(1, 2100);
+        if (nrarfcn >= 386000 && nrarfcn <= 398000)
+            return new BasicCellData(2, 1900);
+        if (nrarfcn >= 361000 && nrarfcn <= 376000)
+            return new BasicCellData(3, 1800);
+        if (nrarfcn >= 173800 && nrarfcn <= 178800)
+            return new BasicCellData(5, 850);
+        if (nrarfcn >= 524000 && nrarfcn <= 538000)
+            return new BasicCellData(7, 2600);
+        if (nrarfcn >= 185000 && nrarfcn <= 192000)
+            return new BasicCellData(8, 900);
+        if (nrarfcn >= 145800 && nrarfcn <= 149200)
+            return new BasicCellData(12, 700);
+        if (nrarfcn >= 149200 && nrarfcn <= 155400)
+            return new BasicCellData(13, 700);
+        if (nrarfcn >= 151600 && nrarfcn <= 153600)
+            return new BasicCellData(14, 700);
+        if (nrarfcn >= 172000 && nrarfcn <= 175000)
+            return new BasicCellData(18, 800);
+        if (nrarfcn >= 158200 && nrarfcn <= 164200)
+            return new BasicCellData(20, 800);
+        if (nrarfcn >= 305000 && nrarfcn <= 325300)
+            return new BasicCellData(24, 1600);
+        if (nrarfcn >= 386000 && nrarfcn <= 399000)
+            return new BasicCellData(25, 1900);
+        if (nrarfcn >= 171800 && nrarfcn <= 178800)
+            return new BasicCellData(26, 850);
+        if (nrarfcn >= 151600 && nrarfcn <= 160600)
+            return new BasicCellData(28, 700);
+        if (nrarfcn >= 143400 && nrarfcn <= 145600)
+            return new BasicCellData(29, 700); // WIP: EU/NA/ASIA/GLOBAL overlap fix with mcc
+
         if (nrarfcn >= 620000 && nrarfcn <= 653333)
             return new BasicCellData(78, 3500);
-        // n78
         if (nrarfcn >= 636667 && nrarfcn <= 646666)
             return new BasicCellData(48, 3600);
         if (nrarfcn >= 653334 && nrarfcn <= 680000)
@@ -46,50 +85,20 @@ public class DataExtractor {
             return new BasicCellData(46, 5200);
         if (nrarfcn >= 514000 && nrarfcn <= 524000)
             return new BasicCellData(38, 2600);
-        // n38
         if (nrarfcn >= 499200 && nrarfcn <= 537999)
             return new BasicCellData(41, 2500);
         if (nrarfcn >= 496700 && nrarfcn <= 499000)
             return new BasicCellData(53, 2500);
         if (nrarfcn >= 460000 && nrarfcn <= 480000)
             return new BasicCellData(40, 2300);
-        if (nrarfcn >= 422000 && nrarfcn <= 434000)
-            return new BasicCellData(1, 2100);
         if (nrarfcn >= 422000 && nrarfcn <= 440000)
             return new BasicCellData(66, 1700);
         if (nrarfcn >= 399000 && nrarfcn <= 404000)
             return new BasicCellData(70, 1700);
         if (nrarfcn >= 402000 && nrarfcn <= 405000)
             return new BasicCellData(34, 2000);
-        if (nrarfcn >= 386000 && nrarfcn <= 399000)
-            return new BasicCellData(25, 1900);
-        // n25
-        if (nrarfcn >= 386000 && nrarfcn <= 398000)
-            return new BasicCellData(2, 1900);
         if (nrarfcn >= 376000 && nrarfcn <= 384000)
             return new BasicCellData(39, 1900);
-        if (nrarfcn >= 361000 && nrarfcn <= 376000)
-            return new BasicCellData(3, 1800);
-        if (nrarfcn >= 158200 && nrarfcn <= 164200)
-            return new BasicCellData(20, 800);
-        if (nrarfcn >= 151600 && nrarfcn <= 160600)
-            return new BasicCellData(28, 700);
-        // n28
-        if (nrarfcn >= 151600 && nrarfcn <= 153600)
-            return new BasicCellData(14, 700);
-        if (nrarfcn >= 145800 && nrarfcn <= 149200)
-            return new BasicCellData(12, 700);
-        if (nrarfcn >= 143400 && nrarfcn <= 145600)
-            return new BasicCellData(29, 700);
-        if (nrarfcn >= 185000 && nrarfcn <= 192000)
-            return new BasicCellData(8, 900);
-        if (nrarfcn >= 171800 && nrarfcn <= 178800)
-            return new BasicCellData(26, 850);
-        // n26
-        if (nrarfcn >= 173800 && nrarfcn <= 178800)
-            return new BasicCellData(5, 850);
-        if (nrarfcn >= 172000 && nrarfcn <= 175000)
-            return new BasicCellData(18, 800);
         if (nrarfcn >= 295000 && nrarfcn <= 303600)
             return new BasicCellData(74, 1500);
         if (nrarfcn >= 285400 && nrarfcn <= 286400)
@@ -161,7 +170,6 @@ public class DataExtractor {
             return new BasicCellData(31, 450);
         if (earfcn >= 9920 && earfcn <= 10359)
             return new BasicCellData(32, 1500);
-
         if (earfcn >= 36000 && earfcn <= 36199)
             return new BasicCellData(33, 1900);
         if (earfcn >= 36200 && earfcn <= 36349)
@@ -204,7 +212,6 @@ public class DataExtractor {
             return new BasicCellData(52, 3300);
         if (earfcn >= 60140 && earfcn <= 60254)
             return new BasicCellData(53, 2500);
-
         if (earfcn >= 65536 && earfcn <= 66435)
             return new BasicCellData(65, 2100);
         if (earfcn >= 66436 && earfcn <= 67335)
@@ -244,17 +251,13 @@ public class DataExtractor {
     private static BasicCellData getUmtsBasicData(int uarfcn) {
         if (uarfcn >= 10562 && uarfcn <= 10838)
             return new BasicCellData(1, 2100);
-        if (uarfcn >= 412 && uarfcn <= 687)
-            return new BasicCellData(2, 1900);
-        if (uarfcn >= 9662 && uarfcn <= 9938)
+        if (uarfcn >= 412 && uarfcn <= 687 || uarfcn >= 9662 && uarfcn <= 9938)
             return new BasicCellData(2, 1900);
         if (uarfcn >= 1162 && uarfcn <= 1513)
             return new BasicCellData(3, 1800);
         if (uarfcn >= 1537 && uarfcn <= 2087)
             return new BasicCellData(4, 1700);
-        if (uarfcn >= 1007 && uarfcn <= 1087)
-            return new BasicCellData(5, 850);
-        if (uarfcn >= 4357 && uarfcn <= 4458)
+        if (uarfcn >= 1007 && uarfcn <= 1087 || uarfcn >= 4357 && uarfcn <= 4458)
             return new BasicCellData(5, 850);
         if (uarfcn >= 2237 && uarfcn <= 2563)
             return new BasicCellData(7, 2600);
@@ -280,9 +283,7 @@ public class DataExtractor {
             return new BasicCellData(21, 1500);
         if (uarfcn >= 4662 && uarfcn <= 5038)
             return new BasicCellData(22, 3500);
-        if (uarfcn >= 5112 && uarfcn <= 5413)
-            return new BasicCellData(25, 1900);
-        if (uarfcn >= 6292 && uarfcn <= 6592)
+        if (uarfcn >= 5112 && uarfcn <= 5413 || uarfcn >= 6292 && uarfcn <= 6592)
             return new BasicCellData(25, 1900);
         if (uarfcn >= 5762 && uarfcn <= 5913)
             return new BasicCellData(26, 850);
@@ -293,20 +294,18 @@ public class DataExtractor {
     }
 
     private static BasicCellData getGsmBasicData(int arfcn) {
-        if (arfcn >= 0 && arfcn <= 124)
-            return new BasicCellData(8, 900);
-        if (arfcn >= 128 && arfcn <= 251)
-            return new BasicCellData(5, 850);
-        if (arfcn >= 259 && arfcn <= 293)
-            return new BasicCellData(31, 450);
-        if (arfcn >= 306 && arfcn <= 340)
-            return new BasicCellData(72, 480);
         if (arfcn >= 512 && arfcn <= 810)
             return new BasicCellData(2, 1900);
         if (arfcn >= 811 && arfcn <= 885)
             return new BasicCellData(3, 1800);
-        if (arfcn >= 955 && arfcn <= 1023)
+        if (arfcn >= 128 && arfcn <= 251)
+            return new BasicCellData(5, 850);
+        if (arfcn >= 0 && arfcn <= 124 || arfcn >= 955 && arfcn <= 1023)
             return new BasicCellData(8, 900);
+        if (arfcn >= 259 && arfcn <= 293)
+            return new BasicCellData(31, 450);
+        if (arfcn >= 306 && arfcn <= 340)
+            return new BasicCellData(72, 480);
 
         return new BasicCellData(-1, -1);
     }

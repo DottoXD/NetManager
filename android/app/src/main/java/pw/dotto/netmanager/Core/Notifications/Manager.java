@@ -19,6 +19,7 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.CellData;
 import pw.dotto.netmanager.Core.Mobile.CellDatas.GsmCellData;
 import pw.dotto.netmanager.Core.Mobile.CellDatas.NrCellData;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
+import pw.dotto.netmanager.Utils.Mobile;
 import pw.dotto.netmanager.Utils.Permissions;
 import pw.dotto.netmanager.MainActivity;
 
@@ -111,16 +112,8 @@ public class Manager {
                 long firstPart, secondPart;
 
                 CellData primaryCell = simData.getPrimaryCell();
-                if (primaryCell instanceof GsmCellData) {
-                    firstPart = Long.parseLong(primaryCell.getCellIdentifier()) / 64;
-                    secondPart = Long.parseLong(primaryCell.getCellIdentifier()) % 64;
-                } else if (primaryCell instanceof CdmaCellData) {
-                    firstPart = Long.parseLong(primaryCell.getCellIdentifier());
-                    secondPart = Long.parseLong(primaryCell.getCellIdentifier());
-                } else {
-                    firstPart = Long.parseLong(primaryCell.getCellIdentifier()) / 256;
-                    secondPart = Long.parseLong(primaryCell.getCellIdentifier()) % 256;
-                }
+                firstPart = Long.parseLong(primaryCell.getCellIdentifier()) / Mobile.getFactor(primaryCell);
+                secondPart = Long.parseLong(primaryCell.getCellIdentifier()) % Mobile.getFactor(primaryCell);
 
                 nodeStr = firstPart + "/" + secondPart;
             } catch (Exception ignored) {

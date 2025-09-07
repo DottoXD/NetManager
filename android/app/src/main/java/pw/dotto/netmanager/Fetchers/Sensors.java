@@ -5,13 +5,19 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Handler;
+import android.os.Looper;
 
 public class Sensors implements SensorEventListener {
+    private static final int DESTROY_TIMEOUT = 5000;
+
     private static Sensors instance;
     private final SensorManager sensorManager;
     private Sensor accelerometer;
-
     private final float[] lastAccelerometerData = new float[3];
+
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private long lastAccess;
 
     public Sensors(Context context) {
         sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
@@ -19,6 +25,7 @@ public class Sensors implements SensorEventListener {
         if (sensorManager != null) {
             accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
             sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+            updateAccess();
         }
     }
 
@@ -35,7 +42,6 @@ public class Sensors implements SensorEventListener {
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
-
     }
 
     @Override
@@ -46,8 +52,17 @@ public class Sensors implements SensorEventListener {
     }
 
     public float[] getAccelerometerData() {
+        updateAccess();
         return lastAccelerometerData;
     }
+
+    public void updateAccess() {
+        lastAccess = System.currentTimeMillis();
+        handler.removeCallbacks(selfDestruct);
+        handler.postDelayed(selfDestruct, DESTROY_TIMEOUT);
+    }
+
+    private final Runnable selfDestruct = this::destroy;
 
     public void destroy() {
         sensorManager.unregisterListener(this);
