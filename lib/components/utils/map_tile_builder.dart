@@ -13,9 +13,9 @@ Widget mapTileBuilder(BuildContext context, Widget tileWidget, TileImage tile) {
   } else {
     return ColorFiltered(
       colorFilter: const ColorFilter.matrix(<double>[
-        -0.1, -0.5, -0.05, 0, 180, //red
-        -0.1, -0.5, -0.05, 0, 180, //green
-        -0.1, -0.5, -0.05, 0, 180, //blue
+        -0.1, -0.5, -0.05, 0, 200, //red
+        -0.1, -0.5, -0.05, 0, 200, //green
+        -0.1, -0.5, -0.05, 0, 200, //blue
         0, 0, 0, 1, 0, //alpha
       ]),
       child: tileWidget,

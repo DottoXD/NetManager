@@ -78,18 +78,27 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: TopBar(
-        platform,
-        widget.sharedPreferences,
-        platformSignalNotifier,
+    return PopScope(
+      canPop: _currentPage == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _currentPage != 0) {
+          setState(() {
+            _currentPage = 0;
+          });
+        }
+      },
+      child: Scaffold(
+        appBar: TopBar(
+          platform,
+          widget.sharedPreferences,
+          platformSignalNotifier,
+        ),
+        bottomNavigationBar: NavBar(updatePage, _currentPage),
+        body: _pages[_currentPage],
+        floatingActionButton: (_currentPage == 0
+            ? UpdateButton()
+            : (_currentPage == 1 ? PositionButton() : null)),
       ),
-      bottomNavigationBar: NavBar(updatePage, _currentPage),
-      body: _pages[_currentPage],
-      floatingActionButton:
-          (_currentPage == 0
-              ? UpdateButton()
-              : (_currentPage == 1 ? PositionButton() : null)),
     );
   }
 }

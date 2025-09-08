@@ -31,10 +31,12 @@ Widget eventLogDialog(BuildContext context, List<NetmanagerEvent> events) {
                     ],
                   ),
                   Text(
-                    "${dt.day}/${dt.month}/${dt.year} ${dt.hour}:${dt.minute}:${dt.second}",
+                    "${dt.day < 10 ? "0${dt.day}" : dt.day}/${dt.month < 10 ? "0${dt.month}" : dt.month}/${dt.year} ${dt.hour}:${dt.minute < 10 ? "0${dt.minute}" : dt.minute}:${dt.second < 10 ? "0${dt.second}" : dt.second}",
                   ),
                   if (event is MobileNetmanagerEvent) ...[
-                    Text("SIM ${event.simSlot + 1} (${event.network})"),
+                    Text(
+                      "SIM ${event.simSlot + 1} ${event.network.trim().isNotEmpty ? "(${event.network})" : "(Unknown)"}",
+                    ),
                   ],
                   if (i < events.length - 1)
                     Padding(

@@ -1,6 +1,7 @@
 package pw.dotto.netmanager.Core;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
 import android.telephony.CellIdentityNr;
@@ -25,6 +26,8 @@ import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -43,8 +46,13 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.LteCellData;
 import pw.dotto.netmanager.Core.Mobile.CellDatas.NrCellData;
 import pw.dotto.netmanager.Core.Mobile.CellDatas.TdscdmaCellData;
 import pw.dotto.netmanager.Core.Mobile.CellDatas.WcdmaCellData;
-import pw.dotto.netmanager.Core.Mobile.Extractors.CellExtractor;
-import pw.dotto.netmanager.Core.Mobile.Extractors.DataExtractor;
+import pw.dotto.netmanager.Core.Mobile.Extractors.Cells.CdmaExtractor;
+import pw.dotto.netmanager.Core.Mobile.Extractors.Cells.GsmExtractor;
+import pw.dotto.netmanager.Core.Mobile.Extractors.Cells.LteExtractor;
+import pw.dotto.netmanager.Core.Mobile.Extractors.Cells.NrExtractor;
+import pw.dotto.netmanager.Core.Mobile.Extractors.Cells.TdscdmaExtractor;
+import pw.dotto.netmanager.Core.Mobile.Extractors.Cells.WcdmaExtractor;
+import pw.dotto.netmanager.Core.Mobile.Extractors.BasicData.DataManager;
 import pw.dotto.netmanager.Core.Listeners.DisplayInfoListener;
 import pw.dotto.netmanager.Core.Mobile.PhysicalChannelDumper;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
@@ -220,38 +228,38 @@ public class Manager {
         switch (baseCell.getCellConnectionStatus()) {
           case CellInfo.CONNECTION_PRIMARY_SERVING:
             if (baseCell instanceof CellInfoGsm) {
-              GsmCellData gsmCellData = CellExtractor.getGsmCellData((CellInfoGsm) baseCell);
+              GsmCellData gsmCellData = GsmExtractor.get((CellInfoGsm) baseCell);
               String mccMnc = ((CellInfoGsm) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoGsm) baseCell).getCellIdentity().getMncString();
 
               if (mccMnc.equals(simOperator))
                 data.setPrimaryCell(gsmCellData);
             } else if (baseCell instanceof CellInfoCdma) {
-              CdmaCellData cdmaCellData = CellExtractor.getCdmaCellData((CellInfoCdma) baseCell);
+              CdmaCellData cdmaCellData = CdmaExtractor.get((CellInfoCdma) baseCell);
               data.setPrimaryCell(cdmaCellData);
             } else if (baseCell instanceof CellInfoTdscdma) {
-              TdscdmaCellData tdscdmaCellData = CellExtractor.getTdscdmaCellData((CellInfoTdscdma) baseCell);
+              TdscdmaCellData tdscdmaCellData = TdscdmaExtractor.get((CellInfoTdscdma) baseCell);
               String mccMnc = ((CellInfoTdscdma) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoTdscdma) baseCell).getCellIdentity().getMncString();
 
               if (mccMnc.equals(simOperator))
                 data.setPrimaryCell(tdscdmaCellData);
             } else if (baseCell instanceof CellInfoWcdma) {
-              WcdmaCellData wcdmaCellData = CellExtractor.getWcdmaCellData((CellInfoWcdma) baseCell);
+              WcdmaCellData wcdmaCellData = WcdmaExtractor.get((CellInfoWcdma) baseCell);
               String mccMnc = ((CellInfoWcdma) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoWcdma) baseCell).getCellIdentity().getMncString();
 
               if (mccMnc.equals(simOperator))
                 data.setPrimaryCell(wcdmaCellData);
             } else if (baseCell instanceof CellInfoLte) {
-              LteCellData lteCellData = CellExtractor.getLteCellData((CellInfoLte) baseCell);
+              LteCellData lteCellData = LteExtractor.get((CellInfoLte) baseCell);
               String mccMnc = ((CellInfoLte) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoLte) baseCell).getCellIdentity().getMncString();
 
               if (mccMnc.equals(simOperator))
                 data.setPrimaryCell(lteCellData);
             } else if (baseCell instanceof CellInfoNr) {
-              NrCellData nrCellData = CellExtractor.getNrCellData((CellInfoNr) baseCell);
+              NrCellData nrCellData = NrExtractor.get((CellInfoNr) baseCell);
 
               if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 CellIdentityNr identity = (CellIdentityNr) baseCell.getCellIdentity();
@@ -266,7 +274,7 @@ public class Manager {
             break;
           case CellInfo.CONNECTION_SECONDARY_SERVING:
             if (baseCell instanceof CellInfoGsm) {
-              GsmCellData gsmCellData = CellExtractor.getGsmCellData((CellInfoGsm) baseCell);
+              GsmCellData gsmCellData = GsmExtractor.get((CellInfoGsm) baseCell);
               String mccMnc = ((CellInfoGsm) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoGsm) baseCell).getCellIdentity().getMncString();
 
@@ -276,10 +284,10 @@ public class Manager {
               } else
                 data.addActiveCell(gsmCellData);
             } else if (baseCell instanceof CellInfoCdma) {
-              CdmaCellData cdmaCellData = CellExtractor.getCdmaCellData((CellInfoCdma) baseCell);
+              CdmaCellData cdmaCellData = CdmaExtractor.get((CellInfoCdma) baseCell);
               data.addActiveCell(cdmaCellData);
             } else if (baseCell instanceof CellInfoTdscdma) {
-              TdscdmaCellData tdscdmaCellData = CellExtractor.getTdscdmaCellData((CellInfoTdscdma) baseCell);
+              TdscdmaCellData tdscdmaCellData = TdscdmaExtractor.get((CellInfoTdscdma) baseCell);
               String mccMnc = ((CellInfoTdscdma) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoTdscdma) baseCell).getCellIdentity().getMncString();
 
@@ -289,7 +297,7 @@ public class Manager {
               } else
                 data.addActiveCell(tdscdmaCellData);
             } else if (baseCell instanceof CellInfoWcdma) {
-              WcdmaCellData wcdmaCellData = CellExtractor.getWcdmaCellData((CellInfoWcdma) baseCell);
+              WcdmaCellData wcdmaCellData = WcdmaExtractor.get((CellInfoWcdma) baseCell);
               String mccMnc = ((CellInfoWcdma) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoWcdma) baseCell).getCellIdentity().getMncString();
 
@@ -299,7 +307,7 @@ public class Manager {
               } else
                 data.addActiveCell(wcdmaCellData);
             } else if (baseCell instanceof CellInfoLte) {
-              LteCellData lteCellData = CellExtractor.getLteCellData((CellInfoLte) baseCell);
+              LteCellData lteCellData = LteExtractor.get((CellInfoLte) baseCell);
               String mccMnc = ((CellInfoLte) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoLte) baseCell).getCellIdentity().getMncString();
 
@@ -309,7 +317,7 @@ public class Manager {
               } else
                 data.addActiveCell(lteCellData);
             } else if (baseCell instanceof CellInfoNr) {
-              NrCellData nrCellData = CellExtractor.getNrCellData((CellInfoNr) baseCell);
+              NrCellData nrCellData = NrExtractor.get((CellInfoNr) baseCell);
 
               if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 CellIdentityNr identity = (CellIdentityNr) baseCell.getCellIdentity();
@@ -328,7 +336,7 @@ public class Manager {
           case CellInfo.CONNECTION_NONE:
           case CellInfo.CONNECTION_UNKNOWN:
             if (baseCell instanceof CellInfoGsm) {
-              GsmCellData gsmCellData = CellExtractor.getGsmCellData((CellInfoGsm) baseCell);
+              GsmCellData gsmCellData = GsmExtractor.get((CellInfoGsm) baseCell);
               String mccMnc = ((CellInfoGsm) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoGsm) baseCell).getCellIdentity().getMncString();
 
@@ -339,10 +347,10 @@ public class Manager {
                 data.addNeighborCell(gsmCellData);
               ;
             } else if (baseCell instanceof CellInfoCdma) {
-              CdmaCellData cdmaCellData = CellExtractor.getCdmaCellData((CellInfoCdma) baseCell);
+              CdmaCellData cdmaCellData = CdmaExtractor.get((CellInfoCdma) baseCell);
               data.addNeighborCell(cdmaCellData);
             } else if (baseCell instanceof CellInfoTdscdma) {
-              TdscdmaCellData tdscdmaCellData = CellExtractor.getTdscdmaCellData((CellInfoTdscdma) baseCell);
+              TdscdmaCellData tdscdmaCellData = TdscdmaExtractor.get((CellInfoTdscdma) baseCell);
               String mccMnc = ((CellInfoTdscdma) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoTdscdma) baseCell).getCellIdentity().getMncString();
 
@@ -352,7 +360,7 @@ public class Manager {
               } else
                 data.addNeighborCell(tdscdmaCellData);
             } else if (baseCell instanceof CellInfoWcdma) {
-              WcdmaCellData wcdmaCellData = CellExtractor.getWcdmaCellData((CellInfoWcdma) baseCell);
+              WcdmaCellData wcdmaCellData = WcdmaExtractor.get((CellInfoWcdma) baseCell);
               String mccMnc = ((CellInfoWcdma) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoWcdma) baseCell).getCellIdentity().getMncString();
 
@@ -362,7 +370,7 @@ public class Manager {
               } else
                 data.addNeighborCell(wcdmaCellData);
             } else if (baseCell instanceof CellInfoLte) {
-              LteCellData lteCellData = CellExtractor.getLteCellData((CellInfoLte) baseCell);
+              LteCellData lteCellData = LteExtractor.get((CellInfoLte) baseCell);
               String mccMnc = ((CellInfoLte) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoLte) baseCell).getCellIdentity().getMncString();
 
@@ -372,7 +380,7 @@ public class Manager {
               } else
                 data.addNeighborCell(lteCellData);
             } else if (baseCell instanceof CellInfoNr) {
-              NrCellData nrCellData = CellExtractor.getNrCellData((CellInfoNr) baseCell);
+              NrCellData nrCellData = NrExtractor.get((CellInfoNr) baseCell);
 
               if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 CellIdentityNr identity = (CellIdentityNr) baseCell.getCellIdentity();
@@ -391,9 +399,10 @@ public class Manager {
         }
       }
 
-    // temporarily disabled until caching is added
-    // List<String> dump = PhysicalChannelDumper.dump(telephony);
-    // DebugLogger.add("PhysicalChannelDumper dump: " + dump);
+    if (context instanceof Activity) {
+      List<String> dump = PhysicalChannelDumper.dump(telephony);
+      DebugLogger.add("PhysicalChannelDumper dump: " + dump);
+    }
 
     List<Integer> cellBandwidths = new ArrayList<>();
     try {
@@ -427,17 +436,19 @@ public class Manager {
       // todo add sentry
     }
 
+    int mcc = Integer.parseInt(getPlmn(telephony).substring(0, 3));
+
     if (data.getPrimaryCell() != null) {
-      data.getPrimaryCell().setBasicCellData(DataExtractor.getBasicData(data.getPrimaryCell()));
+      data.getPrimaryCell().setBasicCellData(DataManager.getBasicData(data.getPrimaryCell(), mcc));
       data.addActiveCell(data.getPrimaryCell());
     }
 
     for (CellData cellData : data.getActiveCells()) {
-      cellData.setBasicCellData(DataExtractor.getBasicData(cellData));
+      cellData.setBasicCellData(DataManager.getBasicData(cellData, mcc));
     }
 
     for (CellData cellData : data.getNeighborCells()) {
-      cellData.setBasicCellData(DataExtractor.getBasicData(cellData));
+      cellData.setBasicCellData(DataManager.getBasicData(cellData, mcc));
     }
 
     // attempt to filter out wrong bands
@@ -549,27 +560,65 @@ public class Manager {
     if (data.getPrimaryCell() != null &&
         data.getPrimaryCell() instanceof LteCellData) {
 
-      // to be filtered for only nsa + moved to another file + rsrp/frequency
-      // difference with multiple nr bands + optimisation
+      // to be moved out of here ---
+      List<NrCellData> nrCells = new ArrayList<>();
       for (CellData cellData : data.getActiveCells()) {
         if (cellData instanceof NrCellData) {
           NrCellData nrCellData = (NrCellData) cellData;
+          if (nrCellData.getProcessedSignal() == CellInfo.UNAVAILABLE
+              || nrCellData.getRawSignal() == CellInfo.UNAVAILABLE
+              || nrCellData.getSignalNoise() == CellInfo.UNAVAILABLE
+              || nrCellData.getSignalQuality() == CellInfo.UNAVAILABLE)
+            nrCells.add(nrCellData);
+        }
+      }
+      nrCells.sort((a, b) -> Integer.compare(b.getBasicCellData().getFrequency(), a.getBasicCellData().getFrequency())); // n78
+                                                                                                                         // ->
+                                                                                                                         // n1
+                                                                                                                         // ->
+                                                                                                                         // n28
 
-          if (nrCellData.getProcessedSignal() == CellInfo.UNAVAILABLE) {
-            CellSignalStrength[] cellSignalStrengths = getSignalStrengths(telephony);
+      List<CellSignalStrengthNr> signalStrengths = new ArrayList<>();
+      SignalStrength signalStrength = telephony.getSignalStrength();
+      if (signalStrength != null) {
+        for (CellSignalStrength cellSignalStrength : signalStrength.getCellSignalStrengths()) {
+          if (cellSignalStrength instanceof CellSignalStrengthNr)
+            signalStrengths.add((CellSignalStrengthNr) cellSignalStrength);
+        }
+      }
+      signalStrengths.sort(Comparator.comparingInt(CellSignalStrengthNr::getSsRsrp)); // -110dBm -> -99dBm -> -78dBm
 
-            for (CellSignalStrength cellSignalStrength : cellSignalStrengths) {
-              if (cellSignalStrength instanceof CellSignalStrengthNr) {
-                int ssRsrp = ((CellSignalStrengthNr) cellSignalStrength).getSsRsrp();
-                if (ssRsrp != CellInfo.UNAVAILABLE)
-                  cellData.setProcessedSignal(ssRsrp);
-              }
-            }
+      int limit = Math.min(nrCells.size(), signalStrengths.size());
+      for (int i = 0; i < limit; i++) {
+        NrCellData nrCell = nrCells.get(i);
+        CellSignalStrengthNr ssNr = signalStrengths.get(i);
+
+        if (nrCell.getProcessedSignal() == CellInfo.UNAVAILABLE && ssNr.getSsRsrp() != CellInfo.UNAVAILABLE) {
+          nrCell.setProcessedSignal(ssNr.getSsRsrp());
+        }
+        if (nrCell.getRawSignal() == CellInfo.UNAVAILABLE && ssNr.getCsiRsrp() != CellInfo.UNAVAILABLE) {
+          nrCell.setRawSignal(ssNr.getCsiRsrp());
+        }
+        if (nrCell.getSignalNoise() == CellInfo.UNAVAILABLE) {
+          if (ssNr.getSsSinr() != CellInfo.UNAVAILABLE) {
+            nrCell.setSignalNoise(ssNr.getSsSinr());
+          } else if (ssNr.getCsiSinr() != CellInfo.UNAVAILABLE) {
+            nrCell.setSignalNoise(ssNr.getCsiSinr());
+          }
+        }
+        if (nrCell.getSignalQuality() == CellInfo.UNAVAILABLE) {
+          if (ssNr.getSsRsrq() != CellInfo.UNAVAILABLE) {
+            nrCell.setSignalQuality(ssNr.getSsRsrq());
+          } else if (ssNr.getCsiRsrq() != CellInfo.UNAVAILABLE) {
+            nrCell.setSignalQuality(ssNr.getCsiRsrq());
           }
         }
       }
+      // to be moved out of here ---
 
-      data.setActiveBw(data.getPrimaryCell().getBandwidth());
+      // total bandwidth calculation
+      if (!(data.getPrimaryCell().getBandwidth() < 0 || data.getPrimaryCell().getBandwidth() == CellInfo.UNAVAILABLE))
+        data.setActiveBw(data.getPrimaryCell().getBandwidth());
       for (CellData cellData : data.getActiveCells()) {
         if (!(cellData.getBandwidth() < 0 || cellData.getBandwidth() == CellInfo.UNAVAILABLE)
             && !data.getPrimaryCell().equals(cellData))

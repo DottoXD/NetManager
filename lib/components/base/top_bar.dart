@@ -141,7 +141,6 @@ class _TopBarState extends State<TopBar> {
       );
     } catch (e) {
       showDialog(
-        //temporary?
         context: context,
         builder: (BuildContext context) {
           return errorDialog(context, e);
