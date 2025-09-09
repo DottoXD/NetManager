@@ -2,7 +2,6 @@ package pw.dotto.netmanager.Core.Mobile;
 
 import static android.content.Context.MODE_PRIVATE;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
@@ -13,14 +12,15 @@ import android.telephony.PhysicalChannelConfig;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
+import androidx.annotation.RequiresApi;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
+import pw.dotto.netmanager.Core.Listeners.ExtendedPhoneStateListener;
 import pw.dotto.netmanager.Utils.DebugLogger;
 
 public class PhysicalChannelDumper {
@@ -40,17 +40,18 @@ public class PhysicalChannelDumper {
         this.context = context;
         this.sharedPreferences = context.getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
 
+        DebugLogger
+                .add("Registering PhysicalChannelDumper for Telephony " + telephonyManager.getNetworkOperator()
+                        + "...");
+
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) {
             setupLegacyDumper();
         } else {
             setupModernDumper();
         }
-
-        DebugLogger
-                .add("PhysicalChannelDumper registered for Telephony " + telephonyManager.getNetworkOperator() + ".");
     }
 
-    public void setupLegacyDumper() {
+    private void setupLegacyDumper() {
         handler = new Handler(Looper.getMainLooper());
 
         if (legacyDumper == null)
@@ -96,21 +97,28 @@ public class PhysicalChannelDumper {
         handler.post(legacyDumper);
     }
 
-    public void setupModernDumper() {
-        try {
-            telephonyManager.listen(new PhoneStateListener() {
-                public void onPhysicalChannelConfigurationChanged(List<PhysicalChannelConfig> configs) {
-                    DebugLogger.add("Received modern PhysicalChannelDumper update!");
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    private void setupModernDumper() {
+        modernDumper = new ExtendedPhoneStateListener(telephonyManager.getSubscriptionId()) {
+            @SuppressWarnings("unused")
+            public void onPhysicalChannelConfigurationChanged(List<PhysicalChannelConfig> configs) {
+                DebugLogger.add("Received modern PhysicalChannelDumper update!");
 
-                    if (configs != null) {
-                        physicalChannelData.clear();
-                        for (Object obj : configs) {
-                            DebugLogger.add("Modern PhysicalChannelDumper config: " + obj.toString());
-                            physicalChannelData.add(obj.toString());
-                        }
+                if (configs != null) {
+                    physicalChannelData.clear();
+                    for (PhysicalChannelConfig physicalChannelConfig : configs) {
+                        DebugLogger.add("Modern PhysicalChannelDumper config: " + physicalChannelConfig.toString());
+                        physicalChannelData.add(physicalChannelConfig.toString());
                     }
                 }
-            }, LISTEN_PHYSICAL_CHANNEL_CONFIGURATION);
+            }
+        };
+
+        try {
+            telephonyManager.listen(modernDumper, LISTEN_PHYSICAL_CHANNEL_CONFIGURATION);
+            DebugLogger
+                    .add("Successfully registered a PhysicalChannelDumper for Telephony "
+                            + telephonyManager.getNetworkOperator() + "!");
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
@@ -127,9 +135,10 @@ public class PhysicalChannelDumper {
     }
 
     public void dispose() {
-        if (modernDumper != null)
+        if (modernDumper != null) {
             telephonyManager.listen(modernDumper, PhoneStateListener.LISTEN_NONE);
-        else if (legacyDumper != null && handler != null)
+            modernDumper = null;
+        } else if (legacyDumper != null && handler != null)
             handler.removeCallbacks(legacyDumper);
     }
 }

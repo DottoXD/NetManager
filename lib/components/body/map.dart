@@ -30,6 +30,7 @@ class _MapBodyState extends State<MapBody> {
   Timer? _animationTimer;
   LatLng? _currentLocation;
 
+  bool _zooming = false;
   bool _dialogOpen = false;
   bool disposed = false;
 
@@ -152,7 +153,7 @@ class _MapBodyState extends State<MapBody> {
         initialCenter: _currentLocation ?? LatLng(45.464664, 9.188540),
         minZoom: 7.0,
         maxZoom: 15.0,
-        initialZoom: 10.0,
+        initialZoom: 13.0,
         interactionOptions: InteractionOptions(
           flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
         ),
@@ -167,6 +168,18 @@ class _MapBodyState extends State<MapBody> {
           });
         },
         onPositionChanged: (camera, hasGesture) {
+          if (_zooming) return;
+
+          final double roundedZoom = mapController.camera.zoom.roundToDouble();
+
+          if ((roundedZoom - mapController.camera.zoom).abs() > 0.01) {
+            _zooming = true;
+            mapController.move(mapController.camera.center, roundedZoom);
+            Future.delayed(Duration(milliseconds: 50), () {
+              _zooming = false;
+            });
+          }
+
           setState(() {
             _progressIndicator = LinearProgressIndicator();
           });
@@ -178,6 +191,23 @@ class _MapBodyState extends State<MapBody> {
           tileBuilder: mapTileBuilder,
           userAgentPackageName: "pw.dotto.netmanager",
         ),
+        if (_currentLocation != null)
+          MarkerLayer(
+            markers: [
+              Marker(
+                point: _currentLocation!,
+                width: 20,
+                height: 20,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                ),
+              ),
+            ],
+          ),
         SafeArea(
           child: Align(
             alignment: Alignment.bottomRight,

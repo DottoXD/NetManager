@@ -426,7 +426,7 @@ public class Manager {
 
       }
     } catch (Exception e) {
-      // todo add sentry
+      DebugLogger.add("Bandwidth calculator exception: " + e.getMessage());
     }
 
     int mcc = Integer.parseInt(getPlmn(telephony).substring(0, 3));
@@ -863,17 +863,21 @@ public class Manager {
       }
     }
 
-    if(context instanceof Activity) {
-      if (firstManager != null) {
-        if (physicalChannelDumpers[0] != null)
-          physicalChannelDumpers[0].dispose();
-        physicalChannelDumpers[0] = new PhysicalChannelDumper(firstManager, context);
-      }
+    if (context instanceof Activity) {
+      try { // currently unstable
+        if (firstManager != null) {
+          if (physicalChannelDumpers[0] != null)
+            physicalChannelDumpers[0].dispose();
+          physicalChannelDumpers[0] = new PhysicalChannelDumper(firstManager, context);
+        }
 
-      if (secondManager != null) {
-        if (physicalChannelDumpers[1] != null)
-          physicalChannelDumpers[1].dispose();
-        physicalChannelDumpers[1] = new PhysicalChannelDumper(secondManager, context);
+        if (secondManager != null) {
+          if (physicalChannelDumpers[1] != null)
+            physicalChannelDumpers[1].dispose();
+          physicalChannelDumpers[1] = new PhysicalChannelDumper(secondManager, context);
+        }
+      } catch (Exception e) {
+        DebugLogger.add("PhysicalChannelDumper registration exception: " + e.getMessage());
       }
     }
   }
