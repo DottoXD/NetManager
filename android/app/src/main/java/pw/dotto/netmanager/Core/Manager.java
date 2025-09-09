@@ -26,7 +26,6 @@ import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -69,11 +68,11 @@ public class Manager {
   private final SimReceiverManager simReceiverManager;
   private final EventManager eventManager;
 
-  private DisplayInfoListener[] nsa = { null, null };
-  private ServiceStateListener[] serviceStates = { null, null };
-  private DataStateListener[] dataStates = { null, null };
-  private SignalStrengthsListener[] signalStrengths = { null, null };
-  private PhysicalChannelDumper[] physicalChannelDumpers = { null, null };
+  private final DisplayInfoListener[] nsa = { null, null };
+  private final ServiceStateListener[] serviceStates = { null, null };
+  private final DataStateListener[] dataStates = { null, null };
+  private final SignalStrengthsListener[] signalStrengths = { null, null };
+  private final PhysicalChannelDumper[] physicalChannelDumpers = { null, null };
 
   private Date lastModemUpdate = null;
   private static final int updateInterval = 10;
@@ -204,6 +203,15 @@ public class Manager {
 
     if (simOperator == null || simOperator.isEmpty())
       simOperator = "00000";
+
+    int subscriptionIndex = 0;
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+      if (secondManager != null && secondManager.getSubscriptionId() == telephony.getSubscriptionId())
+        subscriptionIndex = 1;
+    } else {
+      if (secondManager != null && secondManager == telephony)
+        subscriptionIndex = 1;
+    }
 
     try {
       if (lastModemUpdate == null
@@ -400,11 +408,13 @@ public class Manager {
     List<Integer> cellBandwidths = new ArrayList<>();
     try {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        ServiceStateListener serviceStateListener = serviceStates[telephony.getSubscriptionId()];
+        ServiceStateListener serviceStateListener = serviceStates[subscriptionIndex];
         int[] bandwidths = null;
 
         if (serviceStateListener != null)
           bandwidths = serviceStateListener.getUpdatedCellBandwidths();
+        if (context instanceof Activity)
+          DebugLogger.add("Service state bandwidth: " + Arrays.toString(bandwidths));
         else {
           ServiceState state = telephony.getServiceState();
           if (state != null)
@@ -471,7 +481,7 @@ public class Manager {
 
           boolean isNsa;
           if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            isNsa = getNsaStatus(telephony.getSubscriptionId());
+            isNsa = getNsaStatus(subscriptionIndex);
           } else {
             isNsa = getNsaStatus(telephony);
           }
@@ -486,7 +496,7 @@ public class Manager {
           boolean clearActiveCells = false; // possibly port this to 5G SA in future
 
           if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            int status = getDataStatus(telephony);
+            int status = getDataStatus(subscriptionIndex);
 
             switch (status) {
               case TelephonyManager.DATA_DISCONNECTED:

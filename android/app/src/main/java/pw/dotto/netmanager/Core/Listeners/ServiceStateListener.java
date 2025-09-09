@@ -22,7 +22,6 @@ public class ServiceStateListener extends TelephonyCallback implements Telephony
     }
 
     public int[] getUpdatedCellBandwidths() {
-        DebugLogger.add("Bandwidth: " + Arrays.toString(updatedCellBandwidths));
         return updatedCellBandwidths;
     }
 }

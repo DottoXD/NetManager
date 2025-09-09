@@ -100,13 +100,13 @@ public class PhysicalChannelDumper {
     @RequiresApi(api = Build.VERSION_CODES.R)
     private void setupModernDumper() {
         modernDumper = new ExtendedPhoneStateListener(telephonyManager.getSubscriptionId()) {
-            @SuppressWarnings("unused")
-            public void onPhysicalChannelConfigurationChanged(List<PhysicalChannelConfig> configs) {
+            @Override
+            public void onPhysicalChannelConfigurationChanged(List<?> configs) {
                 DebugLogger.add("Received modern PhysicalChannelDumper update!");
 
                 if (configs != null) {
                     physicalChannelData.clear();
-                    for (PhysicalChannelConfig physicalChannelConfig : configs) {
+                    for (Object physicalChannelConfig : configs) {
                         DebugLogger.add("Modern PhysicalChannelDumper config: " + physicalChannelConfig.toString());
                         physicalChannelData.add(physicalChannelConfig.toString());
                     }

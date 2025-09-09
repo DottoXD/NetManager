@@ -20,7 +20,11 @@ public class ExtendedPhoneStateListener extends PhoneStateListener {
     }
 
     @Deprecated
-    public void onPhysicalChannelConfigurationChanged(List<PhysicalChannelConfig> configs) {
-
+    public void onPhysicalChannelConfigurationChanged(List<?> configs) {
+        if (configs != null) {
+            for (Object config : configs) {
+                DebugLogger.add("Base PhysicalChannel update: " + config.toString());
+            }
+        }
     }
 }

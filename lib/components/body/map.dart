@@ -152,10 +152,13 @@ class _MapBodyState extends State<MapBody> {
         backgroundColor: Theme.of(context).colorScheme.surface,
         initialCenter: _currentLocation ?? LatLng(45.464664, 9.188540),
         minZoom: 7.0,
-        maxZoom: 15.0,
-        initialZoom: 13.0,
+        maxZoom: 16.0,
+        initialZoom: 14.0,
         interactionOptions: InteractionOptions(
-          flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
+          flags:
+              InteractiveFlag.pinchZoom |
+              InteractiveFlag.drag |
+              InteractiveFlag.doubleTapZoom,
         ),
         onMapReady: () {
           setState(() {
@@ -168,18 +171,6 @@ class _MapBodyState extends State<MapBody> {
           });
         },
         onPositionChanged: (camera, hasGesture) {
-          if (_zooming) return;
-
-          final double roundedZoom = mapController.camera.zoom.roundToDouble();
-
-          if ((roundedZoom - mapController.camera.zoom).abs() > 0.01) {
-            _zooming = true;
-            mapController.move(mapController.camera.center, roundedZoom);
-            Future.delayed(Duration(milliseconds: 50), () {
-              _zooming = false;
-            });
-          }
-
           setState(() {
             _progressIndicator = LinearProgressIndicator();
           });
