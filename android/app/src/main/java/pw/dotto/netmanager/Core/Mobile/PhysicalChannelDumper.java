@@ -99,8 +99,8 @@ public class PhysicalChannelDumper {
     public void setupModernDumper() {
         try {
             telephonyManager.listen(new PhoneStateListener() {
-                public void onPhysicalChannelConfigurationChanged(List<?> configs) {
-                    DebugLogger.add("Received modern  PhysicalChannelDumper update!");
+                public void onPhysicalChannelConfigurationChanged(List<PhysicalChannelConfig> configs) {
+                    DebugLogger.add("Received modern PhysicalChannelDumper update!");
 
                     if (configs != null) {
                         physicalChannelData.clear();
