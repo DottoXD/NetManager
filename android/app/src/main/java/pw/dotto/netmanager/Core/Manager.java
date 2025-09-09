@@ -73,6 +73,7 @@ public class Manager {
   private ServiceStateListener[] serviceStates = { null, null };
   private DataStateListener[] dataStates = { null, null };
   private SignalStrengthsListener[] signalStrengths = { null, null };
+  private PhysicalChannelDumper[] physicalChannelDumpers = { null, null };
 
   private Date lastModemUpdate = null;
   private static final int updateInterval = 10;
@@ -211,7 +212,6 @@ public class Manager {
             new TelephonyManager.CellInfoCallback() {
               @Override
               public void onCellInfo(@NonNull List<CellInfo> cellInfo) {
-                DebugLogger.add("Detected new cell: " + cellInfo.toString());
                 lastModemUpdate = new Date();
               }
             });
@@ -223,8 +223,6 @@ public class Manager {
     List<CellInfo> cellInfo = telephony.getAllCellInfo();
     if (cellInfo != null)
       for (CellInfo baseCell : cellInfo) {
-        DebugLogger.add("Detected cell: " + baseCell.toString());
-
         switch (baseCell.getCellConnectionStatus()) {
           case CellInfo.CONNECTION_PRIMARY_SERVING:
             if (baseCell instanceof CellInfoGsm) {
@@ -398,11 +396,6 @@ public class Manager {
             break;
         }
       }
-
-    if (context instanceof Activity) {
-      List<String> dump = PhysicalChannelDumper.dump(telephony);
-      DebugLogger.add("PhysicalChannelDumper dump: " + dump);
-    }
 
     List<Integer> cellBandwidths = new ArrayList<>();
     try {
@@ -867,6 +860,20 @@ public class Manager {
           secondManager.registerTelephonyCallback(executor, dataStates[1]);
         if (signalStrengths[1] != null)
           secondManager.registerTelephonyCallback(executor, signalStrengths[1]);
+      }
+    }
+
+    if(context instanceof Activity) {
+      if (firstManager != null) {
+        if (physicalChannelDumpers[0] != null)
+          physicalChannelDumpers[0].dispose();
+        physicalChannelDumpers[0] = new PhysicalChannelDumper(firstManager, context);
+      }
+
+      if (secondManager != null) {
+        if (physicalChannelDumpers[1] != null)
+          physicalChannelDumpers[1].dispose();
+        physicalChannelDumpers[1] = new PhysicalChannelDumper(secondManager, context);
       }
     }
   }
