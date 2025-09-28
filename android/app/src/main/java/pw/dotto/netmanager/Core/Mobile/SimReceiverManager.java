@@ -51,7 +51,11 @@ public class SimReceiverManager {
 
         try {
             if (context != null) {
-                context.registerReceiver(simReceiver, filter);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    context.registerReceiver(simReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+                } else {
+                    context.registerReceiver(simReceiver, filter);
+                }
                 isRegistered = true;
             }
         } catch (IllegalArgumentException ignored) {

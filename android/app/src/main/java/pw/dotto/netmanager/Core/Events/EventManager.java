@@ -69,7 +69,7 @@ public class EventManager {
             if (maxLogs <= 0)
                 maxLogs = 10;
 
-            if (events != null && !events.isEmpty()) {
+            if (!events.isEmpty()) {
                 if (events.size() > maxLogs)
                     events.subList(0, Math.toIntExact(events.size() - maxLogs)).clear(); // maxLogs shouldn't be bigger
                                                                                          // than an int?
@@ -81,7 +81,7 @@ public class EventManager {
 
     public NetmanagerEvent getLastEventByType(EventTypes type, int simSlot) { // add new method with same name when i'll
                                                                               // add more types
-        for (int i = events.size() - 1; i > 0; i--) {
+        for (int i = events.size() - 1; i >= 0; i--) {
             if (events.get(i).getEventType().equals(type)) {
                 NetmanagerEvent checkedEvent = events.get(i);
 

@@ -112,32 +112,39 @@ public class Manager {
         firstManager = getTelephony().createForSubscriptionId(firstInfo.getSubscriptionId());
       }
 
-      int networkGen = getSimNetworkGen(firstManager);
-      boolean nrSa = networkGen == 5;
+      int networkGen;
+      boolean nrSa;
 
-      if (networkGen == 4 && getNsaStatus(0))
-        networkGen = 5;
+      if(firstManager != null) {
+        networkGen = getSimNetworkGen(firstManager);
+        nrSa = networkGen == 5;
 
-      str.append(firstManager.getNetworkOperatorName()).append(" ").append(
-          networkGen == 0 ? "Unknown"
-              : (networkGen < 0 ? "No service" : networkGen + "G" + (networkGen == 5 ? (nrSa ? " SA" : " NSA") : "")));
+        if (networkGen == 4 && getNsaStatus(0))
+          networkGen = 5;
+
+        str.append(firstManager.getNetworkOperatorName()).append(" ").append(
+                networkGen == 0 ? "Unknown"
+                        : (networkGen < 0 ? "No service" : networkGen + "G" + (networkGen == 5 ? (nrSa ? " SA" : " NSA") : "")));
+      } else str.append("Unknown");
 
       if (activeSubscriptionList.size() > 1) {
         SubscriptionInfo secondInfo = activeSubscriptionList.get(1);
         if (secondManager == null)
           secondManager = getTelephony().createForSubscriptionId(secondInfo.getSubscriptionId());
 
-        networkGen = getSimNetworkGen(secondManager);
-        nrSa = networkGen == 5;
+        if(secondManager != null) {
+          networkGen = getSimNetworkGen(secondManager);
+          nrSa = networkGen == 5;
 
-        if (networkGen == 4 && getNsaStatus(1))
-          networkGen = 5;
+          if (networkGen == 4 && getNsaStatus(1))
+            networkGen = 5;
 
-        if (secondManager.getNetworkOperatorName() != null && !secondManager.getNetworkOperatorName().trim().isEmpty())
-          str.append(" | ").append(secondManager.getNetworkOperatorName()).append(" ").append(
-              networkGen == 0 ? "Unknown"
-                  : (networkGen < 0 ? "No service"
-                      : networkGen + "G" + (networkGen == 5 ? (nrSa ? " SA" : " NSA") : "")));
+          if (secondManager.getNetworkOperatorName() != null && !secondManager.getNetworkOperatorName().trim().isEmpty())
+            str.append(" | ").append(secondManager.getNetworkOperatorName()).append(" ").append(
+                    networkGen == 0 ? "Unknown"
+                            : (networkGen < 0 ? "No service"
+                            : networkGen + "G" + (networkGen == 5 ? (nrSa ? " SA" : " NSA") : "")));
+        } else str.append(" | Unknown");
       }
     } else
       str.append("No service");
@@ -196,7 +203,7 @@ public class Manager {
     }
 
     SIMData data = new SIMData(getSimCarrier(telephony), getSimOperator(telephony), getSimNetworkGen(telephony),
-        telephony.getSimOperator());
+        telephony.getSimOperator(), getNetwork(telephony));
     String simOperator = telephony.getNetworkOperator();
     if ((simOperator == null || simOperator.isEmpty()) && telephony.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA)
       simOperator = telephony.getSimOperator();
@@ -462,6 +469,7 @@ public class Manager {
             if (cellData != data.getPrimaryCell())
               data.removeActiveCell(cellData);
           }
+          break;
         case 3: // filter out bands
           if (data.getPrimaryCell() instanceof CdmaCellData || data.getPrimaryCell() instanceof TdscdmaCellData) {
             for (CellData cellData : data.getActiveCells()) {
@@ -475,6 +483,7 @@ public class Manager {
                 data.removeActiveCell(cellData);
             }
           }
+          break;
         case 4:
           if (cellBandwidths.isEmpty())
             break; // might as well be the wrong amount of cell bandwidths
@@ -805,71 +814,104 @@ public class Manager {
     if (subscriptions == null)
       return;
 
+    TelephonyManager oldFirstManager = this.firstManager;
+    TelephonyManager oldSecondManager = this.secondManager;
+
     if (!subscriptions.isEmpty()) {
       int firstId = subscriptions.get(0).getSubscriptionId();
       firstManager = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE))
           .createForSubscriptionId(firstId);
-    }
+    } else firstManager = null;
 
     if (subscriptions.size() >= 2) {
       int secondId = subscriptions.get(1).getSubscriptionId();
       secondManager = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE))
           .createForSubscriptionId(secondId);
-    }
+    } else secondManager = null;
 
     Executor executor = ContextCompat.getMainExecutor(context);
     if (executor == null)
       return;
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+      if(oldFirstManager != null) {
+        try {
+          if (nsa[0] != null)
+            oldFirstManager.unregisterTelephonyCallback(nsa[0]);
+          if (serviceStates[0] != null)
+            oldFirstManager.unregisterTelephonyCallback(serviceStates[0]);
+          if (dataStates[0] != null)
+            oldFirstManager.unregisterTelephonyCallback(dataStates[0]);
+          if (signalStrengths[0] != null)
+            oldFirstManager.unregisterTelephonyCallback(signalStrengths[0]);
+        } catch(Exception e) {
+          DebugLogger.add("firstManager utils unregistration exception: " + e.getMessage());
+        }
+      }
+
       if (firstManager != null) {
-        if (nsa[0] != null)
-          firstManager.unregisterTelephonyCallback(nsa[0]);
-        if (serviceStates[0] != null)
-          firstManager.unregisterTelephonyCallback(serviceStates[0]);
-        if (dataStates[0] != null)
-          firstManager.unregisterTelephonyCallback(dataStates[0]);
-        if (signalStrengths[0] != null)
-          firstManager.unregisterTelephonyCallback(signalStrengths[0]);
+        try {
+          nsa[0] = new DisplayInfoListener();
+          serviceStates[0] = new ServiceStateListener();
+          dataStates[0] = new DataStateListener();
+          signalStrengths[0] = new SignalStrengthsListener();
 
-        nsa[0] = new DisplayInfoListener();
-        serviceStates[0] = new ServiceStateListener();
-        dataStates[0] = new DataStateListener();
-        signalStrengths[0] = new SignalStrengthsListener();
+          if (nsa[0] != null)
+            firstManager.registerTelephonyCallback(executor, nsa[0]);
+          if (serviceStates[0] != null)
+            firstManager.registerTelephonyCallback(executor, serviceStates[0]);
+          if (dataStates[0] != null)
+            firstManager.registerTelephonyCallback(executor, dataStates[0]);
+          if (signalStrengths[0] != null)
+            firstManager.registerTelephonyCallback(executor, signalStrengths[0]);
+        } catch(Exception e) {
+          DebugLogger.add("firstManager utils registration exception: " + e.getMessage());
+        }
+      } else {
+        nsa[0] = null;
+        serviceStates[0] = null;
+        dataStates[0] = null;
+        signalStrengths[0] = null;
+      }
 
-        if (nsa[0] != null)
-          firstManager.registerTelephonyCallback(executor, nsa[0]);
-        if (serviceStates[0] != null)
-          firstManager.registerTelephonyCallback(executor, serviceStates[0]);
-        if (dataStates[0] != null)
-          firstManager.registerTelephonyCallback(executor, dataStates[0]);
-        if (signalStrengths[0] != null)
-          firstManager.registerTelephonyCallback(executor, signalStrengths[0]);
+      if(oldSecondManager != null) {
+        try {
+          if (nsa[1] != null)
+            oldSecondManager.unregisterTelephonyCallback(nsa[1]);
+          if (serviceStates[1] != null)
+            oldSecondManager.unregisterTelephonyCallback(serviceStates[1]);
+          if (dataStates[1] != null)
+            oldSecondManager.unregisterTelephonyCallback(dataStates[1]);
+          if (signalStrengths[1] != null)
+            oldSecondManager.unregisterTelephonyCallback(signalStrengths[1]);
+        } catch(Exception e) {
+          DebugLogger.add("secondManager utils unregistration exception: " + e.getMessage());
+        }
       }
 
       if (secondManager != null && getSimCount() > 1) {
-        if (nsa[1] != null)
-          secondManager.unregisterTelephonyCallback(nsa[1]);
-        if (serviceStates[1] != null)
-          secondManager.unregisterTelephonyCallback(serviceStates[1]);
-        if (dataStates[1] != null)
-          secondManager.unregisterTelephonyCallback(dataStates[1]);
-        if (signalStrengths[1] != null)
-          secondManager.unregisterTelephonyCallback(signalStrengths[1]);
+        try {
+          nsa[1] = new DisplayInfoListener();
+          serviceStates[1] = new ServiceStateListener();
+          dataStates[1] = new DataStateListener();
+          signalStrengths[1] = new SignalStrengthsListener();
 
-        nsa[1] = new DisplayInfoListener();
-        serviceStates[1] = new ServiceStateListener();
-        dataStates[1] = new DataStateListener();
-        signalStrengths[1] = new SignalStrengthsListener();
-
-        if (nsa[1] != null)
-          secondManager.registerTelephonyCallback(executor, nsa[1]);
-        if (serviceStates[1] != null)
-          secondManager.registerTelephonyCallback(executor, serviceStates[1]);
-        if (dataStates[1] != null)
-          secondManager.registerTelephonyCallback(executor, dataStates[1]);
-        if (signalStrengths[1] != null)
-          secondManager.registerTelephonyCallback(executor, signalStrengths[1]);
+          if (nsa[1] != null)
+            secondManager.registerTelephonyCallback(executor, nsa[1]);
+          if (serviceStates[1] != null)
+            secondManager.registerTelephonyCallback(executor, serviceStates[1]);
+          if (dataStates[1] != null)
+            secondManager.registerTelephonyCallback(executor, dataStates[1]);
+          if (signalStrengths[1] != null)
+            secondManager.registerTelephonyCallback(executor, signalStrengths[1]);
+        } catch(Exception e) {
+          DebugLogger.add("secondManager utils registration exception: " + e.getMessage());
+        }
+      } else {
+        nsa[1] = null;
+        serviceStates[1] = null;
+        dataStates[1] = null;
+        signalStrengths[1] = null;
       }
     }
 
@@ -879,12 +921,18 @@ public class Manager {
           if (physicalChannelDumpers[0] != null)
             physicalChannelDumpers[0].dispose();
           physicalChannelDumpers[0] = new PhysicalChannelDumper(firstManager, context);
+        } else {
+          physicalChannelDumpers[0].dispose();
+          physicalChannelDumpers[0] = null;
         }
 
         if (secondManager != null) {
           if (physicalChannelDumpers[1] != null)
             physicalChannelDumpers[1].dispose();
           physicalChannelDumpers[1] = new PhysicalChannelDumper(secondManager, context);
+        } else {
+          physicalChannelDumpers[1].dispose();
+          physicalChannelDumpers[1] = null;
         }
       } catch (Exception e) {
         DebugLogger.add("PhysicalChannelDumper registration exception: " + e.getMessage());

@@ -147,7 +147,7 @@ public class MainActivity extends FlutterActivity {
         case "getLocation":
           Location locationFetcher = Location.getInstance(this);
 
-          if (locationFetcher == null) {
+          if (locationFetcher == null || locationFetcher.getLastLocation() == null) {
             result.success(gson.toJson(new double[] { 0.000000, 0.000000 })); // hopefully nobody will ever use
                                                                               // netmanager there...
             break;
@@ -166,6 +166,15 @@ public class MainActivity extends FlutterActivity {
           }
 
           result.success(gson.toJson(sensors.getAccelerometerData()));
+          break;
+
+        case "getVersion":
+          String version = "Unknown";
+          try {
+            version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+          } catch(Exception ignored) {}
+
+          result.success(version);
           break;
 
         default:
@@ -190,5 +199,11 @@ public class MainActivity extends FlutterActivity {
     }
 
     super.onStop();
+  }
+
+  @Override
+  public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    Permissions.handleResult(this, requestCode, permissions, grantResults);
   }
 }

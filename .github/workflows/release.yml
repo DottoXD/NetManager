@@ -51,8 +51,11 @@ jobs:
       - name: 🗄️ Upload-keystore.jks
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > $GITHUB_WORKSPACE/android/app/upload-keystore.jks
 
+      - name: 📝 Define GIT_COMMIT
+        run: echo "GIT_COMMIT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: ⛏️ APKs
-        run: flutter build apk --release --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN }} --dart-define=flutter.flutter_map.unblockOSM=${{ secrets.UNBLOCK_OSM }}
+        run: flutter build apk --release --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN }} --dart-define=flutter.flutter_map.unblockOSM=${{ secrets.UNBLOCK_OSM }} --dart-define=GIT_COMMIT=$GIT_COMMIT
 
       - name: 📦 Artifacts
         run: |

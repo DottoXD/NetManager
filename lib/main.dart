@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/services.dart';
+import 'package:netmanager/perms.dart';
 //import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
-
-import 'home.dart';
 
 void main() async {
   /*SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
@@ -88,7 +87,7 @@ class _NetManagerState extends State<NetManager> {
                   return MaterialApp(
                     theme: ThemeData(colorScheme: _lightColorScheme),
                     darkTheme: ThemeData(colorScheme: _darkColorScheme),
-                    home: Home(sharedPreferences, dynamicThemeNotifier),
+                    home: Perms(sharedPreferences, dynamicThemeNotifier),
                     debugShowCheckedModeBanner: false,
                   );
                 },

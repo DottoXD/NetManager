@@ -374,7 +374,8 @@ class _SettingsBodyState extends State<SettingsBody> {
                       trailing: IconButton(
                         onPressed: () => showDialog(
                           context: context,
-                          builder: (BuildContext context) => aboutDialog(),
+                          builder: (BuildContext context) =>
+                              FullAboutDialog(platform: platform),
                         ),
                         icon: Icon(Icons.question_mark_rounded),
                       ),

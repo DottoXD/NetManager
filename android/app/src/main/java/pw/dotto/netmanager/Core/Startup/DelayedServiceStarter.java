@@ -12,6 +12,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import pw.dotto.netmanager.Core.Notifications.Service;
+import pw.dotto.netmanager.R;
 import pw.dotto.netmanager.Utils.Permissions;
 
 public class DelayedServiceStarter extends android.app.Service {
@@ -50,7 +51,7 @@ public class DelayedServiceStarter extends android.app.Service {
 
         Notification tempNotification = new NotificationCompat.Builder(this, TEMP_NOTIFICATION_CHANNEL)
                 .setContentTitle("NetManager is starting!")
-                .setSmallIcon(android.R.drawable.stat_notify_sync) // got to make an icon as soon as i make an app logo
+                .setSmallIcon(R.drawable.ic_launcher_monochrome) // got to make an icon as soon as i make an app logo
                 .setContentText("Preparing NetManager's Cell Updates service..")
                 .setPriority(NotificationCompat.PRIORITY_MIN)
                 .setStyle(new NotificationCompat.BigTextStyle())

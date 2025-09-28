@@ -14,11 +14,10 @@ import androidx.core.app.NotificationCompat;
 import java.util.Objects;
 import java.util.Random;
 
-import pw.dotto.netmanager.Core.Mobile.CellDatas.CdmaCellData;
 import pw.dotto.netmanager.Core.Mobile.CellDatas.CellData;
-import pw.dotto.netmanager.Core.Mobile.CellDatas.GsmCellData;
 import pw.dotto.netmanager.Core.Mobile.CellDatas.NrCellData;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
+import pw.dotto.netmanager.R;
 import pw.dotto.netmanager.Utils.Mobile;
 import pw.dotto.netmanager.Utils.Permissions;
 import pw.dotto.netmanager.MainActivity;
@@ -134,7 +133,7 @@ public class Manager {
                 }
             }
 
-            contentText.append("SIM ").append(i + 1).append(" (").append(simData.getMccMnc());
+            contentText.append("SIM ").append(i + 1).append(" (").append(simData.getNetworkPlmn());
 
             if (selectedCell.getBasicCellData().getBand() > 0 && selectedCell.getBasicCellData().getFrequency() > 0)
                 contentText.append(",");
@@ -187,7 +186,7 @@ public class Manager {
             text = text.replace("\n\n", "");
 
         activeNotification = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
-                .setSmallIcon(android.R.drawable.stat_notify_sync) // got to make an icon as soon as i make an app logo
+                .setSmallIcon(R.drawable.ic_launcher_monochrome) // got to make an icon as soon as i make an app logo
                 .setContentTitle(context.getManager().getFullHeaderString())
                 .setContentText(text)
                 .setContentIntent(openPendingIntent)
@@ -195,7 +194,7 @@ public class Manager {
                 .setStyle(new NotificationCompat.BigTextStyle())
                 .setOngoing(true)
                 .setSilent(true)
-                .addAction(android.R.drawable.stat_notify_sync, "Close", closingPendingIntent) // same here for the logo
+                .addAction(R.drawable.ic_launcher_monochrome, "Close", closingPendingIntent) // same here for the logo
                 .setAllowSystemGeneratedContextualActions(false);
     }
 

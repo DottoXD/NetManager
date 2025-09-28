@@ -5,7 +5,8 @@ class SIMData {
   final String operator;
   final String network;
   final int networkGen;
-  final String mccMnc;
+  final String homePlmn;
+  final String networkPlmn;
   final CellData primaryCell;
   final double activeBw;
   final List<CellData> activeCells;
@@ -15,7 +16,8 @@ class SIMData {
     required this.operator,
     required this.network,
     required this.networkGen,
-    required this.mccMnc,
+    required this.homePlmn,
+    required this.networkPlmn,
     required this.primaryCell,
     required this.activeBw,
     required this.activeCells,
@@ -27,7 +29,8 @@ class SIMData {
       operator: json["operator"],
       network: json["network"],
       networkGen: json["networkGen"],
-      mccMnc: json["mccMnc"],
+      homePlmn: json["homePlmn"],
+      networkPlmn: json["networkPlmn"],
       primaryCell: json["primaryCell"] is Map<String, dynamic>
           ? CellData.fromJson(json["primaryCell"])
           : _emptyCellData(),

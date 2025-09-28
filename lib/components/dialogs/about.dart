@@ -1,10 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-Widget aboutDialog() {
-  return AboutDialog(
-    applicationLegalese: "${DateTime.now().year} @ DottoXD",
-    applicationName: "NetManager",
-    //applicationIcon as soon as i make an icon
-    //applicationVersio maybe?
+class FullAboutDialog extends StatelessWidget {
+  final MethodChannel platform;
+
+  const FullAboutDialog({required this.platform, super.key});
+
+  static const gitCommit = String.fromEnvironment(
+    'GIT_COMMIT',
+    defaultValue: 'devel',
   );
+
+  Future<String> getVersion() async {
+    try {
+      final version = await platform.invokeMethod("getVersion");
+      return version ?? "Unknown";
+    } on PlatformException catch (_) {
+      //super error, handle it
+      return "Unknown";
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: getVersion(),
+      builder: (context, snapshot) {
+        final version = snapshot.data ?? "N/A";
+        return AboutDialog(
+          applicationLegalese: "${DateTime.now().year} @ DottoXD",
+          applicationName: "NetManager",
+          applicationIcon: Image.asset(
+            "assets/icon.png",
+            width: 48,
+            height: 48,
+          ),
+          applicationVersion: "$version ($gitCommit)",
+        );
+      },
+    );
+  }
 }

@@ -9,17 +9,19 @@ public class SIMData {
     private final String operator;
     private final String network;
     private final int networkGen;
-    private final String mccMnc;
+    private final String homePlmn;
+    private final String networkPlmn;
     private CellData primaryCell;
     private float activeBw = 0;
     private final ArrayList<CellData> activeCells = new ArrayList<>();
     private final ArrayList<CellData> neighborCells = new ArrayList<>();
 
-    public SIMData(String operator, String network, int networkGen, String mccMnc) {
+    public SIMData(String operator, String network, int networkGen, String homePlmn, String networkPlmn) {
         this.operator = operator;
         this.network = network;
         this.networkGen = networkGen;
-        this.mccMnc = mccMnc;
+        this.homePlmn = homePlmn;
+        this.networkPlmn = networkPlmn;
     }
 
     public String getOperator() {
@@ -38,8 +40,12 @@ public class SIMData {
         return activeBw;
     }
 
-    public String getMccMnc() {
-        return mccMnc;
+    public String getHomePlmn() {
+        return homePlmn;
+    }
+
+    public String getNetworkPlmn() {
+        return networkPlmn;
     }
 
     public void setPrimaryCell(CellData primaryCell) {
@@ -76,6 +82,7 @@ public class SIMData {
 
     public void clearActiveCells() {
         activeCells.clear();
+        activeCells.add(primaryCell);
     }
 
     public void clearNeighborCells() {
