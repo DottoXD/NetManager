@@ -51,7 +51,7 @@ public class DelayedServiceStarter extends android.app.Service {
 
         Notification tempNotification = new NotificationCompat.Builder(this, TEMP_NOTIFICATION_CHANNEL)
                 .setContentTitle("NetManager is starting!")
-                .setSmallIcon(R.drawable.ic_launcher_monochrome) // got to make an icon as soon as i make an app logo
+                .setSmallIcon(R.drawable.ic_launcher_monochrome)
                 .setContentText("Preparing NetManager's Cell Updates service..")
                 .setPriority(NotificationCompat.PRIORITY_MIN)
                 .setStyle(new NotificationCompat.BigTextStyle())

@@ -106,7 +106,7 @@ public class Manager {
       return "No service";
 
     List<SubscriptionInfo> activeSubscriptionList = manager.getActiveSubscriptionInfoList();
-    if (activeSubscriptionList != null) { // always at least 1
+    if (activeSubscriptionList != null && !activeSubscriptionList.isEmpty()) { // always at least 1
       if (firstManager == null) {
         SubscriptionInfo firstInfo = activeSubscriptionList.get(0);
         firstManager = getTelephony().createForSubscriptionId(firstInfo.getSubscriptionId());
@@ -115,7 +115,7 @@ public class Manager {
       int networkGen;
       boolean nrSa;
 
-      if(firstManager != null) {
+      if (firstManager != null) {
         networkGen = getSimNetworkGen(firstManager);
         nrSa = networkGen == 5;
 
@@ -123,28 +123,32 @@ public class Manager {
           networkGen = 5;
 
         str.append(firstManager.getNetworkOperatorName()).append(" ").append(
-                networkGen == 0 ? "Unknown"
-                        : (networkGen < 0 ? "No service" : networkGen + "G" + (networkGen == 5 ? (nrSa ? " SA" : " NSA") : "")));
-      } else str.append("Unknown");
+            networkGen == 0 ? "Unknown"
+                : (networkGen < 0 ? "No service"
+                    : networkGen + "G" + (networkGen == 5 ? (nrSa ? " SA" : " NSA") : "")));
+      } else
+        str.append("Unknown");
 
       if (activeSubscriptionList.size() > 1) {
         SubscriptionInfo secondInfo = activeSubscriptionList.get(1);
         if (secondManager == null)
           secondManager = getTelephony().createForSubscriptionId(secondInfo.getSubscriptionId());
 
-        if(secondManager != null) {
+        if (secondManager != null) {
           networkGen = getSimNetworkGen(secondManager);
           nrSa = networkGen == 5;
 
           if (networkGen == 4 && getNsaStatus(1))
             networkGen = 5;
 
-          if (secondManager.getNetworkOperatorName() != null && !secondManager.getNetworkOperatorName().trim().isEmpty())
+          if (secondManager.getNetworkOperatorName() != null
+              && !secondManager.getNetworkOperatorName().trim().isEmpty())
             str.append(" | ").append(secondManager.getNetworkOperatorName()).append(" ").append(
-                    networkGen == 0 ? "Unknown"
-                            : (networkGen < 0 ? "No service"
-                            : networkGen + "G" + (networkGen == 5 ? (nrSa ? " SA" : " NSA") : "")));
-        } else str.append(" | Unknown");
+                networkGen == 0 ? "Unknown"
+                    : (networkGen < 0 ? "No service"
+                        : networkGen + "G" + (networkGen == 5 ? (nrSa ? " SA" : " NSA") : "")));
+        } else
+          str.append(" | Unknown");
       }
     } else
       str.append("No service");
@@ -203,7 +207,7 @@ public class Manager {
     }
 
     SIMData data = new SIMData(getSimCarrier(telephony), getSimOperator(telephony), getSimNetworkGen(telephony),
-        telephony.getSimOperator(), getNetwork(telephony));
+        telephony.getSimOperator(), getPlmn(telephony));
     String simOperator = telephony.getNetworkOperator();
     if ((simOperator == null || simOperator.isEmpty()) && telephony.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA)
       simOperator = telephony.getSimOperator();
@@ -759,7 +763,17 @@ public class Manager {
     if (telephony == null || !Permissions.check(context))
       return "00000";
 
-    return telephony.getNetworkOperator();
+    String plmn = null;
+    try {
+      plmn = telephony.getNetworkOperator();
+    } catch(Exception ignored) {
+      // super error, catch it
+    }
+
+    if(plmn == null || plmn.length() < 3)
+      plmn = "00000";
+
+    return plmn;
   }
 
   @SuppressLint("MissingPermission")
@@ -806,35 +820,50 @@ public class Manager {
       return;
 
     SubscriptionManager manager = getSubscriptionManager();
-    if (manager == null)
+    if (manager == null) {
+      firstManager = null;
+      secondManager = null;
+
       return;
+    }
 
     List<SubscriptionInfo> subscriptions = manager.getActiveSubscriptionInfoList();
 
-    if (subscriptions == null)
+    if (subscriptions == null || subscriptions.isEmpty()) {
+      firstManager = null;
+      secondManager = null;
+
       return;
+    }
 
     TelephonyManager oldFirstManager = this.firstManager;
     TelephonyManager oldSecondManager = this.secondManager;
 
-    if (!subscriptions.isEmpty()) {
+    try {
       int firstId = subscriptions.get(0).getSubscriptionId();
       firstManager = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE))
-          .createForSubscriptionId(firstId);
-    } else firstManager = null;
+              .createForSubscriptionId(firstId);
+    } catch(Exception ignored) {
+      firstManager = null;
+    }
 
     if (subscriptions.size() >= 2) {
-      int secondId = subscriptions.get(1).getSubscriptionId();
-      secondManager = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE))
-          .createForSubscriptionId(secondId);
-    } else secondManager = null;
+      try {
+        int secondId = subscriptions.get(1).getSubscriptionId();
+        secondManager = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE))
+                .createForSubscriptionId(secondId);
+      } catch(Exception ignored) {
+        secondManager = null;
+      }
+    } else
+      secondManager = null;
 
     Executor executor = ContextCompat.getMainExecutor(context);
     if (executor == null)
       return;
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-      if(oldFirstManager != null) {
+      if (oldFirstManager != null) {
         try {
           if (nsa[0] != null)
             oldFirstManager.unregisterTelephonyCallback(nsa[0]);
@@ -844,7 +873,7 @@ public class Manager {
             oldFirstManager.unregisterTelephonyCallback(dataStates[0]);
           if (signalStrengths[0] != null)
             oldFirstManager.unregisterTelephonyCallback(signalStrengths[0]);
-        } catch(Exception e) {
+        } catch (Exception e) {
           DebugLogger.add("firstManager utils unregistration exception: " + e.getMessage());
         }
       }
@@ -864,7 +893,7 @@ public class Manager {
             firstManager.registerTelephonyCallback(executor, dataStates[0]);
           if (signalStrengths[0] != null)
             firstManager.registerTelephonyCallback(executor, signalStrengths[0]);
-        } catch(Exception e) {
+        } catch (Exception e) {
           DebugLogger.add("firstManager utils registration exception: " + e.getMessage());
         }
       } else {
@@ -874,7 +903,7 @@ public class Manager {
         signalStrengths[0] = null;
       }
 
-      if(oldSecondManager != null) {
+      if (oldSecondManager != null) {
         try {
           if (nsa[1] != null)
             oldSecondManager.unregisterTelephonyCallback(nsa[1]);
@@ -884,7 +913,7 @@ public class Manager {
             oldSecondManager.unregisterTelephonyCallback(dataStates[1]);
           if (signalStrengths[1] != null)
             oldSecondManager.unregisterTelephonyCallback(signalStrengths[1]);
-        } catch(Exception e) {
+        } catch (Exception e) {
           DebugLogger.add("secondManager utils unregistration exception: " + e.getMessage());
         }
       }
@@ -904,7 +933,7 @@ public class Manager {
             secondManager.registerTelephonyCallback(executor, dataStates[1]);
           if (signalStrengths[1] != null)
             secondManager.registerTelephonyCallback(executor, signalStrengths[1]);
-        } catch(Exception e) {
+        } catch (Exception e) {
           DebugLogger.add("secondManager utils registration exception: " + e.getMessage());
         }
       } else {
@@ -915,14 +944,17 @@ public class Manager {
       }
     }
 
-    if (context instanceof Activity) {
+    if (context instanceof Activity) { // to be improved
       try { // currently unstable
         if (firstManager != null) {
           if (physicalChannelDumpers[0] != null)
             physicalChannelDumpers[0].dispose();
           physicalChannelDumpers[0] = new PhysicalChannelDumper(firstManager, context);
         } else {
-          physicalChannelDumpers[0].dispose();
+          if (physicalChannelDumpers[0] != null) {
+            physicalChannelDumpers[0].dispose();
+          }
+
           physicalChannelDumpers[0] = null;
         }
 
@@ -931,7 +963,10 @@ public class Manager {
             physicalChannelDumpers[1].dispose();
           physicalChannelDumpers[1] = new PhysicalChannelDumper(secondManager, context);
         } else {
-          physicalChannelDumpers[1].dispose();
+          if (physicalChannelDumpers[1] != null) {
+            physicalChannelDumpers[1].dispose();
+          }
+
           physicalChannelDumpers[1] = null;
         }
       } catch (Exception e) {

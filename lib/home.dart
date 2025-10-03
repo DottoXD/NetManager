@@ -13,28 +13,39 @@ import 'components/floating/update_button.dart';
 import 'components/base/nav_bar.dart';
 
 class Home extends StatefulWidget {
-  const Home(this.sharedPreferences, this.dynamicThemeNotifier, {super.key});
+  const Home(
+    this.sharedPreferences,
+    this.dynamicThemeNotifier,
+    this.themeColorNotifier,
+    this.platform, {
+    super.key,
+  });
   final SharedPreferences sharedPreferences;
   final ValueNotifier<bool> dynamicThemeNotifier;
+  final ValueNotifier<int> themeColorNotifier;
+  final MethodChannel platform;
 
   @override
   State<Home> createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
-  static const platform = MethodChannel('pw.dotto.netmanager/telephony');
-
   int _currentPage = 0;
   late List<Widget> _pages;
   final ValueNotifier<bool> homeLoadedNotifier = ValueNotifier(false);
   final ValueNotifier<int> platformSignalNotifier = ValueNotifier(0);
+
   final ValueNotifier<bool> debugNotifier = ValueNotifier(false);
+  final ValueNotifier<bool> logsNotifier = ValueNotifier(false);
+
+  VoidCallback? _homeUpdateCallback;
+  VoidCallback? _mapPositionCallback;
 
   @override
   void initState() {
     super.initState();
 
-    platform.setMethodCallHandler((call) {
+    widget.platform.setMethodCallHandler((call) {
       if (call.method == "restartTimer") {
         platformSignalNotifier.value = Random().nextInt(100000);
         return Future.value();
@@ -44,27 +55,39 @@ class _HomeState extends State<Home> {
     });
 
     debugNotifier.value = widget.sharedPreferences.getBool("debug") ?? false;
+    logsNotifier.value = widget.sharedPreferences.getBool("logEvents") ?? false;
 
     _pages = [
       HomeBody(
-        platform,
+        widget.platform,
         widget.sharedPreferences,
         homeLoadedNotifier,
         platformSignalNotifier,
         debugNotifier,
+        onUpdateButtonPressed: (callback) {
+          _homeUpdateCallback = callback;
+        },
       ),
-      MapBody(platform, widget.sharedPreferences),
+      MapBody(
+        widget.platform,
+        widget.sharedPreferences,
+        onPositionButtonPressed: (callback) {
+          _mapPositionCallback = callback;
+        },
+      ),
       SettingsBody(
-        platform,
+        widget.platform,
         widget.sharedPreferences,
         widget.dynamicThemeNotifier,
+        widget.themeColorNotifier,
         debugNotifier,
+        logsNotifier,
       ),
     ];
 
     try {
-      platform.invokeMethod<bool>("checkPermissions");
-      platform.invokeMethod<void>("sendNotification");
+      widget.platform.invokeMethod<bool>("checkPermissions");
+      widget.platform.invokeMethod<void>("sendNotification");
     } on PlatformException catch (_) {
       //super error, handle it
     }
@@ -89,15 +112,21 @@ class _HomeState extends State<Home> {
       },
       child: Scaffold(
         appBar: TopBar(
-          platform,
+          widget.platform,
           widget.sharedPreferences,
           platformSignalNotifier,
+          logsNotifier,
         ),
         bottomNavigationBar: NavBar(updatePage, _currentPage),
         body: _pages[_currentPage],
-        floatingActionButton: (_currentPage == 0
-            ? UpdateButton()
-            : (_currentPage == 1 ? PositionButton() : null)),
+        floatingActionButton: Container(
+          margin: EdgeInsets.only(bottom: 15.0),
+          child: (_currentPage == 0
+              ? UpdateButton(onPressed: _homeUpdateCallback)
+              : (_currentPage == 1
+                    ? PositionButton(onPressed: _mapPositionCallback)
+                    : null)),
+        ),
       ),
     );
   }

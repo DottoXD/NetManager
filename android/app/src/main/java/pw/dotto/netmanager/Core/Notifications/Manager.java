@@ -186,7 +186,7 @@ public class Manager {
             text = text.replace("\n\n", "");
 
         activeNotification = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
-                .setSmallIcon(R.drawable.ic_launcher_monochrome) // got to make an icon as soon as i make an app logo
+                .setSmallIcon(R.drawable.ic_launcher_monochrome)
                 .setContentTitle(context.getManager().getFullHeaderString())
                 .setContentText(text)
                 .setContentIntent(openPendingIntent)
@@ -194,7 +194,7 @@ public class Manager {
                 .setStyle(new NotificationCompat.BigTextStyle())
                 .setOngoing(true)
                 .setSilent(true)
-                .addAction(R.drawable.ic_launcher_monochrome, "Close", closingPendingIntent) // same here for the logo
+                .addAction(R.drawable.ic_launcher_monochrome, "Close", closingPendingIntent)
                 .setAllowSystemGeneratedContextualActions(false);
     }
 

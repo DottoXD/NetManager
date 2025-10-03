@@ -4,9 +4,16 @@ import 'package:netmanager/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Perms extends StatefulWidget {
-  const Perms(this.sharedPreferences, this.dynamicThemeNotifier, {super.key});
+  const Perms(
+    this.sharedPreferences,
+    this.dynamicThemeNotifier,
+    this.themeColorNotifier, {
+    super.key,
+  });
   final SharedPreferences sharedPreferences;
+
   final ValueNotifier<bool> dynamicThemeNotifier;
+  final ValueNotifier<int> themeColorNotifier;
 
   @override
   State<Perms> createState() => _PermsState();
@@ -81,8 +88,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
                 const SizedBox(height: 32),
                 FilledButton(
                   onPressed: () async {
-                    await platform.invokeMethod<bool>("requestPermissions");
-                    _checkPermissions();
+                    await _checkPermissions();
                   },
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
@@ -99,7 +105,12 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
       );
     }
 
-    return Home(widget.sharedPreferences, widget.dynamicThemeNotifier);
+    return Home(
+      widget.sharedPreferences,
+      widget.dynamicThemeNotifier,
+      widget.themeColorNotifier,
+      platform,
+    );
   }
 
   @override

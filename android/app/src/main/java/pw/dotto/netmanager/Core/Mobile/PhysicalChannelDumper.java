@@ -8,7 +8,6 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.telephony.PhoneStateListener;
-import android.telephony.PhysicalChannelConfig;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -29,9 +28,9 @@ public class PhysicalChannelDumper {
     private Runnable legacyDumper;
     private PhoneStateListener modernDumper;
 
-    private TelephonyManager telephonyManager;
-    private Context context;
-    private SharedPreferences sharedPreferences;
+    private final TelephonyManager telephonyManager;
+    private final Context context;
+    private final SharedPreferences sharedPreferences;
 
     private final List<String> physicalChannelData = new ArrayList<>();
 

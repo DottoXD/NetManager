@@ -17,12 +17,15 @@ class HomeBody extends StatefulWidget {
     this.platformSignalNotifier,
     this.debugNotifier, {
     super.key,
+    this.onUpdateButtonPressed,
   });
   final MethodChannel platform;
   final SharedPreferences sharedPreferences;
   final ValueNotifier<bool> homeLoadedNotifier;
   final ValueNotifier<int> platformSignalNotifier;
   final ValueNotifier<bool> debugNotifier;
+
+  final ValueSetter<VoidCallback>? onUpdateButtonPressed;
 
   @override
   State<HomeBody> createState() => _HomeBodyState();
@@ -35,11 +38,12 @@ class _HomeBodyState extends State<HomeBody> {
   late ValueNotifier<bool> homeLoadedNotifier;
   late ValueNotifier<int> platformSignalNotifier;
   late ValueNotifier<bool> debugNotifier;
+
   Widget _progressIndicator = LinearProgressIndicator();
   bool _isUpdating = false;
 
-  double cardWidth = 185;
-  double cardHeight = 75;
+  final double cardWidth = 185;
+  final double cardHeight = 75;
 
   final int minRssi = -113;
   final int maxRssi = -51;
@@ -64,6 +68,8 @@ class _HomeBodyState extends State<HomeBody> {
     sharedPreferences = widget.sharedPreferences;
     homeLoadedNotifier = widget.homeLoadedNotifier;
     debugNotifier = widget.debugNotifier;
+
+    widget.onUpdateButtonPressed?.call(update);
 
     startTimer();
 
@@ -138,11 +144,9 @@ class _HomeBodyState extends State<HomeBody> {
                       ).colorScheme.primaryContainer,
                     ),
                     onPressed: () {
-                      altCellView = !altCellView; //might add an animation?
-
-                      /*setState(() { //gotta find a way to make this instant
-                        _mainData = mainData;
-                      });*/
+                      setState(() {
+                        altCellView = !altCellView;
+                      });
                     },
                     child: Ink(
                       width: cardWidth * 2,
@@ -418,7 +422,7 @@ class _HomeBodyState extends State<HomeBody> {
         _mainData = mainData;
         _activeData = activeData;
         _neighborData = neighborData;
-        _progressIndicator = Container();
+        _progressIndicator = SizedBox.shrink();
         _debug = jsonStr;
       });
     } on PlatformException catch (err) {
@@ -476,12 +480,7 @@ class _HomeBodyState extends State<HomeBody> {
               children: [
                 Row(children: [Expanded(child: _progressIndicator)]),
                 Container(
-                  margin: EdgeInsets.only(
-                    top: 10,
-                    left: 10,
-                    right: 10,
-                    bottom: 10,
-                  ),
+                  margin: EdgeInsets.all(10.0),
                   child: Column(children: _mainData),
                 ),
                 if (_activeData.isNotEmpty) ...[
@@ -493,12 +492,7 @@ class _HomeBodyState extends State<HomeBody> {
                     ),
                   ),
                   Container(
-                    margin: EdgeInsets.only(
-                      top: 10,
-                      left: 10,
-                      right: 10,
-                      bottom: 10,
-                    ),
+                    margin: EdgeInsets.all(10.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: _activeData,
@@ -514,12 +508,7 @@ class _HomeBodyState extends State<HomeBody> {
                     ),
                   ),
                   Container(
-                    margin: EdgeInsets.only(
-                      top: 10,
-                      left: 10,
-                      right: 10,
-                      bottom: 10,
-                    ),
+                    margin: EdgeInsets.all(10.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: _neighborData,
@@ -723,12 +712,18 @@ class _HomeBodyState extends State<HomeBody> {
   void startTimer() {
     update();
 
+    Future.delayed(const Duration(seconds: 1), () {
+      if (!mounted) return;
+
+      update();
+      pageLoaded = true;
+      homeLoadedNotifier.value = true;
+    });
+
     timer = Timer.periodic(
       Duration(seconds: sharedPreferences.getInt("updateInterval") ?? 3),
       (Timer t) {
         update();
-        pageLoaded = true;
-        homeLoadedNotifier.value = true;
       },
     );
   }

@@ -82,7 +82,6 @@ public class SIMData {
 
     public void clearActiveCells() {
         activeCells.clear();
-        activeCells.add(primaryCell);
     }
 
     public void clearNeighborCells() {

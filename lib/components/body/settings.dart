@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:netmanager/components/dialogs/about.dart';
 import 'package:netmanager/components/dialogs/debug_log.dart';
 import 'package:netmanager/components/dialogs/error.dart';
+import 'package:netmanager/components/utils/color_selection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -13,13 +14,19 @@ class SettingsBody extends StatefulWidget {
     this.platform,
     this.sharedPreferences,
     this.dynamicThemeNotifier,
-    this.debugNotifier, {
+    this.themeColorNotifier,
+    this.debugNotifier,
+    this.logsNotifier, {
     super.key,
   });
   final MethodChannel platform;
   final SharedPreferences sharedPreferences;
+
   final ValueNotifier<bool> dynamicThemeNotifier;
+  final ValueNotifier<int> themeColorNotifier;
+
   final ValueNotifier<bool> debugNotifier;
+  final ValueNotifier<bool> logsNotifier;
 
   @override
   State<SettingsBody> createState() => _SettingsBodyState();
@@ -28,8 +35,12 @@ class SettingsBody extends StatefulWidget {
 class _SettingsBodyState extends State<SettingsBody> {
   late MethodChannel platform;
   late SharedPreferences sharedPreferences;
+
   late ValueNotifier<bool> dynamicThemeNotifier;
+  late ValueNotifier<int> themeColorNotifier;
+
   late ValueNotifier<bool> debugNotifier;
+  late ValueNotifier<bool> logsNotifier;
 
   final List<String> positionPrecisions = ["Off", "Low", "Medium", "High"];
 
@@ -37,6 +48,7 @@ class _SettingsBodyState extends State<SettingsBody> {
   bool _backgroundService = false;
   bool _analytics = false;
   bool _logEvents = false;
+  bool _metricSystem = true;
   int _maximumLogs = 10;
   int _updateInterval = 3;
   int _backgroundUpdateInterval = 3;
@@ -56,7 +68,9 @@ class _SettingsBodyState extends State<SettingsBody> {
     platform = widget.platform;
     sharedPreferences = widget.sharedPreferences;
     dynamicThemeNotifier = widget.dynamicThemeNotifier;
+    themeColorNotifier = widget.themeColorNotifier;
     debugNotifier = widget.debugNotifier;
+    logsNotifier = widget.logsNotifier;
 
     updateData();
     _selection = positionPrecisions[_positionPrecision];
@@ -70,6 +84,8 @@ class _SettingsBodyState extends State<SettingsBody> {
           sharedPreferences.getBool("backgroundService") ?? _backgroundService;
       _analytics = sharedPreferences.getBool("analytics") ?? _analytics;
       _logEvents = sharedPreferences.getBool("logEvents") ?? _logEvents;
+      _metricSystem =
+          sharedPreferences.getBool("metricSystem") ?? _metricSystem;
       _maximumLogs = sharedPreferences.getInt("maximumLogs") ?? _maximumLogs;
       _updateInterval =
           sharedPreferences.getInt("updateInterval") ?? _updateInterval;
@@ -307,12 +323,18 @@ class _SettingsBodyState extends State<SettingsBody> {
                       ),
                     ),
                     ListTile(
-                      title: Text("Theme color (not available)"),
+                      title: Text("Theme color"),
                       subtitle: Text(
                         "Choose a custom theme color in case you are not using Android's dynamic theme feature.",
                       ),
                       enabled: (!_dynamicTheme || !_dynamicSupported),
                     ),
+                    if (!_dynamicTheme || !_dynamicSupported)
+                      colorSelector(context, _themeColor, (newColor) {
+                        setInt("themeColor", newColor);
+                        updateData();
+                        themeColorNotifier.value = newColor;
+                      }),
                     Divider(
                       height: 0,
                       color: Theme.of(context).colorScheme.outlineVariant,
@@ -327,6 +349,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                         onChanged: (bool value) {
                           setBool("logEvents", value);
                           updateData();
+                          logsNotifier.value = value;
                         },
                       ),
                     ),
@@ -348,6 +371,23 @@ class _SettingsBodyState extends State<SettingsBody> {
                           updateData();
                         },
                       ),
+                    Divider(
+                      height: 0,
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                    ListTile(
+                      title: Text("Metric system"),
+                      subtitle: Text(
+                        "Use the metric system for speed measurements in the map.",
+                      ),
+                      trailing: Switch(
+                        value: _metricSystem,
+                        onChanged: (bool value) {
+                          setBool("metricSystem", value);
+                          updateData();
+                        },
+                      ),
+                    ),
                     Divider(
                       height: 0,
                       color: Theme.of(context).colorScheme.outlineVariant,

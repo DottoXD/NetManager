@@ -2,6 +2,7 @@ package pw.dotto.netmanager;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -22,13 +23,14 @@ import pw.dotto.netmanager.Core.Notifications.Service;
 import pw.dotto.netmanager.Fetchers.Location;
 import pw.dotto.netmanager.Fetchers.Sensors;
 import pw.dotto.netmanager.Utils.Activities;
+import pw.dotto.netmanager.Utils.DeviceData;
 import pw.dotto.netmanager.Utils.Permissions;
 import pw.dotto.netmanager.Utils.DebugLogger;
 
 public class MainActivity extends FlutterActivity {
   private static final String CHANNEL = "pw.dotto.netmanager/telephony";
 
-  private Manager core;
+  private Manager core = null;
   private int selectedSim = 0;
 
   private MethodChannel chn;
@@ -39,12 +41,20 @@ public class MainActivity extends FlutterActivity {
     super.configureFlutterEngine(flutterEngine);
     Gson gson = new Gson();
 
-    sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
+    if (sharedPreferences == null)
+      sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
+
+    if (!sharedPreferences.contains("deviceData"))
+      new DeviceData(Build.MANUFACTURER, Build.HARDWARE).save(sharedPreferences);
 
     chn = new MethodChannel(
         flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL);
 
     chn.setMethodCallHandler((call, result) -> {
+      if (core == null) {
+        core = new Manager(this);
+      }
+
       switch (call.method) {
         case "checkPermissions":
           boolean perms = Permissions.check(this);
@@ -56,7 +66,7 @@ public class MainActivity extends FlutterActivity {
 
         case "requestPermissions":
           Permissions.request(this);
-          result.success(true);
+          result.success(null);
           break;
 
         case "getOperator":
@@ -97,18 +107,39 @@ public class MainActivity extends FlutterActivity {
           break;
 
         case "sendNotification":
-          startForegroundService(new Intent(this, Service.class));
-          result.success(true);
+          try {
+            startForegroundService(new Intent(this, Service.class));
+            result.success(null);
+          } catch (Exception e) {
+            result.error("Unknown", e.getMessage(), null); // add proper error handling
+          }
           break;
 
         case "cancelNotification":
-          stopService(new Intent(this, Service.class));
-          result.success(true);
+          try {
+            stopService(new Intent(this, Service.class));
+            result.success(null);
+          } catch (Exception e) {
+            result.error("Unknown", e.getMessage(), null); // add proper error handling
+          }
           break;
 
         case "openRadioInfo":
-          Activities.openRadioInfo(this);
-          result.success(true);
+          try {
+            Activities.openRadioInfo(this);
+            result.success(null);
+          } catch (Exception e) {
+            result.error("Unknown", e.getMessage(), null); // add proper error handling
+          }
+          break;
+
+        case "openSamsungInfo":
+          try {
+            Activities.openSamsungInfo(this);
+            result.success(null);
+          } catch (Exception e) {
+            result.error("Unknown", e.getMessage(), null); // add proper error handling
+          }
           break;
 
         case "switchSim":
@@ -117,10 +148,12 @@ public class MainActivity extends FlutterActivity {
               selectedSim = 1;
             else
               selectedSim = 0;
+          } else {
+            selectedSim = 0;
           }
 
           chn.invokeMethod("restartTimer", null);
-          result.success(true);
+          result.success(null);
           break;
 
         case "getSimCount":
@@ -172,7 +205,8 @@ public class MainActivity extends FlutterActivity {
           String version = "Unknown";
           try {
             version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-          } catch(Exception ignored) {}
+          } catch (Exception ignored) {
+          }
 
           result.success(version);
           break;
@@ -187,7 +221,12 @@ public class MainActivity extends FlutterActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    core = new Manager(this);
+
+    if (sharedPreferences == null)
+      sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
+
+    if (core == null)
+      core = new Manager(this);
   }
 
   @Override

@@ -40,6 +40,7 @@ class _NetManagerState extends State<NetManager> {
   late ColorScheme _darkColorScheme;
 
   final ValueNotifier<bool> dynamicThemeNotifier = ValueNotifier<bool>(true);
+  final ValueNotifier<int> themeColorNotifier = ValueNotifier<int>(0xFFE6F0F2);
 
   @override
   void initState() {
@@ -54,41 +55,55 @@ class _NetManagerState extends State<NetManager> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           final sharedPreferences = snapshot.data!;
-          Color color = Color(
-            sharedPreferences.getInt("backgroundColor") ?? 0xFFE6F0F2,
-          );
           dynamicThemeNotifier.value =
               sharedPreferences.getBool("dynamicTheme") ?? true;
+          themeColorNotifier.value =
+              sharedPreferences.getInt("themeColor") ?? 0xFFE6F0F2;
 
           return ValueListenableBuilder(
-            valueListenable: dynamicThemeNotifier,
-            builder: (context, dynamicTheme, _) {
-              return DynamicColorBuilder(
-                builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-                  if (lightDynamic == null && darkDynamic == null) {
-                    sharedPreferences.setBool("dynamicSupported", false);
-                  } else {
-                    sharedPreferences.setBool("dynamicSupported", true);
-                  }
+            valueListenable: themeColorNotifier,
+            builder: (context, themeColor, _) {
+              return ValueListenableBuilder(
+                valueListenable: dynamicThemeNotifier,
+                builder: (context, dynamicTheme, _) {
+                  return DynamicColorBuilder(
+                    builder:
+                        (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+                          if (lightDynamic == null && darkDynamic == null) {
+                            sharedPreferences.setBool(
+                              "dynamicSupported",
+                              false,
+                            );
+                          } else {
+                            sharedPreferences.setBool("dynamicSupported", true);
+                          }
 
-                  if (lightDynamic != null &&
-                      darkDynamic != null &&
-                      dynamicTheme) {
-                    _lightColorScheme = lightDynamic.harmonized();
-                    _darkColorScheme = darkDynamic.harmonized();
-                  } else {
-                    _lightColorScheme = ColorScheme.fromSeed(seedColor: color);
-                    _darkColorScheme = ColorScheme.fromSeed(
-                      seedColor: color,
-                      brightness: Brightness.dark,
-                    );
-                  }
+                          if (lightDynamic != null &&
+                              darkDynamic != null &&
+                              dynamicTheme) {
+                            _lightColorScheme = lightDynamic.harmonized();
+                            _darkColorScheme = darkDynamic.harmonized();
+                          } else {
+                            _lightColorScheme = ColorScheme.fromSeed(
+                              seedColor: Color(themeColor),
+                            );
+                            _darkColorScheme = ColorScheme.fromSeed(
+                              seedColor: Color(themeColor),
+                              brightness: Brightness.dark,
+                            );
+                          }
 
-                  return MaterialApp(
-                    theme: ThemeData(colorScheme: _lightColorScheme),
-                    darkTheme: ThemeData(colorScheme: _darkColorScheme),
-                    home: Perms(sharedPreferences, dynamicThemeNotifier),
-                    debugShowCheckedModeBanner: false,
+                          return MaterialApp(
+                            theme: ThemeData(colorScheme: _lightColorScheme),
+                            darkTheme: ThemeData(colorScheme: _darkColorScheme),
+                            home: Perms(
+                              sharedPreferences,
+                              dynamicThemeNotifier,
+                              themeColorNotifier,
+                            ),
+                            debugShowCheckedModeBanner: false,
+                          );
+                        },
                   );
                 },
               );

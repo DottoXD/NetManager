@@ -4,7 +4,6 @@ import static android.content.Context.MODE_PRIVATE;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -13,8 +12,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import java.util.ArrayList;
-
-import pw.dotto.netmanager.Utils.DebugLogger;
 
 public class EventManager {
     private static EventManager instance;
@@ -125,7 +122,7 @@ public class EventManager {
 
             for (JsonElement elem : arr) {
                 JsonObject obj = elem.getAsJsonObject();
-                NetmanagerEvent event = null;
+                NetmanagerEvent event;
 
                 if (obj.has("simSlot") && obj.has("network")) {
                     event = gson.fromJson(obj, MobileNetmanagerEvent.class);

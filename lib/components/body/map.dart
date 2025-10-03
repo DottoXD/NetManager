@@ -5,14 +5,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:netmanager/components/dialogs/error.dart';
+import 'package:netmanager/components/utils/map_overlay.dart';
 import 'package:netmanager/components/utils/map_tile_builder.dart';
+import 'package:netmanager/types/cell/sim_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:latlong2/latlong.dart';
 
 class MapBody extends StatefulWidget {
-  const MapBody(this.platform, this.sharedPreferences, {super.key});
+  const MapBody(
+    this.platform,
+    this.sharedPreferences, {
+    super.key,
+    this.onPositionButtonPressed,
+  });
   final MethodChannel platform;
   final SharedPreferences sharedPreferences;
+
+  final ValueSetter<VoidCallback>? onPositionButtonPressed;
 
   @override
   State<MapBody> createState() => _MapBodyState();
@@ -30,28 +39,53 @@ class _MapBodyState extends State<MapBody> {
   Timer? _animationTimer;
   LatLng? _currentLocation;
 
-  bool _zooming = false;
+  LatLng? _lastLocation;
+  DateTime? _lastUpdateTime;
+  double _speedKmh = 0.0;
+
+  bool _follow = true;
   bool _dialogOpen = false;
-  bool disposed = false;
+  bool metricSystem = true;
+
+  Timer? _cellTimer;
+  String cellId = "N/A";
+  String signalStrength = "N/A";
+  String signalStrengthString = "N/A";
 
   @override
   void initState() {
     super.initState();
     platform = widget.platform;
+    sharedPreferences = widget.sharedPreferences;
+
+    metricSystem = sharedPreferences.getBool("metricSystem") ?? true;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onPositionButtonPressed?.call(() {
+        if (mounted) recenterMap();
+      });
+
       setLocation(true);
       updateLocation();
     });
+
+    updateCellInfo();
+
+    _cellTimer = Timer.periodic(
+      Duration(seconds: sharedPreferences.getInt("updateInterval") ?? 3),
+      (timer) async {
+        if (mounted) updateCellInfo();
+      },
+    );
   }
 
   @override
   void dispose() {
     _timer?.cancel();
     _animationTimer?.cancel();
+    _cellTimer?.cancel();
 
     super.dispose();
-    disposed = true;
   }
 
   Future<void> setLocation(bool init) async {
@@ -62,6 +96,25 @@ class _MapBodyState extends State<MapBody> {
       final lat = coordinates[0] as double;
       final lon = coordinates[1] as double;
 
+      LatLng newLocation = LatLng(lat, lon);
+
+      if (_lastLocation != null && _lastUpdateTime != null) {
+        final dist = Distance().as(
+          LengthUnit.Meter,
+          _lastLocation!,
+          newLocation,
+        );
+        final time = DateTime.now().difference(_lastUpdateTime!).inSeconds;
+
+        if (time > 0) {
+          final speed = dist / time;
+          _speedKmh = speed * 3.6;
+        }
+      }
+
+      _lastLocation = newLocation;
+      _lastUpdateTime = DateTime.now();
+
       LatLng? oldLocation;
       if (_currentLocation != null) {
         oldLocation = _currentLocation!;
@@ -71,18 +124,16 @@ class _MapBodyState extends State<MapBody> {
         _currentLocation = LatLng(lat, lon);
       });
 
-      if (init) {
-        mapController.move(_currentLocation!, mapController.camera.zoom);
-      } else {
-        if (oldLocation == null) {
-          return;
+      if (init || _follow) {
+        if (oldLocation == null || init) {
+          mapController.move(_currentLocation!, mapController.camera.zoom);
+        } else {
+          animatedUpdate(
+            oldLocation,
+            _currentLocation!,
+            Duration(milliseconds: 500),
+          );
         }
-
-        animatedUpdate(
-          oldLocation,
-          _currentLocation!,
-          Duration(milliseconds: 500),
-        );
       }
     } catch (e) {
       if (!_dialogOpen) {
@@ -99,9 +150,37 @@ class _MapBodyState extends State<MapBody> {
     }
   }
 
-  void updateLocation() {
+  void recenterMap() {
+    setState(() {
+      _follow = true;
+    });
+
+    setLocation(true);
+  }
+
+  void updateLocation() async {
     _timer = Timer.periodic(Duration(seconds: 3), (timer) async {
-      await setLocation(false);
+      if (mounted) await setLocation(false);
+    });
+  }
+
+  void updateCellInfo() async {
+    final String jsonStr = await platform.invokeMethod("getNetworkData");
+
+    final Map<String, dynamic> map = json.decode(jsonStr);
+    late final SIMData simData;
+
+    try {
+      simData = SIMData.fromJson(map);
+    } catch (e) {
+      return;
+    }
+
+    setState(() {
+      signalStrength = "${simData.primaryCell.processedSignal}dBm";
+      signalStrengthString =
+          simData.primaryCell.processedSignalString; // gotta fallback to rssi
+      cellId = simData.primaryCell.cellIdentifier;
     });
   }
 
@@ -140,7 +219,22 @@ class _MapBodyState extends State<MapBody> {
     return Column(
       children: <Widget>[
         Row(children: [Expanded(child: _progressIndicator)]),
-        Expanded(child: getMap(context)),
+        Expanded(
+          child: Stack(
+            children: [
+              getMap(context),
+              mapOverlay(
+                context,
+                (metricSystem
+                    ? "${_speedKmh.toStringAsFixed(1)}km/h"
+                    : "${(_speedKmh / 1.609).toStringAsFixed(1)}mph"),
+                cellId,
+                signalStrengthString,
+                signalStrength,
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -162,12 +256,21 @@ class _MapBodyState extends State<MapBody> {
         ),
         onMapReady: () {
           setState(() {
-            _progressIndicator = Container();
+            _progressIndicator = SizedBox.shrink();
           });
         },
         onMapEvent: (p0) {
+          if (p0 is! MapEventMove) return;
+
+          if (p0.source == MapEventSource.multiFingerGestureStart ||
+              p0.source == MapEventSource.onDrag) {
+            _follow = false;
+          } else {
+            _follow = true;
+          }
+
           setState(() {
-            _progressIndicator = Container();
+            _progressIndicator = SizedBox.shrink();
           });
         },
         onPositionChanged: (camera, hasGesture) {
@@ -191,7 +294,9 @@ class _MapBodyState extends State<MapBody> {
                 height: 20,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.blue,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer.withAlpha(230),
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 2),
                   ),
