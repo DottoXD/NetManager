@@ -28,7 +28,6 @@ class MapBody extends StatefulWidget {
 }
 
 class _MapBodyState extends State<MapBody> {
-  late Widget _map = Row();
   late MethodChannel platform;
   late SharedPreferences sharedPreferences;
 

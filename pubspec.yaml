@@ -1,5 +1,5 @@
 name: netmanager
-description: "A Material You network monitoring app built with ease-of-use and speed in mind. "
+description: "A Material mobile network monitoring app built with ease-of-use and speed in mind."
 publish_to: 'none'
 
 version: 0.0.1+1
@@ -15,7 +15,7 @@ dependencies:
   dynamic_color: ^1.8.1
   shared_preferences: ^2.5.3
   url_launcher: ^6.3.2
-  flutter_map: ^8.2.1
+  flutter_map: ^8.2.2
   latlong2: ^0.9.1
   # sentry_flutter: ^9.1.0
 
