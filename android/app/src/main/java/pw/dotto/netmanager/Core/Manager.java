@@ -38,6 +38,7 @@ import pw.dotto.netmanager.Core.Events.MobileNetmanagerEvent;
 import pw.dotto.netmanager.Core.Listeners.DataStateListener;
 import pw.dotto.netmanager.Core.Listeners.ServiceStateListener;
 import pw.dotto.netmanager.Core.Listeners.SignalStrengthsListener;
+import pw.dotto.netmanager.Core.Listeners.SubscriptionChangedListener;
 import pw.dotto.netmanager.Core.Mobile.CellDatas.CellData;
 import pw.dotto.netmanager.Core.Mobile.CellDatas.CdmaCellData;
 import pw.dotto.netmanager.Core.Mobile.CellDatas.GsmCellData;
@@ -74,6 +75,8 @@ public class Manager {
   private final SignalStrengthsListener[] signalStrengths = { null, null };
   private final PhysicalChannelDumper[] physicalChannelDumpers = { null, null };
 
+  private SubscriptionChangedListener subscriptionChangedListener;
+
   private Date lastModemUpdate = null;
   private static final int updateInterval = 10;
 
@@ -84,6 +87,16 @@ public class Manager {
     simReceiverManager.registerStateReceiver(this::updateTelephonyManagers);
 
     eventManager = EventManager.getInstance(context);
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+      SubscriptionManager subscriptionManager = getSubscriptionManager();
+      if(subscriptionManager != null) {
+        if(subscriptionChangedListener != null) subscriptionManager.removeOnSubscriptionsChangedListener(subscriptionChangedListener);
+
+        subscriptionChangedListener = new SubscriptionChangedListener(this::updateTelephonyManagers);
+        subscriptionManager.addOnSubscriptionsChangedListener(context.getMainExecutor(), subscriptionChangedListener);
+      }
+    }
   }
 
   private TelephonyManager getTelephony() {
@@ -766,11 +779,11 @@ public class Manager {
     String plmn = null;
     try {
       plmn = telephony.getNetworkOperator();
-    } catch(Exception ignored) {
+    } catch (Exception ignored) {
       // super error, catch it
     }
 
-    if(plmn == null || plmn.length() < 3)
+    if (plmn == null || plmn.length() < 3)
       plmn = "00000";
 
     return plmn;
@@ -842,8 +855,8 @@ public class Manager {
     try {
       int firstId = subscriptions.get(0).getSubscriptionId();
       firstManager = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE))
-              .createForSubscriptionId(firstId);
-    } catch(Exception ignored) {
+          .createForSubscriptionId(firstId);
+    } catch (Exception ignored) {
       firstManager = null;
     }
 
@@ -851,8 +864,8 @@ public class Manager {
       try {
         int secondId = subscriptions.get(1).getSubscriptionId();
         secondManager = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE))
-                .createForSubscriptionId(secondId);
-      } catch(Exception ignored) {
+            .createForSubscriptionId(secondId);
+      } catch (Exception ignored) {
         secondManager = null;
       }
     } else
@@ -918,7 +931,7 @@ public class Manager {
         }
       }
 
-      if (secondManager != null && getSimCount() > 1) {
+      if (secondManager != null && subscriptions.size() >= 2) {
         try {
           nsa[1] = new DisplayInfoListener();
           serviceStates[1] = new ServiceStateListener();

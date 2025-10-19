@@ -16,7 +16,7 @@ public class LteCellData extends CellData {
                 "RSRQ",
                 "SNR",
                 "TA",
-                "Bandwidth",
+                "Total BW",
                 "Band",
                 cellIdentifier,
                 rawSignal,

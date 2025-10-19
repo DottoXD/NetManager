@@ -96,7 +96,6 @@ class _HomeBodyState extends State<HomeBody> {
         _progressIndicator = LinearProgressIndicator();
       });
 
-      //jsonStr is null at start - todo fix.
       final Map<String, dynamic> map = json.decode(jsonStr);
       late final SIMData simData;
 
@@ -276,7 +275,14 @@ class _HomeBodyState extends State<HomeBody> {
                       subtitle: Text(val),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[getTrailingIcon(simData, label)],
+                        children: <Widget>[
+                          Icon(
+                            getTrailingIcon(simData, label),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onPrimaryContainer,
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -381,7 +387,9 @@ class _HomeBodyState extends State<HomeBody> {
               subtitle: Text(cellContent),
               trailing: Icon(
                 icons[index],
-                color: Theme.of(context).colorScheme.onSurface,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onPrimaryContainer.withValues(alpha: 255 * 0.85),
               ),
             ),
           ],
@@ -402,7 +410,9 @@ class _HomeBodyState extends State<HomeBody> {
           children: [
             ListTile(
               title: Text(
-                "${cell.channelNumberString == "NR-ARFCN" ? "N" : "B"}${cell.basicCellData.band} ${isValidInt(cell.basicCellData.frequency) ? "(${cell.basicCellData.frequency}MHz)" : ""}",
+                (cell.basicCellData.band > 0
+                    ? "${cell.channelNumberString == "NR-ARFCN" ? "N" : "B"}${cell.basicCellData.band} ${isValidInt(cell.basicCellData.frequency) ? "(${cell.basicCellData.frequency}MHz)" : ""}"
+                    : "Unknown band"),
               ),
               subtitle: Text(cellContent),
             ),
@@ -488,7 +498,9 @@ class _HomeBodyState extends State<HomeBody> {
                     padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
                     child: Text(
                       "Active Cells",
-                      style: Theme.of(context).textTheme.titleMedium,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleMedium?.copyWith(fontSize: 18),
                     ),
                   ),
                   Container(
@@ -504,7 +516,9 @@ class _HomeBodyState extends State<HomeBody> {
                     padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
                     child: Text(
                       "Neighbor Cells",
-                      style: Theme.of(context).textTheme.titleMedium,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleMedium?.copyWith(fontSize: 18),
                     ),
                   ),
                   Container(
@@ -534,7 +548,7 @@ class _HomeBodyState extends State<HomeBody> {
     );
   }
 
-  Icon getTrailingIcon(SIMData simData, String val) {
+  IconData getTrailingIcon(SIMData simData, String val) {
     if (val == simData.primaryCell.rawSignalString) {
       //RSSI
 
@@ -550,7 +564,7 @@ class _HomeBodyState extends State<HomeBody> {
                   ((maxRssi - minRssi) / 3))
               .floor();
 
-      return Icon(icons[min(index, 2)]);
+      return icons[min(index, 2)];
     } else if (val == simData.primaryCell.processedSignalString) {
       //RSRP
 
@@ -569,34 +583,34 @@ class _HomeBodyState extends State<HomeBody> {
                   (((maxRsrp - 15) - minRsrp) / 3))
               .floor();
 
-      return Icon(icons[min(index, 2)]);
+      return icons[min(index, 2)];
     } else if (val == simData.primaryCell.signalQualityString) {
       //SNR
-      return Icon(Icons.settings_input_antenna_outlined);
+      return Icons.settings_input_antenna_outlined;
     } else if (val == simData.primaryCell.signalNoiseString) {
       //RSRQ
-      return Icon(Icons.spatial_tracking);
+      return Icons.spatial_tracking;
     } else if (val == simData.primaryCell.channelNumberString) {
       //EARFCN
-      return Icon(Icons.wifi_channel);
+      return Icons.wifi_channel;
     } else if (val == simData.primaryCell.stationIdentityString) {
       //PCI
-      return Icon(Icons.perm_identity);
+      return Icons.perm_identity;
     } else if (val == simData.primaryCell.areaCodeString) {
       //TAC
-      return Icon(Icons.landscape);
+      return Icons.landscape;
     } else if (val == simData.primaryCell.timingAdvanceString) {
       //TA
-      return Icon(Icons.shortcut);
+      return Icons.shortcut;
     } else if (val == simData.primaryCell.bandwidthString) {
       //BW
-      return Icon(Icons.swap_horiz_rounded);
+      return Icons.swap_horiz_rounded;
     } else if (val == simData.primaryCell.bandString) {
       //Band
-      return Icon(Icons.numbers_rounded);
+      return Icons.numbers_rounded;
     }
 
-    return Icon(Icons.question_mark); //Unknown icon
+    return Icons.question_mark; //Unknown icon
   }
 
   String createCellContent(CellData cell) {
@@ -613,7 +627,7 @@ class _HomeBodyState extends State<HomeBody> {
     }
 
     if (isValidInt(cell.bandwidth) && isValidString(cell.bandwidthString)) {
-      cellContent += "${cell.bandwidthString}: ${cell.bandwidth}MHz";
+      cellContent += "Bandwidth: ${cell.bandwidth}MHz";
     } else {
       cellContent += "Unknown bandwidth";
     }

@@ -16,7 +16,7 @@ public class NrCellData extends CellData {
                 "RSRQ",
                 "SNR",
                 "TA (µs)",
-                "Bandwidth",
+                "Total BW",
                 "Band",
                 cellIdentifier,
                 rawSignal,

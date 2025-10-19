@@ -62,7 +62,7 @@ class _TopBarState extends State<TopBar> {
           onPressed: openLogs,
           icon: Icon(Icons.my_library_books_outlined),
           tooltip: "Event logs",
-        ); //temporarily like that
+        );
       });
     }
 
@@ -80,7 +80,7 @@ class _TopBarState extends State<TopBar> {
               onPressed: openLogs,
               icon: Icon(Icons.my_library_books_outlined),
               tooltip: "Event logs",
-            ); //temporarily like that
+            );
           });
         } else {
           _logsButton = SizedBox.shrink();

@@ -1,14 +1,12 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:netmanager/components/body/map.dart';
-import 'package:netmanager/components/body/settings.dart';
+import 'package:netmanager/components/base/body/map.dart';
+import 'package:netmanager/components/base/body/settings.dart';
 import 'package:netmanager/components/floating/position_button.dart';
 import 'package:netmanager/components/base/top_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'components/body/home.dart';
+import 'components/base/body/home.dart';
 import 'components/floating/update_button.dart';
 import 'components/base/nav_bar.dart';
 
@@ -47,7 +45,7 @@ class _HomeState extends State<Home> {
 
     widget.platform.setMethodCallHandler((call) {
       if (call.method == "restartTimer") {
-        platformSignalNotifier.value = Random().nextInt(100000);
+        platformSignalNotifier.value++;
         return Future.value();
       }
 
@@ -65,14 +63,19 @@ class _HomeState extends State<Home> {
         platformSignalNotifier,
         debugNotifier,
         onUpdateButtonPressed: (callback) {
-          _homeUpdateCallback = callback;
+          setState(() {
+            _homeUpdateCallback = callback;
+          });
         },
       ),
       MapBody(
         widget.platform,
         widget.sharedPreferences,
+        platformSignalNotifier,
         onPositionButtonPressed: (callback) {
-          _mapPositionCallback = callback;
+          setState(() {
+            _mapPositionCallback = callback;
+          });
         },
       ),
       SettingsBody(

@@ -5,7 +5,7 @@ Widget mapTileBuilder(BuildContext context, Widget tileWidget, TileImage tile) {
   if (Theme.of(context).brightness == Brightness.light) {
     return ColorFiltered(
       colorFilter: ColorFilter.mode(
-        Theme.of(context).colorScheme.surface.withOpacity(0.85),
+        Theme.of(context).colorScheme.surface.withValues(alpha: 255 * 0.85),
         BlendMode.modulate,
       ),
       child: tileWidget,

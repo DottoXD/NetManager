@@ -14,12 +14,14 @@ import 'package:latlong2/latlong.dart';
 class MapBody extends StatefulWidget {
   const MapBody(
     this.platform,
-    this.sharedPreferences, {
+    this.sharedPreferences,
+    this.platformSignalNotifier, {
     super.key,
     this.onPositionButtonPressed,
   });
   final MethodChannel platform;
   final SharedPreferences sharedPreferences;
+  final ValueNotifier<int> platformSignalNotifier;
 
   final ValueSetter<VoidCallback>? onPositionButtonPressed;
 
@@ -30,9 +32,9 @@ class MapBody extends StatefulWidget {
 class _MapBodyState extends State<MapBody> {
   late MethodChannel platform;
   late SharedPreferences sharedPreferences;
+  late ValueNotifier<int> platformSignalNotifier;
 
   final MapController mapController = MapController();
-  Widget _progressIndicator = LinearProgressIndicator();
 
   Timer? _timer;
   Timer? _animationTimer;
@@ -44,6 +46,7 @@ class _MapBodyState extends State<MapBody> {
 
   bool _follow = true;
   bool _dialogOpen = false;
+  bool _isLoading = true;
   bool metricSystem = true;
 
   Timer? _cellTimer;
@@ -64,18 +67,15 @@ class _MapBodyState extends State<MapBody> {
         if (mounted) recenterMap();
       });
 
-      setLocation(true);
+      setLocation(false);
       updateLocation();
     });
 
-    updateCellInfo();
+    startCellTimer();
 
-    _cellTimer = Timer.periodic(
-      Duration(seconds: sharedPreferences.getInt("updateInterval") ?? 3),
-      (timer) async {
-        if (mounted) updateCellInfo();
-      },
-    );
+    widget.platformSignalNotifier.addListener(() {
+      restartTimer();
+    });
   }
 
   @override
@@ -103,11 +103,14 @@ class _MapBodyState extends State<MapBody> {
           _lastLocation!,
           newLocation,
         );
-        final time = DateTime.now().difference(_lastUpdateTime!).inSeconds;
+        final time =
+            DateTime.now().difference(_lastUpdateTime!).inMilliseconds / 1000.0;
 
         if (time > 0) {
           final speed = dist / time;
           _speedKmh = speed * 3.6;
+
+          if (_speedKmh > 300) _speedKmh = 0; // hard limit of 300km/h
         }
       }
 
@@ -135,7 +138,7 @@ class _MapBodyState extends State<MapBody> {
         }
       }
     } catch (e) {
-      if (!_dialogOpen) {
+      if (!_dialogOpen && mounted) {
         _dialogOpen = true;
         showDialog(
           context: context,
@@ -164,23 +167,41 @@ class _MapBodyState extends State<MapBody> {
   }
 
   void updateCellInfo() async {
-    final String jsonStr = await platform.invokeMethod("getNetworkData");
-
-    final Map<String, dynamic> map = json.decode(jsonStr);
-    late final SIMData simData;
-
     try {
-      simData = SIMData.fromJson(map);
-    } catch (e) {
-      return;
-    }
+      final String jsonStr = await platform.invokeMethod("getNetworkData");
 
-    setState(() {
-      signalStrength = "${simData.primaryCell.processedSignal}dBm";
-      signalStrengthString =
-          simData.primaryCell.processedSignalString; // gotta fallback to rssi
-      cellId = simData.primaryCell.cellIdentifier;
-    });
+      final Map<String, dynamic> map = json.decode(jsonStr);
+      late final SIMData simData;
+
+      try {
+        simData = SIMData.fromJson(map);
+      } catch (e) {
+        return;
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        signalStrength = "${simData.primaryCell.processedSignal}dBm";
+        signalStrengthString = simData
+            .primaryCell
+            .processedSignalString; // gotta add fallback to rssi
+        cellId = simData.primaryCell.cellIdentifier;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!_dialogOpen) {
+        _dialogOpen = true;
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return errorDialog(context, e);
+          },
+        ).then((_) {
+          _dialogOpen = false;
+        });
+      }
+    }
   }
 
   void animatedUpdate(LatLng from, LatLng to, Duration duration) async {
@@ -217,7 +238,13 @@ class _MapBodyState extends State<MapBody> {
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        Row(children: [Expanded(child: _progressIndicator)]),
+        Row(
+          children: [
+            Expanded(
+              child: _isLoading ? LinearProgressIndicator() : SizedBox.shrink(),
+            ),
+          ],
+        ),
         Expanded(
           child: Stack(
             children: [
@@ -255,27 +282,25 @@ class _MapBodyState extends State<MapBody> {
         ),
         onMapReady: () {
           setState(() {
-            _progressIndicator = SizedBox.shrink();
+            _isLoading = false;
           });
         },
-        onMapEvent: (p0) {
-          if (p0 is! MapEventMove) return;
-
-          if (p0.source == MapEventSource.multiFingerGestureStart ||
-              p0.source == MapEventSource.onDrag) {
-            _follow = false;
-          } else {
-            _follow = true;
+        onMapEvent: (event) {
+          if (event is MapEventMoveStart ||
+              event is MapEventMove ||
+              event is MapEventMoveEnd) {
+            _isLoading = event is! MapEventMoveEnd;
+            if (event.source == MapEventSource.multiFingerGestureStart ||
+                event.source == MapEventSource.multiFingerEnd ||
+                event.source == MapEventSource.dragStart ||
+                event.source == MapEventSource.dragEnd) {
+              if (_follow) {
+                setState(() {
+                  _follow = false;
+                });
+              }
+            }
           }
-
-          setState(() {
-            _progressIndicator = SizedBox.shrink();
-          });
-        },
-        onPositionChanged: (camera, hasGesture) {
-          setState(() {
-            _progressIndicator = LinearProgressIndicator();
-          });
         },
       ),
       children: <Widget>[
@@ -322,5 +347,23 @@ class _MapBodyState extends State<MapBody> {
         ),
       ],
     );
+  }
+
+  void startCellTimer() {
+    updateCellInfo();
+
+    _cellTimer = Timer.periodic(
+      Duration(seconds: sharedPreferences.getInt("updateInterval") ?? 3),
+      (timer) async {
+        if (mounted) updateCellInfo();
+      },
+    );
+  }
+
+  void restartTimer() {
+    if (_cellTimer == null) return;
+
+    _cellTimer?.cancel();
+    startCellTimer();
   }
 }

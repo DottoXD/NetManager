@@ -208,7 +208,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                   shrinkWrap: true,
                   physics: ClampingScrollPhysics(),
                   children: <Widget>[
-                    ListTile(
+                    /*ListTile(
                       title: Text("Analytics"),
                       subtitle: Text(
                         "Share anonymous insights to help me improve NetManager.",
@@ -224,7 +224,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                     Divider(
                       height: 0,
                       color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
+                    ),*/
                     ListTile(
                       title: Text(
                         "Position precision (${positionPrecisions[_positionPrecision]})",
@@ -325,7 +325,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                     ListTile(
                       title: Text("Theme color"),
                       subtitle: Text(
-                        "Choose a custom theme color in case you are not using Android's dynamic theme feature.",
+                        "Choose a custom theme color if you are not using Android's dynamic theme feature.",
                       ),
                       enabled: (!_dynamicTheme || !_dynamicSupported),
                     ),
@@ -403,6 +403,20 @@ class _SettingsBodyState extends State<SettingsBody> {
                           launchUrl(url);
                         },
                         icon: Icon(Icons.open_in_new),
+                        tooltip: "Open in a browser",
+                      ),
+                    ),
+                    ListTile(
+                      title: Text("Telegram"),
+                      subtitle: Text(
+                        "Join NetManager's Telegram for exclusive feature previews and showcases.",
+                      ),
+                      trailing: IconButton(
+                        onPressed: () {
+                          Uri url = Uri.parse('https://t.me/netmanagerapp');
+                          launchUrl(url);
+                        },
+                        icon: Icon(Icons.message_outlined),
                         tooltip: "Open in a browser",
                       ),
                     ),

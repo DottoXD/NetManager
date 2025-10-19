@@ -16,9 +16,13 @@ Simple workarounds are applied on certain devices to gather extra cell data or t
 Feel free to open an issue for any question, suggestion or any actual issue (such as the app returning wrong cell data) that you might be facing with NetManager.
 Pull requests are highly appreciated as long as they're tested.
 
+## Builds
+Development builds are available at [GitHub Actions](https://github.com/DottoXD/NetManager/actions).
+Somewhat (at least for now) stable builds are available in the [Releases](https://github.com/DottoXD/NetManager/actions) tab on GitHub.
+
 ## License
 ```
-Copyright (C) 2025  DottoXD
+Copyright (C) 2025 DottoXD
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
