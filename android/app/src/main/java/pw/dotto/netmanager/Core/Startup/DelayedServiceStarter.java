@@ -44,11 +44,6 @@ public class DelayedServiceStarter extends android.app.Service {
             notificationManager.createNotificationChannel(notificationChannel);
         }
 
-        if (!Permissions.check(this)) {
-            stopSelf();
-            return START_NOT_STICKY;
-        }
-
         Notification tempNotification = new NotificationCompat.Builder(this, TEMP_NOTIFICATION_CHANNEL)
                 .setContentTitle("NetManager is starting!")
                 .setSmallIcon(R.drawable.ic_launcher_monochrome)

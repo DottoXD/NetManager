@@ -10,8 +10,8 @@ public abstract class CellData {
     protected final String channelNumberString;
     protected final String stationIdentityString;
     protected final String areaCodeString;
-    protected final String signalQualityString;
-    protected final String signalNoiseString;
+    protected String signalQualityString;
+    protected String signalNoiseString;
     protected final String timingAdvanceString;
     protected final String bandwidthString;
     protected final String bandString;
@@ -165,8 +165,16 @@ public abstract class CellData {
         return signalNoiseString;
     }
 
+    public void setSignalNoiseString(String signalNoiseString) {
+        this.signalNoiseString = signalNoiseString;
+    }
+
     public String getSignalQualityString() {
         return signalQualityString;
+    }
+
+    public void setSignalQualityString(String signalQualityString) {
+        this.signalQualityString = signalQualityString;
     }
 
     public String getStationIdentityString() {

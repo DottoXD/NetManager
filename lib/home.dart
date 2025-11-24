@@ -4,6 +4,8 @@ import 'package:netmanager/components/base/body/map.dart';
 import 'package:netmanager/components/base/body/settings.dart';
 import 'package:netmanager/components/floating/position_button.dart';
 import 'package:netmanager/components/base/top_bar.dart';
+import 'package:netmanager/types/device/permissions.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'components/base/body/home.dart';
@@ -89,10 +91,15 @@ class _HomeState extends State<Home> {
     ];
 
     try {
-      widget.platform.invokeMethod<bool>("checkPermissions");
+      widget.platform.invokeMethod<bool>("requestPermissions", {
+        "perms":
+            Permissions.READ_PHONE_STATE |
+            Permissions.ACCESS_FINE_LOCATION |
+            Permissions.ACCESS_BACKGROUND_LOCATION,
+      });
       widget.platform.invokeMethod<void>("sendNotification");
-    } on PlatformException catch (_) {
-      //super error, handle it
+    } on PlatformException catch (e) {
+      Sentry.captureException(e, stackTrace: e.stacktrace);
     }
   }
 

@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -57,15 +58,23 @@ public class MainActivity extends FlutterActivity {
 
       switch (call.method) {
         case "checkPermissions":
-          boolean perms = Permissions.check(this);
-          if (!perms) {
-            Permissions.request(this);
+          boolean perms;
+          if (call.hasArgument(("perms"))) {
+            perms = Permissions.check(this, call.argument("perms"));
+          } else {
+            perms = Permissions.check(this);
           }
+
           result.success(perms);
           break;
 
         case "requestPermissions":
-          Permissions.request(this);
+          if (call.hasArgument(("perms"))) {
+            Permissions.request(this, call.argument("perms"));
+          } else {
+            Permissions.request(this);
+          }
+
           result.success(null);
           break;
 
@@ -126,8 +135,8 @@ public class MainActivity extends FlutterActivity {
 
         case "openRadioInfo":
           try {
-            Activities.openRadioInfo(this);
-            result.success(null);
+            boolean success = Activities.openRadioInfo(this);
+            result.success(success);
           } catch (Exception e) {
             result.error("Unknown", e.getMessage(), null); // add proper error handling
           }
@@ -135,8 +144,8 @@ public class MainActivity extends FlutterActivity {
 
         case "openSamsungInfo":
           try {
-            Activities.openSamsungInfo(this);
-            result.success(null);
+            boolean success = Activities.openSamsungInfo(this);
+            result.success(success);
           } catch (Exception e) {
             result.error("Unknown", e.getMessage(), null); // add proper error handling
           }
@@ -209,6 +218,16 @@ public class MainActivity extends FlutterActivity {
           }
 
           result.success(version);
+          break;
+
+        case "showToast":
+          try {
+            String msg = call.argument("message");
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+          } catch (Exception ignored) {
+          }
+
+          result.success(null);
           break;
 
         default:

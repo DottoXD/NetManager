@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/types/cell/cell_data.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'dart:async';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -153,18 +154,23 @@ class _HomeBodyState extends State<HomeBody> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
-                          Text(
-                            (altCellView
-                                ? simData.primaryCell.cellIdentifierString
-                                : "${simData.primaryCell.nodeIdentifierString}/CID"),
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onPrimaryContainer,
+                          if (!(simData.primaryCell.cellIdentifier.contains(
+                                "-1",
+                              ) ||
+                              simData.primaryCell.cellIdentifier == "0")) ...[
+                            Text(
+                              (altCellView
+                                  ? simData.primaryCell.cellIdentifierString
+                                  : "${simData.primaryCell.nodeIdentifierString}/CID"),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimaryContainer,
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 3),
+                            SizedBox(height: 3),
+                          ],
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
@@ -356,20 +362,13 @@ class _HomeBodyState extends State<HomeBody> {
 
         if (isValidInt(cell.processedSignal)) {
           index =
-              ((min(
-                            max(simData.primaryCell.processedSignal, minRsrp),
-                            (maxRsrp - 15),
-                          ) -
+              ((min(max(cell.processedSignal, minRsrp), (maxRsrp - 15)) -
                           minRsrp) /
                       (((maxRsrp - 15) - minRsrp) / 2))
                   .floor();
         } else if (isValidInt(cell.rawSignal)) {
           index =
-              ((min(
-                            max(simData.primaryCell.rawSignal, minRssi),
-                            (maxRssi - 15),
-                          ) -
-                          minRssi) /
+              ((min(max(cell.rawSignal, minRssi), (maxRssi - 15)) - minRssi) /
                       (((maxRssi - 15) - minRssi) / 2))
                   .floor();
         }
@@ -435,9 +434,10 @@ class _HomeBodyState extends State<HomeBody> {
         _progressIndicator = SizedBox.shrink();
         _debug = jsonStr;
       });
-    } on PlatformException catch (err) {
+    } on PlatformException catch (e) {
+      await Sentry.captureException(e, stackTrace: e.stacktrace);
       setState(() {
-        _debug = "PlatformException: ${err.toString()}";
+        _debug = "PlatformException: ${e.toString()}";
       });
     } finally {
       _isUpdating = false;

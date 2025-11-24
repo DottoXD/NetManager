@@ -1,8 +1,6 @@
 package pw.dotto.netmanager.Core.Listeners;
 
-import android.annotation.SuppressLint;
 import android.telephony.PhoneStateListener;
-import android.telephony.PhysicalChannelConfig;
 
 import java.lang.reflect.Field;
 import java.util.List;

@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/perms.dart';
-//import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 
 void main() async {
-  /*SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+  WidgetsFlutterBinding.ensureInitialized();
+
+  SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
   bool? analytics = sharedPreferences.getBool("analytics");
   String sentryDsn = String.fromEnvironment("SENTRY_DSN", defaultValue: "");
 
@@ -18,9 +20,7 @@ void main() async {
       options.dsn = sentryDsn;
       options.sendDefaultPii = false;
     }, appRunner: () => runApp(NetManager()));
-  }*/
-
-  runApp(NetManager());
+  }
 
   if (Platform.isAndroid) {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);

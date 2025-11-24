@@ -16,7 +16,8 @@ public class DisplayInfoListener extends TelephonyCallback implements TelephonyC
         int overrideType = telephonyDisplayInfo.getOverrideNetworkType();
 
         isNsa = overrideType == TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_NSA ||
-                overrideType == TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_ADVANCED;
+                overrideType == TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_ADVANCED ||
+                overrideType == TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_NSA_MMWAVE;
     }
 
     public boolean getNsa() {

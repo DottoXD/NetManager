@@ -11,7 +11,7 @@ public class TdscdmaCellData extends CellData {
                 "-",
                 "RSCP",
                 "UARFCN",
-                "PSC",
+                "CPID",
                 "LAC",
                 "-",
                 "-",

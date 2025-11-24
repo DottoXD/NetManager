@@ -12,11 +12,11 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.GsmCellData;
 public class GsmExtractor {
     @NonNull
     public static GsmCellData get(CellInfoGsm baseCell) {
-        CellIdentityGsm identityGsm = (CellIdentityGsm) baseCell.getCellIdentity();
+        CellIdentityGsm identityGsm = baseCell.getCellIdentity();
 
         int band = -1;
 
-        CellSignalStrengthGsm signalGsm = (CellSignalStrengthGsm) baseCell.getCellSignalStrength();
+        CellSignalStrengthGsm signalGsm = baseCell.getCellSignalStrength();
         return new GsmCellData(
                 String.valueOf(identityGsm.getCid()),
                 (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ? signalGsm.getRssi() : -1),
@@ -26,7 +26,7 @@ public class GsmExtractor {
                 identityGsm.getLac(),
                 -1, // signalGsm.getRsrq(),
                 -1, // signalGsm.getSnr(),
-                (signalGsm.getTimingAdvance() == Integer.MAX_VALUE ? -1 : signalGsm.getTimingAdvance()),
+                signalGsm.getTimingAdvance(),
                 -1, // identityGsm.getBandwidth(),
                 band,
                 baseCell.isRegistered());

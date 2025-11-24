@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:netmanager/components/utils/check_update.dart';
 import 'package:netmanager/home.dart';
+import 'package:netmanager/types/device/permissions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Perms extends StatefulWidget {
@@ -29,6 +31,21 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _checkPermissions();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (hasPermissions == false) {
+        await _requestPermissions();
+      }
+
+      if (widget.sharedPreferences.getBool("checkUpdates") != true) return;
+      bool updateAvailable = await checkForUpdate();
+
+      if (updateAvailable) {
+        await platform.invokeMethod<bool>("showToast", {
+          "message": "A new version of NetManager is available!",
+        });
+      }
+    });
   }
 
   @override
@@ -39,7 +56,13 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
 
   Future<void> _checkPermissions() async {
     try {
-      final result = await platform.invokeMethod<bool>("checkPermissions");
+      final result = await platform.invokeMethod<bool>("checkPermissions", {
+        "perms":
+            Permissions.READ_PHONE_STATE |
+            Permissions.ACCESS_FINE_LOCATION |
+            Permissions.ACCESS_BACKGROUND_LOCATION,
+      });
+
       setState(() {
         hasPermissions = result ?? false;
       });
@@ -48,6 +71,15 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
         hasPermissions = false;
       });
     }
+  }
+
+  Future<void> _requestPermissions() async {
+    await platform.invokeMethod<bool>("requestPermissions", {
+      "perms":
+          Permissions.READ_PHONE_STATE |
+          Permissions.ACCESS_FINE_LOCATION |
+          Permissions.ACCESS_BACKGROUND_LOCATION,
+    });
   }
 
   @override
@@ -88,6 +120,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
                 const SizedBox(height: 32),
                 FilledButton(
                   onPressed: () async {
+                    await _requestPermissions();
                     await _checkPermissions();
                   },
                   style: FilledButton.styleFrom(
@@ -96,7 +129,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Text("Retry"),
+                  child: const Text("Allow"),
                 ),
               ],
             ),
@@ -123,7 +156,9 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
 
       Future.delayed(const Duration(seconds: 2), () async {
         if (mounted) {
+          await _requestPermissions();
           await _checkPermissions();
+
           setState(() {
             isRefreshing = false;
           });

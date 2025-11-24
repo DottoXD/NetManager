@@ -13,6 +13,8 @@ import com.google.gson.JsonParser;
 
 import java.util.ArrayList;
 
+import pw.dotto.netmanager.Utils.DebugLogger;
+
 public class EventManager {
     private static EventManager instance;
     private final ArrayList<NetmanagerEvent> events = new ArrayList<>();
@@ -22,7 +24,9 @@ public class EventManager {
     public EventManager(Context context) {
         gson = new Gson();
         sharedPreferences = context.getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
-        loadEvents();
+
+        if (!loadEvents())
+            DebugLogger.add("Unexpected error while loading events.");
     }
 
     public static synchronized EventManager getInstance(Context context) {
@@ -72,7 +76,8 @@ public class EventManager {
                                                                                          // than an int?
             }
 
-            saveEvents();
+            if (!saveEvents())
+                DebugLogger.add("Unexpected error while saving events.");
         }
     }
 
@@ -97,23 +102,25 @@ public class EventManager {
         return events.toArray(new NetmanagerEvent[0]);
     }
 
-    private void saveEvents() {
+    private boolean saveEvents() {
         if (sharedPreferences == null)
-            return;
+            return false;
 
         SharedPreferences.Editor sharedEditor = sharedPreferences.edit();
         String json = gson.toJson(events);
         sharedEditor.putString("loggedEvents", json);
         sharedEditor.apply();
+
+        return true;
     }
 
-    private void loadEvents() {
+    private boolean loadEvents() {
         if (sharedPreferences == null)
-            return;
+            return false;
 
         String json = sharedPreferences.getString("loggedEvents", "[]");
         if (json.trim().isEmpty())
-            return;
+            return false;
 
         events.clear();
 
@@ -135,6 +142,10 @@ public class EventManager {
             }
         } catch (Exception e) {
             // todo add sentry
+
+            return false;
         }
+
+        return true;
     }
 }

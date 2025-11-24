@@ -23,15 +23,15 @@ public class NrExtractor {
         }
 
         CellSignalStrengthNr signalNr = (CellSignalStrengthNr) baseCell.getCellSignalStrength();
-        return new NrCellData(
+        NrCellData nrCellData = new NrCellData(
                 String.valueOf(identityNr.getNci()),
                 signalNr.getCsiRsrp(),
                 signalNr.getSsRsrp(),
                 identityNr.getNrarfcn(),
                 identityNr.getPci(),
                 identityNr.getTac(),
-                (signalNr.getSsRsrq() == CellInfo.UNAVAILABLE ? signalNr.getCsiRsrq() : signalNr.getSsRsrq()),
-                (signalNr.getSsSinr() == CellInfo.UNAVAILABLE ? signalNr.getCsiSinr() : signalNr.getSsSinr()),
+                signalNr.getSsRsrq(),
+                signalNr.getSsSinr(),
                 (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
                         ? (signalNr.getTimingAdvanceMicros() == Integer.MAX_VALUE ? -1
                                 : signalNr.getTimingAdvanceMicros())
@@ -39,5 +39,34 @@ public class NrExtractor {
                 -1, // identityNr.getBandwidth()
                 band,
                 baseCell.isRegistered());
+
+        processRsrq(nrCellData, signalNr);
+        processSinr(nrCellData, signalNr);
+
+        return nrCellData;
+    }
+
+    private static void processRsrq(NrCellData nrCellData, CellSignalStrengthNr signalNr) {
+        int rsrq = nrCellData.getSignalQuality();
+
+        if (rsrq == CellInfo.UNAVAILABLE) {
+            rsrq = signalNr.getCsiRsrq();
+
+            if (rsrq != CellInfo.UNAVAILABLE) {
+                nrCellData.setSignalQualityString("CSI RSRQ");
+            }
+        }
+    }
+
+    private static void processSinr(NrCellData nrCellData, CellSignalStrengthNr signalNr) {
+        int sinr = nrCellData.getSignalNoise();
+
+        if (sinr == CellInfo.UNAVAILABLE) {
+            sinr = signalNr.getCsiSinr();
+
+            if (sinr != CellInfo.UNAVAILABLE) {
+                nrCellData.setSignalNoiseString("CSI SINR");
+            }
+        }
     }
 }

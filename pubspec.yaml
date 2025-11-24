@@ -2,7 +2,7 @@ name: netmanager
 description: "A Material mobile network monitoring app built with ease-of-use and speed in mind."
 publish_to: 'none'
 
-version: 0.0.1+2
+version: 0.0.1+3
 
 environment:
   sdk: ^3.9.0
@@ -17,7 +17,8 @@ dependencies:
   url_launcher: ^6.3.2
   flutter_map: ^8.2.2
   latlong2: ^0.9.1
-  # sentry_flutter: ^9.1.0
+  sentry_flutter: ^9.8.0
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:
@@ -28,32 +29,5 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
   assets:
     - assets/icon.png
-
-  # An image asset can refer to one or more resolution-specific "variants", see
-  # https://flutter.dev/to/resolution-aware-images
-
-  # For details regarding adding assets from package dependencies, see
-  # https://flutter.dev/to/asset-from-package
-
-  # To add custom fonts to your application, add a fonts section here,
-  # in this "flutter" section. Each entry in this list should have a
-  # "family" key with the font family name, and a "fonts" key with a
-  # list giving the asset and other descriptors for the font. For
-  # example:
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
-  #         style: italic
-  #   - family: Trajan Pro
-  #     fonts:
-  #       - asset: fonts/TrajanPro.ttf
-  #       - asset: fonts/TrajanPro_Bold.ttf
-  #         weight: 700
-  #
-  # For details regarding fonts from package dependencies,
-  # see https://flutter.dev/to/font-from-package

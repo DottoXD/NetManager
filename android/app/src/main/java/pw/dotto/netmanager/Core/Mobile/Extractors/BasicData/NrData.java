@@ -3,7 +3,7 @@ package pw.dotto.netmanager.Core.Mobile.Extractors.BasicData;
 import pw.dotto.netmanager.Core.Mobile.CellDatas.BasicCellData;
 
 public class NrData {
-    public static BasicCellData get(int nrarfcn, String region) { // might contain a few errors to be fixed...
+    public static BasicCellData get(int nrarfcn, String region) {
         if (nrarfcn >= 422000 && nrarfcn <= 434000)
             return new BasicCellData(1, 2100);
         if (nrarfcn >= 386000 && nrarfcn <= 398000)
@@ -59,7 +59,7 @@ public class NrData {
         if ("US".equals(region) && nrarfcn >= 636667 && nrarfcn <= 646666)
             return new BasicCellData(48, 3600);
 
-        if ("EU".equals(region) && nrarfcn >= 285400 && nrarfcn <= 286400)
+        if ("APAC".equals(region) && nrarfcn >= 285400 && nrarfcn <= 286400)
             return new BasicCellData(51, 1500);
         if ("EU".equals(region) && nrarfcn >= 286400 && nrarfcn <= 303400)
             return new BasicCellData(50, 1500);
@@ -85,7 +85,6 @@ public class NrData {
             return new BasicCellData(76, 1500);
         if ("US".equals(region) && nrarfcn >= 295000 && nrarfcn <= 303600)
             return new BasicCellData(74, 1500);
-
         if ("EU".equals(region) && nrarfcn >= 295000 && nrarfcn <= 303600)
             return new BasicCellData(75, 1500);
 
@@ -99,14 +98,14 @@ public class NrData {
             return new BasicCellData(80, 1800);
         if (nrarfcn >= 197000 && nrarfcn <= 201600)
             return new BasicCellData(81, 850);
-        if ("EU".equals(region) && nrarfcn >= 185000 && nrarfcn <= 192000)
+        if ("EU".equals(region) && nrarfcn >= 166400 && nrarfcn <= 172400)
             return new BasicCellData(82, 900);
         if ("EU".equals(region) && nrarfcn >= 143400 && nrarfcn <= 151600)
             return new BasicCellData(83, 700);
-        if (nrarfcn >= 151600 && nrarfcn <= 160600)
-            return new BasicCellData(84, 700);
-        if ("US".equals(region) && nrarfcn >= 499200 && nrarfcn <= 505000)
-            return new BasicCellData(85, 2600);
+        if (nrarfcn >= 384000 && nrarfcn <= 396000)
+            return new BasicCellData(84, 2100);
+        if ("US".equals(region) && nrarfcn >= 145600 && nrarfcn <= 149200)
+            return new BasicCellData(85, 700);
         if ("US".equals(region) && nrarfcn >= 285400 && nrarfcn <= 286400)
             return new BasicCellData(86, 1500);
         if ("US".equals(region) && nrarfcn >= 410000 && nrarfcn <= 415000)

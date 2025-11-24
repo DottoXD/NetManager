@@ -6,6 +6,7 @@ import 'package:netmanager/components/dialogs/about.dart';
 import 'package:netmanager/components/dialogs/debug_log.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/utils/color_selection.dart';
+import 'package:netmanager/types/device/permissions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -47,6 +48,7 @@ class _SettingsBodyState extends State<SettingsBody> {
   bool _startupMonitoring = false;
   bool _backgroundService = false;
   bool _analytics = false;
+  bool _checkUpdates = false;
   bool _logEvents = false;
   bool _metricSystem = true;
   int _maximumLogs = 10;
@@ -76,13 +78,15 @@ class _SettingsBodyState extends State<SettingsBody> {
     _selection = positionPrecisions[_positionPrecision];
   }
 
-  void updateData() {
+  Future<void> updateData() async {
     setState(() {
       _startupMonitoring =
           sharedPreferences.getBool("startupMonitoring") ?? _startupMonitoring;
       _backgroundService =
           sharedPreferences.getBool("backgroundService") ?? _backgroundService;
       _analytics = sharedPreferences.getBool("analytics") ?? _analytics;
+      _checkUpdates =
+          sharedPreferences.getBool("checkUpdates") ?? _checkUpdates;
       _logEvents = sharedPreferences.getBool("logEvents") ?? _logEvents;
       _metricSystem =
           sharedPreferences.getBool("metricSystem") ?? _metricSystem;
@@ -103,6 +107,74 @@ class _SettingsBodyState extends State<SettingsBody> {
       _dynamicTheme =
           sharedPreferences.getBool("dynamicTheme") ?? _dynamicTheme;
       _debug = sharedPreferences.getBool("debug") ?? _debug;
+    });
+  }
+
+  Future<void> onToggleStartupMonitoring(bool value) async {
+    bool perms =
+        await platform.invokeMethod<bool>("checkPermissions", {
+          "perms": Permissions.POST_NOTIFICATIONS,
+        }) ??
+        false;
+
+    bool finalValue = value;
+
+    if (value && !perms) {
+      await platform.invokeMethod<bool>("requestPermissions", {
+        "perms": Permissions.POST_NOTIFICATIONS,
+      });
+
+      bool finalPerms =
+          await platform.invokeMethod<bool>("checkPermissions", {
+            "perms": Permissions.POST_NOTIFICATIONS,
+          }) ??
+          false;
+
+      if (!finalPerms) {
+        finalValue = false;
+      }
+    }
+
+    setBool("startupMonitoring", finalValue);
+    setState(() {
+      _startupMonitoring = finalValue;
+    });
+  }
+
+  Future<void> onToggleBackgroundService(bool value) async {
+    bool perms =
+        await platform.invokeMethod<bool>("checkPermissions", {
+          "perms": Permissions.POST_NOTIFICATIONS,
+        }) ??
+        false;
+
+    bool finalValue = value;
+
+    if (value && !perms) {
+      await platform.invokeMethod<bool>("requestPermissions", {
+        "perms": Permissions.POST_NOTIFICATIONS,
+      });
+
+      bool finalPerms =
+          await platform.invokeMethod<bool>("checkPermissions", {
+            "perms": Permissions.POST_NOTIFICATIONS,
+          }) ??
+          false;
+
+      if (!finalPerms) {
+        finalValue = false;
+      }
+    }
+
+    if (finalValue) {
+      await platform.invokeMethod<void>("sendNotification");
+    } else {
+      await platform.invokeMethod<void>("cancelNotification");
+    }
+
+    setBool("backgroundService", finalValue);
+    setState(() {
+      _backgroundService = finalValue;
     });
   }
 
@@ -198,17 +270,12 @@ class _SettingsBodyState extends State<SettingsBody> {
         children: <Widget>[
           Row(
             children: [
-              //Expanded(child: LinearProgressIndicator()),
-            ],
-          ),
-          Row(
-            children: [
               Expanded(
                 child: ListView(
                   shrinkWrap: true,
                   physics: ClampingScrollPhysics(),
                   children: <Widget>[
-                    /*ListTile(
+                    ListTile(
                       title: Text("Analytics"),
                       subtitle: Text(
                         "Share anonymous insights to help me improve NetManager.",
@@ -221,10 +288,23 @@ class _SettingsBodyState extends State<SettingsBody> {
                         },
                       ),
                     ),
+                    ListTile(
+                      title: Text("Check for updates"),
+                      subtitle: Text(
+                        "Let NetManager automatically look for updates when the app is opened.",
+                      ),
+                      trailing: Switch(
+                        value: _checkUpdates,
+                        onChanged: (bool value) {
+                          setBool("checkUpdates", value);
+                          updateData();
+                        },
+                      ),
+                    ),
                     Divider(
                       height: 0,
                       color: Theme.of(context).colorScheme.outlineVariant,
-                    ),*/
+                    ),
                     ListTile(
                       title: Text(
                         "Position precision (${positionPrecisions[_positionPrecision]})",
@@ -246,10 +326,8 @@ class _SettingsBodyState extends State<SettingsBody> {
                       ),
                       trailing: Switch(
                         value: _startupMonitoring,
-                        onChanged: (bool value) {
-                          setBool("startupMonitoring", value);
-                          updateData();
-                        },
+                        onChanged: (bool value) async =>
+                            await onToggleStartupMonitoring(value),
                       ),
                     ),
                     ListTile(
@@ -259,10 +337,8 @@ class _SettingsBodyState extends State<SettingsBody> {
                       ),
                       trailing: Switch(
                         value: _backgroundService,
-                        onChanged: (bool value) {
-                          setBool("backgroundService", value);
-                          updateData();
-                        },
+                        onChanged: (bool value) async =>
+                            await onToggleBackgroundService(value),
                       ),
                     ),
                     ListTile(

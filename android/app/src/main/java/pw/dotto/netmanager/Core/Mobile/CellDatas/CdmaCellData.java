@@ -8,8 +8,8 @@ public class CdmaCellData extends CellData {
         super(
                 "Cell ID",
                 "BTS",
-                "-",
-                "RSCP",
+                "RSSI",
+                "EC/IO",
                 "-",
                 "PN",
                 "LAC",

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 class FullAboutDialog extends StatelessWidget {
   final MethodChannel platform;
@@ -8,15 +9,15 @@ class FullAboutDialog extends StatelessWidget {
 
   static const gitCommit = String.fromEnvironment(
     'GIT_COMMIT',
-    defaultValue: 'devel',
+    defaultValue: 'development',
   );
 
   Future<String> getVersion() async {
     try {
       final version = await platform.invokeMethod("getVersion");
       return version ?? "Unknown";
-    } on PlatformException catch (_) {
-      //super error, handle it
+    } on PlatformException catch (e) {
+      await Sentry.captureException(e, stackTrace: e.stacktrace);
       return "Unknown";
     }
   }

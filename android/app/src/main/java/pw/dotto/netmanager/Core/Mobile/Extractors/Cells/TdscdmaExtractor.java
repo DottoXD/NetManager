@@ -11,11 +11,11 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.TdscdmaCellData;
 public class TdscdmaExtractor {
     @NonNull
     public static TdscdmaCellData get(CellInfoTdscdma baseCell) {
-        CellIdentityTdscdma identityTdscdma = (CellIdentityTdscdma) baseCell.getCellIdentity();
+        CellIdentityTdscdma identityTdscdma = baseCell.getCellIdentity();
 
         int band = -1;
 
-        CellSignalStrengthTdscdma signalTdscdma = (CellSignalStrengthTdscdma) baseCell.getCellSignalStrength();
+        CellSignalStrengthTdscdma signalTdscdma = baseCell.getCellSignalStrength();
         return new TdscdmaCellData(
                 String.valueOf(identityTdscdma.getCid()),
                 signalTdscdma.getDbm(),

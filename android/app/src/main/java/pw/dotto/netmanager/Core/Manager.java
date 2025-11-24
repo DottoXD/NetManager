@@ -90,8 +90,9 @@ public class Manager {
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
       SubscriptionManager subscriptionManager = getSubscriptionManager();
-      if(subscriptionManager != null) {
-        if(subscriptionChangedListener != null) subscriptionManager.removeOnSubscriptionsChangedListener(subscriptionChangedListener);
+      if (subscriptionManager != null) {
+        if (subscriptionChangedListener != null)
+          subscriptionManager.removeOnSubscriptionsChangedListener(subscriptionChangedListener);
 
         subscriptionChangedListener = new SubscriptionChangedListener(this::updateTelephonyManagers);
         subscriptionManager.addOnSubscriptionsChangedListener(context.getMainExecutor(), subscriptionChangedListener);
@@ -109,7 +110,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public String getFullHeaderString() {
-    if (!Permissions.check(context))
+    if (!Permissions.check(context, Permissions.READ_PHONE_STATE))
       return "Unknown";
 
     StringBuilder str = new StringBuilder();
@@ -171,7 +172,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public String getSimCarrier(TelephonyManager telephony) {
-    if (telephony == null || !Permissions.check(context))
+    if (telephony == null || !Permissions.check(context, Permissions.READ_PHONE_STATE))
       return "NetManager";
 
     return telephony.getNetworkOperatorName();
@@ -191,7 +192,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public String getSimOperator(TelephonyManager telephony) {
-    if (telephony == null || !Permissions.check(context))
+    if (telephony == null || !Permissions.check(context, Permissions.READ_PHONE_STATE))
       return "NetManager";
 
     return telephony.getSimOperatorName();
@@ -211,7 +212,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public SIMData getSimNetworkData(TelephonyManager telephony) {
-    if (!Permissions.check(context))
+    if (!Permissions.check(context, Permissions.READ_PHONE_STATE))
       return null;
 
     if (telephony == null) {
@@ -625,22 +626,32 @@ public class Manager {
         if (nrCell.getProcessedSignal() == CellInfo.UNAVAILABLE && ssNr.getSsRsrp() != CellInfo.UNAVAILABLE) {
           nrCell.setProcessedSignal(ssNr.getSsRsrp());
         }
+
         if (nrCell.getRawSignal() == CellInfo.UNAVAILABLE && ssNr.getCsiRsrp() != CellInfo.UNAVAILABLE) {
           nrCell.setRawSignal(ssNr.getCsiRsrp());
         }
+
         if (nrCell.getSignalNoise() == CellInfo.UNAVAILABLE) {
           if (ssNr.getSsSinr() != CellInfo.UNAVAILABLE) {
             nrCell.setSignalNoise(ssNr.getSsSinr());
           } else if (ssNr.getCsiSinr() != CellInfo.UNAVAILABLE) {
             nrCell.setSignalNoise(ssNr.getCsiSinr());
+            nrCell.setSignalNoiseString("CSI SINR");
           }
         }
+
         if (nrCell.getSignalQuality() == CellInfo.UNAVAILABLE) {
           if (ssNr.getSsRsrq() != CellInfo.UNAVAILABLE) {
             nrCell.setSignalQuality(ssNr.getSsRsrq());
           } else if (ssNr.getCsiRsrq() != CellInfo.UNAVAILABLE) {
             nrCell.setSignalQuality(ssNr.getCsiRsrq());
+            nrCell.setSignalNoiseString("CSI RSRQ");
           }
+        }
+
+        if (nrCell.getTimingAdvance() == CellInfo.UNAVAILABLE) {
+          nrCell.setTimingAdvance(
+              Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE ? ssNr.getTimingAdvanceMicros() : 0);
         }
       }
       // to be moved out of here ---
@@ -705,7 +716,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public int getSimNetworkGen(TelephonyManager telephony) {
-    if (telephony == null || !Permissions.check(context))
+    if (telephony == null || !Permissions.check(context, Permissions.READ_PHONE_STATE))
       return -1;
 
     int networkType = 0;
@@ -773,7 +784,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public String getPlmn(TelephonyManager telephony) {
-    if (telephony == null || !Permissions.check(context))
+    if (telephony == null || !Permissions.check(context, Permissions.READ_PHONE_STATE))
       return "00000";
 
     String plmn = null;
@@ -809,7 +820,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public String getNetwork(TelephonyManager telephony) {
-    if (telephony == null || !Permissions.check(context))
+    if (telephony == null || !Permissions.check(context, Permissions.READ_PHONE_STATE))
       return "NetManager";
 
     return telephony.getNetworkOperatorName();
@@ -829,7 +840,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   private void updateTelephonyManagers() {
-    if (!Permissions.check(context))
+    if (!Permissions.check(context, Permissions.READ_PHONE_STATE))
       return;
 
     SubscriptionManager manager = getSubscriptionManager();
@@ -990,7 +1001,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public int getSimCount() {
-    if (!Permissions.check(context))
+    if (!Permissions.check(context, Permissions.READ_PHONE_STATE))
       return 0;
 
     SubscriptionManager manager = getSubscriptionManager();
@@ -1003,7 +1014,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public boolean getNsaStatus(TelephonyManager telephony) { // fallback
-    if (telephony == null || !Permissions.check(context))
+    if (telephony == null || !Permissions.check(context, Permissions.READ_PHONE_STATE))
       return false;
 
     ServiceState state = telephony.getServiceState(); // no serviceStates[] since if nsa[] is null it will be null too
@@ -1043,7 +1054,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public int getDataStatus(TelephonyManager telephony) {
-    if (telephony == null || !Permissions.check(context))
+    if (telephony == null || !Permissions.check(context, Permissions.READ_PHONE_STATE))
       return -1;
 
     return telephony.getDataState();
@@ -1075,7 +1086,7 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public CellSignalStrength[] getSignalStrengths(TelephonyManager telephony) {
-    if (telephony == null || !Permissions.check(context))
+    if (telephony == null || !Permissions.check(context, Permissions.READ_PHONE_STATE))
       return null;
 
     SignalStrength signalStrength = telephony.getSignalStrength();

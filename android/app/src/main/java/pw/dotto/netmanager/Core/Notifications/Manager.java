@@ -39,14 +39,14 @@ public class Manager {
         this.context = context;
     }
 
-    public void setupChannel() {
+    public boolean setupChannel() {
         if (context == null)
-            return;
+            return false;
 
         notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
         if (notificationManager == null)
-            return;
+            return false;
 
         notificationChannel = notificationManager.getNotificationChannel(NOTIFICATION_CHANNEL);
         if (notificationChannel == null) {
@@ -80,23 +80,27 @@ public class Manager {
                 Intent.FLAG_ACTIVITY_CLEAR_TASK);
         openPendingIntent = PendingIntent.getActivity(context, 0, openIntent,
                 PendingIntent.FLAG_IMMUTABLE);
+
+        return true;
     }
 
-    public void send() {
-        if (!Permissions.check(context) || (notificationManager == null || notificationChannel == null))
-            return;
+    public boolean send() {
+        if (notificationManager == null || notificationChannel == null)
+            return false;
 
-        build();
+        activeNotification = build();
         if (activeNotification == null)
-            return;
+            return false;
         notificationManager.notify(selectedId, activeNotification.build());
+
+        return true;
     }
 
     public void cancel() {
         notificationManager.cancel(selectedId);
     }
 
-    public void build() { // to be optimised and refactored
+    public String buildContent() {
         StringBuilder contentText = new StringBuilder();
 
         int size = 0;
@@ -179,23 +183,46 @@ public class Manager {
 
         String text = contentText.toString();
 
-        if (text.trim().isBlank())
-            text = "No service";
+        if (text.trim().isBlank()) {
+            int subscriptionCount = context.getManager().getSimCount();
+
+            for (int i = 0; i < subscriptionCount; i++) {
+                if (i > 0)
+                    contentText.append("\n\n");
+                contentText.append("SIM ").append(i + 1).append(" (N/A)\nNo service");
+            }
+
+            if (subscriptionCount == 0)
+                contentText.append("No SIM cards detected");
+
+            text = contentText.toString();
+        }
 
         if (size == 1)
             text = text.replace("\n\n", "");
 
-        activeNotification = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
-                .setSmallIcon(R.drawable.ic_launcher_monochrome)
-                .setContentTitle(context.getManager().getFullHeaderString())
-                .setContentText(text)
-                .setContentIntent(openPendingIntent)
-                .setPriority(NotificationCompat.PRIORITY_MAX)
-                .setStyle(new NotificationCompat.BigTextStyle())
-                .setOngoing(true)
-                .setSilent(true)
-                .addAction(R.drawable.ic_launcher_monochrome, "Close", closingPendingIntent)
-                .setAllowSystemGeneratedContextualActions(false);
+        return text;
+    }
+
+    public NotificationCompat.Builder build() {
+        NotificationCompat.Builder notification = null;
+
+        try {
+            notification = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
+                    .setSmallIcon(R.drawable.ic_launcher_monochrome)
+                    .setContentTitle(context.getManager().getFullHeaderString())
+                    .setContentText(buildContent())
+                    .setContentIntent(openPendingIntent)
+                    .setPriority(NotificationCompat.PRIORITY_MAX)
+                    .setStyle(new NotificationCompat.BigTextStyle())
+                    .setOngoing(true)
+                    .setSilent(true)
+                    .addAction(R.drawable.ic_launcher_monochrome, "Close", closingPendingIntent)
+                    .setAllowSystemGeneratedContextualActions(false);
+        } catch (Exception ignored) {
+        }
+
+        return notification;
     }
 
     public Notification getActiveNotification() {

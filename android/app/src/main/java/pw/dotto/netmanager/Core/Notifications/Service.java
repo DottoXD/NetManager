@@ -12,6 +12,8 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 
 import pw.dotto.netmanager.Core.Mobile.SimReceiverManager;
+import pw.dotto.netmanager.Utils.DebugLogger;
+import pw.dotto.netmanager.Utils.Permissions;
 
 public class Service extends android.app.Service {
     private pw.dotto.netmanager.Core.Manager manager;
@@ -40,8 +42,17 @@ public class Service extends android.app.Service {
             sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
         }
 
-        notification.setupChannel();
-        notification.send();
+        if (!notification.setupChannel()) {
+            DebugLogger.add("Unexpected error while creating the notifications channel.");
+            stopSelf();
+            return START_NOT_STICKY;
+        }
+
+        if (!notification.send()) {
+            DebugLogger.add("Unexpected error while sending the notification.");
+            stopSelf();
+            return START_NOT_STICKY;
+        }
 
         int attempts = 0;
         Notification activeNotification = null;
@@ -61,7 +72,8 @@ public class Service extends android.app.Service {
             return START_NOT_STICKY;
         }
 
-        if (sharedPreferences == null || !sharedPreferences.getBoolean("flutter.backgroundService", false)) {
+        if (sharedPreferences == null || !(sharedPreferences.getBoolean("flutter.backgroundService", false)
+                || sharedPreferences.getBoolean("flutter.startupMonitoring", false))) {
             stopSelf();
             return START_NOT_STICKY;
         }
@@ -98,9 +110,11 @@ public class Service extends android.app.Service {
     public void onDestroy() {
         super.onDestroy();
 
-        SimReceiverManager simReceiverManager = manager.getSimReceiverManager();
-        if (simReceiverManager != null)
-            simReceiverManager.unregisterStateReceiver();
+        if (manager != null) {
+            SimReceiverManager simReceiverManager = manager.getSimReceiverManager();
+            if (simReceiverManager != null)
+                simReceiverManager.unregisterStateReceiver();
+        }
 
         if (handler != null)
             handler.removeCallbacks(notificationRunnable);

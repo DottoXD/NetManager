@@ -9,6 +9,7 @@ import 'package:netmanager/components/dialogs/info_modal.dart';
 import 'package:netmanager/types/device/data.dart';
 import 'package:netmanager/types/events/mobile_netmanager_event.dart';
 import 'package:netmanager/types/events/netmanager_event.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TopBar extends StatefulWidget implements PreferredSizeWidget {
@@ -124,8 +125,8 @@ class _TopBarState extends State<TopBar> {
       setState(() {
         _title;
       });
-    } on PlatformException catch (_) {
-      //super error, handle it
+    } on PlatformException catch (e) {
+      await Sentry.captureException(e, stackTrace: e.stacktrace);
     }
   }
 

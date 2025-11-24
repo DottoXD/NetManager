@@ -16,8 +16,7 @@ public class BootReceiver extends BroadcastReceiver {
 
         Intent delayedServiceIntent = new Intent(context, DelayedServiceStarter.class);
 
-        if (sharedPreferences != null && sharedPreferences.getBoolean("flutter.startupMonitoring", false)
-                && sharedPreferences.getBoolean("flutter.backgroundService", false))
+        if (sharedPreferences != null && sharedPreferences.getBoolean("flutter.startupMonitoring", false))
             context.startForegroundService(delayedServiceIntent);
     }
 }

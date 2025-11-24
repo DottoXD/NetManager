@@ -3,13 +3,15 @@ package pw.dotto.netmanager.Core.Mobile.Extractors.BasicData;
 import pw.dotto.netmanager.Core.Mobile.CellDatas.BasicCellData;
 
 public class GsmData {
-    public static BasicCellData get(int arfcn) {
-        if (arfcn >= 512 && arfcn <= 810)
+    public static BasicCellData get(int arfcn, String region) {
+        if ("US".equals(region) && arfcn >= 512 && arfcn <= 810)
             return new BasicCellData(2, 1900);
-        if (arfcn >= 811 && arfcn <= 885)
+        if (arfcn >= 512 && arfcn <= 885)
             return new BasicCellData(3, 1800);
         if (arfcn >= 128 && arfcn <= 251)
             return new BasicCellData(5, 850);
+        if (arfcn >= 438 && arfcn <= 511)
+            return new BasicCellData(6, 750);
         if (arfcn >= 0 && arfcn <= 124 || arfcn >= 955 && arfcn <= 1023)
             return new BasicCellData(8, 900);
         if (arfcn >= 259 && arfcn <= 293)

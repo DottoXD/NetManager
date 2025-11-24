@@ -8,7 +8,7 @@ public class WcdmaCellData extends CellData {
         super(
                 "Cell ID",
                 "NodeB",
-                "-",
+                "EcNo",
                 "RSCP",
                 "UARFCN",
                 "PSC",
@@ -17,7 +17,7 @@ public class WcdmaCellData extends CellData {
                 "-",
                 "-",
                 "-",
-                "-",
+                "Band",
                 cellIdentifier,
                 rawSignal,
                 processedSignal,

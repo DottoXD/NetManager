@@ -34,7 +34,9 @@ public class DataManager {
         } else if (cellData instanceof WcdmaCellData || cellData instanceof TdscdmaCellData) {
             return UmtsData.get(cellData.getChannelNumber());
         } else if (cellData instanceof GsmCellData) {
-            return GsmData.get(cellData.getChannelNumber());
+            String region = getRegion(mcc);
+
+            return GsmData.get(cellData.getChannelNumber(), region);
         }
 
         return new BasicCellData(-1, -1);
