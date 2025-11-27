@@ -136,10 +136,15 @@ public class Manager {
         if (networkGen == 4 && getNsaStatus(0))
           networkGen = 5;
 
-        str.append(firstManager.getNetworkOperatorName()).append(" ").append(
-            networkGen == 0 ? "Unknown"
-                : (networkGen < 0 ? "No service"
-                    : networkGen + "G" + (networkGen == 5 ? (nrSa ? " SA" : " NSA") : "")));
+        if (firstManager.getNetworkOperatorName() != null
+            && !firstManager.getNetworkOperatorName().trim().isEmpty())
+          str.append(firstManager.getNetworkOperatorName()).append(" ").append(
+              networkGen == 0 ? "Unknown"
+                  : (networkGen < 0 ? "No service"
+                      : networkGen + "G" + (networkGen == 5 ? (nrSa ? " SA" : " NSA") : "")));
+        else
+          str.append("Unknown");
+
       } else
         str.append("Unknown");
 
@@ -404,7 +409,6 @@ public class Manager {
               LteCellData lteCellData = LteExtractor.get((CellInfoLte) baseCell);
               String mccMnc = ((CellInfoLte) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoLte) baseCell).getCellIdentity().getMncString();
-
               if (!mccMnc.contains("null")) {
                 if (mccMnc.equals(simOperator))
                   data.addNeighborCell(lteCellData);
@@ -651,7 +655,7 @@ public class Manager {
 
         if (nrCell.getTimingAdvance() == CellInfo.UNAVAILABLE) {
           nrCell.setTimingAdvance(
-              Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE ? ssNr.getTimingAdvanceMicros() : 0);
+              Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE ? ssNr.getTimingAdvanceMicros() : CellInfo.UNAVAILABLE);
         }
       }
       // to be moved out of here ---

@@ -649,7 +649,8 @@ class _HomeBodyState extends State<HomeBody> {
     }
 
     if (isValidInt(cell.timingAdvance) &&
-        isValidString(cell.timingAdvanceString)) {
+        isValidString(cell.timingAdvanceString) &&
+        cell.isRegistered) {
       cellContent += "${cell.timingAdvanceString}: ${cell.timingAdvance}";
     }
 

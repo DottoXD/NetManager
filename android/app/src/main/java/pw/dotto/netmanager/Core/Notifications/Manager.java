@@ -76,8 +76,7 @@ public class Manager {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         Intent openIntent = new Intent(context, MainActivity.class);
-        openIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
-                Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        openIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         openPendingIntent = PendingIntent.getActivity(context, 0, openIntent,
                 PendingIntent.FLAG_IMMUTABLE);
 

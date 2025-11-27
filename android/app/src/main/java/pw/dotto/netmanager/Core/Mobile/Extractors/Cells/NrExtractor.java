@@ -33,9 +33,7 @@ public class NrExtractor {
                 signalNr.getSsRsrq(),
                 signalNr.getSsSinr(),
                 (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
-                        ? (signalNr.getTimingAdvanceMicros() == Integer.MAX_VALUE ? -1
-                                : signalNr.getTimingAdvanceMicros())
-                        : -1),
+                        ? signalNr.getTimingAdvanceMicros() : CellInfo.UNAVAILABLE),
                 -1, // identityNr.getBandwidth()
                 band,
                 baseCell.isRegistered());
