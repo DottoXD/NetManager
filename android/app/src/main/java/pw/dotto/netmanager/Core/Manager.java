@@ -61,6 +61,7 @@ import pw.dotto.netmanager.Utils.DebugLogger;
 import pw.dotto.netmanager.Utils.Mobile;
 import pw.dotto.netmanager.Utils.Permissions;
 
+// todo: optimise, completely refactor and split into multiple classes. current code is slow and unreadable
 public class Manager {
   private final Context context;
 
@@ -80,6 +81,8 @@ public class Manager {
   private Date lastModemUpdate = null;
   private static final int updateInterval = 10;
 
+  public int CELL_INFO_UNAVAILABLE = Integer.MAX_VALUE;
+
   public Manager(Context context) {
     this.context = context;
 
@@ -97,6 +100,10 @@ public class Manager {
         subscriptionChangedListener = new SubscriptionChangedListener(this::updateTelephonyManagers);
         subscriptionManager.addOnSubscriptionsChangedListener(context.getMainExecutor(), subscriptionChangedListener);
       }
+    }
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      CELL_INFO_UNAVAILABLE = CellInfo.UNAVAILABLE;
     }
   }
 
@@ -244,8 +251,8 @@ public class Manager {
     }
 
     try {
-      if (lastModemUpdate == null
-          || (lastModemUpdate.toInstant().plusSeconds(updateInterval).isBefore(new Date().toInstant()))) {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && (lastModemUpdate == null
+          || (lastModemUpdate.toInstant().plusSeconds(updateInterval).isBefore(new Date().toInstant())))) {
         telephony.requestCellInfoUpdate(ContextCompat.getMainExecutor(context),
             new TelephonyManager.CellInfoCallback() {
               @Override
@@ -273,7 +280,7 @@ public class Manager {
             } else if (baseCell instanceof CellInfoCdma) {
               CdmaCellData cdmaCellData = CdmaExtractor.get((CellInfoCdma) baseCell);
               data.setPrimaryCell(cdmaCellData);
-            } else if (baseCell instanceof CellInfoTdscdma) {
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && baseCell instanceof CellInfoTdscdma) {
               TdscdmaCellData tdscdmaCellData = TdscdmaExtractor.get((CellInfoTdscdma) baseCell);
               String mccMnc = ((CellInfoTdscdma) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoTdscdma) baseCell).getCellIdentity().getMncString();
@@ -294,7 +301,7 @@ public class Manager {
 
               if (mccMnc.equals(simOperator))
                 data.setPrimaryCell(lteCellData);
-            } else if (baseCell instanceof CellInfoNr) {
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && baseCell instanceof CellInfoNr) {
               NrCellData nrCellData = NrExtractor.get((CellInfoNr) baseCell);
 
               if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -322,7 +329,7 @@ public class Manager {
             } else if (baseCell instanceof CellInfoCdma) {
               CdmaCellData cdmaCellData = CdmaExtractor.get((CellInfoCdma) baseCell);
               data.addActiveCell(cdmaCellData);
-            } else if (baseCell instanceof CellInfoTdscdma) {
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && baseCell instanceof CellInfoTdscdma) {
               TdscdmaCellData tdscdmaCellData = TdscdmaExtractor.get((CellInfoTdscdma) baseCell);
               String mccMnc = ((CellInfoTdscdma) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoTdscdma) baseCell).getCellIdentity().getMncString();
@@ -352,7 +359,7 @@ public class Manager {
                   data.addActiveCell(lteCellData);
               } else
                 data.addActiveCell(lteCellData);
-            } else if (baseCell instanceof CellInfoNr) {
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && baseCell instanceof CellInfoNr) {
               NrCellData nrCellData = NrExtractor.get((CellInfoNr) baseCell);
 
               if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -385,7 +392,7 @@ public class Manager {
             } else if (baseCell instanceof CellInfoCdma) {
               CdmaCellData cdmaCellData = CdmaExtractor.get((CellInfoCdma) baseCell);
               data.addNeighborCell(cdmaCellData);
-            } else if (baseCell instanceof CellInfoTdscdma) {
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && baseCell instanceof CellInfoTdscdma) {
               TdscdmaCellData tdscdmaCellData = TdscdmaExtractor.get((CellInfoTdscdma) baseCell);
               String mccMnc = ((CellInfoTdscdma) baseCell).getCellIdentity().getMccString()
                   + ((CellInfoTdscdma) baseCell).getCellIdentity().getMncString();
@@ -414,7 +421,7 @@ public class Manager {
                   data.addNeighborCell(lteCellData);
               } else
                 data.addNeighborCell(lteCellData);
-            } else if (baseCell instanceof CellInfoNr) {
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && baseCell instanceof CellInfoNr) {
               NrCellData nrCellData = NrExtractor.get((CellInfoNr) baseCell);
 
               if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -599,72 +606,71 @@ public class Manager {
       for (CellData cellData : data.getActiveCells()) {
         if (cellData instanceof NrCellData) {
           NrCellData nrCellData = (NrCellData) cellData;
-          if (nrCellData.getProcessedSignal() == CellInfo.UNAVAILABLE
-              || nrCellData.getRawSignal() == CellInfo.UNAVAILABLE
-              || nrCellData.getSignalNoise() == CellInfo.UNAVAILABLE
-              || nrCellData.getSignalQuality() == CellInfo.UNAVAILABLE)
+          if (nrCellData.getProcessedSignal() == CELL_INFO_UNAVAILABLE
+              || nrCellData.getRawSignal() == CELL_INFO_UNAVAILABLE
+              || nrCellData.getSignalNoise() == CELL_INFO_UNAVAILABLE
+              || nrCellData.getSignalQuality() == CELL_INFO_UNAVAILABLE)
             nrCells.add(nrCellData);
         }
       }
-      nrCells.sort((a, b) -> Integer.compare(b.getBasicCellData().getFrequency(), a.getBasicCellData().getFrequency())); // n78
-                                                                                                                         // ->
-                                                                                                                         // n1
-                                                                                                                         // ->
-                                                                                                                         // n28
+      nrCells.sort((a, b) -> Integer.compare(b.getBasicCellData().getFrequency(), a.getBasicCellData().getFrequency()));
 
-      List<CellSignalStrengthNr> signalStrengths = new ArrayList<>();
-      SignalStrength signalStrength = telephony.getSignalStrength();
-      if (signalStrength != null) {
-        for (CellSignalStrength cellSignalStrength : signalStrength.getCellSignalStrengths()) {
-          if (cellSignalStrength instanceof CellSignalStrengthNr)
-            signalStrengths.add((CellSignalStrengthNr) cellSignalStrength);
-        }
-      }
-      signalStrengths.sort(Comparator.comparingInt(CellSignalStrengthNr::getSsRsrp)); // -110dBm -> -99dBm -> -78dBm
-
-      int limit = Math.min(nrCells.size(), signalStrengths.size());
-      for (int i = 0; i < limit; i++) {
-        NrCellData nrCell = nrCells.get(i);
-        CellSignalStrengthNr ssNr = signalStrengths.get(i);
-
-        if (nrCell.getProcessedSignal() == CellInfo.UNAVAILABLE && ssNr.getSsRsrp() != CellInfo.UNAVAILABLE) {
-          nrCell.setProcessedSignal(ssNr.getSsRsrp());
-        }
-
-        if (nrCell.getRawSignal() == CellInfo.UNAVAILABLE && ssNr.getCsiRsrp() != CellInfo.UNAVAILABLE) {
-          nrCell.setRawSignal(ssNr.getCsiRsrp());
-        }
-
-        if (nrCell.getSignalNoise() == CellInfo.UNAVAILABLE) {
-          if (ssNr.getSsSinr() != CellInfo.UNAVAILABLE) {
-            nrCell.setSignalNoise(ssNr.getSsSinr());
-          } else if (ssNr.getCsiSinr() != CellInfo.UNAVAILABLE) {
-            nrCell.setSignalNoise(ssNr.getCsiSinr());
-            nrCell.setSignalNoiseString("CSI SINR");
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        List<CellSignalStrengthNr> signalStrengths = new ArrayList<>();
+        SignalStrength signalStrength = telephony.getSignalStrength();
+        if (signalStrength != null) {
+          for (CellSignalStrength cellSignalStrength : signalStrength.getCellSignalStrengths()) {
+            if (cellSignalStrength instanceof CellSignalStrengthNr)
+              signalStrengths.add((CellSignalStrengthNr) cellSignalStrength);
           }
         }
+        signalStrengths.sort(Comparator.comparingInt(CellSignalStrengthNr::getSsRsrp)); // -110dBm -> -99dBm -> -78dBm
 
-        if (nrCell.getSignalQuality() == CellInfo.UNAVAILABLE) {
-          if (ssNr.getSsRsrq() != CellInfo.UNAVAILABLE) {
-            nrCell.setSignalQuality(ssNr.getSsRsrq());
-          } else if (ssNr.getCsiRsrq() != CellInfo.UNAVAILABLE) {
-            nrCell.setSignalQuality(ssNr.getCsiRsrq());
-            nrCell.setSignalNoiseString("CSI RSRQ");
+        int limit = Math.min(nrCells.size(), signalStrengths.size());
+        for (int i = 0; i < limit; i++) {
+          NrCellData nrCell = nrCells.get(i);
+          CellSignalStrengthNr ssNr = signalStrengths.get(i);
+
+          if (nrCell.getProcessedSignal() == CELL_INFO_UNAVAILABLE && ssNr.getSsRsrp() != CELL_INFO_UNAVAILABLE) {
+            nrCell.setProcessedSignal(ssNr.getSsRsrp());
           }
-        }
 
-        if (nrCell.getTimingAdvance() == CellInfo.UNAVAILABLE) {
-          nrCell.setTimingAdvance(
-              Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE ? ssNr.getTimingAdvanceMicros() : CellInfo.UNAVAILABLE);
+          if (nrCell.getRawSignal() == CELL_INFO_UNAVAILABLE && ssNr.getCsiRsrp() != CELL_INFO_UNAVAILABLE) {
+            nrCell.setRawSignal(ssNr.getCsiRsrp());
+          }
+
+          if (nrCell.getSignalNoise() == CELL_INFO_UNAVAILABLE) {
+            if (ssNr.getSsSinr() != CELL_INFO_UNAVAILABLE) {
+              nrCell.setSignalNoise(ssNr.getSsSinr());
+            } else if (ssNr.getCsiSinr() != CELL_INFO_UNAVAILABLE) {
+              nrCell.setSignalNoise(ssNr.getCsiSinr());
+              nrCell.setSignalNoiseString("CSI SINR");
+            }
+          }
+
+          if (nrCell.getSignalQuality() == CELL_INFO_UNAVAILABLE) {
+            if (ssNr.getSsRsrq() != CELL_INFO_UNAVAILABLE) {
+              nrCell.setSignalQuality(ssNr.getSsRsrq());
+            } else if (ssNr.getCsiRsrq() != CELL_INFO_UNAVAILABLE) {
+              nrCell.setSignalQuality(ssNr.getCsiRsrq());
+              nrCell.setSignalNoiseString("CSI RSRQ");
+            }
+          }
+
+          if (nrCell.getTimingAdvance() == CELL_INFO_UNAVAILABLE) {
+            nrCell.setTimingAdvance(
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE ? ssNr.getTimingAdvanceMicros()
+                    : CELL_INFO_UNAVAILABLE);
+          }
         }
       }
       // to be moved out of here ---
 
       // total bandwidth calculation
-      if (!(data.getPrimaryCell().getBandwidth() < 0 || data.getPrimaryCell().getBandwidth() == CellInfo.UNAVAILABLE))
+      if (!(data.getPrimaryCell().getBandwidth() < 0 || data.getPrimaryCell().getBandwidth() == CELL_INFO_UNAVAILABLE))
         data.setActiveBw(data.getPrimaryCell().getBandwidth());
       for (CellData cellData : data.getActiveCells()) {
-        if (!(cellData.getBandwidth() < 0 || cellData.getBandwidth() == CellInfo.UNAVAILABLE)
+        if (!(cellData.getBandwidth() < 0 || cellData.getBandwidth() == CELL_INFO_UNAVAILABLE)
             && !data.getPrimaryCell().equals(cellData))
           data.setActiveBw(data.getActiveBw() + cellData.getBandwidth());
       }
@@ -686,10 +692,10 @@ public class Manager {
 
           saveEvent(EventTypes.MOBILE_BAND_CHANGED, 0,
               (primaryCell instanceof NrCellData ? "N" : "B")
-                  + primaryCell.getBand());
+                  + (primaryCell.getBand() == -1 ? primaryCell.getBasicCellData().getBand() : primaryCell.getBand()));
 
           try {
-            long node = Long.parseLong(primaryCell.getCellIdentifierString()) / Mobile.getFactor(primaryCell);
+            long node = Long.parseLong(primaryCell.getCellIdentifier()) / Mobile.getFactor(primaryCell);
             saveEvent(EventTypes.MOBILE_NODE_CHANGED, 0, String.valueOf(node));
           } catch (Exception ignored) {
             saveEvent(EventTypes.MOBILE_NODE_CHANGED, 0, "N/A");
@@ -703,10 +709,10 @@ public class Manager {
 
           saveEvent(EventTypes.MOBILE_BAND_CHANGED, 1,
               (primaryCell instanceof NrCellData ? "N" : "B")
-                  + primaryCell.getBand());
+                  + (primaryCell.getBand() == -1 ? primaryCell.getBasicCellData().getBand() : primaryCell.getBand()));
 
           try {
-            long node = Long.parseLong(primaryCell.getCellIdentifierString()) / Mobile.getFactor(primaryCell);
+            long node = Long.parseLong(primaryCell.getCellIdentifier()) / Mobile.getFactor(primaryCell);
             saveEvent(EventTypes.MOBILE_NODE_CHANGED, 1, String.valueOf(node));
           } catch (Exception ignored) {
             saveEvent(EventTypes.MOBILE_NODE_CHANGED, 1, "N/A");
@@ -1090,7 +1096,8 @@ public class Manager {
 
   @SuppressLint("MissingPermission")
   public CellSignalStrength[] getSignalStrengths(TelephonyManager telephony) {
-    if (telephony == null || !Permissions.check(context, Permissions.READ_PHONE_STATE))
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || telephony == null
+        || !Permissions.check(context, Permissions.READ_PHONE_STATE))
       return null;
 
     SignalStrength signalStrength = telephony.getSignalStrength();

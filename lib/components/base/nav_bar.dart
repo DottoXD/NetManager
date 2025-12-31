@@ -12,11 +12,11 @@ class NavBar extends StatelessWidget {
     int page = currentPage;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
+      value: const SystemUiOverlayStyle(
         systemNavigationBarColor: Color.fromARGB(0, 255, 255, 255),
       ),
       child: NavigationBar(
-        destinations: [
+        destinations: const [
           NavigationDestination(
             icon: Icon(Icons.person_outline_rounded),
             label: "Data",

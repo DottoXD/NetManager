@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:netmanager/components/dialogs/error.dart';
+import 'package:netmanager/components/utils/cell_utils.dart';
 import 'package:netmanager/components/utils/map_overlay.dart';
 import 'package:netmanager/components/utils/map_tile_builder.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
@@ -19,10 +20,10 @@ class MapBody extends StatefulWidget {
     super.key,
     this.onPositionButtonPressed,
   });
+
   final MethodChannel platform;
   final SharedPreferences sharedPreferences;
   final ValueNotifier<int> platformSignalNotifier;
-
   final ValueSetter<VoidCallback>? onPositionButtonPressed;
 
   @override
@@ -127,7 +128,7 @@ class _MapBodyState extends State<MapBody> {
       });
 
       if (init || _follow) {
-        if (oldLocation == null || init) {
+        if (oldLocation == null) {
           mapController.move(_currentLocation!, mapController.camera.zoom);
         } else {
           animatedUpdate(
@@ -161,7 +162,7 @@ class _MapBodyState extends State<MapBody> {
   }
 
   void updateLocation() async {
-    _timer = Timer.periodic(Duration(seconds: 3), (timer) async {
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) async {
       if (mounted) await setLocation(false);
     });
   }
@@ -183,10 +184,24 @@ class _MapBodyState extends State<MapBody> {
 
       setState(() {
         signalStrength = "${simData.primaryCell.processedSignal}dBm";
-        signalStrengthString = simData
-            .primaryCell
-            .processedSignalString; // gotta add fallback to rssi
+        signalStrengthString = simData.primaryCell.processedSignalString;
         cellId = simData.primaryCell.cellIdentifier;
+
+        if (!isValidInt(simData.primaryCell.processedSignal) ||
+            signalStrengthString.trim() == "") {
+          if (isValidString(simData.primaryCell.rawSignalString) &&
+              isValidInt(simData.primaryCell.rawSignal)) {
+            signalStrength = "${simData.primaryCell.rawSignal}dBm";
+            signalStrengthString = simData.primaryCell.rawSignalString;
+          } else {
+            signalStrength = "N/A";
+            signalStrengthString = "N/A";
+          }
+        }
+
+        if (!isValidString(cellId)) {
+          cellId = "N/A";
+        }
         _isLoading = false;
       });
     } catch (e) {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-final List<int> themeColors = [
+const List<int> themeColors = [
   0xFFD1C4E9, // Purple
   0xFFB3E5FC, // Default cyan
   0xFFE6F0F2, // Gray
@@ -14,8 +14,11 @@ Widget colorSelector(
   int themeColor,
   void Function(int) onColorChanged,
 ) {
+  final primaryColor = Theme.of(context).colorScheme.primary;
+  final surfaceColor = Theme.of(context).colorScheme.surface;
+
   return Padding(
-    padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
     child: Wrap(
       spacing: 8.0,
       runSpacing: 8.0,
@@ -25,12 +28,11 @@ Widget colorSelector(
         return ChoiceChip(
           label: const SizedBox.shrink(),
           selected: selected,
+          checkmarkColor: surfaceColor,
           selectedColor: Color(color),
           backgroundColor: Color(color),
-          shape: CircleBorder(),
-          side: selected
-              ? BorderSide(color: Theme.of(context).colorScheme.primary)
-              : BorderSide.none,
+          shape: const CircleBorder(),
+          side: selected ? BorderSide(color: primaryColor) : BorderSide.none,
           onSelected: (_) {
             onColorChanged(color);
           },

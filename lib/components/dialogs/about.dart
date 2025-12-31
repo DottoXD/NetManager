@@ -12,6 +12,13 @@ class FullAboutDialog extends StatelessWidget {
     defaultValue: 'development',
   );
 
+  static const _darkInvertFilter = ColorFilter.matrix(<double>[
+    -1, 0, 0, 0, 255, // red
+    0, -1, 0, 0, 255, // green
+    0, 0, -1, 0, 255, // blue
+    0, 0, 0, 1, 0,
+  ]);
+
   Future<String> getVersion() async {
     try {
       final version = await platform.invokeMethod("getVersion");
@@ -24,27 +31,25 @@ class FullAboutDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Future<String> versionFuture = getVersion();
+
     return FutureBuilder(
-      future: getVersion(),
+      future: versionFuture,
       builder: (context, snapshot) {
         final version = snapshot.data ?? "N/A";
+        final img = Image.asset("assets/icon.png", width: 48, height: 48);
+
         return AboutDialog(
-          applicationLegalese: "${DateTime.now().year} @ DottoXD",
+          applicationLegalese: "2025 - ${DateTime.now().year} @ DottoXD",
           applicationName: "NetManager",
           applicationIcon: Builder(
             builder: (context) {
               bool lightTheme =
                   Theme.of(context).brightness == Brightness.light;
-              Image img = Image.asset("assets/icon.png", width: 48, height: 48);
 
               if (!lightTheme) {
                 return ColorFiltered(
-                  colorFilter: ColorFilter.matrix(<double>[
-                    -1, 0, 0, 0, 255, // red
-                    0, -1, 0, 0, 255, // green
-                    0, 0, -1, 0, 255, // blue
-                    0, 0, 0, 1, 0,
-                  ]),
+                  colorFilter: _darkInvertFilter,
                   child: img,
                 );
               }

@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 public abstract class NetmanagerEvent {
     private final EventTypes eventType;
     private String oldValue;
-    private final String newValue;
+    private String newValue;
     private final String dateTime;
 
     public NetmanagerEvent(EventTypes eventType, String newValue) {
@@ -18,6 +18,10 @@ public abstract class NetmanagerEvent {
 
     public void setOldValue(String oldValue) {
         this.oldValue = oldValue;
+    }
+
+    public void setNewValue(String newValue) {
+        this.newValue = newValue;
     }
 
     public EventTypes getEventType() {

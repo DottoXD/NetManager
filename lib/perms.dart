@@ -26,6 +26,11 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
   bool? hasPermissions;
   bool? isRefreshing = false;
 
+  static final int _requiredPerms =
+      Permissions.READ_PHONE_STATE |
+      Permissions.ACCESS_FINE_LOCATION |
+      Permissions.ACCESS_BACKGROUND_LOCATION;
+
   @override
   void initState() {
     super.initState();
@@ -57,28 +62,22 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
   Future<void> _checkPermissions() async {
     try {
       final result = await platform.invokeMethod<bool>("checkPermissions", {
-        "perms":
-            Permissions.READ_PHONE_STATE |
-            Permissions.ACCESS_FINE_LOCATION |
-            Permissions.ACCESS_BACKGROUND_LOCATION,
+        "perms": _requiredPerms,
       });
 
-      setState(() {
-        hasPermissions = result ?? false;
-      });
+      final newValue = result ?? false;
+
+      if (hasPermissions != newValue && mounted) {
+        setState(() => hasPermissions = result ?? false);
+      }
     } on PlatformException catch (_) {
-      setState(() {
-        hasPermissions = false;
-      });
+      setState(() => hasPermissions = false);
     }
   }
 
   Future<void> _requestPermissions() async {
     await platform.invokeMethod<bool>("requestPermissions", {
-      "perms":
-          Permissions.READ_PHONE_STATE |
-          Permissions.ACCESS_FINE_LOCATION |
-          Permissions.ACCESS_BACKGROUND_LOCATION,
+      "perms": _requiredPerms,
     });
   }
 
@@ -150,18 +149,14 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if ((hasPermissions == null || hasPermissions == false) &&
         state == AppLifecycleState.resumed) {
-      setState(() {
-        isRefreshing = true;
-      });
+      setState(() => isRefreshing = true);
 
       Future.delayed(const Duration(seconds: 2), () async {
         if (mounted) {
           await _requestPermissions();
           await _checkPermissions();
 
-          setState(() {
-            isRefreshing = false;
-          });
+          setState(() => isRefreshing = false);
         }
       });
     }

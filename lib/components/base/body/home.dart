@@ -1,10 +1,15 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:netmanager/components/utils/cell_utils.dart';
 import 'package:netmanager/types/cell/cell_data.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'dart:async';
 
@@ -19,7 +24,9 @@ class HomeBody extends StatefulWidget {
     this.debugNotifier, {
     super.key,
     this.onUpdateButtonPressed,
+    this.onScreenshotButtonPressed,
   });
+
   final MethodChannel platform;
   final SharedPreferences sharedPreferences;
   final ValueNotifier<bool> homeLoadedNotifier;
@@ -27,6 +34,7 @@ class HomeBody extends StatefulWidget {
   final ValueNotifier<bool> debugNotifier;
 
   final ValueSetter<VoidCallback>? onUpdateButtonPressed;
+  final ValueSetter<VoidCallback>? onScreenshotButtonPressed;
 
   @override
   State<HomeBody> createState() => _HomeBodyState();
@@ -39,6 +47,8 @@ class _HomeBodyState extends State<HomeBody> {
   late ValueNotifier<bool> homeLoadedNotifier;
   late ValueNotifier<int> platformSignalNotifier;
   late ValueNotifier<bool> debugNotifier;
+
+  final GlobalKey _captureKey = GlobalKey();
 
   Widget _progressIndicator = LinearProgressIndicator();
   bool _isUpdating = false;
@@ -71,6 +81,7 @@ class _HomeBodyState extends State<HomeBody> {
     debugNotifier = widget.debugNotifier;
 
     widget.onUpdateButtonPressed?.call(update);
+    widget.onScreenshotButtonPressed?.call(screenshot);
 
     startTimer();
 
@@ -81,8 +92,43 @@ class _HomeBodyState extends State<HomeBody> {
 
   @override
   void dispose() {
+    widget.onUpdateButtonPressed?.call(() {});
+    widget.onScreenshotButtonPressed?.call(() {});
+
     timer.cancel();
     super.dispose();
+  }
+
+  void screenshot() async {
+    try {
+      final dir = await getExternalStorageDirectory();
+
+      if (dir == null) {
+        await platform.invokeMethod<bool>("showToast", {
+          "message": "External storage is unavailable!",
+        });
+        return;
+      }
+
+      RenderRepaintBoundary boundary =
+          _captureKey.currentContext!.findRenderObject()
+              as RenderRepaintBoundary;
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData? byteData = await image.toByteData(format: ImageByteFormat.png);
+      Uint8List pngBytes = byteData!.buffer.asUint8List();
+      final file = File(
+        "${dir.path}/${DateTime.now().toIso8601String().replaceAll(":", "-")}.png",
+      );
+      await file.writeAsBytes(pngBytes);
+
+      await platform.invokeMethod<bool>("showToast", {
+        "message": "Screenshot saved at: ${file.path}",
+      });
+    } catch (e) {
+      await platform.invokeMethod<bool>("showToast", {
+        "message": "An unexpected error occured!",
+      });
+    }
   }
 
   Future<void> update() async {
@@ -489,28 +535,38 @@ class _HomeBodyState extends State<HomeBody> {
             Column(
               children: [
                 Row(children: [Expanded(child: _progressIndicator)]),
-                Container(
-                  margin: EdgeInsets.all(10.0),
-                  child: Column(children: _mainData),
-                ),
-                if (_activeData.isNotEmpty) ...[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
-                    child: Text(
-                      "Active Cells",
-                      style: Theme.of(
-                        context,
-                      ).textTheme.titleMedium?.copyWith(fontSize: 18),
-                    ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.all(10.0),
+                RepaintBoundary(
+                  key: _captureKey,
+                  child: Material(
+                    color: Theme.of(context).colorScheme.surface,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: _activeData,
+                      children: [
+                        Container(
+                          margin: EdgeInsets.all(10.0),
+                          child: Column(children: _mainData),
+                        ),
+                        if (_activeData.isNotEmpty) ...[
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
+                            child: Text(
+                              "Active Cells",
+                              style: Theme.of(
+                                context,
+                              ).textTheme.titleMedium?.copyWith(fontSize: 18),
+                            ),
+                          ),
+                          Container(
+                            margin: EdgeInsets.all(10.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: _activeData,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                ],
+                ),
                 if (_neighborData.isNotEmpty) ...[
                   Padding(
                     padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
@@ -546,182 +602,6 @@ class _HomeBodyState extends State<HomeBody> {
         ],
       ),
     );
-  }
-
-  IconData getTrailingIcon(SIMData simData, String val) {
-    if (val == simData.primaryCell.rawSignalString) {
-      //RSSI
-
-      List<IconData> icons = [
-        Icons.signal_cellular_alt_1_bar,
-        Icons.signal_cellular_alt_2_bar,
-        Icons.signal_cellular_alt,
-      ];
-
-      int index =
-          ((min(max(simData.primaryCell.rawSignal, minRssi), maxRssi) -
-                      minRssi) /
-                  ((maxRssi - minRssi) / 3))
-              .floor();
-
-      return icons[min(index, 2)];
-    } else if (val == simData.primaryCell.processedSignalString) {
-      //RSRP
-
-      List<IconData> icons = [
-        Icons.signal_cellular_connected_no_internet_0_bar,
-        Icons.signal_cellular_0_bar,
-        Icons.signal_cellular_4_bar,
-      ];
-
-      int index =
-          ((min(
-                        max(simData.primaryCell.processedSignal, minRsrp),
-                        (maxRsrp - 15),
-                      ) -
-                      minRsrp) /
-                  (((maxRsrp - 15) - minRsrp) / 3))
-              .floor();
-
-      return icons[min(index, 2)];
-    } else if (val == simData.primaryCell.signalQualityString) {
-      //SNR
-      return Icons.settings_input_antenna_outlined;
-    } else if (val == simData.primaryCell.signalNoiseString) {
-      //RSRQ
-      return Icons.spatial_tracking;
-    } else if (val == simData.primaryCell.channelNumberString) {
-      //EARFCN
-      return Icons.wifi_channel;
-    } else if (val == simData.primaryCell.stationIdentityString) {
-      //PCI
-      return Icons.perm_identity;
-    } else if (val == simData.primaryCell.areaCodeString) {
-      //TAC
-      return Icons.landscape;
-    } else if (val == simData.primaryCell.timingAdvanceString) {
-      //TA
-      return Icons.shortcut;
-    } else if (val == simData.primaryCell.bandwidthString) {
-      //BW
-      return Icons.swap_horiz_rounded;
-    } else if (val == simData.primaryCell.bandString) {
-      //Band
-      return Icons.numbers_rounded;
-    }
-
-    return Icons.question_mark; //Unknown icon
-  }
-
-  String createCellContent(CellData cell) {
-    String cellContent = "";
-    int factor = conversionFactor(cell);
-
-    int? cellId = int.tryParse(cell.cellIdentifier);
-    if (cellId != null && isValidString(cell.cellIdentifier) && cellId != 0) {
-      cellContent += "${(cellId / factor).floor()}/${cellId % factor}, ";
-    } else if (cell.isRegistered) {
-      cellContent += "%node%, ";
-    } else {
-      cellContent += "Unknown cell, ";
-    }
-
-    if (isValidInt(cell.bandwidth) && isValidString(cell.bandwidthString)) {
-      cellContent += "Bandwidth: ${cell.bandwidth}MHz";
-    } else {
-      cellContent += "Unknown bandwidth";
-    }
-
-    cellContent += ".\n";
-
-    if (isValidInt(cell.areaCode) && isValidString(cell.areaCodeString)) {
-      cellContent += "${cell.areaCodeString}: ${cell.areaCode}, ";
-    }
-
-    if (isValidInt(cell.channelNumber) &&
-        isValidString(cell.channelNumberString)) {
-      cellContent += "${cell.channelNumberString}: ${cell.channelNumber}, ";
-    }
-
-    if (isValidInt(cell.stationIdentity) &&
-        isValidString(cell.stationIdentityString)) {
-      cellContent += "${cell.stationIdentityString}: ${cell.stationIdentity}, ";
-    }
-
-    if (isValidInt(cell.timingAdvance) &&
-        isValidString(cell.timingAdvanceString) &&
-        cell.isRegistered) {
-      cellContent += "${cell.timingAdvanceString}: ${cell.timingAdvance}";
-    }
-
-    if (cellContent.endsWith(", ")) {
-      cellContent = cellContent.substring(0, cellContent.length - 2);
-    }
-
-    cellContent += ".\n";
-    cellContent.replaceAll("\n.\n", "\n");
-
-    if (isValidInt(cell.processedSignal) &&
-        isValidString(cell.processedSignalString)) {
-      cellContent +=
-          "${cell.processedSignalString} ${cell.processedSignal}dBm, ";
-    } else if (isValidInt(cell.rawSignal) &&
-        isValidString(cell.rawSignalString)) {
-      cellContent += "${cell.rawSignalString} ${cell.rawSignal}dBm, ";
-    }
-
-    if (isValidInt(cell.signalQuality) &&
-        isValidString(cell.signalQualityString)) {
-      cellContent += "${cell.signalQualityString} ${cell.signalQuality}dB, ";
-    }
-
-    if (isValidInt(cell.signalNoise) && isValidString(cell.signalNoiseString)) {
-      cellContent += "${cell.signalNoiseString} ${cell.signalNoise}dB";
-    }
-
-    if (cellContent.endsWith(", ")) {
-      cellContent = "${cellContent.substring(0, cellContent.length - 2)}.";
-    } else {
-      cellContent += ".";
-    }
-
-    if (cellContent.isEmpty) cellContent = "No info for this cell.";
-
-    return cellContent;
-  }
-
-  bool isValidInt(int val) {
-    // todo: find a better way to sanitise data
-    return !(val == -1 || val == 2147483647 || val == 268435455);
-  }
-
-  bool isValidString(String val) {
-    // todo: find a better way to sanitise data
-    return !((val.contains("-1") &&
-            (!val.endsWith("dB") && !val.contains("dB"))) ||
-        val.contains("2147483647") ||
-        val.contains("268435455") ||
-        val.contains("null") ||
-        val.contains("-1dBm") ||
-        val.trim() == "0.0" ||
-        val.trim() == "0.0MHz" ||
-        val.trim() == "-1MHz" ||
-        val.trim() == "-1.0MHz" ||
-        val.trim() == "-" ||
-        val.trim().isEmpty);
-  }
-
-  int conversionFactor(CellData cellData) {
-    // to be improved
-    int factor = 256; // wcdma, tdscdma, lte, nr
-
-    if (cellData.channelNumberString == "ARFCN") {
-      factor = 64; // gsm
-    } else if (cellData.stationIdentityString == "PN") {
-      factor = 1; // cdma
-    }
-
-    return factor;
   }
 
   void startTimer() {

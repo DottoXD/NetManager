@@ -4,6 +4,7 @@ import 'package:netmanager/components/base/body/map.dart';
 import 'package:netmanager/components/base/body/settings.dart';
 import 'package:netmanager/components/floating/position_button.dart';
 import 'package:netmanager/components/base/top_bar.dart';
+import 'package:netmanager/components/floating/screenshot_button.dart';
 import 'package:netmanager/types/device/permissions.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -39,6 +40,7 @@ class _HomeState extends State<Home> {
   final ValueNotifier<bool> logsNotifier = ValueNotifier(false);
 
   VoidCallback? _homeUpdateCallback;
+  VoidCallback? _screenshotCallback;
   VoidCallback? _mapPositionCallback;
 
   @override
@@ -65,9 +67,10 @@ class _HomeState extends State<Home> {
         platformSignalNotifier,
         debugNotifier,
         onUpdateButtonPressed: (callback) {
-          setState(() {
-            _homeUpdateCallback = callback;
-          });
+          setState(() => _homeUpdateCallback = callback);
+        },
+        onScreenshotButtonPressed: (callback) {
+          setState(() => _screenshotCallback = callback);
         },
       ),
       MapBody(
@@ -75,9 +78,7 @@ class _HomeState extends State<Home> {
         widget.sharedPreferences,
         platformSignalNotifier,
         onPositionButtonPressed: (callback) {
-          setState(() {
-            _mapPositionCallback = callback;
-          });
+          setState(() => _mapPositionCallback = callback);
         },
       ),
       SettingsBody(
@@ -101,6 +102,17 @@ class _HomeState extends State<Home> {
     } on PlatformException catch (e) {
       Sentry.captureException(e, stackTrace: e.stacktrace);
     }
+  }
+
+  @override
+  void dispose() {
+    widget.platform.setMethodCallHandler(null);
+
+    homeLoadedNotifier.dispose();
+    platformSignalNotifier.dispose();
+    debugNotifier.dispose();
+    logsNotifier.dispose();
+    super.dispose();
   }
 
   void updatePage(int page) {
@@ -130,12 +142,19 @@ class _HomeState extends State<Home> {
         bottomNavigationBar: NavBar(updatePage, _currentPage),
         body: _pages[_currentPage],
         floatingActionButton: Container(
-          margin: EdgeInsets.only(bottom: 15.0),
-          child: (_currentPage == 0
-              ? UpdateButton(onPressed: _homeUpdateCallback)
-              : (_currentPage == 1
-                    ? PositionButton(onPressed: _mapPositionCallback)
-                    : null)),
+          margin: const EdgeInsets.only(bottom: 15.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (_currentPage == 0) ...[
+                ScreenshotButton(onPressed: _screenshotCallback),
+                const SizedBox(height: 4),
+                UpdateButton(onPressed: _homeUpdateCallback),
+              ] else if (_currentPage == 1)
+                PositionButton(onPressed: _mapPositionCallback),
+            ],
+          ),
         ),
       ),
     );

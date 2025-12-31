@@ -20,6 +20,7 @@ class TopBar extends StatefulWidget implements PreferredSizeWidget {
     this.logsNotifier, {
     super.key,
   });
+
   final MethodChannel platform;
   final SharedPreferences sharedPreferences;
   final ValueNotifier<int> platformSignalNotifier;
@@ -39,15 +40,11 @@ class _TopBarState extends State<TopBar> {
   late ValueNotifier<int> platformSignalNotifier;
   late ValueNotifier<bool> logsNotifier;
 
-  String _title = "NetManager is loading...";
+  final ValueNotifier<String> title = ValueNotifier("NetManager is loading...");
   String _carrier = "NetManager";
   String _plmn = "00000";
   int _gen = 0;
-
-  Widget _switchSimButton = SizedBox.shrink();
   int simCount = 0;
-
-  Widget _logsButton = SizedBox.shrink();
 
   @override
   void initState() {
@@ -57,50 +54,13 @@ class _TopBarState extends State<TopBar> {
     platformSignalNotifier = widget.platformSignalNotifier;
     logsNotifier = widget.logsNotifier;
 
-    if (logsNotifier.value) {
-      setState(() {
-        _logsButton = IconButton(
-          onPressed: openLogs,
-          icon: Icon(Icons.my_library_books_outlined),
-          tooltip: "Event logs",
-        );
-      });
-    }
-
     startTimer();
-
-    platformSignalNotifier.addListener(() {
-      restartTimer();
-    });
-
+    platformSignalNotifier.addListener(() => restartTimer());
     logsNotifier.addListener(() {
-      setState(() {
-        if (logsNotifier.value) {
-          setState(() {
-            _logsButton = IconButton(
-              onPressed: openLogs,
-              icon: Icon(Icons.my_library_books_outlined),
-              tooltip: "Event logs",
-            );
-          });
-        } else {
-          _logsButton = SizedBox.shrink();
-        }
-      });
+      if (mounted) setState(() {});
     });
 
-    () async {
-      simCount = await platform.invokeMethod("getSimCount");
-      if (simCount > 1) {
-        setState(() {
-          _switchSimButton = IconButton(
-            onPressed: switchSim,
-            icon: Icon(Icons.sim_card_outlined),
-            tooltip: "Switch SIM card",
-          );
-        });
-      }
-    }();
+    checkSimCount();
   }
 
   @override
@@ -109,22 +69,25 @@ class _TopBarState extends State<TopBar> {
     super.dispose();
   }
 
+  Future<void> checkSimCount() async {
+    final count = await platform.invokeMethod("getSimCount") ?? 0;
+    if (mounted && count != simCount) setState(() => simCount = count);
+  }
+
   Future<void> update() async {
+    final initialTitle = title.value;
+
     try {
       _carrier =
           (await platform.invokeMethod<String>("getCarrier")) ?? "Unknown";
-      _plmn = (await platform.invokeMethod<String>("getPlmn")) ?? "";
+      _plmn = (await platform.invokeMethod<String>("getPlmn")) ?? "00000";
       _gen = await platform.invokeMethod<int>("getNetworkGen") as int;
 
-      if (_gen > 0 && _plmn.isNotEmpty) {
-        _title = "${"$_carrier $_gen"}G ($_plmn)";
+      if (_gen > 0 && _plmn != "00000" && _carrier.trim().isNotEmpty) {
+        title.value = "${"$_carrier $_gen"}G ($_plmn)";
       } else {
-        _title = "No service";
+        title.value = "No service";
       }
-
-      setState(() {
-        _title;
-      });
     } on PlatformException catch (e) {
       await Sentry.captureException(e, stackTrace: e.stacktrace);
     }
@@ -157,7 +120,9 @@ class _TopBarState extends State<TopBar> {
       return;
     }
 
-    if (deviceData.manufacturer.toLowerCase() == "samsung") {
+    if (deviceData.manufacturer.toLowerCase().trim() == "samsung") {
+      if (!mounted) return;
+
       showModalBottomSheet(
         context: context,
         shape: const RoundedRectangleBorder(
@@ -175,8 +140,6 @@ class _TopBarState extends State<TopBar> {
 
   void openLogs() async {
     try {
-      if (!mounted) return;
-
       final String logs = await platform.invokeMethod("getEvents");
       if (logs.trim().isEmpty) return;
 
@@ -189,10 +152,12 @@ class _TopBarState extends State<TopBar> {
         }
       }).toList();
 
+      if (!mounted) return;
+
       showDialog(
         context: context,
         builder: (BuildContext context) {
-          return eventLogDialog(context, events);
+          return eventLogDialog(context, events, platform);
         },
       );
     } catch (e) {
@@ -207,17 +172,30 @@ class _TopBarState extends State<TopBar> {
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      title: Text(_title),
-      actions: [
-        IconButton(
-          onPressed: openInfo,
-          icon: Icon(Icons.info_outline_rounded),
-          tooltip: "Radio info settings",
-        ),
-        _switchSimButton,
-        _logsButton,
-      ],
+    return ValueListenableBuilder(
+      valueListenable: title,
+      builder: (context, title, _) => AppBar(
+        title: Text(title),
+        actions: [
+          IconButton(
+            onPressed: openInfo,
+            icon: const Icon(Icons.info_outline_rounded),
+            tooltip: "Radio info settings",
+          ),
+          if (simCount > 1)
+            IconButton(
+              onPressed: switchSim,
+              icon: const Icon(Icons.sim_card_outlined),
+              tooltip: "Switch SIM card",
+            ),
+          if (widget.logsNotifier.value)
+            IconButton(
+              onPressed: openLogs,
+              icon: const Icon(Icons.my_library_books_outlined),
+              tooltip: "Event logs",
+            ),
+        ],
+      ),
     );
   }
 
@@ -231,7 +209,7 @@ class _TopBarState extends State<TopBar> {
   }
 
   void restartTimer() {
-    timer.cancel();
+    if (timer.isActive) timer.cancel();
     startTimer();
   }
 }

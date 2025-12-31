@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:netmanager/types/events/event_types.dart';
 
 class NetmanagerEvent {
@@ -20,5 +21,11 @@ class NetmanagerEvent {
       newValue: json['newValue'],
       dateTime: DateTime.parse(json['dateTime']),
     );
+  }
+
+  @override
+  String toString() {
+    final formatter = DateFormat("dd/MM/yyyy HH:mm:ss");
+    return "[${formatter.format(dateTime)}] $eventType\nOld: $oldValue\nNew $newValue\n";
   }
 }

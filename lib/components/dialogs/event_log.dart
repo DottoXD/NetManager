@@ -1,8 +1,22 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:netmanager/types/events/mobile_netmanager_event.dart';
 import 'package:netmanager/types/events/netmanager_event.dart';
+import 'package:path_provider/path_provider.dart';
 
-Widget eventLogDialog(BuildContext context, List<NetmanagerEvent> events) {
+Widget eventLogDialog(
+  BuildContext context,
+  List<NetmanagerEvent> events,
+  MethodChannel platform,
+) {
+  final formatter = DateFormat("dd/MM/yyyy HH:mm:ss");
+  final outlineVariant = Theme.of(context).colorScheme.outlineVariant;
+
+  if (events.isEmpty) throw "No events";
+
   return AlertDialog(
     title: Text("Event Logs"),
     content: SizedBox(
@@ -11,9 +25,7 @@ Widget eventLogDialog(BuildContext context, List<NetmanagerEvent> events) {
         child: ListView.builder(
           itemCount: events.length,
           itemBuilder: (context, i) {
-            final event = events[i];
-
-            DateTime dt = event.dateTime.toLocal();
+            final event = events[events.length - 1 - i];
 
             return ListTile(
               title: Text(formatEventName(event.eventType.name)),
@@ -24,15 +36,13 @@ Widget eventLogDialog(BuildContext context, List<NetmanagerEvent> events) {
                     children: [
                       Text(event.oldValue),
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 5),
+                        padding: const EdgeInsets.symmetric(horizontal: 5),
                         child: Icon(Icons.arrow_right_rounded),
                       ),
                       Text(event.newValue),
                     ],
                   ),
-                  Text(
-                    "${dt.day < 10 ? "0${dt.day}" : dt.day}/${dt.month < 10 ? "0${dt.month}" : dt.month}/${dt.year} ${dt.hour}:${dt.minute < 10 ? "0${dt.minute}" : dt.minute}:${dt.second < 10 ? "0${dt.second}" : dt.second}",
-                  ),
+                  Text(formatter.format(event.dateTime.toLocal())),
                   if (event is MobileNetmanagerEvent) ...[
                     Text(
                       "SIM ${event.simSlot + 1} ${event.network.trim().isNotEmpty ? "(${event.network})" : "(Unknown)"}",
@@ -40,11 +50,8 @@ Widget eventLogDialog(BuildContext context, List<NetmanagerEvent> events) {
                   ],
                   if (i < events.length - 1)
                     Padding(
-                      padding: EdgeInsets.only(top: 10.0),
-                      child: Divider(
-                        height: 0,
-                        color: Theme.of(context).colorScheme.outlineVariant,
-                      ),
+                      padding: const EdgeInsets.only(top: 15.0),
+                      child: Divider(height: 0, color: outlineVariant),
                     ),
                 ],
               ),
@@ -54,6 +61,28 @@ Widget eventLogDialog(BuildContext context, List<NetmanagerEvent> events) {
       ),
     ),
     actions: [
+      TextButton.icon(
+        onPressed: () async {
+          final dir = await getExternalStorageDirectory();
+
+          if (dir == null) {
+            await platform.invokeMethod<bool>("showToast", {
+              "message": "External storage is unavailable!",
+            });
+            return;
+          }
+
+          final file = File("${dir.path}/event_list.txt");
+          final content = events.join("\n");
+          await file.writeAsString(content);
+
+          await platform.invokeMethod<bool>("showToast", {
+            "message": "Event log saved at: ${file.path}",
+          });
+        },
+        label: const Text("Export"),
+        icon: const Icon(Icons.share),
+      ),
       TextButton(
         onPressed: () => Navigator.of(context).pop(),
         child: Text("Close"),

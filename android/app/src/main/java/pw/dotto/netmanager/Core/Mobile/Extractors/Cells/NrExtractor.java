@@ -7,13 +7,31 @@ import android.telephony.CellInfoNr;
 import android.telephony.CellSignalStrengthNr;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 
 import pw.dotto.netmanager.Core.Mobile.CellDatas.NrCellData;
 
 public class NrExtractor {
     @NonNull
     public static NrCellData get(CellInfoNr baseCell) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            return new NrCellData(
+                    "-1",
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    baseCell.isRegistered());
+        }
+
         CellIdentityNr identityNr = (CellIdentityNr) baseCell.getCellIdentity();
+        CellSignalStrengthNr signalNr = (CellSignalStrengthNr) baseCell.getCellSignalStrength();
 
         int band = -1;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -22,7 +40,6 @@ public class NrExtractor {
                 band = bands[0];
         }
 
-        CellSignalStrengthNr signalNr = (CellSignalStrengthNr) baseCell.getCellSignalStrength();
         NrCellData nrCellData = new NrCellData(
                 String.valueOf(identityNr.getNci()),
                 signalNr.getCsiRsrp(),
@@ -33,17 +50,20 @@ public class NrExtractor {
                 signalNr.getSsRsrq(),
                 signalNr.getSsSinr(),
                 (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
-                        ? signalNr.getTimingAdvanceMicros() : CellInfo.UNAVAILABLE),
+                        ? signalNr.getTimingAdvanceMicros()
+                        : CellInfo.UNAVAILABLE),
                 -1, // identityNr.getBandwidth()
                 band,
                 baseCell.isRegistered());
 
+        //
         processRsrq(nrCellData, signalNr);
         processSinr(nrCellData, signalNr);
 
         return nrCellData;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.Q)
     private static void processRsrq(NrCellData nrCellData, CellSignalStrengthNr signalNr) {
         int rsrq = nrCellData.getSignalQuality();
 
@@ -52,10 +72,12 @@ public class NrExtractor {
 
             if (rsrq != CellInfo.UNAVAILABLE) {
                 nrCellData.setSignalQualityString("CSI RSRQ");
+                nrCellData.setSignalQuality(rsrq);
             }
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.Q)
     private static void processSinr(NrCellData nrCellData, CellSignalStrengthNr signalNr) {
         int sinr = nrCellData.getSignalNoise();
 
@@ -64,6 +86,7 @@ public class NrExtractor {
 
             if (sinr != CellInfo.UNAVAILABLE) {
                 nrCellData.setSignalNoiseString("CSI SINR");
+                nrCellData.setSignalNoise(sinr);
             }
         }
     }

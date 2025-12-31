@@ -19,7 +19,6 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.NrCellData;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
 import pw.dotto.netmanager.R;
 import pw.dotto.netmanager.Utils.Mobile;
-import pw.dotto.netmanager.Utils.Permissions;
 import pw.dotto.netmanager.MainActivity;
 
 public class Manager {
@@ -90,6 +89,9 @@ public class Manager {
         activeNotification = build();
         if (activeNotification == null)
             return false;
+
+        if (selectedId < 0)
+            selectedId = new Random().nextInt(10);
         notificationManager.notify(selectedId, activeNotification.build());
 
         return true;
@@ -219,6 +221,15 @@ public class Manager {
                     .addAction(R.drawable.ic_launcher_monochrome, "Close", closingPendingIntent)
                     .setAllowSystemGeneratedContextualActions(false);
         } catch (Exception ignored) {
+            notification = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
+                    .setSmallIcon(R.drawable.ic_launcher_monochrome)
+                    .setContentTitle("NetManager is loading...")
+                    .setContentText("The notification component has failed to load.")
+                    .setPriority(NotificationCompat.PRIORITY_MAX)
+                    .setStyle(new NotificationCompat.BigTextStyle())
+                    .setOngoing(true)
+                    .setSilent(true)
+                    .setAllowSystemGeneratedContextualActions(false);
         }
 
         return notification;

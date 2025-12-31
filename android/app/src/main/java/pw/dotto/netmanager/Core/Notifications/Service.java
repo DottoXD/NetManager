@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -13,7 +14,6 @@ import androidx.annotation.Nullable;
 
 import pw.dotto.netmanager.Core.Mobile.SimReceiverManager;
 import pw.dotto.netmanager.Utils.DebugLogger;
-import pw.dotto.netmanager.Utils.Permissions;
 
 public class Service extends android.app.Service {
     private pw.dotto.netmanager.Core.Manager manager;
@@ -60,8 +60,12 @@ public class Service extends android.app.Service {
         while (activeNotification == null && attempts < 3) {
             activeNotification = notification.getActiveNotification();
             if (activeNotification != null) {
-                startForeground(notification.getSelectedId(), notification.getActiveNotification(),
-                        ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    startForeground(notification.getSelectedId(), notification.getActiveNotification(),
+                            ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL);
+                } else {
+                    startForeground(notification.getSelectedId(), notification.getActiveNotification());
+                }
             }
 
             attempts++;

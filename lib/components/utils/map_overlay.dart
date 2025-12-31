@@ -7,6 +7,8 @@ Widget mapOverlay(
   String signalStrengthString,
   String signalStrength,
 ) {
+  final theme = Theme.of(context);
+
   return Align(
     alignment: Alignment.topCenter,
     child: Card(
@@ -24,41 +26,41 @@ Widget mapOverlay(
               children: [
                 Text(
                   "Speed",
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.onPrimaryContainer,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(speed),
               ],
             ),
-            SizedBox(width: 24),
+            const SizedBox(width: 24),
             Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
                   "Cell ID",
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.onPrimaryContainer,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(cellId),
               ],
             ),
-            SizedBox(width: 24),
+            const SizedBox(width: 24),
             Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
                   signalStrengthString,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.onPrimaryContainer,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(signalStrength),
               ],
             ),

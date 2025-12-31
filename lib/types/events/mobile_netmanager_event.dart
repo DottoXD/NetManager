@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:netmanager/types/events/event_types.dart';
 import 'package:netmanager/types/events/netmanager_event.dart';
 
@@ -23,5 +24,11 @@ class MobileNetmanagerEvent extends NetmanagerEvent {
       simSlot: json['simSlot'],
       network: json['network'],
     );
+  }
+
+  @override
+  String toString() {
+    final formatter = DateFormat("dd/MM/yyyy HH:mm:ss");
+    return "[${formatter.format(dateTime)}] $eventType\nOld: $oldValue\nNew $newValue\nSIM: $simSlot\nNetwork: $network\n";
   }
 }

@@ -9,6 +9,9 @@ public class MobileNetmanagerEvent extends NetmanagerEvent {
     public MobileNetmanagerEvent(EventTypes eventType, String newValue, int simSlot, String network) {
         super(eventType, newValue);
 
+        if (newValue.equals("00000") || newValue.contains("-1"))
+            setNewValue("N/A");
+
         this.simSlot = simSlot;
         this.network = network;
     }
@@ -20,7 +23,6 @@ public class MobileNetmanagerEvent extends NetmanagerEvent {
     public String getNetwork() {
         return network;
     }
-
 
     @Override
     public boolean equals(@Nullable Object obj) {

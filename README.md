@@ -4,7 +4,7 @@ A Material UI mobile network monitoring app built with ease-of-use and speed in 
 Built from scratch with Flutter, NetManager plans to respect Material guidelines for user interfaces and possibly blend in with system applications.
 
 ## Supported platforms
-NetManager currently supports Android 10+ (SDK ver. 29).
+NetManager currently has stable support for Android 10+ (SDK ver. 29) and experimental support for Android 9 (SDK ver. 28).
 Support for older Android versions (Android 7+, SDK ver. 24) is planned before version 1.0.0.
 iOS support is currently unplanned due to missing public APIs to reliably retrieve cell data.
 
@@ -22,7 +22,7 @@ Somewhat (at least for now) stable builds are available in the [Releases](https:
 
 ## License
 ```
-Copyright (C) 2025 DottoXD
+Copyright (C) 2025 - 2026 DottoXD
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 

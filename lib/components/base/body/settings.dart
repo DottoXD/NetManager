@@ -20,6 +20,7 @@ class SettingsBody extends StatefulWidget {
     this.logsNotifier, {
     super.key,
   });
+
   final MethodChannel platform;
   final SharedPreferences sharedPreferences;
 
@@ -101,11 +102,8 @@ class _SettingsBodyState extends State<SettingsBody> {
       _dynamicTheme =
           sharedPreferences.getBool("dynamicTheme") ?? _dynamicTheme;
       _themeColor = sharedPreferences.getInt("themeColor") ?? _themeColor;
-
       _dynamicSupported =
           sharedPreferences.getBool("dynamicSupported") ?? _dynamicSupported;
-      _dynamicTheme =
-          sharedPreferences.getBool("dynamicTheme") ?? _dynamicTheme;
       _debug = sharedPreferences.getBool("debug") ?? _debug;
     });
   }
@@ -188,8 +186,6 @@ class _SettingsBodyState extends State<SettingsBody> {
 
   void openDebugLogs() async {
     try {
-      if (!mounted) return;
-
       final String debugLogs = await platform.invokeMethod("getDebugLogs");
       if (debugLogs.trim().isEmpty) return;
 
@@ -198,10 +194,12 @@ class _SettingsBodyState extends State<SettingsBody> {
               .map((e) => e.toString())
               .toList();
 
+      if (!mounted) return;
+
       showDialog(
         context: context,
         builder: (BuildContext context) {
-          return debugLogDialog(context, debugLogsList);
+          return debugLogDialog(context, debugLogsList, platform);
         },
       );
     } catch (e) {

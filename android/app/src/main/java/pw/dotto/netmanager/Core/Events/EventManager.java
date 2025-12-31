@@ -50,7 +50,10 @@ public class EventManager {
                     mobileNetmanagerEvent.getEventType(), mobileNetmanagerEvent.getSimSlot());
 
             if (lastEvent != null) {
-                mobileNetmanagerEvent.setOldValue(lastEvent.getNewValue());
+                String oldValue = lastEvent.getNewValue();
+                if (oldValue.equals("00000") || oldValue.contains("-1"))
+                    oldValue = "N/A";
+                mobileNetmanagerEvent.setOldValue(oldValue);
             } else
                 mobileNetmanagerEvent.setOldValue("N/A");
 

@@ -27,7 +27,7 @@ public class LteExtractor {
         CellSignalStrengthLte signalLte = baseCell.getCellSignalStrength();
         LteCellData lteCellData = new LteCellData(
                 String.valueOf(identityLte.getCi()),
-                signalLte.getRssi(),
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ? signalLte.getRssi() : -1),
                 signalLte.getRsrp(),
                 identityLte.getEarfcn(),
                 identityLte.getPci(),

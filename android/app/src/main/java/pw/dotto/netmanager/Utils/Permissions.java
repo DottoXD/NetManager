@@ -21,7 +21,8 @@ public class Permissions {
         public static final int POST_NOTIFICATIONS = 1 << 3;
 
         public static boolean check(Context context) {
-                return check(context, READ_PHONE_STATE | ACCESS_FINE_LOCATION | ACCESS_BACKGROUND_LOCATION);
+                return check(context, READ_PHONE_STATE | ACCESS_FINE_LOCATION
+                                | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ? ACCESS_BACKGROUND_LOCATION : 0));
         }
 
         public static boolean check(Context context, int req) {
@@ -37,9 +38,10 @@ public class Permissions {
                         return false;
                 }
 
-                if ((req & ACCESS_BACKGROUND_LOCATION) != 0 && ActivityCompat.checkSelfPermission(
-                                context,
-                                Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && (req & ACCESS_BACKGROUND_LOCATION) != 0
+                                && ActivityCompat.checkSelfPermission(
+                                                context,
+                                                Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                         return false;
                 }
 
@@ -54,7 +56,8 @@ public class Permissions {
         }
 
         public static void request(Activity activity) {
-                request(activity, READ_PHONE_STATE | ACCESS_FINE_LOCATION | ACCESS_BACKGROUND_LOCATION);
+                request(activity, READ_PHONE_STATE | ACCESS_FINE_LOCATION
+                                | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ? ACCESS_BACKGROUND_LOCATION : 0));
         }
 
         public static void request(Activity activity, int req) {
@@ -74,7 +77,7 @@ public class Permissions {
                                         permissions.toArray(new String[0]),
                                         1);
 
-                if ((req & ACCESS_BACKGROUND_LOCATION) != 0) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && (req & ACCESS_BACKGROUND_LOCATION) != 0) {
                         ActivityCompat.requestPermissions(activity,
                                         new String[] { Manifest.permission.ACCESS_BACKGROUND_LOCATION },
                                         REQ_BACKGROUND);
@@ -83,6 +86,9 @@ public class Permissions {
 
         public static void handleResult(Activity activity, int requestCode, @NonNull String[] permissions,
                         @NonNull int[] grantResults) {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
+                        return;
+
                 if (requestCode == REQ_FOREGROUND) {
                         if (ActivityCompat.checkSelfPermission(activity,
                                         Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
