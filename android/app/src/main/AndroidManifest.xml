@@ -18,6 +18,10 @@
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
+    <uses-feature
+        android:name="android.hardware.type.watch"
+        android:required="false" />
+
     <application
         android:label="NetManager"
         android:name="${applicationName}"
@@ -55,9 +59,13 @@
 
         <service android:name=".Core.Startup.DelayedServiceStarter" android:foregroundServiceType="specialUse" android:exported="false" />
         <service android:name=".Core.Notifications.Service" android:foregroundServiceType="phoneCall" android:exported="false" />
+
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <meta-data
+            android:name="com.google.android.gms.wearable.app"
+            android:resource="@xml/wearable_app_desc" />
     </application>
     <queries>
         <package android:name="com.android.phone.settings.RadioInfo" />

@@ -8,8 +8,15 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
+import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.MessageClient;
+import com.google.android.gms.wearable.MessageEvent;
+import com.google.android.gms.wearable.PutDataMapRequest;
+import com.google.android.gms.wearable.Wearable;
 import com.google.gson.Gson;
 
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectOutputStream;
 import java.util.List;
 
 import io.flutter.embedding.android.FlutterActivity;
@@ -18,6 +25,7 @@ import io.flutter.plugin.common.MethodChannel;
 import pw.dotto.netmanager.Core.Events.EventManager;
 import pw.dotto.netmanager.Core.Events.NetmanagerEvent;
 import pw.dotto.netmanager.Core.Manager;
+import pw.dotto.netmanager.Core.Mobile.CellSnapshot;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
 import pw.dotto.netmanager.Core.Mobile.SimReceiverManager;
 import pw.dotto.netmanager.Core.Notifications.Service;
@@ -28,7 +36,7 @@ import pw.dotto.netmanager.Utils.DeviceData;
 import pw.dotto.netmanager.Utils.Permissions;
 import pw.dotto.netmanager.Utils.DebugLogger;
 
-public class MainActivity extends FlutterActivity {
+public class MainActivity extends FlutterActivity implements MessageClient.OnMessageReceivedListener {
   private static final String CHANNEL = "pw.dotto.netmanager/telephony";
 
   private Manager core = null;
@@ -260,8 +268,45 @@ public class MainActivity extends FlutterActivity {
   }
 
   @Override
+  public void onResume() {
+    super.onResume();
+    Wearable.getMessageClient(this).addListener(this);
+  }
+
+  @Override
+  public void onPause() {
+    Wearable.getMessageClient(this).removeListener(this);
+    super.onPause();
+  }
+
+  @Override
   public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     Permissions.handleResult(this, requestCode, permissions, grantResults);
+  }
+
+  @Override
+  public void onMessageReceived(@NonNull MessageEvent messageEvent) {
+    if (messageEvent.getPath().equals("/request_wearos_data")) {
+      PutDataMapRequest request = PutDataMapRequest.create("/wearos_data");
+
+      DataMap dataMap = request.getDataMap();
+      int id = messageEvent.getData().length;
+      dataMap.putInt("id", id);
+
+      if (core != null) {
+        CellSnapshot snapshot = core.getCellSnapshot(id);
+
+        dataMap.putString("network", snapshot.getNetwork());
+        dataMap.putString("node", snapshot.getNode());
+        dataMap.putInt("band", snapshot.getBand());
+        dataMap.putInt("networkGen", snapshot.getNetworkGen());
+        dataMap.putInt("rawSignal", snapshot.getRawSignal());
+        dataMap.putInt("processedSignal", snapshot.getProcessedSignal());
+        dataMap.putLong("timestamp", snapshot.getTimestamp());
+      }
+
+      Wearable.getDataClient(this).putDataItem(request.asPutDataRequest().setUrgent());
+    }
   }
 }

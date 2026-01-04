@@ -3,15 +3,17 @@ package pw.dotto.netmanager.Core.Mobile;
 public class CellSnapshot {
     private final String network;
     private final String node;
-    private final String band;
+    private final int band;
+    private final int networkGen;
     private final int rawSignal;
     private final int processedSignal;
     private final long timestamp;
 
-    public CellSnapshot(String network, String node, String band, int rawSignal, int processedSignal) {
+    public CellSnapshot(String network, String node, int band, int networkGen, int rawSignal, int processedSignal) {
         this.network = network;
         this.node = node;
         this.band = band;
+        this.networkGen = networkGen;
         this.rawSignal = rawSignal;
         this.processedSignal = processedSignal;
         this.timestamp = System.currentTimeMillis();
@@ -25,8 +27,12 @@ public class CellSnapshot {
         return node;
     }
 
-    public String getBand() {
+    public int getBand() {
         return band;
+    }
+
+    public int getNetworkGen() {
+        return networkGen;
     }
 
     public int getRawSignal() {

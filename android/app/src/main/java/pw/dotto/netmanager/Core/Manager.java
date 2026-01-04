@@ -46,6 +46,7 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.LteCellData;
 import pw.dotto.netmanager.Core.Mobile.CellDatas.NrCellData;
 import pw.dotto.netmanager.Core.Mobile.CellDatas.TdscdmaCellData;
 import pw.dotto.netmanager.Core.Mobile.CellDatas.WcdmaCellData;
+import pw.dotto.netmanager.Core.Mobile.CellSnapshot;
 import pw.dotto.netmanager.Core.Mobile.Extractors.Cells.CdmaExtractor;
 import pw.dotto.netmanager.Core.Mobile.Extractors.Cells.GsmExtractor;
 import pw.dotto.netmanager.Core.Mobile.Extractors.Cells.LteExtractor;
@@ -75,6 +76,8 @@ public class Manager {
   private final DataStateListener[] dataStates = { null, null };
   private final SignalStrengthsListener[] signalStrengths = { null, null };
   private final PhysicalChannelDumper[] physicalChannelDumpers = { null, null };
+
+  private final CellSnapshot[] latestCellSnapshots = { null, null };
 
   private SubscriptionChangedListener subscriptionChangedListener;
 
@@ -701,9 +704,18 @@ public class Manager {
             saveEvent(EventTypes.MOBILE_NODE_CHANGED, 0, "N/A");
           }
         }
+
+        if (simData != null)
+          latestCellSnapshots[simId] = new CellSnapshot(simData.getNetwork(),
+              simData.getPrimaryCell().getCellIdentifier(),
+              simData.getPrimaryCell().getBand() == -1 ? simData.getPrimaryCell().getBasicCellData().getBand()
+                  : simData.getPrimaryCell().getBand(),
+              simData.getNetworkGen(), simData.getPrimaryCell().getRawSignal(),
+              simData.getPrimaryCell().getProcessedSignal());
         return simData;
       case 1:
         simData = getSimNetworkData(secondManager);
+
         if (simData != null && simData.getPrimaryCell() != null) {
           CellData primaryCell = simData.getPrimaryCell();
 
@@ -718,6 +730,14 @@ public class Manager {
             saveEvent(EventTypes.MOBILE_NODE_CHANGED, 1, "N/A");
           }
         }
+
+        if (simData != null)
+          latestCellSnapshots[simId] = new CellSnapshot(simData.getNetwork(),
+              simData.getPrimaryCell().getCellIdentifier(),
+              simData.getPrimaryCell().getBand() == -1 ? simData.getPrimaryCell().getBasicCellData().getBand()
+                  : simData.getPrimaryCell().getBand(),
+              simData.getNetworkGen(), simData.getPrimaryCell().getRawSignal(),
+              simData.getPrimaryCell().getProcessedSignal());
         return simData;
       default:
         return null;
@@ -1129,6 +1149,11 @@ public class Manager {
     }
 
     return cellSignalStrength;
+  }
+
+  @SuppressLint("MissingPermission")
+  public CellSnapshot getCellSnapshot(int index) {
+    return latestCellSnapshots[index];
   }
 
   private void saveEvent(EventTypes type, int simId, String value) {

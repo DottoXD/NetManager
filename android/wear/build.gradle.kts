@@ -1,10 +1,8 @@
-import java.util.Properties
 import java.io.FileInputStream
+import java.util.Properties
 
 plugins {
     id("com.android.application")
-    id("kotlin-android")
-    id("dev.flutter.flutter-gradle-plugin")
 }
 
 val keystoreProperties = Properties()
@@ -14,25 +12,17 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "pw.dotto.netmanager"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = "28.2.13676358" //flutter.ndkVersion
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+    namespace = "pw.dotto.netmanager.wear"
+    compileSdk {
+        version = release(36)
     }
 
     defaultConfig {
-        applicationId = "pw.dotto.netmanager"
-        minSdk = 28 //flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        applicationId = "pw.dotto.netmanager.wear"
+        minSdk = 30
+        targetSdk = 36
+        versionCode = 1
+        versionName = "0.0.3"
     }
 
     signingConfigs {
@@ -47,11 +37,10 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                file("proguard-rules.pro")
+                "proguard-rules.pro"
             )
         }
 
@@ -59,13 +48,13 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
-}
-
-flutter {
-    source = "../.."
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
 }
 
 dependencies {
-    implementation("com.google.code.gson:gson:2.13.2")
     implementation("com.google.android.gms:play-services-wearable:19.0.0")
+    implementation("androidx.wear.compose:compose-material3:1.5.6")
 }
