@@ -5,6 +5,7 @@ Built from scratch with Flutter, NetManager plans to respect Material guidelines
 
 ## Supported platforms
 NetManager currently has stable support for Android 10+ (SDK ver. 29) and experimental support for Android 9 (SDK ver. 28).
+Experimental support for a companion Wear OS companion app is also available.
 Support for older Android versions (Android 7+, SDK ver. 24) is planned before version 1.0.0.
 iOS support is currently unplanned due to missing public APIs to reliably retrieve cell data.
 
@@ -12,13 +13,17 @@ iOS support is currently unplanned due to missing public APIs to reliably retrie
 NetManager does its best to provide accurate and up-to-date data by filtering out invalid cell info returned by Android's Telephony service.
 Simple workarounds are applied on certain devices to gather extra cell data or to remove invalid info.
 
+## Analytics
+NetManager might collect anonymous analytic data (opt-in) such as crash dumps and error logs.
+All data is non-linkable to user and is collected with the open source [Sentry Dart SDK](https://github.com/getsentry/sentry-dart) and stored on Bugsink, an EU managed open source Sentry alternative.
+
 ## Issues and pull requests
 Feel free to open an issue for any question, suggestion or any actual issue (such as the app returning wrong cell data) that you might be facing with NetManager.
 Pull requests are highly appreciated as long as they're tested.
 
 ## Builds
 Development builds are available at [GitHub Actions](https://github.com/DottoXD/NetManager/actions).
-Somewhat (at least for now) stable builds are available in the [Releases](https://github.com/DottoXD/NetManager/actions) tab on GitHub.
+Stable and pre-release builds are available in the [Releases](https://github.com/DottoXD/NetManager/actions) tab on GitHub.
 
 ## License
 ```

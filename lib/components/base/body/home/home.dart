@@ -103,12 +103,7 @@ class _HomeBodyState extends State<HomeBody> {
     try {
       final dir = await getExternalStorageDirectory();
 
-      if (dir == null) {
-        await platform.invokeMethod<bool>("showToast", {
-          "message": "External storage is unavailable!",
-        });
-        return;
-      }
+      if (dir == null) throw "Error";
 
       RenderRepaintBoundary boundary =
           _captureKey.currentContext!.findRenderObject()
@@ -121,9 +116,14 @@ class _HomeBodyState extends State<HomeBody> {
       );
       await file.writeAsBytes(pngBytes);
 
-      await platform.invokeMethod<bool>("showToast", {
-        "message": "Screenshot saved at: ${file.path}",
-      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Screenshot saved at: ${file.path}"),
+            showCloseIcon: true,
+          ),
+        );
+      }
     } catch (e) {
       await platform.invokeMethod<bool>("showToast", {
         "message": "An unexpected error occured!",

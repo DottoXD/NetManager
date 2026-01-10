@@ -26,7 +26,7 @@ void main() async {
     }, appRunner: () => runApp(const NetManager()));
   }
 
-  if (Platform.isAndroid) {
+  if (Platform.isAndroid && (sharedPreferences.getBool("material3") ?? true)) {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
 }
@@ -46,6 +46,7 @@ class _NetManagerState extends State<NetManager> {
 
   final ValueNotifier<bool> dynamicThemeNotifier = ValueNotifier<bool>(true);
   final ValueNotifier<int> themeColorNotifier = ValueNotifier<int>(0xFFE6F0F2);
+  final ValueNotifier<bool> material3Notifier = ValueNotifier<bool>(true);
 
   @override
   void initState() {
@@ -57,6 +58,7 @@ class _NetManagerState extends State<NetManager> {
   void dispose() {
     dynamicThemeNotifier.dispose();
     themeColorNotifier.dispose();
+    material3Notifier.dispose();
     super.dispose();
   }
 
@@ -67,6 +69,7 @@ class _NetManagerState extends State<NetManager> {
         _sharedPreferences.getBool("dynamicTheme") ?? true;
     themeColorNotifier.value =
         _sharedPreferences.getInt("themeColor") ?? 0xFFE6F0F2;
+    material3Notifier.value = _sharedPreferences.getBool("material3") ?? true;
 
     setState(() => _prefsLoaded = true);
   }
@@ -80,7 +83,11 @@ class _NetManagerState extends State<NetManager> {
     }
 
     return AnimatedBuilder(
-      animation: Listenable.merge([dynamicThemeNotifier, themeColorNotifier]),
+      animation: Listenable.merge([
+        dynamicThemeNotifier,
+        themeColorNotifier,
+        material3Notifier,
+      ]),
       builder: (context, _) {
         return DynamicColorBuilder(
           builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
@@ -103,7 +110,10 @@ class _NetManagerState extends State<NetManager> {
             } else {
               final seedColor = Color(themeColorNotifier.value);
 
-              lightScheme = ColorScheme.fromSeed(seedColor: seedColor);
+              lightScheme = ColorScheme.fromSeed(
+                seedColor: seedColor,
+                brightness: Brightness.light,
+              );
               darkScheme = ColorScheme.fromSeed(
                 seedColor: seedColor,
                 brightness: Brightness.dark,
@@ -111,12 +121,19 @@ class _NetManagerState extends State<NetManager> {
             }
 
             return MaterialApp(
-              theme: ThemeData(colorScheme: lightScheme),
-              darkTheme: ThemeData(colorScheme: darkScheme),
+              theme: ThemeData(
+                colorScheme: lightScheme,
+                useMaterial3: material3Notifier.value,
+              ),
+              darkTheme: ThemeData(
+                colorScheme: darkScheme,
+                useMaterial3: material3Notifier.value,
+              ),
               home: Perms(
                 _sharedPreferences,
                 dynamicThemeNotifier,
                 themeColorNotifier,
+                material3Notifier,
               ),
               debugShowCheckedModeBanner: false,
             );

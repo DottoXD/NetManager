@@ -6,7 +6,10 @@ import 'package:netmanager/components/dialogs/about.dart';
 import 'package:netmanager/components/dialogs/debug_log.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/utils/color_selection.dart';
+import 'package:netmanager/components/utils/event_selection.dart';
+import 'package:netmanager/components/utils/haptic_utils.dart';
 import 'package:netmanager/types/device/permissions.dart';
+import 'package:netmanager/types/events/event_types.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -16,6 +19,7 @@ class SettingsBody extends StatefulWidget {
     this.sharedPreferences,
     this.dynamicThemeNotifier,
     this.themeColorNotifier,
+    this.material3Notifier,
     this.debugNotifier,
     this.logsNotifier, {
     super.key,
@@ -26,6 +30,7 @@ class SettingsBody extends StatefulWidget {
 
   final ValueNotifier<bool> dynamicThemeNotifier;
   final ValueNotifier<int> themeColorNotifier;
+  final ValueNotifier<bool> material3Notifier;
 
   final ValueNotifier<bool> debugNotifier;
   final ValueNotifier<bool> logsNotifier;
@@ -40,6 +45,7 @@ class _SettingsBodyState extends State<SettingsBody> {
 
   late ValueNotifier<bool> dynamicThemeNotifier;
   late ValueNotifier<int> themeColorNotifier;
+  late ValueNotifier<bool> material3Notifier;
 
   late ValueNotifier<bool> debugNotifier;
   late ValueNotifier<bool> logsNotifier;
@@ -58,8 +64,12 @@ class _SettingsBodyState extends State<SettingsBody> {
   int _positionPrecision = 3;
   int _themeColor = 0xFFE6F0F2;
 
+  bool _hapticFeedback = true;
+  bool _material3 = true;
   bool _dynamicSupported = true;
   bool _dynamicTheme = true;
+
+  List<EventTypes> _loggedEventTypes = EventTypes.values.toList();
 
   bool _debug = false;
 
@@ -72,6 +82,7 @@ class _SettingsBodyState extends State<SettingsBody> {
     sharedPreferences = widget.sharedPreferences;
     dynamicThemeNotifier = widget.dynamicThemeNotifier;
     themeColorNotifier = widget.themeColorNotifier;
+    material3Notifier = widget.material3Notifier;
     debugNotifier = widget.debugNotifier;
     logsNotifier = widget.logsNotifier;
 
@@ -99,11 +110,24 @@ class _SettingsBodyState extends State<SettingsBody> {
           _backgroundUpdateInterval;
       _positionPrecision =
           sharedPreferences.getInt("positionPrecision") ?? _positionPrecision;
+      _material3 = sharedPreferences.getBool("material3") ?? _material3;
+      _hapticFeedback =
+          sharedPreferences.getBool("hapticFeedback") ?? _hapticFeedback;
       _dynamicTheme =
           sharedPreferences.getBool("dynamicTheme") ?? _dynamicTheme;
       _themeColor = sharedPreferences.getInt("themeColor") ?? _themeColor;
       _dynamicSupported =
           sharedPreferences.getBool("dynamicSupported") ?? _dynamicSupported;
+
+      List<String>? tempLoggedEventTypes = sharedPreferences.getStringList(
+        "loggedEventTypes",
+      );
+      if (tempLoggedEventTypes != null) {
+        _loggedEventTypes = tempLoggedEventTypes
+            .map((v) => EventTypes.values.byName(v))
+            .toList();
+      }
+
       _debug = sharedPreferences.getBool("debug") ?? _debug;
     });
   }
@@ -182,6 +206,10 @@ class _SettingsBodyState extends State<SettingsBody> {
 
   void setInt(String key, int value) {
     sharedPreferences.setInt(key, value);
+  }
+
+  void setStringList(String key, List<String> value) {
+    sharedPreferences.setStringList(key, value);
   }
 
   void openDebugLogs() async {
@@ -278,12 +306,15 @@ class _SettingsBodyState extends State<SettingsBody> {
                       subtitle: Text(
                         "Share anonymous insights to help me improve NetManager.",
                       ),
-                      trailing: Switch(
-                        value: _analytics,
-                        onChanged: (bool value) {
-                          setBool("analytics", value);
-                          updateData();
-                        },
+                      trailing: HapticTap(
+                        type: HapticType.SELECTION,
+                        child: Switch(
+                          value: _analytics,
+                          onChanged: (bool value) {
+                            setBool("analytics", value);
+                            updateData();
+                          },
+                        ),
                       ),
                     ),
                     ListTile(
@@ -291,12 +322,15 @@ class _SettingsBodyState extends State<SettingsBody> {
                       subtitle: Text(
                         "Let NetManager automatically look for updates when the app is opened.",
                       ),
-                      trailing: Switch(
-                        value: _checkUpdates,
-                        onChanged: (bool value) {
-                          setBool("checkUpdates", value);
-                          updateData();
-                        },
+                      trailing: HapticTap(
+                        type: HapticType.SELECTION,
+                        child: Switch(
+                          value: _checkUpdates,
+                          onChanged: (bool value) {
+                            setBool("checkUpdates", value);
+                            updateData();
+                          },
+                        ),
                       ),
                     ),
                     Divider(
@@ -322,10 +356,13 @@ class _SettingsBodyState extends State<SettingsBody> {
                       subtitle: Text(
                         "Start the monitoring service with your device. The map tracking service still needs to be manually started in the app.",
                       ),
-                      trailing: Switch(
-                        value: _startupMonitoring,
-                        onChanged: (bool value) async =>
-                            await onToggleStartupMonitoring(value),
+                      trailing: HapticTap(
+                        type: HapticType.SELECTION,
+                        child: Switch(
+                          value: _startupMonitoring,
+                          onChanged: (bool value) async =>
+                              await onToggleStartupMonitoring(value),
+                        ),
                       ),
                     ),
                     ListTile(
@@ -333,10 +370,13 @@ class _SettingsBodyState extends State<SettingsBody> {
                       subtitle: Text(
                         "Keep the monitoring service running even when you shut down the app.",
                       ),
-                      trailing: Switch(
-                        value: _backgroundService,
-                        onChanged: (bool value) async =>
-                            await onToggleBackgroundService(value),
+                      trailing: HapticTap(
+                        type: HapticType.SELECTION,
+                        child: Switch(
+                          value: _backgroundService,
+                          onChanged: (bool value) async =>
+                              await onToggleBackgroundService(value),
+                        ),
                       ),
                     ),
                     ListTile(
@@ -380,21 +420,57 @@ class _SettingsBodyState extends State<SettingsBody> {
                       color: Theme.of(context).colorScheme.outlineVariant,
                     ),
                     ListTile(
+                      title: Text("Haptics"),
+                      subtitle: Text(
+                        "Haptic feedback allows the app to feel more immersive.",
+                      ),
+                      trailing: HapticTap(
+                        type: HapticType.SELECTION,
+                        child: Switch(
+                          value: _hapticFeedback,
+                          onChanged: (bool value) {
+                            setBool("hapticFeedback", value);
+                            updateData();
+                          },
+                        ),
+                      ),
+                    ),
+                    ListTile(
+                      title: Text("Material You (3)"),
+                      subtitle: Text(
+                        "Use Material You, Android's latest UI kit. Do note that Material 2 is not well unsupported.",
+                      ),
+                      trailing: HapticTap(
+                        type: HapticType.SELECTION,
+                        child: Switch(
+                          value: _material3,
+                          onChanged: (bool value) {
+                            setBool("material3", value);
+                            updateData();
+                            material3Notifier.value = value;
+                          },
+                        ),
+                      ),
+                    ),
+                    ListTile(
                       title: Text("Dynamic theme"),
                       subtitle: Text(
-                        "Use Android's dynamic theme system. Supported on Android 12+.",
+                        "Use Android's dynamic theme system. Supported on Material You (Android 12+.).",
                       ),
-                      enabled: _dynamicSupported,
-                      trailing: Switch(
-                        value: _dynamicTheme,
-                        onChanged: (bool value) {
-                          if (_dynamicSupported) {
-                            setBool("dynamicTheme", value);
-                            updateData();
-                            dynamicThemeNotifier.value = value;
-                          }
-                        },
-                      ),
+                      enabled: _dynamicSupported && _material3,
+                      trailing: (_dynamicSupported && _material3
+                          ? HapticTap(
+                              type: HapticType.SELECTION,
+                              child: Switch(
+                                value: _dynamicTheme,
+                                onChanged: (bool value) {
+                                  setBool("dynamicTheme", value);
+                                  updateData();
+                                  dynamicThemeNotifier.value = value;
+                                },
+                              ),
+                            )
+                          : const SizedBox.shrink()),
                     ),
                     ListTile(
                       title: Text("Theme color"),
@@ -418,15 +494,33 @@ class _SettingsBodyState extends State<SettingsBody> {
                       subtitle: Text(
                         "Log various events such as changes between mobile cells and technologies.",
                       ),
-                      trailing: Switch(
-                        value: _logEvents,
-                        onChanged: (bool value) {
-                          setBool("logEvents", value);
-                          updateData();
-                          logsNotifier.value = value;
-                        },
+                      trailing: HapticTap(
+                        type: HapticType.SELECTION,
+                        child: Switch(
+                          value: _logEvents,
+                          onChanged: (bool value) {
+                            setBool("logEvents", value);
+                            updateData();
+                            logsNotifier.value = value;
+                          },
+                        ),
                       ),
                     ),
+                    if (_logEvents)
+                      eventSelection(context, _loggedEventTypes, (eventType) {
+                        if (_loggedEventTypes.contains(eventType)) {
+                          _loggedEventTypes.remove(eventType);
+                        } else {
+                          _loggedEventTypes.add(eventType);
+                        }
+
+                        setStringList(
+                          "loggedEventTypes",
+                          _loggedEventTypes.map((e) => e.name).toList(),
+                        );
+
+                        updateData();
+                      }),
                     ListTile(
                       title: Text("Maximum logs ($_maximumLogs)"),
                       subtitle: Text(
@@ -454,12 +548,15 @@ class _SettingsBodyState extends State<SettingsBody> {
                       subtitle: Text(
                         "Use the metric system for speed measurements in the map.",
                       ),
-                      trailing: Switch(
-                        value: _metricSystem,
-                        onChanged: (bool value) {
-                          setBool("metricSystem", value);
-                          updateData();
-                        },
+                      trailing: HapticTap(
+                        type: HapticType.SELECTION,
+                        child: Switch(
+                          value: _metricSystem,
+                          onChanged: (bool value) {
+                            setBool("metricSystem", value);
+                            updateData();
+                          },
+                        ),
                       ),
                     ),
                     Divider(
@@ -517,13 +614,16 @@ class _SettingsBodyState extends State<SettingsBody> {
                       subtitle: Text(
                         "Manage NetManager's debug mode. Enabling this setting will show raw debug data in some parts of the app.",
                       ),
-                      trailing: Switch(
-                        value: _debug,
-                        onChanged: (bool value) {
-                          setBool("debug", value);
-                          updateData();
-                          debugNotifier.value = value;
-                        },
+                      trailing: HapticTap(
+                        type: HapticType.SELECTION,
+                        child: Switch(
+                          value: _debug,
+                          onChanged: (bool value) {
+                            setBool("debug", value);
+                            updateData();
+                            debugNotifier.value = value;
+                          },
+                        ),
                       ),
                     ),
                     if (_debug)

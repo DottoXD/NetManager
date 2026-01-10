@@ -288,10 +288,13 @@ public class MainActivity extends FlutterActivity implements MessageClient.OnMes
   @Override
   public void onMessageReceived(@NonNull MessageEvent messageEvent) {
     if (messageEvent.getPath().equals("/request_wearos_data")) {
-      PutDataMapRequest request = PutDataMapRequest.create("/wearos_data");
+      PutDataMapRequest request = PutDataMapRequest.create("/wearos_data/" + System.currentTimeMillis());
 
       DataMap dataMap = request.getDataMap();
-      int id = messageEvent.getData().length;
+
+      byte[] data = messageEvent.getData();
+      int id = data.length > 0 ? data[0] : 0;
+
       dataMap.putInt("id", id);
 
       if (core != null) {

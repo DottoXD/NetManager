@@ -83,11 +83,11 @@ public class Manager {
     }
 
     public boolean send() {
-        if (notificationManager == null || notificationChannel == null)
-            return false;
-
         activeNotification = build();
         if (activeNotification == null)
+            return false;
+
+        if (notificationManager == null || notificationChannel == null)
             return false;
 
         if (selectedId < 0)
@@ -173,7 +173,7 @@ public class Manager {
                 contentText.append(selectedCell.getSignalNoiseString()).append(": ")
                         .append(selectedCell.getSignalNoise()).append("dB ");
 
-            if (contentText.charAt(contentText.length() - 1) == '\n')
+            if (contentText.length() > 0 && contentText.charAt(contentText.length() - 1) == '\n')
                 contentText.deleteCharAt(contentText.length() - 1);
 
             if (i == 0)
@@ -220,11 +220,11 @@ public class Manager {
                     .setSilent(true)
                     .addAction(R.drawable.ic_launcher_monochrome, "Close", closingPendingIntent)
                     .setAllowSystemGeneratedContextualActions(false);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
             notification = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
                     .setSmallIcon(R.drawable.ic_launcher_monochrome)
                     .setContentTitle("NetManager is loading...")
-                    .setContentText("The notification component has failed to load.")
+                    .setContentText("The notification component has failed to load. (" + e.getMessage() + ")")
                     .setPriority(NotificationCompat.PRIORITY_MAX)
                     .setStyle(new NotificationCompat.BigTextStyle())
                     .setOngoing(true)
@@ -233,6 +233,16 @@ public class Manager {
         }
 
         return notification;
+    }
+
+    public Notification buildBootstrapNotification() {
+        return new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
+                .setSmallIcon(R.drawable.ic_launcher_monochrome)
+                .setContentTitle("Netmanager is starting...")
+                .setContentText("Initialising...")
+                .setOngoing(true)
+                .setSilent(true)
+                .build();
     }
 
     public Notification getActiveNotification() {

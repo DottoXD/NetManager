@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:netmanager/components/utils/haptic_utils.dart';
 
 Widget infoModal(BuildContext context, MethodChannel platform) {
   return Padding(
@@ -7,15 +8,21 @@ Widget infoModal(BuildContext context, MethodChannel platform) {
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        ListTile(
-          leading: const Icon(Icons.settings_input_antenna_outlined),
-          title: const Text("Radio Info"),
-          onTap: () async => await platform.invokeMethod("openRadioInfo"),
+        HapticTap(
+          type: HapticType.SELECTION,
+          child: ListTile(
+            leading: const Icon(Icons.settings_input_antenna_outlined),
+            title: const Text("Radio Info"),
+            onTap: () async => await platform.invokeMethod("openRadioInfo"),
+          ),
         ),
-        ListTile(
-          leading: const Icon(Icons.engineering_outlined),
-          title: const Text("Telephony UI"),
-          onTap: () async => await platform.invokeMethod("openSamsungInfo"),
+        HapticTap(
+          type: HapticType.SELECTION,
+          child: ListTile(
+            leading: const Icon(Icons.engineering_outlined),
+            title: const Text("Telephony UI"),
+            onTap: () async => await platform.invokeMethod("openSamsungInfo"),
+          ),
         ),
       ],
     ),

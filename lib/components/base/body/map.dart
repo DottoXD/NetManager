@@ -162,7 +162,7 @@ class _MapBodyState extends State<MapBody> {
   }
 
   void updateLocation() async {
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) async {
+    _timer = Timer.periodic(Duration(seconds: 3), (timer) async {
       if (mounted) await setLocation(false);
     });
   }
@@ -337,7 +337,10 @@ class _MapBodyState extends State<MapBody> {
                       context,
                     ).colorScheme.primaryContainer.withAlpha(230),
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
+                    border: Border.all(
+                      color: Colors.white, //color to be changed
+                      width: 2,
+                    ),
                   ),
                 ),
               ),
@@ -345,7 +348,7 @@ class _MapBodyState extends State<MapBody> {
           ),
         SafeArea(
           child: Align(
-            alignment: Alignment.bottomRight,
+            alignment: Alignment.bottomLeft,
             child: ColoredBox(
               color: Theme.of(context).colorScheme.surface,
               child: GestureDetector(

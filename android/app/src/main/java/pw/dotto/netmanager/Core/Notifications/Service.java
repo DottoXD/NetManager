@@ -32,46 +32,32 @@ public class Service extends android.app.Service {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        notification = new Manager(this);
+
+        if (!notification.setupChannel()) {
+            DebugLogger.add("Unexpected error while creating the notifications channel.");
+        }
+
+        Notification bootstrap = notification.buildBootstrapNotification();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(notification.getSelectedId(), bootstrap,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL);
+        } else {
+            startForeground(notification.getSelectedId(), bootstrap);
+        }
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (manager == null) {
             manager = new pw.dotto.netmanager.Core.Manager(this);
-            notification = new Manager(this);
             sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
-        }
-
-        if (!notification.setupChannel()) {
-            DebugLogger.add("Unexpected error while creating the notifications channel.");
-            stopSelf();
-            return START_NOT_STICKY;
         }
 
         if (!notification.send()) {
             DebugLogger.add("Unexpected error while sending the notification.");
-            stopSelf();
-            return START_NOT_STICKY;
-        }
-
-        int attempts = 0;
-        Notification activeNotification = null;
-
-        while (activeNotification == null && attempts < 3) {
-            activeNotification = notification.getActiveNotification();
-            if (activeNotification != null) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    startForeground(notification.getSelectedId(), notification.getActiveNotification(),
-                            ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL);
-                } else {
-                    startForeground(notification.getSelectedId(), notification.getActiveNotification());
-                }
-            }
-
-            attempts++;
-        }
-
-        if (activeNotification == null) {
             stopSelf();
             return START_NOT_STICKY;
         }

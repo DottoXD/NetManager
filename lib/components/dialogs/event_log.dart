@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:netmanager/components/utils/haptic_utils.dart';
+import 'package:netmanager/types/events/event_types.dart';
 import 'package:netmanager/types/events/mobile_netmanager_event.dart';
 import 'package:netmanager/types/events/netmanager_event.dart';
 import 'package:path_provider/path_provider.dart';
@@ -61,41 +63,38 @@ Widget eventLogDialog(
       ),
     ),
     actions: [
-      TextButton.icon(
-        onPressed: () async {
-          final dir = await getExternalStorageDirectory();
+      HapticTap(
+        type: HapticType.SELECTION,
+        child: TextButton.icon(
+          onPressed: () async {
+            final dir = await getExternalStorageDirectory();
 
-          if (dir == null) {
+            if (dir == null) {
+              await platform.invokeMethod<bool>("showToast", {
+                "message": "External storage is unavailable!",
+              });
+              return;
+            }
+
+            final file = File("${dir.path}/event_list.txt");
+            final content = events.join("\n");
+            await file.writeAsString(content);
+
             await platform.invokeMethod<bool>("showToast", {
-              "message": "External storage is unavailable!",
+              "message": "Event log saved at: ${file.path}",
             });
-            return;
-          }
-
-          final file = File("${dir.path}/event_list.txt");
-          final content = events.join("\n");
-          await file.writeAsString(content);
-
-          await platform.invokeMethod<bool>("showToast", {
-            "message": "Event log saved at: ${file.path}",
-          });
-        },
-        label: const Text("Export"),
-        icon: const Icon(Icons.share),
+          },
+          label: const Text("Export"),
+          icon: const Icon(Icons.share),
+        ),
       ),
-      TextButton(
-        onPressed: () => Navigator.of(context).pop(),
-        child: Text("Close"),
+      HapticTap(
+        type: HapticType.SELECTION,
+        child: TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text("Close"),
+        ),
       ),
     ],
   );
-}
-
-String formatEventName(String name) {
-  String finalName = name
-      .replaceFirst("MOBILE_", "")
-      .replaceAll("_", " ")
-      .toUpperCase();
-
-  return finalName;
 }

@@ -76,7 +76,7 @@ public class MainActivity extends Activity implements DataClient.OnDataChangedLi
                 continue;
 
             if (dataEvent.getType() == DataEvent.TYPE_CHANGED
-                    && dataEvent.getDataItem().getUri().getPath().equals("/wearos_data")) {
+                    && dataEvent.getDataItem().getUri().getPath().startsWith("/wearos_data/")) {
                 DataMap map = DataMapItem.fromDataItem(dataEvent.getDataItem()).getDataMap();
                 updateUI(map);
             }

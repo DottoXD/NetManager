@@ -10,3 +10,12 @@ EventTypes eventTypeFromString(String type) {
     (e) => e.toString().split(".").last == type,
   );
 }
+
+String formatEventName(String name) {
+  String finalName = name
+      .replaceFirst("MOBILE_", "")
+      .replaceAll("_", " ")
+      .toUpperCase();
+
+  return finalName;
+}

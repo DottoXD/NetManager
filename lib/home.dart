@@ -3,27 +3,29 @@ import 'package:flutter/services.dart';
 import 'package:netmanager/components/base/body/map.dart';
 import 'package:netmanager/components/base/body/settings.dart';
 import 'package:netmanager/components/floating/position_button.dart';
-import 'package:netmanager/components/base/top_bar.dart';
+import 'package:netmanager/components/base/bars/top_bar.dart';
 import 'package:netmanager/components/floating/screenshot_button.dart';
 import 'package:netmanager/types/device/permissions.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'components/base/body/home.dart';
+import 'components/base/body/home/home.dart';
 import 'components/floating/update_button.dart';
-import 'components/base/nav_bar.dart';
+import 'components/base/bars/nav_bar.dart';
 
 class Home extends StatefulWidget {
   const Home(
     this.sharedPreferences,
     this.dynamicThemeNotifier,
     this.themeColorNotifier,
+    this.material3Notifier,
     this.platform, {
     super.key,
   });
   final SharedPreferences sharedPreferences;
   final ValueNotifier<bool> dynamicThemeNotifier;
   final ValueNotifier<int> themeColorNotifier;
+  final ValueNotifier<bool> material3Notifier;
   final MethodChannel platform;
 
   @override
@@ -86,6 +88,7 @@ class _HomeState extends State<Home> {
         widget.sharedPreferences,
         widget.dynamicThemeNotifier,
         widget.themeColorNotifier,
+        widget.material3Notifier,
         debugNotifier,
         logsNotifier,
       ),
@@ -142,7 +145,7 @@ class _HomeState extends State<Home> {
         bottomNavigationBar: NavBar(updatePage, _currentPage),
         body: _pages[_currentPage],
         floatingActionButton: Container(
-          margin: const EdgeInsets.only(bottom: 15.0),
+          margin: const EdgeInsets.only(bottom: 4.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.end,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/utils/check_update.dart';
+import 'package:netmanager/components/utils/haptic_utils.dart';
 import 'package:netmanager/home.dart';
 import 'package:netmanager/types/device/permissions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,13 +10,15 @@ class Perms extends StatefulWidget {
   const Perms(
     this.sharedPreferences,
     this.dynamicThemeNotifier,
-    this.themeColorNotifier, {
+    this.themeColorNotifier,
+    this.material3Notifier, {
     super.key,
   });
   final SharedPreferences sharedPreferences;
 
   final ValueNotifier<bool> dynamicThemeNotifier;
   final ValueNotifier<int> themeColorNotifier;
+  final ValueNotifier<bool> material3Notifier;
 
   @override
   State<Perms> createState() => _PermsState();
@@ -117,18 +120,21 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
-                FilledButton(
-                  onPressed: () async {
-                    await _requestPermissions();
-                    await _checkPermissions();
-                  },
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                HapticTap(
+                  type: HapticType.LIGHT,
+                  child: FilledButton(
+                    onPressed: () async {
+                      await _requestPermissions();
+                      await _checkPermissions();
+                    },
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
+                    child: const Text("Allow"),
                   ),
-                  child: const Text("Allow"),
                 ),
               ],
             ),
@@ -141,6 +147,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
       widget.sharedPreferences,
       widget.dynamicThemeNotifier,
       widget.themeColorNotifier,
+      widget.material3Notifier,
       platform,
     );
   }
