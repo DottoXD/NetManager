@@ -35,8 +35,10 @@ public class Service extends android.app.Service {
 
         notification = new Manager(this);
 
-        if (!notification.setupChannel()) {
-            DebugLogger.add("Unexpected error while creating the notifications channel.");
+        try {
+            notification.setupChannel();
+        } catch (Exception e) {
+            DebugLogger.add("Unexpected error while creating the notifications channel: " + e.getMessage());
         }
 
         Notification bootstrap = notification.buildBootstrapNotification();

@@ -7,6 +7,18 @@ import java.util.List;
 
 import pw.dotto.netmanager.Utils.DebugLogger;
 
+/**
+ * NetManager's ExtendedPhoneStateListener is a WIP component for cell info
+ * collection which aims at helping to acquire more data on devices with
+ * root-less PhysicalChannelConfig access.
+ * This is used on NetManager's PhysicalChannelDumper on more modern Android
+ * versions.
+ * ExtendedPhoneStateListener must be considered as a preview feature due to its
+ * low accuracy and effectiveness across all Android devices.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class ExtendedPhoneStateListener extends PhoneStateListener {
     public ExtendedPhoneStateListener(int subscriptionId) {
         try {

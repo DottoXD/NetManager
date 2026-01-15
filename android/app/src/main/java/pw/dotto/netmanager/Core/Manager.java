@@ -34,7 +34,7 @@ import java.util.concurrent.Executor;
 
 import pw.dotto.netmanager.Core.Events.EventManager;
 import pw.dotto.netmanager.Core.Events.EventTypes;
-import pw.dotto.netmanager.Core.Events.MobileNetmanagerEvent;
+import pw.dotto.netmanager.Core.Events.MobileNetManagerEvent;
 import pw.dotto.netmanager.Core.Listeners.DataStateListener;
 import pw.dotto.netmanager.Core.Listeners.ServiceStateListener;
 import pw.dotto.netmanager.Core.Listeners.SignalStrengthsListener;
@@ -444,6 +444,16 @@ public class Manager {
         }
       }
 
+    // test: fix phones returning active cells as neighbor cells
+    if (data.getActiveCells().length == 0) {
+      for (CellData neighborCell : data.getNeighborCells()) {
+        if (neighborCell.isRegistered()) {
+          data.addActiveCell(neighborCell);
+          data.removeNeighborCell(neighborCell);
+        }
+      }
+    }
+
     List<Integer> cellBandwidths = new ArrayList<>();
     try {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -551,8 +561,10 @@ public class Manager {
             clearActiveCells = !(SubscriptionManager.getActiveDataSubscriptionId() == telephony.getSubscriptionId());
           }
 
-          if (clearActiveCells)
+          if (clearActiveCells) {
+            DebugLogger.add("Active cells have been cleared!");
             data.clearActiveCells(); // (idle sim = no CA)
+          }
 
           break;
       }
@@ -705,13 +717,16 @@ public class Manager {
           }
         }
 
-        if (simData != null)
-          latestCellSnapshots[simId] = new CellSnapshot(simData.getNetwork(),
-              simData.getPrimaryCell().getCellIdentifier(),
-              simData.getPrimaryCell().getBand() == -1 ? simData.getPrimaryCell().getBasicCellData().getBand()
-                  : simData.getPrimaryCell().getBand(),
-              simData.getNetworkGen(), simData.getPrimaryCell().getRawSignal(),
-              simData.getPrimaryCell().getProcessedSignal());
+        /*
+         * if (simData != null) //add null check for getPrimaryCell
+         * latestCellSnapshots[simId] = new CellSnapshot(simData.getNetwork(),
+         * simData.getPrimaryCell().getCellIdentifier(),
+         * simData.getPrimaryCell().getBand() == -1 ?
+         * simData.getPrimaryCell().getBasicCellData().getBand()
+         * : simData.getPrimaryCell().getBand(),
+         * simData.getNetworkGen(), simData.getPrimaryCell().getRawSignal(),
+         * simData.getPrimaryCell().getProcessedSignal());
+         */
         return simData;
       case 1:
         simData = getSimNetworkData(secondManager);
@@ -731,13 +746,16 @@ public class Manager {
           }
         }
 
-        if (simData != null)
-          latestCellSnapshots[simId] = new CellSnapshot(simData.getNetwork(),
-              simData.getPrimaryCell().getCellIdentifier(),
-              simData.getPrimaryCell().getBand() == -1 ? simData.getPrimaryCell().getBasicCellData().getBand()
-                  : simData.getPrimaryCell().getBand(),
-              simData.getNetworkGen(), simData.getPrimaryCell().getRawSignal(),
-              simData.getPrimaryCell().getProcessedSignal());
+        /*
+         * if (simData != null) //add null check for getPrimaryCell
+         * latestCellSnapshots[simId] = new CellSnapshot(simData.getNetwork(),
+         * simData.getPrimaryCell().getCellIdentifier(),
+         * simData.getPrimaryCell().getBand() == -1 ?
+         * simData.getPrimaryCell().getBasicCellData().getBand()
+         * : simData.getPrimaryCell().getBand(),
+         * simData.getNetworkGen(), simData.getPrimaryCell().getRawSignal(),
+         * simData.getPrimaryCell().getProcessedSignal());
+         */
         return simData;
       default:
         return null;
@@ -1047,7 +1065,13 @@ public class Manager {
     if (telephony == null || !Permissions.check(context, Permissions.READ_PHONE_STATE))
       return false;
 
-    ServiceState state = telephony.getServiceState(); // no serviceStates[] since if nsa[] is null it will be null too
+    ServiceState state = null;
+
+    try {
+      state = telephony.getServiceState();
+    } catch (Exception ignored) {
+      // todo
+    }
 
     if (state != null) {
       String s = state.toString();
@@ -1161,7 +1185,7 @@ public class Manager {
       return;
 
     if (type.toString().startsWith("MOBILE")) {
-      eventManager.addEvent(new MobileNetmanagerEvent(type, value, simId, getNetwork(simId)));
+      eventManager.addEvent(new MobileNetManagerEvent(type, value, simId, getNetwork(simId)));
     }
   }
 

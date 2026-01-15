@@ -15,15 +15,13 @@ import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.Wearable;
 import com.google.gson.Gson;
 
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectOutputStream;
 import java.util.List;
 
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
 import pw.dotto.netmanager.Core.Events.EventManager;
-import pw.dotto.netmanager.Core.Events.NetmanagerEvent;
+import pw.dotto.netmanager.Core.Events.NetManagerEvent;
 import pw.dotto.netmanager.Core.Manager;
 import pw.dotto.netmanager.Core.Mobile.CellSnapshot;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
@@ -185,7 +183,7 @@ public class MainActivity extends FlutterActivity implements MessageClient.OnMes
             break;
           }
 
-          NetmanagerEvent[] events = eventManager.getEvents();
+          NetManagerEvent[] events = eventManager.getEvents();
           result.success(gson.toJson(events));
           break;
 
