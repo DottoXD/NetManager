@@ -1,5 +1,12 @@
 package pw.dotto.netmanager.Core.Mobile.CellDatas;
 
+/**
+ * NetManager's LteCellData is a core component which is used to store various
+ * info about Lte cells.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class LteCellData extends CellData {
 
     public LteCellData(String cellIdentifier, int rawSignal, int processedSignal, int channelNumber,

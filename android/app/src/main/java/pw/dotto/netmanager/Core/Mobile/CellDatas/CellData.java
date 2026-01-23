@@ -2,6 +2,13 @@ package pw.dotto.netmanager.Core.Mobile.CellDatas;
 
 import androidx.annotation.NonNull;
 
+/**
+ * NetManager's CellData is a core component which is used to store various info
+ * about cells.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public abstract class CellData {
     protected final String cellIdentifierString;
     protected final String nodeIdentifierString;

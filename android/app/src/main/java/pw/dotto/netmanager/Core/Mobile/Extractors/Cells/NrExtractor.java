@@ -11,6 +11,13 @@ import androidx.annotation.RequiresApi;
 
 import pw.dotto.netmanager.Core.Mobile.CellDatas.NrCellData;
 
+/**
+ * NetManager's NrExtractor is a component which creates a NrCellData object
+ * based on the provided cell info.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class NrExtractor {
     @NonNull
     public static NrCellData get(CellInfoNr baseCell) {

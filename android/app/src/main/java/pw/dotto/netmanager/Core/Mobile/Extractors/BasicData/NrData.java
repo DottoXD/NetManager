@@ -2,7 +2,21 @@ package pw.dotto.netmanager.Core.Mobile.Extractors.BasicData;
 
 import pw.dotto.netmanager.Core.Mobile.CellDatas.BasicCellData;
 
+/**
+ * NetManager's NrData is a component which defines different NRARFCN ranges to
+ * identify bands.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class NrData {
+    /**
+     * Return a BasicCellData object based on the provided NRARFCN and region.
+     *
+     * @param nrarfcn The cell's NRARFCN.
+     * @param region  The network's region.
+     * @return A BasicCellData object.
+     */
     public static BasicCellData get(int nrarfcn, String region) {
         if (nrarfcn >= 422000 && nrarfcn <= 434000)
             return new BasicCellData(1, 2100);

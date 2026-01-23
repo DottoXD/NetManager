@@ -1,9 +1,10 @@
-package pw.dotto.netmanager.wear;
+package pw.dotto.netmanager;
 
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.widget.TextView;
 
 import com.google.android.gms.wearable.DataClient;
@@ -63,6 +64,8 @@ public class MainActivity extends Activity implements DataClient.OnDataChangedLi
         Wearable.getNodeClient(this).getConnectedNodes().addOnSuccessListener(nodes -> {
             byte[] payload = new byte[] { (byte) currentSim };
 
+            Log.d("wear", "Detected nodes: " + nodes.size());
+
             for (Node node : nodes) {
                 Wearable.getMessageClient(this).sendMessage(node.getId(), "/request_wearos_data", payload);
             }
@@ -72,11 +75,12 @@ public class MainActivity extends Activity implements DataClient.OnDataChangedLi
     @Override
     public void onDataChanged(DataEventBuffer dataEventBuffer) {
         for (DataEvent dataEvent : dataEventBuffer) {
-            if (dataEvent.getDataItem().getUri().getPath() == null)
+            String path = dataEvent.getDataItem().getUri().getPath();
+            if (path == null)
                 continue;
 
             if (dataEvent.getType() == DataEvent.TYPE_CHANGED
-                    && dataEvent.getDataItem().getUri().getPath().startsWith("/wearos_data/")) {
+                    && path.startsWith("/wearos_data")) {
                 DataMap map = DataMapItem.fromDataItem(dataEvent.getDataItem()).getDataMap();
                 updateUI(map);
             }
@@ -84,6 +88,10 @@ public class MainActivity extends Activity implements DataClient.OnDataChangedLi
     }
 
     private void updateUI(DataMap map) {
+        int simId = map.getInt("id", -1);
+        if (simId != currentSim)
+            return;
+
         runOnUiThread(() -> {
             networkName.setText(map.getString("network") + " (SIM " + currentSim + ")");
             signalText.setText(map.getInt("processedSignal") + "dBm");

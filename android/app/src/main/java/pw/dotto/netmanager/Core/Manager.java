@@ -448,7 +448,11 @@ public class Manager {
     if (data.getActiveCells().length == 0) {
       for (CellData neighborCell : data.getNeighborCells()) {
         if (neighborCell.isRegistered()) {
-          data.addActiveCell(neighborCell);
+          if (data.getPrimaryCell() == null)
+            data.setPrimaryCell(neighborCell);
+          else
+            data.addActiveCell(neighborCell);
+
           data.removeNeighborCell(neighborCell);
         }
       }
@@ -462,13 +466,17 @@ public class Manager {
 
         if (serviceStateListener != null)
           bandwidths = serviceStateListener.getUpdatedCellBandwidths();
-        if (context instanceof Activity)
-          DebugLogger.add("Service state bandwidth: " + Arrays.toString(bandwidths));
-        else {
-          ServiceState state = telephony.getServiceState();
-          if (state != null)
-            bandwidths = state.getCellBandwidths();
-        }
+
+        // todo: test if anything breaks
+        /*
+         * if (context instanceof Activity)
+         * DebugLogger.add("Service state bandwidth: " + Arrays.toString(bandwidths));
+         * else {
+         * ServiceState state = telephony.getServiceState();
+         * if (state != null)
+         * bandwidths = state.getCellBandwidths();
+         * }
+         */
 
         if (bandwidths != null)
           for (int bw : bandwidths) {
@@ -491,16 +499,30 @@ public class Manager {
     int mcc = Integer.parseInt(getPlmn(telephony).substring(0, 3));
 
     if (data.getPrimaryCell() != null) {
-      data.getPrimaryCell().setBasicCellData(DataManager.getBasicData(data.getPrimaryCell(), mcc));
-      data.addActiveCell(data.getPrimaryCell());
+      CellData primaryCell = data.getPrimaryCell();
+      primaryCell.setBasicCellData(DataManager.getBasicData(primaryCell, mcc));
+
+      if (primaryCell.getBand() == -1) {
+        primaryCell.setBand(primaryCell.getBasicCellData().getBand());
+      }
+
+      data.addActiveCell(primaryCell);
     }
 
     for (CellData cellData : data.getActiveCells()) {
       cellData.setBasicCellData(DataManager.getBasicData(cellData, mcc));
+
+      if (cellData.getBand() == -1) {
+        cellData.setBand(cellData.getBasicCellData().getBand());
+      }
     }
 
     for (CellData cellData : data.getNeighborCells()) {
       cellData.setBasicCellData(DataManager.getBasicData(cellData, mcc));
+
+      if (cellData.getBand() == -1) {
+        cellData.setBand(cellData.getBasicCellData().getBand());
+      }
     }
 
     // attempt to filter out wrong bands
@@ -717,16 +739,14 @@ public class Manager {
           }
         }
 
-        /*
-         * if (simData != null) //add null check for getPrimaryCell
-         * latestCellSnapshots[simId] = new CellSnapshot(simData.getNetwork(),
-         * simData.getPrimaryCell().getCellIdentifier(),
-         * simData.getPrimaryCell().getBand() == -1 ?
-         * simData.getPrimaryCell().getBasicCellData().getBand()
-         * : simData.getPrimaryCell().getBand(),
-         * simData.getNetworkGen(), simData.getPrimaryCell().getRawSignal(),
-         * simData.getPrimaryCell().getProcessedSignal());
-         */
+        if (simData != null && simData.getPrimaryCell() != null)
+          latestCellSnapshots[simId] = new CellSnapshot(simData.getNetwork(),
+              simData.getPrimaryCell().getCellIdentifier(),
+              simData.getPrimaryCell().getBand() == -1 ? simData.getPrimaryCell().getBasicCellData().getBand()
+                  : simData.getPrimaryCell().getBand(),
+              simData.getNetworkGen(), simData.getPrimaryCell().getRawSignal(),
+              simData.getPrimaryCell().getProcessedSignal());
+
         return simData;
       case 1:
         simData = getSimNetworkData(secondManager);
@@ -746,16 +766,14 @@ public class Manager {
           }
         }
 
-        /*
-         * if (simData != null) //add null check for getPrimaryCell
-         * latestCellSnapshots[simId] = new CellSnapshot(simData.getNetwork(),
-         * simData.getPrimaryCell().getCellIdentifier(),
-         * simData.getPrimaryCell().getBand() == -1 ?
-         * simData.getPrimaryCell().getBasicCellData().getBand()
-         * : simData.getPrimaryCell().getBand(),
-         * simData.getNetworkGen(), simData.getPrimaryCell().getRawSignal(),
-         * simData.getPrimaryCell().getProcessedSignal());
-         */
+        if (simData != null && simData.getPrimaryCell() != null)
+          latestCellSnapshots[simId] = new CellSnapshot(simData.getNetwork(),
+              simData.getPrimaryCell().getCellIdentifier(),
+              simData.getPrimaryCell().getBand() == -1 ? simData.getPrimaryCell().getBasicCellData().getBand()
+                  : simData.getPrimaryCell().getBand(),
+              simData.getNetworkGen(), simData.getPrimaryCell().getRawSignal(),
+              simData.getPrimaryCell().getProcessedSignal());
+
         return simData;
       default:
         return null;

@@ -9,6 +9,13 @@ import androidx.annotation.NonNull;
 
 import pw.dotto.netmanager.Core.Mobile.CellDatas.TdscdmaCellData;
 
+/**
+ * NetManager's TdscdmaExtractor is a component which creates a TdscdmaCellData
+ * object based on the provided cell info.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class TdscdmaExtractor {
     @NonNull
     public static TdscdmaCellData get(CellInfoTdscdma baseCell) {

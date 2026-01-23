@@ -10,7 +10,21 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.WcdmaCellData;
 
 import android.telephony.CellInfo;
 
+/**
+ * NetManager's DataManager is a core component which manages BasicCellData for
+ * all cells.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class DataManager {
+    /**
+     * Returns a BasicCellData object based on the CellData and mcc provided.
+     *
+     * @param cellData Any kind of CellData.
+     * @param mcc      The cell network's mobile country code.
+     * @return A BasicCellData object.
+     */
     public static BasicCellData getBasicData(CellData cellData, int mcc) {
         if (cellData instanceof NrCellData) {
             String region = getRegion(mcc);
@@ -42,6 +56,13 @@ public class DataManager {
         return new BasicCellData(-1, -1);
     }
 
+    /**
+     * Returns a string identifier of the network's zone based on the mobile country
+     * code.
+     *
+     * @param mcc A valid mobile country code.
+     * @return A string containing the network's zone.
+     */
     private static String getRegion(int mcc) {
         if (mcc >= 202 && mcc <= 289)
             return "EU"; // Europe

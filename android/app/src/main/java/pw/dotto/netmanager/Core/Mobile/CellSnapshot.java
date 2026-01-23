@@ -1,5 +1,13 @@
 package pw.dotto.netmanager.Core.Mobile;
 
+/**
+ * NetManager's CellSnapshot is a component which is supposed to contain
+ * subscription, network and main cell info of a SIM card.
+ * This is used for NetManager's WearOS bridge.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class CellSnapshot {
     private final String network;
     private final String node;

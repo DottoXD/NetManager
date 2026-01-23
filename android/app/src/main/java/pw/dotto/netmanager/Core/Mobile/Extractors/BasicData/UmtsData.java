@@ -2,7 +2,20 @@ package pw.dotto.netmanager.Core.Mobile.Extractors.BasicData;
 
 import pw.dotto.netmanager.Core.Mobile.CellDatas.BasicCellData;
 
+/**
+ * NetManager's UmtsData is a component which defines different UARFCN ranges to
+ * identify bands.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class UmtsData {
+    /**
+     * Return a BasicCellData object based on the provided UARFCN and region.
+     *
+     * @param uarfcn The cell's UARFCN.
+     * @return A BasicCellData object.
+     */
     public static BasicCellData get(int uarfcn) {
         if (uarfcn >= 10562 && uarfcn <= 10838)
             return new BasicCellData(1, 2100);

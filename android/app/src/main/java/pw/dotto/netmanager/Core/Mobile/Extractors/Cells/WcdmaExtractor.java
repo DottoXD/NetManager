@@ -9,6 +9,13 @@ import androidx.annotation.NonNull;
 
 import pw.dotto.netmanager.Core.Mobile.CellDatas.WcdmaCellData;
 
+/**
+ * NetManager's WcdmaExtractor is a component which creates a WcdmaCellData
+ * object based on the provided cell info.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class WcdmaExtractor {
     @NonNull
     public static WcdmaCellData get(CellInfoWcdma baseCell) {

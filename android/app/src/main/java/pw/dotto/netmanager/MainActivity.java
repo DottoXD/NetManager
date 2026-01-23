@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -123,7 +124,12 @@ public class MainActivity extends FlutterActivity implements MessageClient.OnMes
 
         case "sendNotification":
           try {
-            startForegroundService(new Intent(this, Service.class));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+              startForegroundService(new Intent(this, Service.class));
+            } else {
+              startService(new Intent(this, Service.class));
+            }
+
             result.success(null);
           } catch (Exception e) {
             result.error("Unknown", e.getMessage(), null); // add proper error handling
@@ -285,8 +291,9 @@ public class MainActivity extends FlutterActivity implements MessageClient.OnMes
 
   @Override
   public void onMessageReceived(@NonNull MessageEvent messageEvent) {
+    Log.d("wear", "Message received: " + messageEvent.getPath());
     if (messageEvent.getPath().equals("/request_wearos_data")) {
-      PutDataMapRequest request = PutDataMapRequest.create("/wearos_data/" + System.currentTimeMillis());
+      PutDataMapRequest request = PutDataMapRequest.create("/wearos_data");
 
       DataMap dataMap = request.getDataMap();
 
@@ -298,13 +305,15 @@ public class MainActivity extends FlutterActivity implements MessageClient.OnMes
       if (core != null) {
         CellSnapshot snapshot = core.getCellSnapshot(id);
 
-        dataMap.putString("network", snapshot.getNetwork());
-        dataMap.putString("node", snapshot.getNode());
-        dataMap.putInt("band", snapshot.getBand());
-        dataMap.putInt("networkGen", snapshot.getNetworkGen());
-        dataMap.putInt("rawSignal", snapshot.getRawSignal());
-        dataMap.putInt("processedSignal", snapshot.getProcessedSignal());
-        dataMap.putLong("timestamp", snapshot.getTimestamp());
+        if (snapshot != null) {
+          dataMap.putString("network", snapshot.getNetwork());
+          dataMap.putString("node", snapshot.getNode());
+          dataMap.putInt("band", snapshot.getBand());
+          dataMap.putInt("networkGen", snapshot.getNetworkGen());
+          dataMap.putInt("rawSignal", snapshot.getRawSignal());
+          dataMap.putInt("processedSignal", snapshot.getProcessedSignal());
+          dataMap.putLong("timestamp", snapshot.getTimestamp());
+        }
       }
 
       Wearable.getDataClient(this).putDataItem(request.asPutDataRequest().setUrgent());

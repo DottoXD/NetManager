@@ -1,5 +1,12 @@
 package pw.dotto.netmanager.Core.Mobile.CellDatas;
 
+/**
+ * NetManager's NrCellData is a core component which is used to store various
+ * info about Nr cells.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class NrCellData extends CellData {
 
     public NrCellData(String cellIdentifier, int rawSignal, int processedSignal, int channelNumber,

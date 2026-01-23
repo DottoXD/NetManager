@@ -9,6 +9,13 @@ import androidx.annotation.NonNull;
 
 import pw.dotto.netmanager.Core.Mobile.CellDatas.GsmCellData;
 
+/**
+ * NetManager's GsmExtractor is a component which creates a GsmCellData object
+ * based on the provided cell info.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class GsmExtractor {
     @NonNull
     public static GsmCellData get(CellInfoGsm baseCell) {
@@ -26,7 +33,7 @@ public class GsmExtractor {
                 identityGsm.getLac(),
                 -1, // signalGsm.getRsrq(),
                 -1, // signalGsm.getSnr(),
-                signalGsm.getTimingAdvance(),
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? signalGsm.getTimingAdvance() : -1),
                 -1, // identityGsm.getBandwidth(),
                 band,
                 baseCell.isRegistered());

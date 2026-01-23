@@ -2,7 +2,20 @@ package pw.dotto.netmanager.Core.Mobile.Extractors.BasicData;
 
 import pw.dotto.netmanager.Core.Mobile.CellDatas.BasicCellData;
 
+/**
+ * NetManager's LteData is a component which defines different EARFCN ranges to
+ * identify bands.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class LteData {
+    /**
+     * Return a BasicCellData object based on the provided EARFCN.
+     *
+     * @param earfcn The cell's EARFCN.
+     * @return A BasicCellData object.
+     */
     public static BasicCellData get(int earfcn) {
         if (earfcn >= 0 && earfcn <= 599)
             return new BasicCellData(1, 2100);

@@ -44,7 +44,10 @@ public class SimReceiverManager {
         };
 
         IntentFilter filter = new IntentFilter();
-        filter.addAction(TelephonyManager.ACTION_SUBSCRIPTION_CARRIER_IDENTITY_CHANGED);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            filter.addAction(TelephonyManager.ACTION_SUBSCRIPTION_CARRIER_IDENTITY_CHANGED);
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             filter.addAction(TelephonyManager.ACTION_MULTI_SIM_CONFIG_CHANGED);
         }

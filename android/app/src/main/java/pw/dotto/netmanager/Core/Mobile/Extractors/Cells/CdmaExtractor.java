@@ -8,6 +8,13 @@ import androidx.annotation.NonNull;
 
 import pw.dotto.netmanager.Core.Mobile.CellDatas.CdmaCellData;
 
+/**
+ * NetManager's CdmaExtractor is a component which creates a CdmaCellData object
+ * based on the provided cell info.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class CdmaExtractor {
     @NonNull
     public static CdmaCellData get(CellInfoCdma baseCell) {

@@ -29,7 +29,7 @@ android {
 
     defaultConfig {
         applicationId = "pw.dotto.netmanager"
-        minSdk = 28 //flutter.minSdkVersion
+        minSdk = 24 //flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

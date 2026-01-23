@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.service.notification.StatusBarNotification;
 import android.telephony.CellInfo;
 
@@ -47,21 +48,23 @@ public class Manager {
         if (notificationManager == null)
             return false;
 
-        notificationChannel = notificationManager.getNotificationChannel(NOTIFICATION_CHANNEL);
-        if (notificationChannel == null) {
-            notificationChannel = new NotificationChannel(
-                    NOTIFICATION_CHANNEL,
-                    "NetManager Cell Updates",
-                    NotificationManager.IMPORTANCE_LOW);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            notificationChannel = notificationManager.getNotificationChannel(NOTIFICATION_CHANNEL);
+            if (notificationChannel == null) {
+                notificationChannel = new NotificationChannel(
+                        NOTIFICATION_CHANNEL,
+                        "NetManager Cell Updates",
+                        NotificationManager.IMPORTANCE_LOW);
 
-            notificationChannel.enableVibration(false);
-            notificationManager.createNotificationChannel(notificationChannel);
-        }
+                notificationChannel.enableVibration(false);
+                notificationManager.createNotificationChannel(notificationChannel);
+            }
 
-        for (StatusBarNotification notification : notificationManager.getActiveNotifications()) {
-            if (notification.getNotification().getChannelId().equals(NOTIFICATION_CHANNEL)) {
-                selectedId = notification.getId();
-                break;
+            for (StatusBarNotification notification : notificationManager.getActiveNotifications()) {
+                if (notification.getNotification().getChannelId().equals(NOTIFICATION_CHANNEL)) {
+                    selectedId = notification.getId();
+                    break;
+                }
             }
         }
 
@@ -75,7 +78,6 @@ public class Manager {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         Intent openIntent = new Intent(context, MainActivity.class);
-        openIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         openPendingIntent = PendingIntent.getActivity(context, 0, openIntent,
                 PendingIntent.FLAG_IMMUTABLE);
 

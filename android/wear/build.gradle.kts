@@ -12,13 +12,13 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "pw.dotto.netmanager.wear"
+    namespace = "pw.dotto.netmanager"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "pw.dotto.netmanager.wear"
+        applicationId = "pw.dotto.netmanager"
         minSdk = 30
         targetSdk = 36
         versionCode = 1

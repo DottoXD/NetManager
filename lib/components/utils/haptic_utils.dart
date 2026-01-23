@@ -19,8 +19,8 @@ class HapticTap extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
-      onTap: () {
-        triggerHaptic(type);
+      onTap: () async {
+        await triggerHaptic(type);
         onTap?.call();
       },
       child: child,
@@ -28,19 +28,19 @@ class HapticTap extends StatelessWidget {
   }
 }
 
-void triggerHaptic(HapticType type) {
+Future<void> triggerHaptic(HapticType type) async {
   switch (type) {
     case HapticType.SELECTION:
-      HapticFeedback.selectionClick();
+      await HapticFeedback.selectionClick();
       break;
     case HapticType.LIGHT:
-      HapticFeedback.lightImpact();
+      await HapticFeedback.lightImpact();
       break;
     case HapticType.MEDIUM:
-      HapticFeedback.mediumImpact();
+      await HapticFeedback.mediumImpact();
       break;
     case HapticType.HEAVY:
-      HapticFeedback.heavyImpact();
+      await HapticFeedback.heavyImpact();
       break;
   }
 }

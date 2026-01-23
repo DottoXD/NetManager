@@ -1,5 +1,12 @@
 package pw.dotto.netmanager.Core.Mobile.CellDatas;
 
+/**
+ * NetManager's GsmCellData is a core component which is used to store various
+ * info about Gsm cells.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class GsmCellData extends CellData {
 
     public GsmCellData(String cellIdentifier, int rawSignal, int processedSignal, int channelNumber,

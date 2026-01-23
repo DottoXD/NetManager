@@ -10,6 +10,13 @@ import androidx.annotation.NonNull;
 
 import pw.dotto.netmanager.Core.Mobile.CellDatas.LteCellData;
 
+/**
+ * NetManager's LteExtractor is a component which creates a LteCellData object
+ * based on the provided cell info.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class LteExtractor {
     private static final int MAXIMUM_LTE_MHZ = 20;
 
@@ -28,14 +35,14 @@ public class LteExtractor {
         LteCellData lteCellData = new LteCellData(
                 String.valueOf(identityLte.getCi()),
                 (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ? signalLte.getRssi() : -1),
-                signalLte.getRsrp(),
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? signalLte.getRsrp() : -1),
                 identityLte.getEarfcn(),
                 identityLte.getPci(),
                 identityLte.getTac(),
-                signalLte.getRsrq(),
-                signalLte.getRssnr(),
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? signalLte.getRsrq() : -1),
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? signalLte.getRssnr() : -1),
                 signalLte.getTimingAdvance(),
-                identityLte.getBandwidth(),
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P ? identityLte.getBandwidth() : -1),
                 band,
                 baseCell.isRegistered());
 
@@ -45,6 +52,9 @@ public class LteExtractor {
     }
 
     private static void processBandwidth(LteCellData lteCellData, CellIdentityLte cellIdentityLte) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P)
+            return;
+
         int bandwidth = cellIdentityLte.getBandwidth();
 
         if (!(bandwidth == CellInfo.UNAVAILABLE || (bandwidth / 1000) > MAXIMUM_LTE_MHZ)) {
