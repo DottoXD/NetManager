@@ -153,7 +153,7 @@ public class EventManager {
         if (sharedPreferences == null)
             return false;
 
-        String json = sharedPreferences.getString("loggedEvents", "[]");
+        String json = sharedPreferences.getString("loggedEvents", "");
         if (json.trim().isEmpty())
             return false;
 

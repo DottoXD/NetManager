@@ -5,6 +5,15 @@ import java.util.Collections;
 
 import pw.dotto.netmanager.Core.Mobile.CellDatas.CellData;
 
+/**
+ * NetManager's SIMData is a core NetManager component.
+ * A SIMData instance contains all kind of data from a device's SIM card,
+ * ranging from the SIM card network to the mobile cells the device is connected
+ * to.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class SIMData {
     private final String operator;
     private final String network;

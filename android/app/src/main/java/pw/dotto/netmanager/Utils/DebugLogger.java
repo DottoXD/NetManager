@@ -17,6 +17,11 @@ public class DebugLogger {
     private static final List<String> logs = new ArrayList<>();
     private static final int MAX_SIZE = 300;
 
+    /**
+     * Adds a debug log to NetManager's DebugLogger.
+     *
+     * @param msg The debug log's message.
+     */
     public static void add(String msg) {
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
         String timestamp = sdf.format(new Date());

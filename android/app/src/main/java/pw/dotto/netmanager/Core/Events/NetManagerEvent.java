@@ -3,6 +3,7 @@ package pw.dotto.netmanager.Core.Events;
 import androidx.annotation.Nullable;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * NetManager's NetManagerEvent is a loggable event for generic events.
@@ -83,7 +84,7 @@ public abstract class NetManagerEvent {
             NetManagerEvent event = (NetManagerEvent) obj;
 
             return event.getEventType().equals(eventType)
-                    && (event.getOldValue().equals(oldValue) && event.getNewValue().equals(newValue));
+                    && Objects.equals(event.getOldValue(), oldValue) && Objects.equals(event.getNewValue(), newValue);
         }
 
         return false;

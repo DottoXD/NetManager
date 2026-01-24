@@ -5,6 +5,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 
+/**
+ * NetManager's Activities class is a component that allows the app to start
+ * external Android activities such as the Android Radio Info package.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class Activities {
     private static final String RADIO_INFO_PKG = "com.android.phone";
     private static final String RADIO_INFO_CLS = "com.android.phone.settings.RadioInfo";
@@ -14,6 +21,12 @@ public class Activities {
     private static final String SAMSUNG_INFO_PKG = "com.samsung.android.app.telephonyui";
     private static final String SAMSUNG_INFO_CLS = "com.samsung.android.app.telephonyui.hiddennetworksetting.MainActivity";
 
+    /**
+     * This method starts up Android's Radio Info package.
+     *
+     * @param context A valid application Context.
+     * @return Wether or not the Activity was started successfully.
+     */
     public static boolean openRadioInfo(Context context) {
         Intent intent = new Intent(Intent.ACTION_MAIN);
 
@@ -32,6 +45,12 @@ public class Activities {
         return true;
     }
 
+    /**
+     * This method starts up Samsung's Radio Info package.
+     *
+     * @param context A valid application Context.
+     * @return Wether or not the Activity was started successfully.
+     */
     public static boolean openSamsungInfo(Context context) {
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setComponent(new ComponentName(SAMSUNG_INFO_PKG, SAMSUNG_INFO_CLS));

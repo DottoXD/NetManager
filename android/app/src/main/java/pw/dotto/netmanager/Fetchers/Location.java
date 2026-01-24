@@ -13,6 +13,13 @@ import android.os.Looper;
 
 import pw.dotto.netmanager.Utils.Permissions;
 
+/**
+ * NetManager's Location class is a core component which is used in the map
+ * component to display the user's position.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class Location {
     private static final int UPDATES_INTERVAL = 3000;
     private static final int DESTROY_TIMEOUT = 5000;
@@ -87,11 +94,19 @@ public class Location {
         return instance;
     }
 
+    /**
+     * Returns the latest registered Location.
+     *
+     * @return A location object.
+     */
     public android.location.Location getLastLocation() {
         updateAccess();
         return lastLocation;
     }
 
+    /**
+     * Updates the latest access to location data.
+     */
     public void updateAccess() {
         lastAccess = System.currentTimeMillis();
         handler.removeCallbacks(selfDestruct);
@@ -100,6 +115,9 @@ public class Location {
 
     private final Runnable selfDestruct = this::destroy;
 
+    /**
+     * Disposes the Location object.
+     */
     public void destroy() {
         if (locationManager != null) {
             locationManager.removeUpdates(locationListener);

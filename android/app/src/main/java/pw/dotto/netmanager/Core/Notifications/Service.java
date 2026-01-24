@@ -15,6 +15,13 @@ import androidx.annotation.Nullable;
 import pw.dotto.netmanager.Core.Mobile.SimReceiverManager;
 import pw.dotto.netmanager.Utils.DebugLogger;
 
+/**
+ * NetManager's Service is an essential component for notification management.
+ * This component shuts down the notification service.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class Service extends android.app.Service {
     private pw.dotto.netmanager.Core.Manager manager;
     private Manager notification;
@@ -98,6 +105,9 @@ public class Service extends android.app.Service {
         return START_STICKY;
     }
 
+    /**
+     * Disposes the notification Service.
+     */
     @Override
     public void onDestroy() {
         super.onDestroy();

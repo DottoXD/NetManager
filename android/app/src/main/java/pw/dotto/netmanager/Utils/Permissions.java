@@ -11,6 +11,13 @@ import androidx.core.app.ActivityCompat;
 
 import java.util.ArrayList;
 
+/**
+ * NetManager's Permissions class is a component used to check and request
+ * permissions.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class Permissions {
         private static final int REQ_FOREGROUND = 1;
         private static final int REQ_BACKGROUND = 2;
@@ -20,6 +27,13 @@ public class Permissions {
         public static final int ACCESS_BACKGROUND_LOCATION = 1 << 2;
         public static final int POST_NOTIFICATIONS = 1 << 3;
 
+        /**
+         * Checks if the default permissions (READ_PHONE_STATE, ACCESS_FINE_LOCATION &
+         * ACCESS_BACKGROUND_LOCATION) are granted or not.
+         *
+         * @param context A valid Context object.
+         * @return Whether or not the permissions are granted.
+         */
         public static boolean check(Context context) {
                 return check(context, READ_PHONE_STATE | ACCESS_FINE_LOCATION
                                 | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ? ACCESS_BACKGROUND_LOCATION : 0));
@@ -55,11 +69,23 @@ public class Permissions {
                 return true;
         }
 
+        /**
+         * Requests the default permissions (READ_PHONE_STATE, ACCESS_FINE_LOCATION &
+         * ACCESS_BACKGROUND_LOCATION).
+         *
+         * @param activity A valid & active Activity object.
+         */
         public static void request(Activity activity) {
                 request(activity, READ_PHONE_STATE | ACCESS_FINE_LOCATION
                                 | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ? ACCESS_BACKGROUND_LOCATION : 0));
         }
 
+        /**
+         * Requests the required permissions.
+         *
+         * @param activity A valid & active Activity object.
+         * @param req      The BitField value representing the requested permissions.
+         */
         public static void request(Activity activity, int req) {
                 ArrayList<String> permissions = new ArrayList<>();
 
@@ -84,6 +110,15 @@ public class Permissions {
                 }
         }
 
+        /**
+         * Handles permissions requests' results and eventually asks for the
+         * ACCESS_BACKGROUND_LOCATION permission.
+         *
+         * @param activity     A valid & active Activity object.
+         * @param requestCode  The request's code.
+         * @param permissions  The requested permissions.
+         * @param grantResults Wether or not the permissions were granted.
+         */
         public static void handleResult(Activity activity, int requestCode, @NonNull String[] permissions,
                         @NonNull int[] grantResults) {
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)

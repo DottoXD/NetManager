@@ -7,6 +7,13 @@ import android.content.IntentFilter;
 import android.os.Build;
 import android.telephony.TelephonyManager;
 
+/**
+ * NetManager's SimReceiverManager is a class used to listen to SIM/subscription
+ * changes.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class SimReceiverManager {
     private static SimReceiverManager instance;
 
@@ -30,6 +37,12 @@ public class SimReceiverManager {
         return instance;
     }
 
+    /**
+     * Registers an event receiver for Android subscription updates.
+     *
+     * @param onUpdate A method that shall be ran as soon as there's an update to
+     *                 the SIM's subscription.
+     */
     public void registerStateReceiver(Runnable onUpdate) {
         if (isRegistered)
             return;
@@ -67,6 +80,9 @@ public class SimReceiverManager {
 
     }
 
+    /**
+     * Disposes this SimReceiverManager instance.
+     */
     public void unregisterStateReceiver() {
         if (simReceiver == null || !isRegistered)
             return;

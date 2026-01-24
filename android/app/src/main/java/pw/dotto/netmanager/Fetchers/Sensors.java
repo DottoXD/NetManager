@@ -8,6 +8,13 @@ import android.hardware.SensorManager;
 import android.os.Handler;
 import android.os.Looper;
 
+/**
+ * NetManager's Sensors class is a component which is used to detect sensors
+ * data.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class Sensors implements SensorEventListener {
     private static final int DESTROY_TIMEOUT = 5000;
 
@@ -56,6 +63,9 @@ public class Sensors implements SensorEventListener {
         return lastAccelerometerData;
     }
 
+    /**
+     * Updates the latest access to sensor data.
+     */
     public void updateAccess() {
         lastAccess = System.currentTimeMillis();
         handler.removeCallbacks(selfDestruct);
@@ -64,6 +74,9 @@ public class Sensors implements SensorEventListener {
 
     private final Runnable selfDestruct = this::destroy;
 
+    /**
+     * Disposes the Sensors object.
+     */
     public void destroy() {
         sensorManager.unregisterListener(this);
         instance = null;

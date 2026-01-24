@@ -39,6 +39,11 @@ public class Manager {
         this.context = context;
     }
 
+    /**
+     * Sets up NetManager's notification channel for cell monitoring notifications.
+     *
+     * @return Whether or not the operation was successful.
+     */
     public boolean setupChannel() {
         if (context == null)
             return false;
@@ -84,6 +89,11 @@ public class Manager {
         return true;
     }
 
+    /**
+     * Sends the currently saved activeNotification.
+     *
+     * @return Whether or not the notification was sent successfully.
+     */
     public boolean send() {
         activeNotification = build();
         if (activeNotification == null)
@@ -99,10 +109,18 @@ public class Manager {
         return true;
     }
 
+    /**
+     * Deletes the currently active notification using its selectedId.
+     */
     public void cancel() {
         notificationManager.cancel(selectedId);
     }
 
+    /**
+     * Builds the actual contents of a NetManager notification.
+     *
+     * @return A string containing the notification's content.
+     */
     public String buildContent() {
         StringBuilder contentText = new StringBuilder();
 
@@ -207,6 +225,11 @@ public class Manager {
         return text;
     }
 
+    /**
+     * Builds a full notification body with cell data.
+     *
+     * @return A builder for NetManager's classic notification.
+     */
     public NotificationCompat.Builder build() {
         NotificationCompat.Builder notification = null;
 
@@ -237,6 +260,11 @@ public class Manager {
         return notification;
     }
 
+    /**
+     * This method builds a temporary placeholder notification.
+     *
+     * @return The placeholder notification.
+     */
     public Notification buildBootstrapNotification() {
         return new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
                 .setSmallIcon(R.drawable.ic_launcher_monochrome)
@@ -247,12 +275,23 @@ public class Manager {
                 .build();
     }
 
+    /**
+     * Returns the currently active notification, if there's any.
+     *
+     * @return A Notification component (or null).
+     */
     public Notification getActiveNotification() {
         if (activeNotification == null)
             return null;
         return activeNotification.build();
     }
 
+    /**
+     * Returns the currently randomly-chosen notification ID if there's an active
+     * notification.
+     *
+     * @return An active notification ID or -1.
+     */
     public int getSelectedId() {
         return selectedId;
     }

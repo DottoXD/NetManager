@@ -22,6 +22,15 @@ import java.util.List;
 import pw.dotto.netmanager.Core.Listeners.ExtendedPhoneStateListener;
 import pw.dotto.netmanager.Utils.DebugLogger;
 
+/**
+ * NetManager's PhysicalChannelDumper is a core component which is used to
+ * obtain extra data on phones supporting it.
+ * Nowadays it is extremely rare to find a phone that supports Android's
+ * PhysicalChannelDumper...
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class PhysicalChannelDumper {
     private static final int LISTEN_PHYSICAL_CHANNEL_CONFIGURATION = 0x00100000;
     private Handler handler;
@@ -50,6 +59,9 @@ public class PhysicalChannelDumper {
         }
     }
 
+    /**
+     * Tries setting up a PhysicalChannelDumper on Android version 10 and lower.
+     */
     private void setupLegacyDumper() {
         handler = new Handler(Looper.getMainLooper());
 
@@ -96,6 +108,9 @@ public class PhysicalChannelDumper {
         handler.post(legacyDumper);
     }
 
+    /**
+     * Tries setting up a PhysicalChannelDumper on Android version 11 and higher.
+     */
     @RequiresApi(api = Build.VERSION_CODES.R)
     private void setupModernDumper() {
         modernDumper = new ExtendedPhoneStateListener(telephonyManager.getSubscriptionId()) {
@@ -133,6 +148,9 @@ public class PhysicalChannelDumper {
         return physicalChannelData.toArray(new String[0]);
     }
 
+    /**
+     * Disposes this PhysicalChannelDumper instance.
+     */
     public void dispose() {
         if (modernDumper != null) {
             telephonyManager.listen(modernDumper, PhoneStateListener.LISTEN_NONE);

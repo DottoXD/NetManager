@@ -35,6 +35,14 @@ import pw.dotto.netmanager.Utils.DeviceData;
 import pw.dotto.netmanager.Utils.Permissions;
 import pw.dotto.netmanager.Utils.DebugLogger;
 
+/**
+ * NetManager's MainActivity class is the core component which coordinates
+ * almost any operation performed with the Flutter <-> Native bridge.
+ * This class also manages communications with WearOS devices.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class MainActivity extends FlutterActivity implements MessageClient.OnMessageReceivedListener {
   private static final String CHANNEL = "pw.dotto.netmanager/telephony";
 
@@ -44,6 +52,11 @@ public class MainActivity extends FlutterActivity implements MessageClient.OnMes
   private MethodChannel chn;
   private SharedPreferences sharedPreferences;
 
+  /**
+   * This method is essentially NetManager's core on Android.
+   *
+   * @param flutterEngine The Flutter engine.
+   */
   @Override
   public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
     super.configureFlutterEngine(flutterEngine);
@@ -289,6 +302,11 @@ public class MainActivity extends FlutterActivity implements MessageClient.OnMes
     Permissions.handleResult(this, requestCode, permissions, grantResults);
   }
 
+  /**
+   * This method coordinates incoming communications with WearOS devices.
+   *
+   * @param messageEvent A valid MessageEvent from a WearOS device.
+   */
   @Override
   public void onMessageReceived(@NonNull MessageEvent messageEvent) {
     Log.d("wear", "Message received: " + messageEvent.getPath());
