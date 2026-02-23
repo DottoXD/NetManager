@@ -9,6 +9,8 @@ import android.telephony.CellSignalStrengthNr;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
+import java.lang.reflect.Field;
+
 import pw.dotto.netmanager.Core.Mobile.CellDatas.NrCellData;
 
 /**
@@ -19,6 +21,8 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.NrCellData;
  * @version 0.0.3
  */
 public class NrExtractor {
+    private static final String REFLECTION_TA = "mTimingAdvance";
+
     @NonNull
     public static NrCellData get(CellInfoNr baseCell) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
@@ -58,16 +62,30 @@ public class NrExtractor {
                 signalNr.getSsSinr(),
                 (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
                         ? signalNr.getTimingAdvanceMicros()
-                        : CellInfo.UNAVAILABLE),
+                        : -1),
                 -1, // identityNr.getBandwidth()
                 band,
                 baseCell.isRegistered());
 
-        //
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            nrCellData.setTimingAdvance(getReflectedField(signalNr, REFLECTION_TA));
+        }
+
         processRsrq(nrCellData, signalNr);
         processSinr(nrCellData, signalNr);
 
         return nrCellData;
+    }
+
+    public static int getReflectedField(CellSignalStrengthNr cellSignalStrengthNr, String fieldName) {
+        try {
+            Field field = CellSignalStrengthNr.class.getDeclaredField(fieldName);
+            field.setAccessible(true);
+
+            return (int) field.get(cellSignalStrengthNr);
+        } catch (Exception ignored) {
+            return -1;
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
@@ -96,5 +114,16 @@ public class NrExtractor {
                 nrCellData.setSignalNoise(sinr);
             }
         }
+    }
+
+    public static int getMaximumNrMhz(int frequency) {
+        if (frequency <= 1000)
+            return 20;
+        if (frequency <= 3000)
+            return 50;
+        if (frequency <= 7000)
+            return 100;
+
+        return 400;
     }
 }

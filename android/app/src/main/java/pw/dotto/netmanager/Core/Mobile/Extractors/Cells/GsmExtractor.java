@@ -7,6 +7,8 @@ import android.telephony.CellSignalStrengthGsm;
 
 import androidx.annotation.NonNull;
 
+import java.lang.reflect.Field;
+
 import pw.dotto.netmanager.Core.Mobile.CellDatas.GsmCellData;
 
 /**
@@ -17,6 +19,9 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.GsmCellData;
  * @version 0.0.3
  */
 public class GsmExtractor {
+    private static final String REFLECTION_RSSI = "mSignalStrength";
+    private static final String REFLECTION_TA = "mTimingAdvance";
+
     @NonNull
     public static GsmCellData get(CellInfoGsm baseCell) {
         CellIdentityGsm identityGsm = baseCell.getCellIdentity();
@@ -24,7 +29,7 @@ public class GsmExtractor {
         int band = -1;
 
         CellSignalStrengthGsm signalGsm = baseCell.getCellSignalStrength();
-        return new GsmCellData(
+        GsmCellData gsmCellData = new GsmCellData(
                 String.valueOf(identityGsm.getCid()),
                 (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ? signalGsm.getRssi() : -1),
                 signalGsm.getDbm(),
@@ -37,5 +42,26 @@ public class GsmExtractor {
                 -1, // identityGsm.getBandwidth(),
                 band,
                 baseCell.isRegistered());
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            gsmCellData.setRawSignal(getReflectedField(signalGsm, REFLECTION_RSSI));
+        }
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            gsmCellData.setTimingAdvance(getReflectedField(signalGsm, REFLECTION_TA));
+        }
+
+        return gsmCellData;
+    }
+
+    public static int getReflectedField(CellSignalStrengthGsm cellSignalStrengthGsm, String fieldName) {
+        try {
+            Field field = CellSignalStrengthGsm.class.getDeclaredField(fieldName);
+            field.setAccessible(true);
+
+            return (int) field.get(cellSignalStrengthGsm);
+        } catch (Exception ignored) {
+            return -1;
+        }
     }
 }

@@ -378,9 +378,13 @@ class _HomeBodyState extends State<HomeBody> {
 
       int? node = int.tryParse(simData.primaryCell.cellIdentifier);
 
+      if (simData.activeCells.isEmpty && node != null) {
+        simData.activeCells.add(simData.primaryCell);
+      }
+
       final List<CellData> tempActiveData = simData.activeCells;
-      if (simData.primaryCell.cellIdentifier.contains("-1") ||
-          simData.primaryCell.cellIdentifier == "0") {
+
+      if (!isValidString(simData.primaryCell.cellIdentifier)) {
         tempActiveData.clear();
       }
 

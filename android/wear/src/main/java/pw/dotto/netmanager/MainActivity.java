@@ -15,6 +15,17 @@ import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.Wearable;
 
+/**
+ * NetManager's WearOS MainActivity class is the core of the app's WearOS
+ * bridge.
+ * This class currently handles all of WearOS NetManager's interactions with the
+ * main app.
+ * This should be considered as low-quality, testing code which is going to be
+ * replaced soon.
+ *
+ * @author DottoXD
+ * @version 0.0.3
+ */
 public class MainActivity extends Activity implements DataClient.OnDataChangedListener {
     private Handler pollingHandler;
     private int currentSim = 0;

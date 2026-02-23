@@ -5,8 +5,8 @@ publish_to: 'none'
 version: 0.0.3
 
 environment:
-  sdk: ^3.10.4
-  flutter: ^3.38.5
+  sdk: ^3.11.0
+  flutter: ^3.41.2
 
 dependencies:
   flutter:
@@ -17,7 +17,7 @@ dependencies:
   url_launcher: ^6.3.2
   flutter_map: ^8.2.2
   latlong2: ^0.9.1
-  sentry_flutter: ^9.9.2
+  sentry_flutter: ^9.14.0
   http: ^1.6.0
   intl: ^0.20.2
   path_provider: ^2.1.5

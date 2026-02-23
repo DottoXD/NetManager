@@ -8,6 +8,8 @@ import android.telephony.CellSignalStrengthLte;
 
 import androidx.annotation.NonNull;
 
+import java.lang.reflect.Field;
+
 import pw.dotto.netmanager.Core.Mobile.CellDatas.LteCellData;
 
 /**
@@ -19,6 +21,12 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.LteCellData;
  */
 public class LteExtractor {
     private static final int MAXIMUM_LTE_MHZ = 20;
+
+    private static final String REFLECTION_RSSI = "mSignalStrength";
+    private static final String REFLECTION_BW = "mBandwidth";
+    private static final String REFLECTION_RSRP = "mRsrp";
+    private static final String REFLECTION_RSRQ = "mRsrq";
+    private static final String REFLECTION_SNR = "mRssnr";
 
     @NonNull
     public static LteCellData get(CellInfoLte baseCell) {
@@ -46,9 +54,34 @@ public class LteExtractor {
                 band,
                 baseCell.isRegistered());
 
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            lteCellData.setRawSignal(getReflectedField(signalLte, REFLECTION_RSSI));
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            lteCellData.setBandwidth(getReflectedField(signalLte, REFLECTION_BW));
+        }
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            lteCellData.setProcessedSignal(getReflectedField(signalLte, REFLECTION_RSRP));
+            lteCellData.setSignalQuality(getReflectedField(signalLte, REFLECTION_RSRQ));
+            lteCellData.setSignalNoise(getReflectedField(signalLte, REFLECTION_SNR));
+        }
+
         processBandwidth(lteCellData, identityLte);
 
         return lteCellData;
+    }
+
+    public static int getReflectedField(CellSignalStrengthLte cellSignalStrengthLte, String fieldName) {
+        try {
+            Field field = CellSignalStrengthLte.class.getDeclaredField(fieldName);
+            field.setAccessible(true);
+
+            return (int) field.get(cellSignalStrengthLte);
+        } catch (Exception ignored) {
+            return -1;
+        }
     }
 
     private static void processBandwidth(LteCellData lteCellData, CellIdentityLte cellIdentityLte) {
