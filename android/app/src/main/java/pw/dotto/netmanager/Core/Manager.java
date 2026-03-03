@@ -484,10 +484,8 @@ public class Manager {
       }
     }
 
-    // shouldn't throw as it's impossible to have active cells without a primary
-    // cell!
     for (CellData cell : data.getActiveCells()) {
-      if (cell.getChannelNumber() == data.getPrimaryCell().getChannelNumber())
+      if (data.getPrimaryCell() != null && cell.getChannelNumber() == data.getPrimaryCell().getChannelNumber())
         data.removeActiveCell(cell);
 
       for (CellData altCell : data.getActiveCells()) {
@@ -508,17 +506,15 @@ public class Manager {
         if (serviceStateListener != null)
           bandwidths = serviceStateListener.getUpdatedCellBandwidths();
 
-        // todo: test if anything breaks - keeping this uncommented makes the app lag
-        // snapdragon samsungs...
-        /*
-         * if (context instanceof Activity)
-         * DebugLogger.add("Service state bandwidth: " + Arrays.toString(bandwidths));
-         * else {
-         * ServiceState state = telephony.getServiceState();
-         * if (state != null)
-         * bandwidths = state.getCellBandwidths();
-         * }
-         */
+        if (context instanceof Activity)
+          DebugLogger.add("Service state bandwidth: " + Arrays.toString(bandwidths));
+
+        // todo: test if anything breaks on snapdragon samsungs
+        if (bandwidths == null) {
+          ServiceState state = telephony.getServiceState();
+          if (state != null)
+            bandwidths = state.getCellBandwidths();
+        }
 
         if (bandwidths != null)
           for (int bw : bandwidths) {
@@ -1255,6 +1251,18 @@ public class Manager {
     }
 
     return cellSignalStrength;
+  }
+
+  @SuppressLint("MissingPermission")
+  public TelephonyManager getSubscription(int index) {
+    switch (index) {
+      case 0:
+        return firstManager;
+      case 1:
+        return secondManager;
+    }
+
+    return null;
   }
 
   @SuppressLint("MissingPermission")

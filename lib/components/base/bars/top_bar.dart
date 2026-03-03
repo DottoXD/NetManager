@@ -60,18 +60,27 @@ class _TopBarState extends State<TopBar> {
       if (mounted) setState(() {});
     });
 
-    checkSimCount();
+    init();
   }
 
   @override
   void dispose() {
+    widget.platformSignalNotifier.removeListener(restartTimer);
+
     timer.cancel();
     super.dispose();
   }
 
-  Future<void> checkSimCount() async {
+  Future<void> init() async {
     final count = await platform.invokeMethod("getSimCount") ?? 0;
     if (mounted && count != simCount) setState(() => simCount = count);
+
+    if (count > 1) {
+      final activeSelected =
+          await platform.invokeMethod("isActiveSubscriptionSelected") ?? true;
+
+      if (!activeSelected) switchSim();
+    }
   }
 
   Future<void> update() async {

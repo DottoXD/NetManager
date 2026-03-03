@@ -62,6 +62,8 @@ class _HomeBodyState extends State<HomeBody> {
   final int minRsrp = -140;
   final int maxRsrp = -43;
 
+  int simCount = 0;
+
   String _debug = "";
   String plmn = "";
   bool pageLoaded = false;
@@ -136,6 +138,8 @@ class _HomeBodyState extends State<HomeBody> {
     _isUpdating = true;
 
     try {
+      simCount = await platform.invokeMethod("getSimCount") ?? 0;
+
       final String jsonStr = await platform.invokeMethod("getNetworkData");
       plmn = (await platform.invokeMethod<String>("getPlmn"))!;
 
@@ -514,6 +518,27 @@ class _HomeBodyState extends State<HomeBody> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[CircularProgressIndicator()],
+                ),
+              ),
+            )
+          else if (simCount == 0)
+            ConstrainedBox(
+              constraints: BoxConstraints(minHeight: widgetsHeight),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Icon(
+                      Icons.sim_card_alert_outlined,
+                      size: 80,
+                      //color: Theme.of(context).colorScheme.primaryContainer,
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      "No SIM card detected",
+                      style: TextStyle(fontSize: 22),
+                    ),
+                  ],
                 ),
               ),
             )

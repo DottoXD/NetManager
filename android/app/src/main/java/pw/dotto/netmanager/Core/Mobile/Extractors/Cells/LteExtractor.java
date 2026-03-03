@@ -58,7 +58,7 @@ public class LteExtractor {
             lteCellData.setRawSignal(getReflectedField(signalLte, REFLECTION_RSSI));
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
             lteCellData.setBandwidth(getReflectedField(signalLte, REFLECTION_BW));
         }
 

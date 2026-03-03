@@ -26,6 +26,9 @@ public class DataManager {
      * @return A BasicCellData object.
      */
     public static BasicCellData getBasicData(CellData cellData, int mcc) {
+        if (cellData == null)
+            return new BasicCellData(-1, -1);
+
         if (cellData instanceof NrCellData) {
             String region = getRegion(mcc);
 

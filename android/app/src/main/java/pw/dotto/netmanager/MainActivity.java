@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -253,6 +255,29 @@ public class MainActivity extends FlutterActivity implements MessageClient.OnMes
           }
 
           result.success(null);
+          break;
+
+        case "isActiveSubscriptionSelected":
+          boolean inactive = false;
+
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            int status = core.getDataStatus(selectedSim);
+
+            switch (status) {
+              case TelephonyManager.DATA_DISCONNECTED:
+              case TelephonyManager.DATA_DISCONNECTING:
+              case TelephonyManager.DATA_SUSPENDED:
+              case TelephonyManager.DATA_UNKNOWN:
+                inactive = true;
+                break;
+            }
+          } else if (Build.VERSION.SDK_INT == Build.VERSION_CODES.R) {
+            TelephonyManager subscription = core.getSubscription(selectedSim);
+            if (subscription != null)
+              inactive = !(SubscriptionManager.getActiveDataSubscriptionId() == subscription.getSubscriptionId());
+          }
+
+          result.success(!inactive);
           break;
 
         default:
