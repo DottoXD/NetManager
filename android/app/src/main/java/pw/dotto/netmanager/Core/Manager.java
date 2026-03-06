@@ -506,14 +506,15 @@ public class Manager {
         if (serviceStateListener != null)
           bandwidths = serviceStateListener.getUpdatedCellBandwidths();
 
-        if (context instanceof Activity)
-          DebugLogger.add("Service state bandwidth: " + Arrays.toString(bandwidths));
+        DebugLogger.add("Service state bandwidth: " + Arrays.toString(bandwidths));
 
-        // todo: test if anything breaks on snapdragon samsungs
-        if (bandwidths == null) {
-          ServiceState state = telephony.getServiceState();
-          if (state != null)
-            bandwidths = state.getCellBandwidths();
+        if (context instanceof Activity) {
+          // todo: test if anything breaks on snapdragon samsungs
+          if (bandwidths == null) {
+            ServiceState state = telephony.getServiceState();
+            if (state != null)
+              bandwidths = state.getCellBandwidths();
+          }
         }
 
         if (bandwidths != null)

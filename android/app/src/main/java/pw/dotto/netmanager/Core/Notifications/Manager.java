@@ -6,9 +6,12 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.service.notification.StatusBarNotification;
 import android.telephony.CellInfo;
+import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyManager;
 
 import androidx.core.app.NotificationCompat;
 
@@ -226,16 +229,81 @@ public class Manager {
     }
 
     /**
+     * Returns the appropriate icon for the main data subscription's primary band's
+     * frequency.
+     *
+     * @param frequency Frequency in MHz.
+     * @return A resource integer for the requested icon.
+     */
+    private int getFrequencyIcon(int frequency) {
+        String iconName = "ic_notification_" + frequency;
+        int resId = context.getResources().getIdentifier(iconName, "drawable", context.getPackageName());
+
+        return (resId != 0) ? resId : R.drawable.ic_launcher_monochrome;
+    }
+
+    /**
      * Builds a full notification body with cell data.
      *
      * @return A builder for NetManager's classic notification.
      */
     public NotificationCompat.Builder build() {
-        NotificationCompat.Builder notification = null;
+        NotificationCompat.Builder notification;
 
         try {
+            int simCount = context.getManager().getSimCount();
+            int selectedSubscription = 1;
+
+            if (simCount < 2) {
+                selectedSubscription = 0;
+            } else {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    int status = context.getManager().getDataStatus(1);
+
+                    switch (status) {
+                        case TelephonyManager.DATA_DISCONNECTED:
+                        case TelephonyManager.DATA_DISCONNECTING:
+                        case TelephonyManager.DATA_SUSPENDED:
+                        case TelephonyManager.DATA_UNKNOWN:
+                            selectedSubscription = 0;
+                            break;
+                    }
+
+                } else if (Build.VERSION.SDK_INT == Build.VERSION_CODES.R) {
+                    TelephonyManager subscription = context.getManager().getSubscription(1);
+                    if (subscription != null) {
+                        if (!(SubscriptionManager.getActiveDataSubscriptionId() == subscription.getSubscriptionId()))
+                            selectedSubscription = 0;
+                    }
+                }
+            }
+
+            SIMData simData = context.getManager().getSimNetworkData(selectedSubscription);
+            int freq = 0;
+
+            if (simData != null) {
+                CellData selectedCell = simData.getPrimaryCell();
+                if (!(selectedCell instanceof NrCellData)) {
+                    for (CellData cell : simData.getActiveCells()) {
+                        if (cell instanceof NrCellData) {
+                            NrCellData nrCell = (NrCellData) cell;
+                            if (nrCell.getProcessedSignal() == CellInfo.UNAVAILABLE)
+                                continue;
+
+                            selectedCell = nrCell;
+                            break;
+                        }
+                    }
+                }
+
+                if (selectedCell != null && selectedCell.getBasicCellData() != null)
+                    freq = selectedCell.getBasicCellData().getFrequency();
+            }
+
+            int icon = getFrequencyIcon(freq);
+
             notification = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
-                    .setSmallIcon(R.drawable.ic_launcher_monochrome)
+                    .setSmallIcon(icon)
                     .setContentTitle(context.getManager().getFullHeaderString())
                     .setContentText(buildContent())
                     .setContentIntent(openPendingIntent)
@@ -253,8 +321,8 @@ public class Manager {
                     .setPriority(NotificationCompat.PRIORITY_MAX)
                     .setStyle(new NotificationCompat.BigTextStyle())
                     .setOngoing(true)
-                    .setSilent(true)
-                    .setAllowSystemGeneratedContextualActions(false);
+                    .setSilent(true).setAllowSystemGeneratedContextualActions(false)
+                    .addAction(R.drawable.ic_launcher_monochrome, "Close", closingPendingIntent);
         }
 
         return notification;
