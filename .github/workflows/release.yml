@@ -35,9 +35,12 @@ jobs:
           java-version: '17'
 
       - name: 🦋 Setup Flutter
-        uses: subosito/flutter-action@v2.19.0
+        uses: subosito/flutter-action@v2.22.0
         with:
           channel: stable
+
+      - name: ✔️ Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v3
 
       - name: 🪛 Dependencies
         run: flutter pub get

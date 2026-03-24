@@ -26,6 +26,7 @@ class Perms extends StatefulWidget {
 
 class _PermsState extends State<Perms> with WidgetsBindingObserver {
   static const platform = MethodChannel('pw.dotto.netmanager/telephony');
+
   bool? hasPermissions;
   bool? isRefreshing = false;
 

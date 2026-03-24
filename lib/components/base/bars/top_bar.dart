@@ -84,8 +84,6 @@ class _TopBarState extends State<TopBar> {
   }
 
   Future<void> update() async {
-    final initialTitle = title.value;
-
     try {
       _carrier =
           (await platform.invokeMethod<String>("getCarrier")) ?? "Unknown";

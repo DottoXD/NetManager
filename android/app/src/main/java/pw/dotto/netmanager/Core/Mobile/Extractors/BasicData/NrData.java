@@ -34,7 +34,7 @@ public class NrData {
             return new BasicCellData(12, 700);
         if (nrarfcn >= 149200 && nrarfcn <= 151600)
             return new BasicCellData(13, 700);
-        if (nrarfcn >= 151600 && nrarfcn <= 153600)
+        if ("US".equals(region) && nrarfcn >= 151600 && nrarfcn <= 153600)
             return new BasicCellData(14, 700);
         if ("APAC".equals(region) && nrarfcn >= 172000 && nrarfcn <= 175000)
             return new BasicCellData(18, 800);

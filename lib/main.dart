@@ -18,12 +18,13 @@ void main() async {
   );
 
   if (!analytics || sentryDsn.isEmpty) {
-    runApp(const NetManager());
+    runApp(NetManager(prefs: sharedPreferences));
   } else {
     await SentryFlutter.init((options) {
       options.dsn = sentryDsn;
       options.sendDefaultPii = false;
-    }, appRunner: () => runApp(const NetManager()));
+      options.tracesSampleRate = 0;
+    }, appRunner: () => runApp(NetManager(prefs: sharedPreferences)));
   }
 
   if (Platform.isAndroid && (sharedPreferences.getBool("material3") ?? true)) {
@@ -32,16 +33,14 @@ void main() async {
 }
 
 class NetManager extends StatefulWidget {
-  const NetManager({super.key});
+  final SharedPreferences prefs;
+  const NetManager({super.key, required this.prefs});
 
   @override
   State<NetManager> createState() => _NetManagerState();
 }
 
 class _NetManagerState extends State<NetManager> {
-  late SharedPreferences _sharedPreferences;
-
-  bool _prefsLoaded = false;
   bool? _dynamicSupported;
 
   final ValueNotifier<bool> dynamicThemeNotifier = ValueNotifier<bool>(true);
@@ -51,7 +50,10 @@ class _NetManagerState extends State<NetManager> {
   @override
   void initState() {
     super.initState();
-    _loadPreferences();
+
+    dynamicThemeNotifier.value = widget.prefs.getBool("dynamicTheme") ?? true;
+    themeColorNotifier.value = widget.prefs.getInt("themeColor") ?? 0xFFE6F0F2;
+    material3Notifier.value = widget.prefs.getBool("material3") ?? true;
   }
 
   @override
@@ -62,26 +64,8 @@ class _NetManagerState extends State<NetManager> {
     super.dispose();
   }
 
-  Future<void> _loadPreferences() async {
-    _sharedPreferences = await SharedPreferences.getInstance();
-
-    dynamicThemeNotifier.value =
-        _sharedPreferences.getBool("dynamicTheme") ?? true;
-    themeColorNotifier.value =
-        _sharedPreferences.getInt("themeColor") ?? 0xFFE6F0F2;
-    material3Notifier.value = _sharedPreferences.getBool("material3") ?? true;
-
-    setState(() => _prefsLoaded = true);
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (!_prefsLoaded) {
-      return const MaterialApp(
-        home: Scaffold(body: Center(child: CircularProgressIndicator())),
-      );
-    }
-
     return AnimatedBuilder(
       animation: Listenable.merge([
         dynamicThemeNotifier,
@@ -96,7 +80,7 @@ class _NetManagerState extends State<NetManager> {
 
             if (_dynamicSupported != dynamicAvailable) {
               _dynamicSupported = dynamicAvailable;
-              _sharedPreferences.setBool("dynamicSupported", dynamicAvailable);
+              widget.prefs.setBool("dynamicSupported", dynamicAvailable);
             }
 
             final bool useDynamic =
@@ -130,7 +114,7 @@ class _NetManagerState extends State<NetManager> {
                 useMaterial3: material3Notifier.value,
               ),
               home: Perms(
-                _sharedPreferences,
+                widget.prefs,
                 dynamicThemeNotifier,
                 themeColorNotifier,
                 material3Notifier,
