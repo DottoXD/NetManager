@@ -21,12 +21,22 @@ jobs:
       - name: 📁 Checkout
         uses: actions/checkout@v4
 
-      - name: 📋 Cache
+      - name: 📋 Cache Flutter
         uses: actions/cache@v4
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.yaml') }}
           restore-keys: ${{ runner.os }}-pub-
+
+      - name: 📋 Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
       - name: ☕️ Java
         uses: actions/setup-java@v4
@@ -38,9 +48,6 @@ jobs:
         uses: subosito/flutter-action@v2.22.0
         with:
           channel: stable
-
-      - name: ✔️ Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v3
 
       - name: 🪛 Dependencies
         run: flutter pub get
@@ -59,6 +66,9 @@ jobs:
 
       - name: ⛏️ APKs
         run: flutter build apk --release --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN }} --dart-define=flutter.flutter_map.unblockOSM=${{ secrets.UNBLOCK_OSM }} --dart-define=GIT_COMMIT=$GIT_COMMIT --target-platform android-arm,android-arm64
+
+      - name: ✔️ Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v3
 
       - name: 📦 Artifacts
         run: |
