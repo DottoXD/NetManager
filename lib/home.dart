@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/base/body/map.dart';
@@ -6,6 +8,7 @@ import 'package:netmanager/components/floating/position_button.dart';
 import 'package:netmanager/components/base/bars/top_bar.dart';
 import 'package:netmanager/components/floating/screenshot_button.dart';
 import 'package:netmanager/types/device/permissions.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -48,6 +51,12 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
+
+    try {
+      cleanOldExports();
+    } catch (e) {
+      //todo
+    }
 
     widget.platform.setMethodCallHandler((call) {
       if (call.method == "restartTimer") {
@@ -104,6 +113,15 @@ class _HomeState extends State<Home> {
       widget.platform.invokeMethod<void>("sendNotification");
     } on PlatformException catch (e) {
       Sentry.captureException(e, stackTrace: e.stacktrace);
+    }
+  }
+
+  Future<void> cleanOldExports() async {
+    final tempDir = await getTemporaryDirectory();
+    final exportDir = Directory("${tempDir.path}/exports");
+
+    if (await exportDir.exists()) {
+      await exportDir.delete(recursive: true);
     }
   }
 

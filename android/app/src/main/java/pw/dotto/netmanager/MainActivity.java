@@ -1,5 +1,8 @@
 package pw.dotto.netmanager;
 
+import static pw.dotto.netmanager.Utils.FileManager.shareImage;
+import static pw.dotto.netmanager.Utils.FileManager.shareLog;
+
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
@@ -278,6 +281,22 @@ public class MainActivity extends FlutterActivity implements MessageClient.OnMes
           }
 
           result.success(!inactive);
+          break;
+
+        case "share":
+          String path = call.argument("path");
+
+          if (path != null) {
+            if (path.endsWith(".txt"))
+              shareLog(this, path);
+            else
+              shareImage(this, path);
+
+            result.success(null);
+          } else {
+            result.error(
+                "Unknown", "Unknown", null); // add proper error handling
+          }
           break;
 
         default:

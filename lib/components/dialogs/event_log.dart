@@ -67,22 +67,25 @@ Widget eventLogDialog(
         type: HapticType.SELECTION,
         child: TextButton.icon(
           onPressed: () async {
-            final dir = await getExternalStorageDirectory();
+            final dir = await getTemporaryDirectory();
 
-            if (dir == null) {
-              await platform.invokeMethod<bool>("showToast", {
-                "message": "External storage is unavailable!",
-              });
-              return;
+            final exportFolder = Directory("${dir.path}/exports");
+            if (!await exportFolder.exists()) {
+              await exportFolder.create();
             }
 
-            final file = File("${dir.path}/event_list.txt");
+            final file = File("${exportFolder.path}/event_list.txt");
             final content = events.join("\n");
             await file.writeAsString(content);
 
-            await platform.invokeMethod<bool>("showToast", {
-              "message": "Event log saved at: ${file.path}",
-            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Event logs saved at: ${file.path}"),
+                showCloseIcon: true,
+              ),
+            );
+
+            await platform.invokeMethod("share", {"path": file.path});
           },
           label: const Text("Export"),
           icon: const Icon(Icons.share),

@@ -419,7 +419,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                       height: 0,
                       color: Theme.of(context).colorScheme.outlineVariant,
                     ),
-                    ListTile(
+                    /*ListTile(
                       title: Text("Haptics"),
                       subtitle: Text(
                         "Haptic feedback allows the app to feel more immersive.",
@@ -434,7 +434,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                           },
                         ),
                       ),
-                    ),
+                    ),*/
                     ListTile(
                       title: Text("Material You (3)"),
                       subtitle: Text(

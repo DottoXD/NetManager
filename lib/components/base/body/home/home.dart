@@ -103,9 +103,12 @@ class _HomeBodyState extends State<HomeBody> {
 
   void screenshot() async {
     try {
-      final dir = await getExternalStorageDirectory();
+      final dir = await getTemporaryDirectory();
 
-      if (dir == null) throw "Error";
+      final exportFolder = Directory("${dir.path}/exports");
+      if (!await exportFolder.exists()) {
+        await exportFolder.create();
+      }
 
       RenderRepaintBoundary boundary =
           _captureKey.currentContext!.findRenderObject()
@@ -114,7 +117,7 @@ class _HomeBodyState extends State<HomeBody> {
       ByteData? byteData = await image.toByteData(format: ImageByteFormat.png);
       Uint8List pngBytes = byteData!.buffer.asUint8List();
       final file = File(
-        "${dir.path}/${DateTime.now().toIso8601String().replaceAll(":", "-")}.png",
+        "${exportFolder.path}/${DateTime.now().toIso8601String().replaceAll(":", "-")}.png",
       );
       await file.writeAsBytes(pngBytes);
 
@@ -126,6 +129,8 @@ class _HomeBodyState extends State<HomeBody> {
           ),
         );
       }
+
+      await platform.invokeMethod("share", {"path": file.path});
     } catch (e) {
       await platform.invokeMethod<bool>("showToast", {
         "message": "An unexpected error occured!",
