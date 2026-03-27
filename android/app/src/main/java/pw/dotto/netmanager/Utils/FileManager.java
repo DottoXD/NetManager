@@ -8,6 +8,13 @@ import androidx.core.content.FileProvider;
 
 import java.io.File;
 
+/**
+ * NetManager's FileManager class is a utility component which allows the user
+ * to share debug logs and band images.
+ *
+ * @author DottoXD
+ * @version 0.0.4
+ */
 public class FileManager {
     public static void shareLog(Context context, String path) {
         File file = new File(path);
