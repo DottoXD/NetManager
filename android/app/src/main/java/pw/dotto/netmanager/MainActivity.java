@@ -46,7 +46,7 @@ import pw.dotto.netmanager.Utils.DebugLogger;
  * This class also manages communications with WearOS devices.
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.0.4
  */
 public class MainActivity extends FlutterActivity implements MessageClient.OnMessageReceivedListener {
   private static final String CHANNEL = "pw.dotto.netmanager/telephony";
@@ -70,7 +70,7 @@ public class MainActivity extends FlutterActivity implements MessageClient.OnMes
     if (sharedPreferences == null)
       sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
 
-    if (!sharedPreferences.contains("deviceData"))
+    if (!sharedPreferences.contains("flutter.deviceData"))
       new DeviceData(Build.MANUFACTURER, Build.HARDWARE).save(sharedPreferences);
 
     chn = new MethodChannel(

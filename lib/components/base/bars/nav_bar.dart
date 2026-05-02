@@ -26,6 +26,10 @@ class NavBar extends StatelessWidget {
             label: "Map",
           ),
           NavigationDestination(
+            icon: Icon(Icons.speed_outlined),
+            label: "Speed test",
+          ),
+          NavigationDestination(
             icon: Icon(Icons.settings_outlined),
             label: "Settings",
           ),

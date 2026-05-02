@@ -6,6 +6,7 @@ import 'package:netmanager/components/base/body/map.dart';
 import 'package:netmanager/components/base/body/settings.dart';
 import 'package:netmanager/components/floating/position_button.dart';
 import 'package:netmanager/components/base/bars/top_bar.dart';
+import 'package:netmanager/components/floating/record_button.dart';
 import 'package:netmanager/components/floating/screenshot_button.dart';
 import 'package:netmanager/types/device/permissions.dart';
 import 'package:path_provider/path_provider.dart';
@@ -47,6 +48,7 @@ class _HomeState extends State<Home> {
   VoidCallback? _homeUpdateCallback;
   VoidCallback? _screenshotCallback;
   VoidCallback? _mapPositionCallback;
+  VoidCallback? _recordCallback;
 
   @override
   void initState() {
@@ -91,6 +93,9 @@ class _HomeState extends State<Home> {
         onPositionButtonPressed: (callback) {
           setState(() => _mapPositionCallback = callback);
         },
+        onRecordButtonPressed: (callback) {
+          setState(() => _recordCallback = callback);
+        },
       ),
       SettingsBody(
         widget.platform,
@@ -120,7 +125,7 @@ class _HomeState extends State<Home> {
     final tempDir = await getTemporaryDirectory();
     final exportDir = Directory("${tempDir.path}/exports");
 
-    if (await exportDir.exists()) {
+    if (exportDir.existsSync()) {
       await exportDir.delete(recursive: true);
     }
   }
@@ -172,8 +177,11 @@ class _HomeState extends State<Home> {
                 ScreenshotButton(onPressed: _screenshotCallback),
                 const SizedBox(height: 4),
                 UpdateButton(onPressed: _homeUpdateCallback),
-              ] else if (_currentPage == 1)
+              ] else if (_currentPage == 1) ...[
+                RecordButton(onPressed: _recordCallback),
+                const SizedBox(height: 4),
                 PositionButton(onPressed: _mapPositionCallback),
+              ],
             ],
           ),
         ),

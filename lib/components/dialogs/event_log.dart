@@ -70,7 +70,7 @@ Widget eventLogDialog(
             final dir = await getTemporaryDirectory();
 
             final exportFolder = Directory("${dir.path}/exports");
-            if (!await exportFolder.exists()) {
+            if (!exportFolder.existsSync()) {
               await exportFolder.create();
             }
 
@@ -78,12 +78,14 @@ Widget eventLogDialog(
             final content = events.join("\n");
             await file.writeAsString(content);
 
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text("Event logs saved at: ${file.path}"),
-                showCloseIcon: true,
-              ),
-            );
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text("Event logs saved at: ${file.path}"),
+                  showCloseIcon: true,
+                ),
+              );
+            }
 
             await platform.invokeMethod("share", {"path": file.path});
           },

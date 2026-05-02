@@ -19,12 +19,14 @@ class MapBody extends StatefulWidget {
     this.platformSignalNotifier, {
     super.key,
     this.onPositionButtonPressed,
+    this.onRecordButtonPressed,
   });
 
   final MethodChannel platform;
   final SharedPreferences sharedPreferences;
   final ValueNotifier<int> platformSignalNotifier;
   final ValueSetter<VoidCallback>? onPositionButtonPressed;
+  final ValueSetter<VoidCallback>? onRecordButtonPressed;
 
   @override
   State<MapBody> createState() => _MapBodyState();
@@ -67,6 +69,8 @@ class _MapBodyState extends State<MapBody> {
       widget.onPositionButtonPressed?.call(() {
         if (mounted) recenterMap();
       });
+
+      widget.onRecordButtonPressed?.call(() {});
 
       setLocation(false);
       updateLocation();
@@ -169,7 +173,8 @@ class _MapBodyState extends State<MapBody> {
 
   void updateCellInfo() async {
     try {
-      final String jsonStr = await platform.invokeMethod("getNetworkData");
+      final jsonStr = await platform.invokeMethod("getNetworkData");
+      if (jsonStr == null) return;
 
       final Map<String, dynamic> map = json.decode(jsonStr);
       late final SIMData simData;

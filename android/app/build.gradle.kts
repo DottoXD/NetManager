@@ -66,6 +66,6 @@ flutter {
 }
 
 dependencies {
-    implementation("com.google.code.gson:gson:2.13.2")
+    implementation("com.google.code.gson:gson:2.14.0")
     implementation("com.google.android.gms:play-services-wearable:19.0.0")
 }

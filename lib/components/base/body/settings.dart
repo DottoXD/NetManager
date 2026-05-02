@@ -51,6 +51,7 @@ class _SettingsBodyState extends State<SettingsBody> {
   late ValueNotifier<bool> logsNotifier;
 
   final List<String> positionPrecisions = ["Off", "Low", "Medium", "High"];
+  final List<String> speedMeasurementUnits = ["Gbps", "Mbps", "Kbps"];
 
   bool _startupMonitoring = false;
   bool _backgroundService = false;
@@ -62,6 +63,7 @@ class _SettingsBodyState extends State<SettingsBody> {
   int _updateInterval = 3;
   int _backgroundUpdateInterval = 3;
   int _positionPrecision = 3;
+  int _speedMeasurementUnit = 1;
   int _themeColor = 0xFFE6F0F2;
 
   bool _hapticFeedback = true;
@@ -73,7 +75,8 @@ class _SettingsBodyState extends State<SettingsBody> {
 
   bool _debug = false;
 
-  late String _selection;
+  late String _positionPrecisionSelection;
+  late String _speedMeasurementUnitSelection;
 
   @override
   void initState() {
@@ -87,7 +90,9 @@ class _SettingsBodyState extends State<SettingsBody> {
     logsNotifier = widget.logsNotifier;
 
     updateData();
-    _selection = positionPrecisions[_positionPrecision];
+    _positionPrecisionSelection = positionPrecisions[_positionPrecision];
+    _speedMeasurementUnitSelection =
+        speedMeasurementUnits[_speedMeasurementUnit];
   }
 
   Future<void> updateData() async {
@@ -110,6 +115,9 @@ class _SettingsBodyState extends State<SettingsBody> {
           _backgroundUpdateInterval;
       _positionPrecision =
           sharedPreferences.getInt("positionPrecision") ?? _positionPrecision;
+      _speedMeasurementUnit =
+          sharedPreferences.getInt("speedMeasurementUnit") ??
+          _speedMeasurementUnit;
       _material3 = sharedPreferences.getBool("material3") ?? _material3;
       _hapticFeedback =
           sharedPreferences.getBool("hapticFeedback") ?? _hapticFeedback;
@@ -241,13 +249,13 @@ class _SettingsBodyState extends State<SettingsBody> {
     }
   }
 
-  Future<dynamic> _showDialog(BuildContext context) {
+  Future<dynamic> _showPositionPrecisionDialog(BuildContext context) {
     return showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           // to be put in "dialogs"
-          title: const Text('Edit precision'),
+          title: const Text('Edit position precision'),
           content: SingleChildScrollView(
             child: StatefulBuilder(
               builder: (BuildContext context, StateSetter setState) {
@@ -257,14 +265,61 @@ class _SettingsBodyState extends State<SettingsBody> {
                       return RadioListTile(
                         title: Text(precision.value),
                         value: precision.value,
-                        groupValue: _selection,
+                        groupValue: _positionPrecisionSelection,
                         onChanged: (value) {
                           if (value != null) {
                             setState(() {
-                              _selection = value;
+                              _positionPrecisionSelection = value;
                             });
 
                             setInt("positionPrecision", precision.key);
+                            updateData();
+                          }
+                        },
+                      );
+                    }),
+                  ],
+                );
+              },
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Edit'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<dynamic> _showSpeedMeasurementUnitDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          // to be put in "dialogs"
+          title: const Text('Edit speed measurement unit'),
+          content: SingleChildScrollView(
+            child: StatefulBuilder(
+              builder: (BuildContext context, StateSetter setState) {
+                return ListBody(
+                  children: <Widget>[
+                    ...speedMeasurementUnits.asMap().entries.map((unit) {
+                      return RadioListTile(
+                        title: Text(unit.value),
+                        value: unit.value,
+                        groupValue: _speedMeasurementUnitSelection,
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _speedMeasurementUnitSelection = value;
+                            });
+
+                            setInt("speedMeasurementUnit", unit.key);
                             updateData();
                           }
                         },
@@ -347,7 +402,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                       trailing: IconButton(
                         icon: Icon(Icons.edit),
                         onPressed: () {
-                          _showDialog(context);
+                          _showPositionPrecisionDialog(context);
                         },
                       ),
                     ),
@@ -564,6 +619,22 @@ class _SettingsBodyState extends State<SettingsBody> {
                       color: Theme.of(context).colorScheme.outlineVariant,
                     ),
                     ListTile(
+                      title: Text("Speed measurement unit"),
+                      subtitle: Text(
+                        "Choose your preferred speed measurement unit for speedtests.",
+                      ),
+                      trailing: IconButton(
+                        icon: Icon(Icons.edit),
+                        onPressed: () {
+                          _showSpeedMeasurementUnitDialog(context);
+                        },
+                      ),
+                    ),
+                    Divider(
+                      height: 0,
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                    ListTile(
                       title: Text("Contribute"),
                       subtitle: Text("Contribute to NetManager on GitHub."),
                       trailing: IconButton(
@@ -626,7 +697,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                         ),
                       ),
                     ),
-                    if (_debug)
+                    if (_debug) ...[
                       ListTile(
                         title: Text("Debug Logs"),
                         subtitle: Text(
@@ -639,6 +710,12 @@ class _SettingsBodyState extends State<SettingsBody> {
                           tooltip: "View",
                         ),
                       ),
+                      ElevatedButton(
+                        //test
+                        onPressed: () => throw Exception("BugSink Test Crash"),
+                        child: Text("Test Sentry"),
+                      ),
+                    ],
                   ],
                 ),
               ),

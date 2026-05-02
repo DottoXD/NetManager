@@ -47,7 +47,7 @@ Widget debugLogDialog(
             final dir = await getTemporaryDirectory();
 
             final exportFolder = Directory("${dir.path}/exports");
-            if (!await exportFolder.exists()) {
+            if (!exportFolder.existsSync()) {
               await exportFolder.create();
             }
 
@@ -55,12 +55,14 @@ Widget debugLogDialog(
             final content = debugLogsList.join("\n");
             await file.writeAsString(content);
 
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text("Debug logs saved at: ${file.path}"),
-                showCloseIcon: true,
-              ),
-            );
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text("Debug logs saved at: ${file.path}"),
+                  showCloseIcon: true,
+                ),
+              );
+            }
 
             await platform.invokeMethod("share", {"path": file.path});
           },

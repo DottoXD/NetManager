@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/dialogs/event_log.dart';
-import 'package:netmanager/components/dialogs/info_modal.dart';
+import 'package:netmanager/components/modals/info_modal.dart';
 import 'package:netmanager/types/device/data.dart';
 import 'package:netmanager/types/events/mobile_netmanager_event.dart';
 import 'package:netmanager/types/events/netmanager_event.dart';

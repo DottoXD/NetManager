@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/utils/cell_utils.dart';
+import 'package:netmanager/components/utils/haptic_utils.dart';
 import 'package:netmanager/types/cell/cell_data.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
 import 'package:path_provider/path_provider.dart';
@@ -106,7 +107,7 @@ class _HomeBodyState extends State<HomeBody> {
       final dir = await getTemporaryDirectory();
 
       final exportFolder = Directory("${dir.path}/exports");
-      if (!await exportFolder.exists()) {
+      if (!exportFolder.existsSync()) {
         await exportFolder.create();
       }
 
@@ -198,7 +199,9 @@ class _HomeBodyState extends State<HomeBody> {
                         context,
                       ).colorScheme.primaryContainer,
                     ),
-                    onPressed: () {
+                    onPressed: () async {
+                      await triggerHaptic(HapticType.SELECTION, context); //test
+
                       setState(() {
                         altCellView = !altCellView;
                       });
@@ -402,8 +405,6 @@ class _HomeBodyState extends State<HomeBody> {
       );
 
       final List<Widget> activeData = tempActiveData.map((cell) {
-        int i = simData.activeCells.indexOf(cell);
-
         String cellContent = createCellContent(cell).replaceAll(
           "%node%",
           (node != null ? "Likely ${(node / factor).floor()}" : "Unknown cell"),
