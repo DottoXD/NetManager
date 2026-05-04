@@ -121,21 +121,20 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
-                HapticTap(
-                  type: HapticType.LIGHT,
-                  child: FilledButton(
-                    onPressed: () async {
-                      await _requestPermissions();
-                      await _checkPermissions();
-                    },
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
+                FilledButton(
+                  onPressed: () async {
+                    await triggerHaptic(HapticType.LIGHT, context);
+
+                    await _requestPermissions();
+                    await _checkPermissions();
+                  },
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Text("Allow"),
                   ),
+                  child: const Text("Allow"),
                 ),
               ],
             ),

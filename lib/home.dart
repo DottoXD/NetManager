@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/base/body/map.dart';
 import 'package:netmanager/components/base/body/settings.dart';
+import 'package:netmanager/components/base/body/speedtest.dart';
 import 'package:netmanager/components/floating/position_button.dart';
 import 'package:netmanager/components/base/bars/top_bar.dart';
 import 'package:netmanager/components/floating/record_button.dart';
@@ -44,6 +45,8 @@ class _HomeState extends State<Home> {
 
   final ValueNotifier<bool> debugNotifier = ValueNotifier(false);
   final ValueNotifier<bool> logsNotifier = ValueNotifier(false);
+
+  final ValueNotifier<bool> recordingActionNotifier = ValueNotifier(false);
 
   VoidCallback? _homeUpdateCallback;
   VoidCallback? _screenshotCallback;
@@ -90,6 +93,7 @@ class _HomeState extends State<Home> {
         widget.platform,
         widget.sharedPreferences,
         platformSignalNotifier,
+        recordingActionNotifier,
         onPositionButtonPressed: (callback) {
           setState(() => _mapPositionCallback = callback);
         },
@@ -97,6 +101,7 @@ class _HomeState extends State<Home> {
           setState(() => _recordCallback = callback);
         },
       ),
+      SpeedtestBody(widget.platform, widget.sharedPreferences),
       SettingsBody(
         widget.platform,
         widget.sharedPreferences,
@@ -178,7 +183,10 @@ class _HomeState extends State<Home> {
                 const SizedBox(height: 4),
                 UpdateButton(onPressed: _homeUpdateCallback),
               ] else if (_currentPage == 1) ...[
-                RecordButton(onPressed: _recordCallback),
+                RecordButton(
+                  onPressed: _recordCallback,
+                  recordingActionNotifier: recordingActionNotifier,
+                ),
                 const SizedBox(height: 4),
                 PositionButton(onPressed: _mapPositionCallback),
               ],

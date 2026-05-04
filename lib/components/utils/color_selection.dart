@@ -32,23 +32,22 @@ Widget colorSelector(
 
           return Padding(
             padding: const EdgeInsets.only(right: 3.0),
-            child: HapticTap(
-              type: HapticType.SELECTION,
-              child: ChoiceChip(
-                label: const SizedBox.shrink(),
-                selected: selected,
-                checkmarkColor: surfaceColor,
-                selectedColor: Color(color),
-                backgroundColor: Color(color),
-                shape: const CircleBorder(),
-                tooltip: "#$color",
-                side: selected
-                    ? BorderSide(color: primaryColor)
-                    : BorderSide.none,
-                onSelected: (_) {
-                  onColorChanged(color);
-                },
-              ),
+            child: ChoiceChip(
+              label: const SizedBox.shrink(),
+              selected: selected,
+              checkmarkColor: surfaceColor,
+              selectedColor: Color(color),
+              backgroundColor: Color(color),
+              shape: const CircleBorder(),
+              tooltip: "#$color",
+              side: selected
+                  ? BorderSide(color: primaryColor)
+                  : BorderSide.none,
+              onSelected: (_) async {
+                await triggerHaptic(HapticType.SELECTION, context);
+
+                onColorChanged(color);
+              },
             ),
           );
         }).toList(),

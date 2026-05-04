@@ -11,12 +11,9 @@ Widget errorDialog(BuildContext context, Object e) {
       child: Scrollbar(child: Text(e.toString())),
     ),
     actions: [
-      HapticTap(
-        type: HapticType.SELECTION,
-        child: TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text("Close"),
-        ),
+      TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: const Text("Close"),
       ),
     ],
   );

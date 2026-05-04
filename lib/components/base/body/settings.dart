@@ -59,6 +59,7 @@ class _SettingsBodyState extends State<SettingsBody> {
   bool _checkUpdates = false;
   bool _logEvents = false;
   bool _metricSystem = true;
+  String _mapTilesTemplate = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
   int _maximumLogs = 10;
   int _updateInterval = 3;
   int _backgroundUpdateInterval = 3;
@@ -107,6 +108,8 @@ class _SettingsBodyState extends State<SettingsBody> {
       _logEvents = sharedPreferences.getBool("logEvents") ?? _logEvents;
       _metricSystem =
           sharedPreferences.getBool("metricSystem") ?? _metricSystem;
+      _mapTilesTemplate =
+          sharedPreferences.getString("mapTilesTemplate") ?? _mapTilesTemplate;
       _maximumLogs = sharedPreferences.getInt("maximumLogs") ?? _maximumLogs;
       _updateInterval =
           sharedPreferences.getInt("updateInterval") ?? _updateInterval;
@@ -218,6 +221,10 @@ class _SettingsBodyState extends State<SettingsBody> {
 
   void setStringList(String key, List<String> value) {
     sharedPreferences.setStringList(key, value);
+  }
+
+  void setString(String key, String value) {
+    sharedPreferences.setString(key, value);
   }
 
   void openDebugLogs() async {
@@ -361,15 +368,14 @@ class _SettingsBodyState extends State<SettingsBody> {
                       subtitle: Text(
                         "Share anonymous insights to help me improve NetManager.",
                       ),
-                      trailing: HapticTap(
-                        type: HapticType.SELECTION,
-                        child: Switch(
-                          value: _analytics,
-                          onChanged: (bool value) {
-                            setBool("analytics", value);
-                            updateData();
-                          },
-                        ),
+                      trailing: Switch(
+                        value: _analytics,
+                        onChanged: (bool value) async {
+                          await triggerHaptic(HapticType.SELECTION, context);
+
+                          setBool("analytics", value);
+                          updateData();
+                        },
                       ),
                     ),
                     ListTile(
@@ -377,15 +383,14 @@ class _SettingsBodyState extends State<SettingsBody> {
                       subtitle: Text(
                         "Let NetManager automatically look for updates when the app is opened.",
                       ),
-                      trailing: HapticTap(
-                        type: HapticType.SELECTION,
-                        child: Switch(
-                          value: _checkUpdates,
-                          onChanged: (bool value) {
-                            setBool("checkUpdates", value);
-                            updateData();
-                          },
-                        ),
+                      trailing: Switch(
+                        value: _checkUpdates,
+                        onChanged: (bool value) async {
+                          await triggerHaptic(HapticType.SELECTION, context);
+
+                          setBool("checkUpdates", value);
+                          updateData();
+                        },
                       ),
                     ),
                     Divider(
@@ -411,13 +416,13 @@ class _SettingsBodyState extends State<SettingsBody> {
                       subtitle: Text(
                         "Start the monitoring service with your device. The map tracking service still needs to be manually started in the app.",
                       ),
-                      trailing: HapticTap(
-                        type: HapticType.SELECTION,
-                        child: Switch(
-                          value: _startupMonitoring,
-                          onChanged: (bool value) async =>
-                              await onToggleStartupMonitoring(value),
-                        ),
+                      trailing: Switch(
+                        value: _startupMonitoring,
+                        onChanged: (bool value) async {
+                          await triggerHaptic(HapticType.SELECTION, context);
+
+                          await onToggleStartupMonitoring(value);
+                        },
                       ),
                     ),
                     ListTile(
@@ -425,13 +430,13 @@ class _SettingsBodyState extends State<SettingsBody> {
                       subtitle: Text(
                         "Keep the monitoring service running even when you shut down the app.",
                       ),
-                      trailing: HapticTap(
-                        type: HapticType.SELECTION,
-                        child: Switch(
-                          value: _backgroundService,
-                          onChanged: (bool value) async =>
-                              await onToggleBackgroundService(value),
-                        ),
+                      trailing: Switch(
+                        value: _backgroundService,
+                        onChanged: (bool value) async {
+                          await triggerHaptic(HapticType.SELECTION, context);
+
+                          await onToggleBackgroundService(value);
+                        },
                       ),
                     ),
                     ListTile(
@@ -474,37 +479,35 @@ class _SettingsBodyState extends State<SettingsBody> {
                       height: 0,
                       color: Theme.of(context).colorScheme.outlineVariant,
                     ),
-                    /*ListTile(
+                    ListTile(
                       title: Text("Haptics"),
                       subtitle: Text(
                         "Haptic feedback allows the app to feel more immersive.",
                       ),
-                      trailing: HapticTap(
-                        type: HapticType.SELECTION,
-                        child: Switch(
-                          value: _hapticFeedback,
-                          onChanged: (bool value) {
-                            setBool("hapticFeedback", value);
-                            updateData();
-                          },
-                        ),
+                      trailing: Switch(
+                        value: _hapticFeedback,
+                        onChanged: (bool value) async {
+                          await triggerHaptic(HapticType.SELECTION, context);
+
+                          setBool("hapticFeedback", value);
+                          updateData();
+                        },
                       ),
-                    ),*/
+                    ),
                     ListTile(
                       title: Text("Material You (3)"),
                       subtitle: Text(
                         "Use Material You, Android's latest UI kit. Do note that Material 2 is not well unsupported.",
                       ),
-                      trailing: HapticTap(
-                        type: HapticType.SELECTION,
-                        child: Switch(
-                          value: _material3,
-                          onChanged: (bool value) {
-                            setBool("material3", value);
-                            updateData();
-                            material3Notifier.value = value;
-                          },
-                        ),
+                      trailing: Switch(
+                        value: _material3,
+                        onChanged: (bool value) async {
+                          await triggerHaptic(HapticType.SELECTION, context);
+
+                          setBool("material3", value);
+                          updateData();
+                          material3Notifier.value = value;
+                        },
                       ),
                     ),
                     ListTile(
@@ -514,16 +517,18 @@ class _SettingsBodyState extends State<SettingsBody> {
                       ),
                       enabled: _dynamicSupported && _material3,
                       trailing: (_dynamicSupported && _material3
-                          ? HapticTap(
-                              type: HapticType.SELECTION,
-                              child: Switch(
-                                value: _dynamicTheme,
-                                onChanged: (bool value) {
-                                  setBool("dynamicTheme", value);
-                                  updateData();
-                                  dynamicThemeNotifier.value = value;
-                                },
-                              ),
+                          ? Switch(
+                              value: _dynamicTheme,
+                              onChanged: (bool value) async {
+                                await triggerHaptic(
+                                  HapticType.SELECTION,
+                                  context,
+                                );
+
+                                setBool("dynamicTheme", value);
+                                updateData();
+                                dynamicThemeNotifier.value = value;
+                              },
                             )
                           : const SizedBox.shrink()),
                     ),
@@ -549,16 +554,15 @@ class _SettingsBodyState extends State<SettingsBody> {
                       subtitle: Text(
                         "Log various events such as changes between mobile cells and technologies.",
                       ),
-                      trailing: HapticTap(
-                        type: HapticType.SELECTION,
-                        child: Switch(
-                          value: _logEvents,
-                          onChanged: (bool value) {
-                            setBool("logEvents", value);
-                            updateData();
-                            logsNotifier.value = value;
-                          },
-                        ),
+                      trailing: Switch(
+                        value: _logEvents,
+                        onChanged: (bool value) async {
+                          await triggerHaptic(HapticType.SELECTION, context);
+
+                          setBool("logEvents", value);
+                          updateData();
+                          logsNotifier.value = value;
+                        },
                       ),
                     ),
                     if (_logEvents)
@@ -603,15 +607,33 @@ class _SettingsBodyState extends State<SettingsBody> {
                       subtitle: Text(
                         "Use the metric system for speed measurements in the map.",
                       ),
-                      trailing: HapticTap(
-                        type: HapticType.SELECTION,
-                        child: Switch(
-                          value: _metricSystem,
-                          onChanged: (bool value) {
-                            setBool("metricSystem", value);
-                            updateData();
-                          },
+                      trailing: Switch(
+                        value: _metricSystem,
+                        onChanged: (bool value) async {
+                          await triggerHaptic(HapticType.SELECTION, context);
+
+                          setBool("metricSystem", value);
+                          updateData();
+                        },
+                      ),
+                    ),
+                    ListTile(
+                      title: Text("Map tiles template URL"),
+                      subtitle: Text("The custom map tiles template URL."),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: TextField(
+                        autocorrect: false,
+                        controller: TextEditingController(
+                          text: _mapTilesTemplate,
                         ),
+                        onChanged: (String value) async {
+                          await triggerHaptic(HapticType.SELECTION, context);
+
+                          setString("mapTilesTemplate", value);
+                          updateData();
+                        },
                       ),
                     ),
                     Divider(
@@ -685,19 +707,18 @@ class _SettingsBodyState extends State<SettingsBody> {
                       subtitle: Text(
                         "Manage NetManager's debug mode. Enabling this setting will show raw debug data in some parts of the app.",
                       ),
-                      trailing: HapticTap(
-                        type: HapticType.SELECTION,
-                        child: Switch(
-                          value: _debug,
-                          onChanged: (bool value) {
-                            setBool("debug", value);
-                            updateData();
-                            debugNotifier.value = value;
-                          },
-                        ),
+                      trailing: Switch(
+                        value: _debug,
+                        onChanged: (bool value) async {
+                          await triggerHaptic(HapticType.SELECTION, context);
+
+                          setBool("debug", value);
+                          updateData();
+                          debugNotifier.value = value;
+                        },
                       ),
                     ),
-                    if (_debug) ...[
+                    if (_debug)
                       ListTile(
                         title: Text("Debug Logs"),
                         subtitle: Text(
@@ -710,12 +731,6 @@ class _SettingsBodyState extends State<SettingsBody> {
                           tooltip: "View",
                         ),
                       ),
-                      ElevatedButton(
-                        //test
-                        onPressed: () => throw Exception("BugSink Test Crash"),
-                        child: Text("Test Sentry"),
-                      ),
-                    ],
                   ],
                 ),
               ),

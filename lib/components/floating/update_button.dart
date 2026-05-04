@@ -8,14 +8,14 @@ class UpdateButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HapticTap(
-      type: HapticType.LIGHT,
-      child: FloatingActionButton(
-        elevation: 1,
-        onPressed: onPressed,
-        tooltip: 'Update data',
-        child: const Icon(Icons.update_rounded),
-      ),
+    return FloatingActionButton(
+      elevation: 1,
+      onPressed: () async {
+        await triggerHaptic(HapticType.LIGHT, context);
+        onPressed!();
+      },
+      tooltip: 'Update data',
+      child: const Icon(Icons.update_rounded),
     );
   }
 }

@@ -5,10 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:netmanager/components/dialogs/error.dart';
+import 'package:netmanager/components/modals/record_modal.dart';
 import 'package:netmanager/components/utils/cell_utils.dart';
 import 'package:netmanager/components/utils/map_overlay.dart';
 import 'package:netmanager/components/utils/map_tile_builder.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
+import 'package:netmanager/types/recording/recorded_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -16,7 +18,8 @@ class MapBody extends StatefulWidget {
   const MapBody(
     this.platform,
     this.sharedPreferences,
-    this.platformSignalNotifier, {
+    this.platformSignalNotifier,
+    this.recordingActionNotifier, {
     super.key,
     this.onPositionButtonPressed,
     this.onRecordButtonPressed,
@@ -25,6 +28,7 @@ class MapBody extends StatefulWidget {
   final MethodChannel platform;
   final SharedPreferences sharedPreferences;
   final ValueNotifier<int> platformSignalNotifier;
+  final ValueNotifier<bool> recordingActionNotifier;
   final ValueSetter<VoidCallback>? onPositionButtonPressed;
   final ValueSetter<VoidCallback>? onRecordButtonPressed;
 
@@ -36,8 +40,13 @@ class _MapBodyState extends State<MapBody> {
   late MethodChannel platform;
   late SharedPreferences sharedPreferences;
   late ValueNotifier<int> platformSignalNotifier;
+  late ValueNotifier<bool> recordingActionNotifier;
 
   final MapController mapController = MapController();
+  final String defaultMapTilesTemplate =
+      "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+
+  RecordedData? _activeReplayData;
 
   Timer? _timer;
   Timer? _animationTimer;
@@ -57,6 +66,9 @@ class _MapBodyState extends State<MapBody> {
   String signalStrength = "N/A";
   String signalStrengthString = "N/A";
 
+  List<String> _displayTitles = <String>["Speed", "Cell ID", "Signal"];
+  List<String> _displayValues = <String>["N/A", "N/A", "N/A"];
+
   @override
   void initState() {
     super.initState();
@@ -70,7 +82,61 @@ class _MapBodyState extends State<MapBody> {
         if (mounted) recenterMap();
       });
 
-      widget.onRecordButtonPressed?.call(() {});
+      widget.onRecordButtonPressed?.call(() {
+        if (_activeReplayData != null) {
+          setState(() {
+            _displayTitles = <String>["Speed", "Cell ID", "Signal"];
+            _displayValues = <String>["N/A", "N/A", "N/A"];
+
+            _activeReplayData = null;
+            recordingActionNotifier.value = false;
+
+            startCellTimer();
+            updateLocation();
+          });
+        } else {
+          showModalBottomSheet(
+            context: context,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            builder: (BuildContext context) {
+              return recordModal(context, platform, (data) {
+                recordingActionNotifier.value = true;
+
+                if (data.records.isNotEmpty) {
+                  setState(() {
+                    _displayTitles = ["Carrier", "PLMN", "Date"];
+                    _displayValues = [
+                      data.operator,
+                      data.network,
+                      data.date.toString(),
+                    ];
+
+                    _activeReplayData = data;
+                  });
+                  if (_currentLocation != null) {
+                    animatedUpdate(
+                      _currentLocation!,
+                      LatLng(data.records.first.lat, data.records.first.lon),
+                      Duration(milliseconds: 500),
+                    );
+                  } else {
+                    mapController.move(
+                      LatLng(data.records.first.lat, data.records.first.lon),
+                      mapController.camera.zoom,
+                    );
+                  }
+                }
+
+                _timer?.cancel();
+                _cellTimer?.cancel();
+              });
+            },
+          );
+        }
+      });
 
       setLocation(false);
       updateLocation();
@@ -93,6 +159,8 @@ class _MapBodyState extends State<MapBody> {
   }
 
   Future<void> setLocation(bool init) async {
+    if (_activeReplayData != null) return;
+
     try {
       final String jsonString = await platform.invokeMethod("getLocation");
       final List<dynamic> coordinates = json.decode(jsonString);
@@ -115,7 +183,7 @@ class _MapBodyState extends State<MapBody> {
           final speed = dist / time;
           _speedKmh = speed * 3.6;
 
-          if (_speedKmh > 300) _speedKmh = 0; // hard limit of 300km/h
+          if (_speedKmh > 500) _speedKmh = 0; // hard limit of 500km/h
         }
       }
 
@@ -187,26 +255,36 @@ class _MapBodyState extends State<MapBody> {
 
       if (!mounted) return;
 
+      signalStrength = "${simData.primaryCell.processedSignal}dBm";
+      signalStrengthString = simData.primaryCell.processedSignalString;
+      cellId = simData.primaryCell.cellIdentifier;
+
+      if (!isValidInt(simData.primaryCell.processedSignal) ||
+          signalStrengthString.trim() == "") {
+        if (isValidString(simData.primaryCell.rawSignalString) &&
+            isValidInt(simData.primaryCell.rawSignal)) {
+          signalStrength = "${simData.primaryCell.rawSignal}dBm";
+          signalStrengthString = simData.primaryCell.rawSignalString;
+        } else {
+          signalStrength = "N/A";
+          signalStrengthString = "N/A";
+        }
+      }
+
+      if (!isValidString(cellId)) {
+        cellId = "N/A";
+      }
+
       setState(() {
-        signalStrength = "${simData.primaryCell.processedSignal}dBm";
-        signalStrengthString = simData.primaryCell.processedSignalString;
-        cellId = simData.primaryCell.cellIdentifier;
+        _displayTitles = ["Speed", "Cell ID", signalStrengthString];
+        _displayValues = [
+          (metricSystem
+              ? "${_speedKmh.toStringAsFixed(1)}km/h"
+              : "${(_speedKmh / 1.609).toStringAsFixed(1)}mph"),
+          cellId,
+          signalStrength,
+        ];
 
-        if (!isValidInt(simData.primaryCell.processedSignal) ||
-            signalStrengthString.trim() == "") {
-          if (isValidString(simData.primaryCell.rawSignalString) &&
-              isValidInt(simData.primaryCell.rawSignal)) {
-            signalStrength = "${simData.primaryCell.rawSignal}dBm";
-            signalStrengthString = simData.primaryCell.rawSignalString;
-          } else {
-            signalStrength = "N/A";
-            signalStrengthString = "N/A";
-          }
-        }
-
-        if (!isValidString(cellId)) {
-          cellId = "N/A";
-        }
         _isLoading = false;
       });
     } catch (e) {
@@ -269,15 +347,7 @@ class _MapBodyState extends State<MapBody> {
           child: Stack(
             children: [
               getMap(context),
-              mapOverlay(
-                context,
-                (metricSystem
-                    ? "${_speedKmh.toStringAsFixed(1)}km/h"
-                    : "${(_speedKmh / 1.609).toStringAsFixed(1)}mph"),
-                cellId,
-                signalStrengthString,
-                signalStrength,
-              ),
+              mapOverlay(context, _displayTitles, _displayValues),
             ],
           ),
         ),
@@ -325,9 +395,12 @@ class _MapBodyState extends State<MapBody> {
       ),
       children: <Widget>[
         TileLayer(
-          urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+          urlTemplate:
+              sharedPreferences.getString("mapTilesTemplate") ??
+              defaultMapTilesTemplate,
           tileBuilder: mapTileBuilder,
-          userAgentPackageName: "pw.dotto.netmanager",
+          userAgentPackageName:
+              "pw.dotto.netmanager${sharedPreferences.getString("mapTilesTemplate") != defaultMapTilesTemplate ? "(Customised by user)" : ""}",
         ),
         if (_currentLocation != null)
           MarkerLayer(
@@ -350,6 +423,19 @@ class _MapBodyState extends State<MapBody> {
                 ),
               ),
             ],
+          ),
+        if (_activeReplayData != null)
+          CircleLayer(
+            circles: _activeReplayData!.records.map((record) {
+              return CircleMarker(
+                point: LatLng(record.lat, record.lon),
+                radius: 5,
+                useRadiusInMeter: false,
+                color: Colors.green, //temp
+                borderStrokeWidth: 1,
+                borderColor: Colors.white,
+              );
+            }).toList(),
           ),
         SafeArea(
           child: Align(

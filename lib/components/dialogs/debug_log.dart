@@ -40,42 +40,37 @@ Widget debugLogDialog(
       ),
     ),
     actions: [
-      HapticTap(
-        type: HapticType.SELECTION,
-        child: TextButton.icon(
-          onPressed: () async {
-            final dir = await getTemporaryDirectory();
+      TextButton.icon(
+        onPressed: () async {
+          await triggerHaptic(HapticType.SELECTION, context);
+          final dir = await getTemporaryDirectory();
 
-            final exportFolder = Directory("${dir.path}/exports");
-            if (!exportFolder.existsSync()) {
-              await exportFolder.create();
-            }
+          final exportFolder = Directory("${dir.path}/exports");
+          if (!exportFolder.existsSync()) {
+            await exportFolder.create();
+          }
 
-            final file = File("${exportFolder.path}/debug_logs.txt");
-            final content = debugLogsList.join("\n");
-            await file.writeAsString(content);
+          final file = File("${exportFolder.path}/debug_logs.txt");
+          final content = debugLogsList.join("\n");
+          await file.writeAsString(content);
 
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text("Debug logs saved at: ${file.path}"),
-                  showCloseIcon: true,
-                ),
-              );
-            }
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Debug logs saved at: ${file.path}"),
+                showCloseIcon: true,
+              ),
+            );
+          }
 
-            await platform.invokeMethod("share", {"path": file.path});
-          },
-          label: const Text("Export"),
-          icon: const Icon(Icons.share),
-        ),
+          await platform.invokeMethod("share", {"path": file.path});
+        },
+        label: const Text("Export"),
+        icon: const Icon(Icons.share),
       ),
-      HapticTap(
-        type: HapticType.SELECTION,
-        child: TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text("Close"),
-        ),
+      TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: const Text("Close"),
       ),
     ],
   );

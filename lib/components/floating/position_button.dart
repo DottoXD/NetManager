@@ -8,14 +8,14 @@ class PositionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HapticTap(
-      type: HapticType.LIGHT,
-      child: FloatingActionButton(
-        elevation: 1,
-        onPressed: onPressed,
-        tooltip: 'Reposition location',
-        child: const Icon(Icons.location_searching_rounded),
-      ),
+    return FloatingActionButton(
+      elevation: 1,
+      onPressed: () async {
+        await triggerHaptic(HapticType.LIGHT, context);
+        onPressed!();
+      },
+      tooltip: 'Reposition location',
+      child: const Icon(Icons.location_searching_rounded),
     );
   }
 }

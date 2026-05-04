@@ -15,7 +15,7 @@ Future<bool> checkForUpdate() async {
     final latestTag = data[0];
     final latestSha = latestTag["commit"]["sha"].substring(0, 7);
 
-    final gitCommit = String.fromEnvironment(
+    const gitCommit = String.fromEnvironment(
       'GIT_COMMIT',
       defaultValue: 'development',
     );

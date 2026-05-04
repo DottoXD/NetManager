@@ -200,7 +200,7 @@ class _HomeBodyState extends State<HomeBody> {
                       ).colorScheme.primaryContainer,
                     ),
                     onPressed: () async {
-                      await triggerHaptic(HapticType.SELECTION, context); //test
+                      await triggerHaptic(HapticType.SELECTION, context);
 
                       setState(() {
                         altCellView = !altCellView;

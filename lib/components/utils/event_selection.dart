@@ -19,21 +19,20 @@ Widget eventSelection(
 
           return Padding(
             padding: const EdgeInsets.only(right: 8.0),
-            child: HapticTap(
-              type: HapticType.SELECTION,
-              child: FilterChip(
-                label: Text(formatEventName(eventType.name)),
-                selected: selected,
-                checkmarkColor: primaryColor,
-                shape: const StadiumBorder(),
-                tooltip: eventType.toString(),
-                side: selected
-                    ? BorderSide(color: primaryColor)
-                    : BorderSide.none,
-                onSelected: (_) {
-                  onEventsChanged(eventType);
-                },
-              ),
+            child: FilterChip(
+              label: Text(formatEventName(eventType.name)),
+              selected: selected,
+              checkmarkColor: primaryColor,
+              shape: const StadiumBorder(),
+              tooltip: eventType.toString(),
+              side: selected
+                  ? BorderSide(color: primaryColor)
+                  : BorderSide.none,
+              onSelected: (_) async {
+                await triggerHaptic(HapticType.SELECTION, context);
+
+                onEventsChanged(eventType);
+              },
             ),
           );
         }).toList(),
