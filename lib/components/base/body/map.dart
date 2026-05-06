@@ -82,7 +82,7 @@ class _MapBodyState extends State<MapBody> {
         if (mounted) recenterMap();
       });
 
-      widget.onRecordButtonPressed?.call(() {
+      widget.onRecordButtonPressed?.call(() async {
         if (_activeReplayData != null) {
           setState(() {
             _displayTitles = <String>["Speed", "Cell ID", "Signal"];
@@ -94,50 +94,66 @@ class _MapBodyState extends State<MapBody> {
             startCellTimer();
             updateLocation();
           });
-        } else {
-          showModalBottomSheet(
-            context: context,
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
-            ),
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            builder: (BuildContext context) {
-              return recordModal(context, platform, (data) {
-                recordingActionNotifier.value = true;
 
-                if (data.records.isNotEmpty) {
-                  setState(() {
-                    _displayTitles = ["Carrier", "PLMN", "Date"];
-                    _displayValues = [
-                      data.operator,
-                      data.network,
-                      sharedPreferences.getBool("metricSystem") ?? true
-                          ? "${data.date.month}/${data.date.day}"
-                          : "${data.date.day}/${data.date.month}",
-                    ];
-
-                    _activeReplayData = data;
-                  });
-                  if (_currentLocation != null) {
-                    animatedUpdate(
-                      _currentLocation!,
-                      LatLng(data.records.first.lat, data.records.first.lon),
-                      Duration(milliseconds: 500),
-                    );
-                  } else {
-                    mapController.move(
-                      LatLng(data.records.first.lat, data.records.first.lon),
-                      mapController.camera.zoom,
-                    );
-                  }
-                }
-
-                _timer?.cancel();
-                _cellTimer?.cancel();
-              });
-            },
-          );
+          return;
         }
+
+        if (recordingActionNotifier.value == true) {
+          try {
+            await platform.invokeMethod("stopRecording");
+            recordingActionNotifier.value = false;
+
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Recording stopped and saved.")),
+              );
+            }
+          } catch (e) {}
+
+          return;
+        }
+
+        showModalBottomSheet(
+          context: context,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          builder: (BuildContext context) {
+            return recordModal(context, platform, (data) {
+              if (data.records.isNotEmpty) {
+                setState(() {
+                  _displayTitles = ["Carrier", "PLMN", "Date"];
+                  _displayValues = [
+                    data.operator,
+                    data.network,
+                    sharedPreferences.getBool("metricSystem") ?? true
+                        ? "${data.date.month}/${data.date.day}"
+                        : "${data.date.day}/${data.date.month}",
+                  ];
+
+                  _activeReplayData = data;
+                  recordingActionNotifier.value = true;
+                });
+                if (_currentLocation != null) {
+                  animatedUpdate(
+                    _currentLocation!,
+                    LatLng(data.records.first.lat, data.records.first.lon),
+                    Duration(milliseconds: 500),
+                  );
+                } else {
+                  mapController.move(
+                    LatLng(data.records.first.lat, data.records.first.lon),
+                    mapController.camera.zoom,
+                  );
+                }
+              }
+
+              _timer?.cancel();
+              _cellTimer?.cancel();
+            });
+          },
+        );
       });
 
       setLocation(false);
