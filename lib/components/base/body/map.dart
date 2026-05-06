@@ -111,7 +111,9 @@ class _MapBodyState extends State<MapBody> {
                     _displayValues = [
                       data.operator,
                       data.network,
-                      data.date.toString(),
+                      sharedPreferences.getBool("metricSystem") ?? true
+                          ? "${data.date.month}/${data.date.day}"
+                          : "${data.date.day}/${data.date.month}",
                     ];
 
                     _activeReplayData = data;
@@ -431,7 +433,10 @@ class _MapBodyState extends State<MapBody> {
                 point: LatLng(record.lat, record.lon),
                 radius: 5,
                 useRadiusInMeter: false,
-                color: Colors.green, //temp
+                color: _getSignalColor(
+                  record.networkGen,
+                  record.processedSignal,
+                ),
                 borderStrokeWidth: 1,
                 borderColor: Colors.white,
               );
@@ -474,5 +479,27 @@ class _MapBodyState extends State<MapBody> {
 
     _cellTimer?.cancel();
     startCellTimer();
+  }
+}
+
+Color _getSignalColor(int gen, int signal) {
+  double strength;
+
+  switch (gen) {
+    case 5:
+      strength = (signal.clamp(-135, -60) + 135) / 75;
+      return const Color(0xFF00C853).withOpacity(0.2 + (strength * 0.7));
+    case 4:
+      strength = (signal.clamp(-135, -60) + 135) / 75;
+      return const Color(0xFF99CC00).withOpacity(0.2 + (strength * 0.7));
+    case 3:
+      strength = (signal.clamp(-115, -60) + 115) / 55;
+      return const Color(0xFFFFAB00).withOpacity(0.2 + (strength * 0.7));
+    case 2:
+      strength = (signal.clamp(-110, -50) + 110) / 60;
+      return const Color(0xFFFF3D00).withOpacity(0.2 + (strength * 0.7));
+
+    default:
+      return const Color(0xFF9E9E9E).withOpacity(0.5);
   }
 }

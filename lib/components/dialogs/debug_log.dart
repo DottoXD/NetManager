@@ -15,7 +15,7 @@ Widget debugLogDialog(
   if (debugLogsList.isEmpty) throw "No debug logs";
 
   return AlertDialog(
-    title: Text("Debug Logs"),
+    title: Text("Debug logs"),
     content: SizedBox(
       width: double.maxFinite,
       child: Scrollbar(
@@ -40,7 +40,7 @@ Widget debugLogDialog(
       ),
     ),
     actions: [
-      TextButton.icon(
+      FilledButton.icon(
         onPressed: () async {
           await triggerHaptic(HapticType.SELECTION, context);
           final dir = await getTemporaryDirectory();

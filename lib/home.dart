@@ -57,11 +57,7 @@ class _HomeState extends State<Home> {
   void initState() {
     super.initState();
 
-    try {
-      cleanOldExports();
-    } catch (e) {
-      //todo
-    }
+    cleanOldExports();
 
     widget.platform.setMethodCallHandler((call) {
       if (call.method == "restartTimer") {

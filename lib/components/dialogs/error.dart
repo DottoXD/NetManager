@@ -11,7 +11,7 @@ Widget errorDialog(BuildContext context, Object e) {
       child: Scrollbar(child: Text(e.toString())),
     ),
     actions: [
-      TextButton(
+      FilledButton(
         onPressed: () => Navigator.of(context).pop(),
         child: const Text("Close"),
       ),

@@ -1,6 +1,6 @@
 class Record {
   final int networkGen;
-  final String processedSignal;
+  final int processedSignal;
   final bool usable;
   final DateTime dateTime;
   final double lat;

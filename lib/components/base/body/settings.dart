@@ -247,7 +247,6 @@ class _SettingsBodyState extends State<SettingsBody> {
       );
     } catch (e) {
       showDialog(
-        //temporary?
         context: context,
         builder: (BuildContext context) {
           return errorDialog(context, e);
@@ -291,7 +290,7 @@ class _SettingsBodyState extends State<SettingsBody> {
             ),
           ),
           actions: <Widget>[
-            TextButton(
+            FilledButton(
               child: const Text('Edit'),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -338,7 +337,7 @@ class _SettingsBodyState extends State<SettingsBody> {
             ),
           ),
           actions: <Widget>[
-            TextButton(
+            FilledButton(
               child: const Text('Edit'),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -622,11 +621,22 @@ class _SettingsBodyState extends State<SettingsBody> {
                       subtitle: Text("The custom map tiles template URL."),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18.0,
+                        vertical: 2.0,
+                      ),
                       child: TextField(
                         autocorrect: false,
                         controller: TextEditingController(
                           text: _mapTilesTemplate,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r"https?:\/\/[\w\.\/\-?#%&={}\[\]+]+"),
+                          ),
+                        ],
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
                         ),
                         onChanged: (String value) async {
                           await triggerHaptic(HapticType.SELECTION, context);

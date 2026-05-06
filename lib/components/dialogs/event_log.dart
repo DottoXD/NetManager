@@ -20,7 +20,7 @@ Widget eventLogDialog(
   if (events.isEmpty) throw "No events";
 
   return AlertDialog(
-    title: Text("Event Logs"),
+    title: Text("Event logs"),
     content: SizedBox(
       width: double.maxFinite,
       child: Scrollbar(
@@ -63,7 +63,7 @@ Widget eventLogDialog(
       ),
     ),
     actions: [
-      TextButton.icon(
+      FilledButton.icon(
         onPressed: () async {
           await triggerHaptic(HapticType.SELECTION, context);
           final dir = await getTemporaryDirectory();
