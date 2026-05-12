@@ -50,6 +50,9 @@ class _SettingsBodyState extends State<SettingsBody> {
   late ValueNotifier<bool> debugNotifier;
   late ValueNotifier<bool> logsNotifier;
 
+  late TextEditingController _mapTilesTemplateController;
+  late TextEditingController _speedtestInstanceController;
+
   final List<String> positionPrecisions = ["Off", "Low", "Medium", "High"];
   final List<String> speedMeasurementUnits = ["Gbps", "Mbps", "Kbps"];
 
@@ -65,6 +68,7 @@ class _SettingsBodyState extends State<SettingsBody> {
   int _backgroundUpdateInterval = 3;
   int _positionPrecision = 3;
   int _speedMeasurementUnit = 1;
+  String _speedtestInstance = "https://librespeed.org";
   int _themeColor = 0xFFE6F0F2;
 
   bool _hapticFeedback = true;
@@ -94,6 +98,21 @@ class _SettingsBodyState extends State<SettingsBody> {
     _positionPrecisionSelection = positionPrecisions[_positionPrecision];
     _speedMeasurementUnitSelection =
         speedMeasurementUnits[_speedMeasurementUnit];
+
+    _mapTilesTemplateController = TextEditingController(
+      text: _mapTilesTemplate,
+    );
+    _speedtestInstanceController = TextEditingController(
+      text: _speedtestInstance,
+    );
+  }
+
+  @override
+  void dispose() {
+    _mapTilesTemplateController.dispose();
+    _speedtestInstanceController.dispose();
+
+    super.dispose();
   }
 
   Future<void> updateData() async {
@@ -121,6 +140,9 @@ class _SettingsBodyState extends State<SettingsBody> {
       _speedMeasurementUnit =
           sharedPreferences.getInt("speedMeasurementUnit") ??
           _speedMeasurementUnit;
+      _speedtestInstance =
+          sharedPreferences.getString("speedtestInstance") ??
+          _speedtestInstance;
       _material3 = sharedPreferences.getBool("material3") ?? _material3;
       _hapticFeedback =
           sharedPreferences.getBool("hapticFeedback") ?? _hapticFeedback;
@@ -351,402 +373,434 @@ class _SettingsBodyState extends State<SettingsBody> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.vertical,
-      child: Column(
-        children: <Widget>[
-          Row(
-            children: [
-              Expanded(
-                child: ListView(
-                  shrinkWrap: true,
-                  physics: ClampingScrollPhysics(),
-                  children: <Widget>[
-                    ListTile(
-                      title: Text("Analytics"),
-                      subtitle: Text(
-                        "Share anonymous insights to help me improve NetManager.",
-                      ),
-                      trailing: Switch(
-                        value: _analytics,
-                        onChanged: (bool value) async {
-                          await triggerHaptic(HapticType.SELECTION, context);
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      behavior: HitTestBehavior.opaque,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: Column(
+          children: <Widget>[
+            Row(
+              children: [
+                Expanded(
+                  child: ListView(
+                    shrinkWrap: true,
+                    physics: ClampingScrollPhysics(),
+                    children: <Widget>[
+                      ListTile(
+                        title: Text("Analytics"),
+                        subtitle: Text(
+                          "Share anonymous insights to help me improve NetManager.",
+                        ),
+                        trailing: Switch(
+                          value: _analytics,
+                          onChanged: (bool value) async {
+                            await triggerHaptic(HapticType.SELECTION, context);
 
-                          setBool("analytics", value);
-                          updateData();
-                        },
+                            setBool("analytics", value);
+                            updateData();
+                          },
+                        ),
                       ),
-                    ),
-                    ListTile(
-                      title: Text("Check for updates"),
-                      subtitle: Text(
-                        "Let NetManager automatically look for updates when the app is opened.",
-                      ),
-                      trailing: Switch(
-                        value: _checkUpdates,
-                        onChanged: (bool value) async {
-                          await triggerHaptic(HapticType.SELECTION, context);
+                      ListTile(
+                        title: Text("Check for updates"),
+                        subtitle: Text(
+                          "Let NetManager automatically look for updates when the app is opened.",
+                        ),
+                        trailing: Switch(
+                          value: _checkUpdates,
+                          onChanged: (bool value) async {
+                            await triggerHaptic(HapticType.SELECTION, context);
 
-                          setBool("checkUpdates", value);
-                          updateData();
-                        },
+                            setBool("checkUpdates", value);
+                            updateData();
+                          },
+                        ),
                       ),
-                    ),
-                    Divider(
-                      height: 0,
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
-                    ListTile(
-                      title: Text(
-                        "Position precision (${positionPrecisions[_positionPrecision]})",
+                      Divider(
+                        height: 0,
+                        color: Theme.of(context).colorScheme.outlineVariant,
                       ),
-                      subtitle: Text(
-                        "The precision of your position determines the precision of the map tracking service.",
+                      ListTile(
+                        title: Text(
+                          "Position precision (${positionPrecisions[_positionPrecision]})",
+                        ),
+                        subtitle: Text(
+                          "The precision of your position determines the precision of the map tracking service.",
+                        ),
+                        trailing: IconButton(
+                          icon: Icon(Icons.edit),
+                          onPressed: () {
+                            _showPositionPrecisionDialog(context);
+                          },
+                        ),
                       ),
-                      trailing: IconButton(
-                        icon: Icon(Icons.edit),
-                        onPressed: () {
-                          _showPositionPrecisionDialog(context);
-                        },
-                      ),
-                    ),
-                    ListTile(
-                      title: Text("Startup monitoring"),
-                      subtitle: Text(
-                        "Start the monitoring service with your device. The map tracking service still needs to be manually started in the app.",
-                      ),
-                      trailing: Switch(
-                        value: _startupMonitoring,
-                        onChanged: (bool value) async {
-                          await triggerHaptic(HapticType.SELECTION, context);
+                      ListTile(
+                        title: Text("Startup monitoring"),
+                        subtitle: Text(
+                          "Start the monitoring service with your device. The map tracking service still needs to be manually started in the app.",
+                        ),
+                        trailing: Switch(
+                          value: _startupMonitoring,
+                          onChanged: (bool value) async {
+                            await triggerHaptic(HapticType.SELECTION, context);
 
-                          await onToggleStartupMonitoring(value);
-                        },
+                            await onToggleStartupMonitoring(value);
+                          },
+                        ),
                       ),
-                    ),
-                    ListTile(
-                      title: Text("Background service"),
-                      subtitle: Text(
-                        "Keep the monitoring service running even when you shut down the app.",
-                      ),
-                      trailing: Switch(
-                        value: _backgroundService,
-                        onChanged: (bool value) async {
-                          await triggerHaptic(HapticType.SELECTION, context);
+                      ListTile(
+                        title: Text("Background service"),
+                        subtitle: Text(
+                          "Keep the monitoring service running even when you shut down the app.",
+                        ),
+                        trailing: Switch(
+                          value: _backgroundService,
+                          onChanged: (bool value) async {
+                            await triggerHaptic(HapticType.SELECTION, context);
 
-                          await onToggleBackgroundService(value);
-                        },
+                            await onToggleBackgroundService(value);
+                          },
+                        ),
                       ),
-                    ),
-                    ListTile(
-                      title: Text("Update interval (${_updateInterval}s)"),
-                      subtitle: Text(
-                        "The interval in seconds between each monitoring service data update.",
+                      ListTile(
+                        title: Text("Update interval (${_updateInterval}s)"),
+                        subtitle: Text(
+                          "The interval in seconds between each monitoring service data update.",
+                        ),
                       ),
-                    ),
-                    Slider(
-                      value: _updateInterval.toDouble(),
-                      max: 30,
-                      min: 1,
-                      label: _updateInterval.toString(),
-                      onChanged: (double value) {
-                        setInt("updateInterval", value.toInt());
-                        updateData();
-                      },
-                    ),
-                    ListTile(
-                      title: Text(
-                        "Background update interval (${_backgroundUpdateInterval}s)",
-                      ),
-                      subtitle: Text(
-                        "The interval between each monitoring service data update when it is running in the background or on startup.",
-                      ),
-                      enabled: (_backgroundService || _startupMonitoring),
-                    ),
-                    if (_backgroundService || _startupMonitoring)
                       Slider(
-                        value: _backgroundUpdateInterval.toDouble(),
+                        value: _updateInterval.toDouble(),
                         max: 30,
                         min: 1,
-                        label: _backgroundUpdateInterval.toString(),
+                        label: _updateInterval.toString(),
                         onChanged: (double value) {
-                          setInt("backgroundUpdateInterval", value.toInt());
+                          setInt("updateInterval", value.toInt());
                           updateData();
                         },
                       ),
-                    Divider(
-                      height: 0,
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
-                    ListTile(
-                      title: Text("Haptics"),
-                      subtitle: Text(
-                        "Haptic feedback allows the app to feel more immersive.",
-                      ),
-                      trailing: Switch(
-                        value: _hapticFeedback,
-                        onChanged: (bool value) async {
-                          await triggerHaptic(HapticType.SELECTION, context);
-
-                          setBool("hapticFeedback", value);
-                          updateData();
-                        },
-                      ),
-                    ),
-                    ListTile(
-                      title: Text("Material You (3)"),
-                      subtitle: Text(
-                        "Use Material You, Android's latest UI kit. Do note that Material 2 is not well unsupported.",
-                      ),
-                      trailing: Switch(
-                        value: _material3,
-                        onChanged: (bool value) async {
-                          await triggerHaptic(HapticType.SELECTION, context);
-
-                          setBool("material3", value);
-                          updateData();
-                          material3Notifier.value = value;
-                        },
-                      ),
-                    ),
-                    ListTile(
-                      title: Text("Dynamic theme"),
-                      subtitle: Text(
-                        "Use Android's dynamic theme system. Supported on Material You (Android 12+.).",
-                      ),
-                      enabled: _dynamicSupported && _material3,
-                      trailing: (_dynamicSupported && _material3
-                          ? Switch(
-                              value: _dynamicTheme,
-                              onChanged: (bool value) async {
-                                await triggerHaptic(
-                                  HapticType.SELECTION,
-                                  context,
-                                );
-
-                                setBool("dynamicTheme", value);
-                                updateData();
-                                dynamicThemeNotifier.value = value;
-                              },
-                            )
-                          : const SizedBox.shrink()),
-                    ),
-                    ListTile(
-                      title: Text("Theme color"),
-                      subtitle: Text(
-                        "Choose a custom theme color if you are not using Android's dynamic theme feature.",
-                      ),
-                      enabled: (!_dynamicTheme || !_dynamicSupported),
-                    ),
-                    if (!_dynamicTheme || !_dynamicSupported)
-                      colorSelector(context, _themeColor, (newColor) {
-                        setInt("themeColor", newColor);
-                        updateData();
-                        themeColorNotifier.value = newColor;
-                      }),
-                    Divider(
-                      height: 0,
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
-                    ListTile(
-                      title: Text("Log events"),
-                      subtitle: Text(
-                        "Log various events such as changes between mobile cells and technologies.",
-                      ),
-                      trailing: Switch(
-                        value: _logEvents,
-                        onChanged: (bool value) async {
-                          await triggerHaptic(HapticType.SELECTION, context);
-
-                          setBool("logEvents", value);
-                          updateData();
-                          logsNotifier.value = value;
-                        },
-                      ),
-                    ),
-                    if (_logEvents)
-                      eventSelection(context, _loggedEventTypes, (eventType) {
-                        if (_loggedEventTypes.contains(eventType)) {
-                          _loggedEventTypes.remove(eventType);
-                        } else {
-                          _loggedEventTypes.add(eventType);
-                        }
-
-                        setStringList(
-                          "loggedEventTypes",
-                          _loggedEventTypes.map((e) => e.name).toList(),
-                        );
-
-                        updateData();
-                      }),
-                    ListTile(
-                      title: Text("Maximum logs ($_maximumLogs)"),
-                      subtitle: Text(
-                        "The maximum amount of events that should be logged and stored.",
-                      ),
-                      enabled: _logEvents,
-                    ),
-                    if (_logEvents)
-                      Slider(
-                        value: _maximumLogs.toDouble(),
-                        max: 500,
-                        min: 10,
-                        label: _maximumLogs.toString(),
-                        onChanged: (double value) {
-                          setInt("maximumLogs", value.toInt());
-                          updateData();
-                        },
-                      ),
-                    Divider(
-                      height: 0,
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
-                    ListTile(
-                      title: Text("Metric system"),
-                      subtitle: Text(
-                        "Use the metric system for speed measurements in the map.",
-                      ),
-                      trailing: Switch(
-                        value: _metricSystem,
-                        onChanged: (bool value) async {
-                          await triggerHaptic(HapticType.SELECTION, context);
-
-                          setBool("metricSystem", value);
-                          updateData();
-                        },
-                      ),
-                    ),
-                    ListTile(
-                      title: Text("Map tiles template URL"),
-                      subtitle: Text("The custom map tiles template URL."),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18.0,
-                        vertical: 2.0,
-                      ),
-                      child: TextField(
-                        autocorrect: false,
-                        controller: TextEditingController(
-                          text: _mapTilesTemplate,
-                        ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                            RegExp(r"https?:\/\/[\w\.\/\-?#%&={}\[\]+]+"),
-                          ),
-                        ],
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                        ),
-                        onChanged: (String value) async {
-                          await triggerHaptic(HapticType.SELECTION, context);
-
-                          setString("mapTilesTemplate", value);
-                          updateData();
-                        },
-                      ),
-                    ),
-                    Divider(
-                      height: 0,
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
-                    ListTile(
-                      title: Text("Speed measurement unit"),
-                      subtitle: Text(
-                        "Choose your preferred speed measurement unit for speedtests.",
-                      ),
-                      trailing: IconButton(
-                        icon: Icon(Icons.edit),
-                        onPressed: () {
-                          _showSpeedMeasurementUnitDialog(context);
-                        },
-                      ),
-                    ),
-                    Divider(
-                      height: 0,
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
-                    ListTile(
-                      title: Text("Contribute"),
-                      subtitle: Text("Contribute to NetManager on GitHub."),
-                      trailing: IconButton(
-                        onPressed: () {
-                          Uri url = Uri.parse(
-                            'https://github.com/DottoXD/NetManager',
-                          );
-                          launchUrl(url);
-                        },
-                        icon: Icon(Icons.open_in_new),
-                        tooltip: "Open in a browser",
-                      ),
-                    ),
-                    ListTile(
-                      title: Text("Telegram"),
-                      subtitle: Text(
-                        "Join NetManager's Telegram for exclusive feature previews and showcases.",
-                      ),
-                      trailing: IconButton(
-                        onPressed: () {
-                          Uri url = Uri.parse('https://t.me/netmanagerapp');
-                          launchUrl(url);
-                        },
-                        icon: Icon(Icons.message_outlined),
-                        tooltip: "Open in a browser",
-                      ),
-                    ),
-                    ListTile(
-                      title: Text("About"),
-                      subtitle: Text(
-                        "View some info about NetManager. Open source licenses and credits are included in this page.",
-                      ),
-                      trailing: IconButton(
-                        onPressed: () => showDialog(
-                          context: context,
-                          builder: (BuildContext context) =>
-                              FullAboutDialog(platform: platform),
-                        ),
-                        icon: Icon(Icons.question_mark_rounded),
-                      ),
-                    ),
-                    Divider(
-                      height: 0,
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
-                    ListTile(
-                      title: Text("Debug"),
-                      subtitle: Text(
-                        "Manage NetManager's debug mode. Enabling this setting will show raw debug data in some parts of the app.",
-                      ),
-                      trailing: Switch(
-                        value: _debug,
-                        onChanged: (bool value) async {
-                          await triggerHaptic(HapticType.SELECTION, context);
-
-                          setBool("debug", value);
-                          updateData();
-                          debugNotifier.value = value;
-                        },
-                      ),
-                    ),
-                    if (_debug)
                       ListTile(
-                        title: Text("Debug Logs"),
-                        subtitle: Text(
-                          "View NetManager's debug logs. Useful for debugging issues or viewing additional info.",
+                        title: Text(
+                          "Background update interval (${_backgroundUpdateInterval}s)",
                         ),
-                        enabled: _debug,
-                        trailing: IconButton(
-                          onPressed: openDebugLogs,
-                          icon: Icon(Icons.pageview_outlined),
-                          tooltip: "View",
+                        subtitle: Text(
+                          "The interval between each monitoring service data update when it is running in the background or on startup.",
+                        ),
+                        enabled: (_backgroundService || _startupMonitoring),
+                      ),
+                      if (_backgroundService || _startupMonitoring)
+                        Slider(
+                          value: _backgroundUpdateInterval.toDouble(),
+                          max: 30,
+                          min: 1,
+                          label: _backgroundUpdateInterval.toString(),
+                          onChanged: (double value) {
+                            setInt("backgroundUpdateInterval", value.toInt());
+                            updateData();
+                          },
+                        ),
+                      Divider(
+                        height: 0,
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
+                      ListTile(
+                        title: Text("Haptics"),
+                        subtitle: Text(
+                          "Haptic feedback allows the app to feel more immersive.",
+                        ),
+                        trailing: Switch(
+                          value: _hapticFeedback,
+                          onChanged: (bool value) async {
+                            await triggerHaptic(HapticType.SELECTION, context);
+
+                            setBool("hapticFeedback", value);
+                            updateData();
+                          },
                         ),
                       ),
-                  ],
+                      ListTile(
+                        title: Text("Material You (3)"),
+                        subtitle: Text(
+                          "Use Material You, Android's latest UI kit. Do note that Material 2 is not well unsupported.",
+                        ),
+                        trailing: Switch(
+                          value: _material3,
+                          onChanged: (bool value) async {
+                            await triggerHaptic(HapticType.SELECTION, context);
+
+                            setBool("material3", value);
+                            updateData();
+                            material3Notifier.value = value;
+                          },
+                        ),
+                      ),
+                      ListTile(
+                        title: Text("Dynamic theme"),
+                        subtitle: Text(
+                          "Use Android's dynamic theme system. Supported on Material You (Android 12+.).",
+                        ),
+                        enabled: _dynamicSupported && _material3,
+                        trailing: (_dynamicSupported && _material3
+                            ? Switch(
+                                value: _dynamicTheme,
+                                onChanged: (bool value) async {
+                                  await triggerHaptic(
+                                    HapticType.SELECTION,
+                                    context,
+                                  );
+
+                                  setBool("dynamicTheme", value);
+                                  updateData();
+                                  dynamicThemeNotifier.value = value;
+                                },
+                              )
+                            : const SizedBox.shrink()),
+                      ),
+                      ListTile(
+                        title: Text("Theme color"),
+                        subtitle: Text(
+                          "Choose a custom theme color if you are not using Android's dynamic theme feature.",
+                        ),
+                        enabled: (!_dynamicTheme || !_dynamicSupported),
+                      ),
+                      if (!_dynamicTheme || !_dynamicSupported)
+                        colorSelector(context, _themeColor, (newColor) {
+                          setInt("themeColor", newColor);
+                          updateData();
+                          themeColorNotifier.value = newColor;
+                        }),
+                      Divider(
+                        height: 0,
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
+                      ListTile(
+                        title: Text("Log events"),
+                        subtitle: Text(
+                          "Log various events such as changes between mobile cells and technologies.",
+                        ),
+                        trailing: Switch(
+                          value: _logEvents,
+                          onChanged: (bool value) async {
+                            await triggerHaptic(HapticType.SELECTION, context);
+
+                            setBool("logEvents", value);
+                            updateData();
+                            logsNotifier.value = value;
+                          },
+                        ),
+                      ),
+                      if (_logEvents)
+                        eventSelection(context, _loggedEventTypes, (eventType) {
+                          if (_loggedEventTypes.contains(eventType)) {
+                            _loggedEventTypes.remove(eventType);
+                          } else {
+                            _loggedEventTypes.add(eventType);
+                          }
+
+                          setStringList(
+                            "loggedEventTypes",
+                            _loggedEventTypes.map((e) => e.name).toList(),
+                          );
+
+                          updateData();
+                        }),
+                      ListTile(
+                        title: Text("Maximum logs ($_maximumLogs)"),
+                        subtitle: Text(
+                          "The maximum amount of events that should be logged and stored.",
+                        ),
+                        enabled: _logEvents,
+                      ),
+                      if (_logEvents)
+                        Slider(
+                          value: _maximumLogs.toDouble(),
+                          max: 500,
+                          min: 10,
+                          label: _maximumLogs.toString(),
+                          onChanged: (double value) {
+                            setInt("maximumLogs", value.toInt());
+                            updateData();
+                          },
+                        ),
+                      Divider(
+                        height: 0,
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
+                      ListTile(
+                        title: Text("Metric system"),
+                        subtitle: Text(
+                          "Use the metric system for speed measurements in the map.",
+                        ),
+                        trailing: Switch(
+                          value: _metricSystem,
+                          onChanged: (bool value) async {
+                            await triggerHaptic(HapticType.SELECTION, context);
+
+                            setBool("metricSystem", value);
+                            updateData();
+                          },
+                        ),
+                      ),
+                      ListTile(
+                        title: Text("Map tiles template URL"),
+                        subtitle: Text("The custom map tiles template URL."),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          left: 16.0,
+                          right: 16.0,
+                          bottom: 12.0,
+                        ),
+                        child: TextField(
+                          autocorrect: false,
+                          controller: _mapTilesTemplateController,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r"https?:\/\/[\w\.\/\-?#%&={}\[\]+]+"),
+                            ),
+                          ],
+                          decoration: const InputDecoration(
+                            border: UnderlineInputBorder(),
+                          ),
+                          onChanged: (String value) async {
+                            await triggerHaptic(HapticType.SELECTION, context);
+
+                            setString("mapTilesTemplate", value);
+                          },
+                        ),
+                      ),
+                      Divider(
+                        height: 0,
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
+                      ListTile(
+                        title: Text("Speed measurement unit"),
+                        subtitle: Text(
+                          "Choose your preferred speed measurement unit for speedtests.",
+                        ),
+                        trailing: IconButton(
+                          icon: Icon(Icons.edit),
+                          onPressed: () {
+                            _showSpeedMeasurementUnitDialog(context);
+                          },
+                        ),
+                      ),
+                      ListTile(
+                        title: Text("Speed test instance URL"),
+                        subtitle: Text(
+                          "Your speed test server instance URL. (Supported backends: LibreSpeed).",
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          left: 16.0,
+                          right: 16.0,
+                          bottom: 12.0,
+                        ),
+                        child: TextField(
+                          autocorrect: false,
+                          controller: _speedtestInstanceController,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r"https?:\/\/[\w\.\/\-?#%&={}\[\]+]+"),
+                            ),
+                          ],
+                          decoration: const InputDecoration(
+                            border: UnderlineInputBorder(),
+                          ),
+                          onChanged: (String value) async {
+                            await triggerHaptic(HapticType.SELECTION, context);
+
+                            setString("speedtestInstance", value);
+                          },
+                        ),
+                      ),
+                      Divider(
+                        height: 0,
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
+                      ListTile(
+                        title: Text("Contribute"),
+                        subtitle: Text("Contribute to NetManager on GitHub."),
+                        trailing: IconButton(
+                          onPressed: () {
+                            Uri url = Uri.parse(
+                              'https://github.com/DottoXD/NetManager',
+                            );
+                            launchUrl(url);
+                          },
+                          icon: Icon(Icons.open_in_new),
+                          tooltip: "Open in a browser",
+                        ),
+                      ),
+                      ListTile(
+                        title: Text("Telegram"),
+                        subtitle: Text(
+                          "Join NetManager's Telegram for exclusive feature previews and showcases.",
+                        ),
+                        trailing: IconButton(
+                          onPressed: () {
+                            Uri url = Uri.parse('https://t.me/netmanagerapp');
+                            launchUrl(url);
+                          },
+                          icon: Icon(Icons.message_outlined),
+                          tooltip: "Open in a browser",
+                        ),
+                      ),
+                      ListTile(
+                        title: Text("About"),
+                        subtitle: Text(
+                          "View some info about NetManager. Open source licenses and credits are included in this page.",
+                        ),
+                        trailing: IconButton(
+                          onPressed: () => showDialog(
+                            context: context,
+                            builder: (BuildContext context) =>
+                                FullAboutDialog(platform: platform),
+                          ),
+                          icon: Icon(Icons.question_mark_outlined),
+                        ),
+                      ),
+                      Divider(
+                        height: 0,
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
+                      ListTile(
+                        title: Text("Debug"),
+                        subtitle: Text(
+                          "Manage NetManager's debug mode. Enabling this setting will show raw debug data in some parts of the app.",
+                        ),
+                        trailing: Switch(
+                          value: _debug,
+                          onChanged: (bool value) async {
+                            await triggerHaptic(HapticType.SELECTION, context);
+
+                            setBool("debug", value);
+                            updateData();
+                            debugNotifier.value = value;
+                          },
+                        ),
+                      ),
+                      if (_debug)
+                        ListTile(
+                          title: Text("Debug Logs"),
+                          subtitle: Text(
+                            "View NetManager's debug logs. Useful for debugging issues or viewing additional info.",
+                          ),
+                          enabled: _debug,
+                          trailing: IconButton(
+                            onPressed: openDebugLogs,
+                            icon: Icon(Icons.pageview_outlined),
+                            tooltip: "View",
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

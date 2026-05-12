@@ -186,7 +186,7 @@ class _TopBarState extends State<TopBar> {
         actions: [
           IconButton(
             onPressed: openInfo,
-            icon: const Icon(Icons.info_outline_rounded),
+            icon: const Icon(Icons.info_outlined),
             tooltip: "Radio info settings",
           ),
           if (simCount > 1)

@@ -18,11 +18,11 @@ import pw.dotto.netmanager.Utils.Permissions;
  * component to display the user's position.
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.0.4
  */
 public class Location {
     private static final int UPDATES_INTERVAL = 3000;
-    private static final int DESTROY_TIMEOUT = 5000;
+    private static final int DESTROY_TIMEOUT = 10000;
 
     private static Location instance;
     private final LocationManager locationManager;

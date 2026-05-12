@@ -31,9 +31,10 @@ Widget mapOverlay(
                   children: [
                     Text(
                       displayTitles[index],
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: theme.colorScheme.secondary,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        //letterSpacing: 4,
                         fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.secondary,
                       ),
                     ),
                     const SizedBox(height: 4),

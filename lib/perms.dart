@@ -28,7 +28,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
   static const platform = MethodChannel('pw.dotto.netmanager/telephony');
 
   bool? hasPermissions;
-  bool? isRefreshing = false;
+  bool isRefreshing = false;
 
   static final int _requiredPerms =
       Permissions.READ_PHONE_STATE |
@@ -75,7 +75,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
         setState(() => hasPermissions = result ?? false);
       }
     } on PlatformException catch (_) {
-      setState(() => hasPermissions = false);
+      if (mounted) setState(() => hasPermissions = false);
     }
   }
 
@@ -121,7 +121,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
-                FilledButton(
+                OutlinedButton(
                   onPressed: () async {
                     await triggerHaptic(HapticType.LIGHT, context);
 

@@ -15,7 +15,7 @@ class UpdateButton extends StatelessWidget {
         onPressed!();
       },
       tooltip: 'Update data',
-      child: const Icon(Icons.update_rounded),
+      child: const Icon(Icons.update_outlined),
     );
   }
 }

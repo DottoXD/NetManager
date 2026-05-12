@@ -36,11 +36,13 @@ class MapBody extends StatefulWidget {
   State<MapBody> createState() => _MapBodyState();
 }
 
-class _MapBodyState extends State<MapBody> {
+class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
   late MethodChannel platform;
   late SharedPreferences sharedPreferences;
   late ValueNotifier<int> platformSignalNotifier;
   late ValueNotifier<bool> recordingActionNotifier;
+
+  late VoidCallback _signalListener;
 
   final MapController mapController = MapController();
   final String defaultMapTilesTemplate =
@@ -49,7 +51,6 @@ class _MapBodyState extends State<MapBody> {
   RecordedData? _activeReplayData;
 
   Timer? _timer;
-  Timer? _animationTimer;
   LatLng? _currentLocation;
 
   LatLng? _lastLocation;
@@ -66,94 +67,117 @@ class _MapBodyState extends State<MapBody> {
   String signalStrength = "N/A";
   String signalStrengthString = "N/A";
 
-  List<String> _displayTitles = <String>["Speed", "Cell ID", "Signal"];
-  List<String> _displayValues = <String>["N/A", "N/A", "N/A"];
+  final ValueNotifier<List<String>> displayTitlesNotifier = ValueNotifier([
+    "Speed",
+    "Cell ID",
+    "Signal",
+  ]);
+  final ValueNotifier<List<String>> displayValuesNotifier = ValueNotifier([
+    "N/A",
+    "N/A",
+    "N/A",
+  ]);
 
   @override
   void initState() {
     super.initState();
     platform = widget.platform;
     sharedPreferences = widget.sharedPreferences;
+    recordingActionNotifier = widget.recordingActionNotifier;
 
     metricSystem = sharedPreferences.getBool("metricSystem") ?? true;
+
+    widget.onRecordButtonPressed?.call(() async {
+      if (_activeReplayData != null) {
+        displayTitlesNotifier.value = <String>["Speed", "Cell ID", "Signal"];
+        displayValuesNotifier.value = <String>["N/A", "N/A", "N/A"];
+
+        setState(() {
+          _activeReplayData = null;
+          recordingActionNotifier.value = false;
+
+          startCellTimer();
+          updateLocation();
+        });
+
+        return;
+      }
+
+      if (recordingActionNotifier.value == true) {
+        try {
+          await platform.invokeMethod("stopRecording");
+          recordingActionNotifier.value = false;
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Recording stopped and saved.")),
+            );
+          }
+        } catch (e) {
+          if (!_dialogOpen && context.mounted) {
+            _dialogOpen = true;
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return errorDialog(context, e);
+              },
+            ).then((_) {
+              _dialogOpen = false;
+            });
+          }
+        }
+
+        return;
+      }
+
+      showModalBottomSheet(
+        context: context,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
+        ),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        builder: (BuildContext context) {
+          return recordModal(context, platform, recordingActionNotifier, (
+            data,
+          ) {
+            if (data.records.isNotEmpty) {
+              displayTitlesNotifier.value = ["Carrier", "PLMN", "Date"];
+              displayValuesNotifier.value = [
+                data.operator,
+                data.network,
+                sharedPreferences.getBool("metricSystem") ?? true
+                    ? "${data.date.month}/${data.date.day}"
+                    : "${data.date.day}/${data.date.month}",
+              ];
+
+              setState(() {
+                _activeReplayData = data;
+                recordingActionNotifier.value = true;
+              });
+              if (_currentLocation != null) {
+                animatedUpdate(
+                  _currentLocation!,
+                  LatLng(data.records.first.lat, data.records.first.lon),
+                  Duration(milliseconds: 500),
+                );
+              } else {
+                mapController.move(
+                  LatLng(data.records.first.lat, data.records.first.lon),
+                  mapController.camera.zoom,
+                );
+              }
+            }
+
+            _timer?.cancel();
+            _cellTimer?.cancel();
+          });
+        },
+      );
+    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.onPositionButtonPressed?.call(() {
         if (mounted) recenterMap();
-      });
-
-      widget.onRecordButtonPressed?.call(() async {
-        if (_activeReplayData != null) {
-          setState(() {
-            _displayTitles = <String>["Speed", "Cell ID", "Signal"];
-            _displayValues = <String>["N/A", "N/A", "N/A"];
-
-            _activeReplayData = null;
-            recordingActionNotifier.value = false;
-
-            startCellTimer();
-            updateLocation();
-          });
-
-          return;
-        }
-
-        if (recordingActionNotifier.value == true) {
-          try {
-            await platform.invokeMethod("stopRecording");
-            recordingActionNotifier.value = false;
-
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Recording stopped and saved.")),
-              );
-            }
-          } catch (e) {}
-
-          return;
-        }
-
-        showModalBottomSheet(
-          context: context,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
-          ),
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          builder: (BuildContext context) {
-            return recordModal(context, platform, (data) {
-              if (data.records.isNotEmpty) {
-                setState(() {
-                  _displayTitles = ["Carrier", "PLMN", "Date"];
-                  _displayValues = [
-                    data.operator,
-                    data.network,
-                    sharedPreferences.getBool("metricSystem") ?? true
-                        ? "${data.date.month}/${data.date.day}"
-                        : "${data.date.day}/${data.date.month}",
-                  ];
-
-                  _activeReplayData = data;
-                  recordingActionNotifier.value = true;
-                });
-                if (_currentLocation != null) {
-                  animatedUpdate(
-                    _currentLocation!,
-                    LatLng(data.records.first.lat, data.records.first.lon),
-                    Duration(milliseconds: 500),
-                  );
-                } else {
-                  mapController.move(
-                    LatLng(data.records.first.lat, data.records.first.lon),
-                    mapController.camera.zoom,
-                  );
-                }
-              }
-
-              _timer?.cancel();
-              _cellTimer?.cancel();
-            });
-          },
-        );
       });
 
       setLocation(false);
@@ -162,16 +186,17 @@ class _MapBodyState extends State<MapBody> {
 
     startCellTimer();
 
-    widget.platformSignalNotifier.addListener(() {
-      restartTimer();
-    });
+    _signalListener = restartTimer;
+    widget.platformSignalNotifier.addListener(_signalListener);
   }
 
   @override
   void dispose() {
     _timer?.cancel();
-    _animationTimer?.cancel();
     _cellTimer?.cancel();
+
+    widget.platformSignalNotifier.removeListener(_signalListener);
+    mapController.dispose();
 
     super.dispose();
   }
@@ -293,16 +318,16 @@ class _MapBodyState extends State<MapBody> {
         cellId = "N/A";
       }
 
-      setState(() {
-        _displayTitles = ["Speed", "Cell ID", signalStrengthString];
-        _displayValues = [
-          (metricSystem
-              ? "${_speedKmh.toStringAsFixed(1)}km/h"
-              : "${(_speedKmh / 1.609).toStringAsFixed(1)}mph"),
-          cellId,
-          signalStrength,
-        ];
+      displayTitlesNotifier.value = ["Speed", "Cell ID", signalStrengthString];
+      displayValuesNotifier.value = [
+        (metricSystem
+            ? "${_speedKmh.toStringAsFixed(1)}km/h"
+            : "${(_speedKmh / 1.609).toStringAsFixed(1)}mph"),
+        cellId,
+        signalStrength,
+      ];
 
+      setState(() {
         _isLoading = false;
       });
     } catch (e) {
@@ -320,34 +345,24 @@ class _MapBodyState extends State<MapBody> {
     }
   }
 
-  void animatedUpdate(LatLng from, LatLng to, Duration duration) async {
-    final double frameCount = WidgetsBinding
-        .instance
-        .platformDispatcher
-        .views
-        .first
-        .display
-        .refreshRate;
-    final int msPerFrame = (duration.inMilliseconds / frameCount).round();
-    int frame = 0;
+  void animatedUpdate(LatLng from, LatLng to, Duration duration) {
+    final tempController = AnimationController(vsync: this, duration: duration);
+    final latTween = Tween(begin: from.latitude, end: to.latitude);
+    final lngTween = Tween(begin: from.longitude, end: to.longitude);
 
-    _animationTimer?.cancel();
-
-    _animationTimer = Timer.periodic(Duration(milliseconds: msPerFrame), (
-      timer,
-    ) {
-      frame++;
-
-      double t = frame / frameCount;
-      double lat = from.latitude + (to.latitude - from.latitude) * t;
-      double lng = from.longitude + (to.longitude - from.longitude) * t;
-
-      mapController.move(LatLng(lat, lng), mapController.camera.zoom);
-
-      if (frame >= frameCount) {
-        _animationTimer!.cancel();
+    tempController.addListener(() {
+      if (mounted) {
+        mapController.move(
+          LatLng(
+            latTween.evaluate(tempController),
+            lngTween.evaluate(tempController),
+          ),
+          mapController.camera.zoom,
+        );
       }
     });
+
+    tempController.forward().then((_) => tempController.dispose());
   }
 
   @override
@@ -365,7 +380,16 @@ class _MapBodyState extends State<MapBody> {
           child: Stack(
             children: [
               getMap(context),
-              mapOverlay(context, _displayTitles, _displayValues),
+              ValueListenableBuilder(
+                valueListenable: displayValuesNotifier,
+                builder: (context, values, child) {
+                  return mapOverlay(
+                    context,
+                    displayTitlesNotifier.value,
+                    values,
+                  );
+                },
+              ),
             ],
           ),
         ),
@@ -374,6 +398,11 @@ class _MapBodyState extends State<MapBody> {
   }
 
   Widget getMap(BuildContext context) {
+    const gitCommit = String.fromEnvironment(
+      'GIT_COMMIT',
+      defaultValue: 'development',
+    );
+
     return FlutterMap(
       mapController: mapController,
       options: MapOptions(
@@ -418,7 +447,7 @@ class _MapBodyState extends State<MapBody> {
               defaultMapTilesTemplate,
           tileBuilder: mapTileBuilder,
           userAgentPackageName:
-              "pw.dotto.netmanager${sharedPreferences.getString("mapTilesTemplate") != defaultMapTilesTemplate ? "(Customised by user)" : ""}",
+              "pw.dotto.netmanager ($gitCommit) ${sharedPreferences.getString("mapTilesTemplate") != defaultMapTilesTemplate ? "(Customised by user)" : ""}",
         ),
         if (_currentLocation != null)
           MarkerLayer(
@@ -431,7 +460,7 @@ class _MapBodyState extends State<MapBody> {
                   decoration: BoxDecoration(
                     color: Theme.of(
                       context,
-                    ).colorScheme.primaryContainer.withAlpha(230),
+                    ).colorScheme.primaryContainer.withValues(alpha: 0.9),
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: Colors.white, //color to be changed
@@ -454,7 +483,7 @@ class _MapBodyState extends State<MapBody> {
                   record.processedSignal,
                 ),
                 borderStrokeWidth: 1,
-                borderColor: Colors.white,
+                borderColor: Colors.white, //color to be changed
               );
             }).toList(),
           ),
@@ -504,18 +533,18 @@ Color _getSignalColor(int gen, int signal) {
   switch (gen) {
     case 5:
       strength = (signal.clamp(-135, -60) + 135) / 75;
-      return const Color(0xFF00C853).withOpacity(0.2 + (strength * 0.7));
+      return const Color(0xFF00C853).withValues(alpha: 0.2 + (strength * 0.7));
     case 4:
       strength = (signal.clamp(-135, -60) + 135) / 75;
-      return const Color(0xFF99CC00).withOpacity(0.2 + (strength * 0.7));
+      return const Color(0xFF99CC00).withValues(alpha: 0.2 + (strength * 0.7));
     case 3:
       strength = (signal.clamp(-115, -60) + 115) / 55;
-      return const Color(0xFFFFAB00).withOpacity(0.2 + (strength * 0.7));
+      return const Color(0xFFFFAB00).withValues(alpha: 0.2 + (strength * 0.7));
     case 2:
       strength = (signal.clamp(-110, -50) + 110) / 60;
-      return const Color(0xFFFF3D00).withOpacity(0.2 + (strength * 0.7));
+      return const Color(0xFFFF3D00).withValues(alpha: 0.2 + (strength * 0.7));
 
     default:
-      return const Color(0xFF9E9E9E).withOpacity(0.5);
+      return const Color(0xFF9E9E9E).withValues(alpha: 0.5);
   }
 }

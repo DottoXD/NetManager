@@ -32,9 +32,9 @@ import pw.dotto.netmanager.Core.Manager;
 import pw.dotto.netmanager.Core.Mobile.CellSnapshot;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
 import pw.dotto.netmanager.Core.Mobile.SimReceiverManager;
-import pw.dotto.netmanager.Core.Notifications.Service;
 import pw.dotto.netmanager.Fetchers.Location;
 import pw.dotto.netmanager.Fetchers.Sensors;
+import pw.dotto.netmanager.Speedtest.Client;
 import pw.dotto.netmanager.Utils.Activities;
 import pw.dotto.netmanager.Utils.DeviceData;
 import pw.dotto.netmanager.Utils.Permissions;
@@ -143,9 +143,9 @@ public class MainActivity extends FlutterActivity implements MessageClient.OnMes
         case "sendNotification":
           try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-              startForegroundService(new Intent(this, Service.class));
+              startForegroundService(new Intent(this, pw.dotto.netmanager.Core.Notifications.Service.class));
             } else {
-              startService(new Intent(this, Service.class));
+              startService(new Intent(this, pw.dotto.netmanager.Core.Notifications.Service.class));
             }
 
             result.success(null);
@@ -156,7 +156,7 @@ public class MainActivity extends FlutterActivity implements MessageClient.OnMes
 
         case "cancelNotification":
           try {
-            stopService(new Intent(this, Service.class));
+            stopService(new Intent(this, pw.dotto.netmanager.Core.Notifications.Service.class));
             result.success(null);
           } catch (Exception e) {
             result.error("Unknown", e.getMessage(), null); // add proper error handling
@@ -299,35 +299,48 @@ public class MainActivity extends FlutterActivity implements MessageClient.OnMes
           }
           break;
 
-          case "startRecording":
-              String recordingName = call.argument("name");
-              long recordingInterval = Long.parseLong(call.argument("interval"));
-              String recordingPath = call.argument("path");
+        case "startRecording":
+          String recordingName = call.argument("name");
+          int recordingInterval = call.argument("interval");
+          String recordingPath = call.argument("path");
 
-              if(recordingInterval < 1 || recordingInterval > 300 || recordingName == null || recordingPath == null) {
-                  result.error(
-                          "Unknown", "Unknown", null); // add proper error handling
-                  return;
-              }
+          if (recordingInterval < 1 || recordingInterval > 300 || recordingName == null || recordingPath == null) {
+            result.error(
+                "Unknown", "Unknown", null); // add proper error handling
+            return;
+          }
 
-              try {
-                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                      startForegroundService(new Intent(this, pw.dotto.netmanager.Recording.Service.class));
-                  } else {
-                      startService(new Intent(this, pw.dotto.netmanager.Recording.Service.class));
-                  }
-              } catch(Exception e) {
-                  result.error(
-                          "Unknown", "Unknown", null); // add proper error handling
-              }
-              result.success(null);
-              break;
+          try {
+            Intent recordingIntent = new Intent(this, pw.dotto.netmanager.Recording.Service.class);
+            recordingIntent.putExtra("name", recordingName);
+            recordingIntent.putExtra("interval", recordingInterval);
+            recordingIntent.putExtra("path", recordingPath);
+            recordingIntent.putExtra("selectedSim", selectedSim);
 
-          case "stopRecording":
-              Intent stopIntent = new Intent(this, pw.dotto.netmanager.Recording.Service.class);
-              stopService(stopIntent);
-              result.success(true);
-              break;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+              startForegroundService(recordingIntent);
+            } else {
+              startService(recordingIntent);
+            }
+          } catch (Exception e) {
+            result.error(
+                "Unknown", "Unknown", null); // add proper error handling
+          }
+          result.success(null);
+          break;
+
+        case "stopRecording":
+          Intent stopIntent = new Intent(this, pw.dotto.netmanager.Recording.Service.class);
+          stopService(stopIntent);
+          result.success(true);
+          break;
+
+        case "startTest":
+          Client client = new Client();
+          client.runSpeedTest(call.argument("pingUrl"), call.argument("downloadUrl"), call.argument("uploadUrl"),
+              new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL));
+          result.success(null);
+          break;
 
         default:
           result.notImplemented();

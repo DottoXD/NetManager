@@ -233,7 +233,7 @@ class _HomeBodyState extends State<HomeBody> {
                             mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
                               Icon(
-                                Icons.cell_tower_rounded,
+                                Icons.cell_tower_outlined,
                                 size: 40,
                                 color: Theme.of(
                                   context,
@@ -411,8 +411,8 @@ class _HomeBodyState extends State<HomeBody> {
         );
 
         List<IconData> icons = [
-          Icons.signal_cellular_0_bar_rounded,
-          Icons.signal_cellular_4_bar_rounded,
+          Icons.signal_cellular_0_bar_outlined,
+          Icons.signal_cellular_4_bar_outlined,
           Icons.auto_awesome_outlined,
           Icons.auto_awesome_rounded,
           Icons.question_mark,

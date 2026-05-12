@@ -39,7 +39,7 @@ Widget eventLogDialog(
                       Text(event.oldValue),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 5),
-                        child: Icon(Icons.arrow_right_rounded),
+                        child: Icon(Icons.arrow_right_outlined),
                       ),
                       Text(event.newValue),
                     ],
@@ -63,6 +63,10 @@ Widget eventLogDialog(
       ),
     ),
     actions: [
+      TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: Text("Close"),
+      ),
       FilledButton.icon(
         onPressed: () async {
           await triggerHaptic(HapticType.SELECTION, context);
@@ -90,10 +94,6 @@ Widget eventLogDialog(
         },
         label: const Text("Export"),
         icon: const Icon(Icons.share),
-      ),
-      TextButton(
-        onPressed: () => Navigator.of(context).pop(),
-        child: Text("Close"),
       ),
     ],
   );

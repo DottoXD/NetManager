@@ -32,14 +32,14 @@ import pw.dotto.netmanager.MainActivity;
 import pw.dotto.netmanager.R;
 
 /**
- * NetManager's Recording Service class is the recording component which coordinates
+ * NetManager's Recording Service class is the recording component which
+ * coordinates
  * all cell coverage recording actions.
  *
  * @author DottoXD
  * @version 0.0.4
  */
 public class Service extends android.app.Service {
-    private SharedPreferences sharedPreferences;
     private Manager core;
     private RecordedData recordedData;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -69,7 +69,7 @@ public class Service extends android.app.Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String name = intent.getStringExtra("name");
-        long intervalSeconds = intent.getLongExtra("interval", 10);
+        int intervalSeconds = intent.getIntExtra("interval", 10);
         String path = intent.getStringExtra("path");
         int selectedSim = intent.getIntExtra("selectedSim", 0);
 
@@ -129,7 +129,7 @@ public class Service extends android.app.Service {
             @Override
             public void run() {
                 record();
-                handler.postDelayed(this, intervalSeconds * 1000);
+                handler.postDelayed(this, intervalSeconds * 1000L);
             }
         };
         handler.post(runnable);
@@ -142,12 +142,13 @@ public class Service extends android.app.Service {
         android.location.Location loc = locationFetcher.getLastLocation();
         SIMData data = core.getSimNetworkData(selectedSim);
 
-        if(loc != null && data != null) {
+        if (loc != null && data != null) {
             int gen = data.getNetworkGen();
-            if(gen == 4 && core.getNsaStatus(selectedSim)) gen++;
+            if (gen == 4 && core.getNsaStatus(selectedSim))
+                gen++;
 
             int processedSignal = -1;
-            if(data.getPrimaryCell() != null) {
+            if (data.getPrimaryCell() != null) {
                 processedSignal = data.getPrimaryCell().getProcessedSignal();
             }
 
@@ -162,7 +163,7 @@ public class Service extends android.app.Service {
             String json = gson.toJson(recordedData);
             fos.write(json.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
-            //todo
+            // todo
         }
     }
 
@@ -180,10 +181,6 @@ public class Service extends android.app.Service {
         if (handler != null && runnable != null)
             handler.removeCallbacks(runnable);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            stopForeground(STOP_FOREGROUND_REMOVE);
-        } else {
-            stopForeground(true);
-        }
+        stopForeground(STOP_FOREGROUND_REMOVE);
     }
 }

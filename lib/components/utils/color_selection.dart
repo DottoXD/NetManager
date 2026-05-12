@@ -12,6 +12,8 @@ const List<int> themeColors = [
   0xFF411B4F, // Dark purple
   0xFFA32E2E, // Red
   0xFFFFB93B, // Orange
+  0xFFFF8D3B, // Dark Orange
+  0xFF453BFF, // Blue
 ];
 
 Widget colorSelector(

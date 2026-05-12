@@ -15,7 +15,7 @@ class PositionButton extends StatelessWidget {
         onPressed!();
       },
       tooltip: 'Reposition location',
-      child: const Icon(Icons.location_searching_rounded),
+      child: const Icon(Icons.location_searching_outlined),
     );
   }
 }

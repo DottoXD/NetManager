@@ -99,10 +99,10 @@ IconData getTrailingIcon(SIMData simData, String val) {
     return Icons.shortcut;
   } else if (val == simData.primaryCell.bandwidthString) {
     //BW
-    return Icons.swap_horiz_rounded;
+    return Icons.swap_horiz_outlined;
   } else if (val == simData.primaryCell.bandString) {
     //Band
-    return Icons.numbers_rounded;
+    return Icons.numbers_outlined;
   }
 
   return Icons.question_mark; //Unknown icon

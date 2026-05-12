@@ -1,9 +1,11 @@
 package pw.dotto.netmanager.Recording;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
- * NetManager's Record class is the component that contains all base attributes for
+ * NetManager's Record class is the component that contains all base attributes
+ * for
  * a single record inside of a cell coverage recording.
  *
  * @author DottoXD
@@ -13,7 +15,7 @@ public class Record {
     private final int networkGen;
     private final int processedSignal;
     private final boolean usable;
-    private final LocalDateTime dateTime;
+    private final String dateTime;
     private final double lat;
     private final double lon;
 
@@ -21,7 +23,7 @@ public class Record {
         this.networkGen = networkGen;
         this.processedSignal = processedSignal;
         this.usable = usable;
-        this.dateTime = LocalDateTime.now();
+        this.dateTime = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         this.lat = lat;
         this.lon = lon;
     }

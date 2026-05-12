@@ -17,15 +17,22 @@ class RecordButton extends StatelessWidget {
       elevation: 1,
       mini: true,
       onPressed: () async {
+        if (onPressed == null) return;
+
         await triggerHaptic(HapticType.SELECTION, context);
-        onPressed!();
+        onPressed?.call();
       },
       tooltip: 'Cell coverage recording',
-      child: Icon(
-        recordingActionNotifier.value
-            ? Icons.close_outlined
-            : Icons.fiber_smart_record_outlined,
-        size: 18,
+      child: ValueListenableBuilder(
+        valueListenable: recordingActionNotifier,
+        builder: (context, isRecording, child) {
+          return Icon(
+            isRecording
+                ? Icons.close_outlined
+                : Icons.fiber_smart_record_outlined,
+            size: 18,
+          );
+        },
       ),
     );
   }

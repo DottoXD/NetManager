@@ -18,7 +18,7 @@ class NavBar extends StatelessWidget {
       child: NavigationBar(
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.person_outline_rounded),
+            icon: Icon(Icons.person_outlined),
             label: "Data",
           ),
           NavigationDestination(

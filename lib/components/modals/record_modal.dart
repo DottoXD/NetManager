@@ -9,6 +9,7 @@ import 'package:netmanager/types/recording/recorded_data.dart';
 Widget recordModal(
   BuildContext context,
   MethodChannel platform,
+  ValueNotifier<bool> recordingActionNotifier,
   Function(RecordedData) onDataLoaded,
 ) {
   return Padding(
@@ -35,6 +36,7 @@ Widget recordModal(
             final bool? start = await showDialog(
               context: context,
               builder: (BuildContext context) {
+                // todo: add usable toggle for the 'usable' tracker
                 return AlertDialog(
                   title: const Text("New recording"),
                   content: SingleChildScrollView(
@@ -66,7 +68,7 @@ Widget recordModal(
                           valueListenable: directoryPathNotifier,
                           builder: (context, path, _) {
                             return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 OutlinedButton.icon(
                                   onPressed: () async {
@@ -102,21 +104,20 @@ Widget recordModal(
                       onPressed: () => Navigator.of(context).pop(false),
                       child: const Text("Cancel"),
                     ),
-                    FilledButton(
-                      onPressed: () {
-                        if (directoryPathNotifier.value == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Please select a save location"),
-                              showCloseIcon: true,
-                            ),
-                          );
-                          return;
-                        }
-
-                        Navigator.of(context).pop(true);
+                    ValueListenableBuilder(
+                      valueListenable: directoryPathNotifier,
+                      builder: (context, path, _) {
+                        return FilledButton(
+                          onPressed: path == null
+                              ? null
+                              : () {
+                                  if (context.mounted) {
+                                    Navigator.of(context).pop(true);
+                                  }
+                                },
+                          child: const Text("Start"),
+                        );
                       },
-                      child: const Text("Start"),
                     ),
                   ],
                 );
@@ -130,6 +131,8 @@ Widget recordModal(
                 "path": directoryPathNotifier.value,
               });
 
+              recordingActionNotifier.value = true;
+
               if (context.mounted) {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -141,6 +144,10 @@ Widget recordModal(
                 );
               }
             }
+
+            nameController.dispose();
+            intervalController.dispose();
+            directoryPathNotifier.dispose();
           },
         ),
         ListTile(

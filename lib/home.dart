@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/base/body/map.dart';
 import 'package:netmanager/components/base/body/settings.dart';
-import 'package:netmanager/components/base/body/speedtest.dart';
+import 'package:netmanager/components/base/body/speedtest/speedtest.dart';
 import 'package:netmanager/components/floating/position_button.dart';
 import 'package:netmanager/components/base/bars/top_bar.dart';
 import 'package:netmanager/components/floating/record_button.dart';
@@ -97,7 +97,7 @@ class _HomeState extends State<Home> {
           setState(() => _recordCallback = callback);
         },
       ),
-      SpeedtestBody(widget.platform, widget.sharedPreferences),
+      SpeedtestBody(widget.platform),
       SettingsBody(
         widget.platform,
         widget.sharedPreferences,
@@ -139,6 +139,8 @@ class _HomeState extends State<Home> {
     platformSignalNotifier.dispose();
     debugNotifier.dispose();
     logsNotifier.dispose();
+    recordingActionNotifier.dispose();
+
     super.dispose();
   }
 
@@ -167,7 +169,7 @@ class _HomeState extends State<Home> {
           logsNotifier,
         ),
         bottomNavigationBar: NavBar(updatePage, _currentPage),
-        body: _pages[_currentPage],
+        body: IndexedStack(index: _currentPage, children: _pages),
         floatingActionButton: Container(
           margin: const EdgeInsets.only(bottom: 4.0),
           child: Column(
@@ -180,7 +182,9 @@ class _HomeState extends State<Home> {
                 UpdateButton(onPressed: _homeUpdateCallback),
               ] else if (_currentPage == 1) ...[
                 RecordButton(
-                  onPressed: _recordCallback,
+                  onPressed: () {
+                    _recordCallback?.call();
+                  },
                   recordingActionNotifier: recordingActionNotifier,
                 ),
                 const SizedBox(height: 4),

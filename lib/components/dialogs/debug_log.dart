@@ -40,6 +40,10 @@ Widget debugLogDialog(
       ),
     ),
     actions: [
+      TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: const Text("Close"),
+      ),
       FilledButton.icon(
         onPressed: () async {
           await triggerHaptic(HapticType.SELECTION, context);
@@ -67,10 +71,6 @@ Widget debugLogDialog(
         },
         label: const Text("Export"),
         icon: const Icon(Icons.share),
-      ),
-      TextButton(
-        onPressed: () => Navigator.of(context).pop(),
-        child: const Text("Close"),
       ),
     ],
   );
