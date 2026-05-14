@@ -60,6 +60,6 @@ android {
 }
 
 dependencies {
-    implementation("com.google.android.gms:play-services-wearable:19.0.0")
+    implementation("com.google.android.gms:play-services-wearable:20.0.1")
     implementation("androidx.wear.compose:compose-material3:1.6.0-rc01")
 }

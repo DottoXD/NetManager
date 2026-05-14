@@ -9,7 +9,8 @@ plugins {
 
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
-if (keystorePropertiesFile.exists()) {
+val keystorePropertiesFileExists = keystorePropertiesFile.exists()
+if (keystorePropertiesFileExists) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
@@ -37,10 +38,14 @@ android {
 
     signingConfigs {
         create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
-            storeFile = keystoreProperties["storeFile"]?.let { file(it) }
-            storePassword = keystoreProperties["storePassword"] as String
+            if(keystorePropertiesFileExists) {
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+                storeFile = keystoreProperties["storeFile"]?.let { file(it) }
+                storePassword = keystoreProperties["storePassword"] as String
+            } else {
+                initWith(getByName("debug"))
+            }
         }
     }
 
@@ -59,6 +64,19 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    flavorDimensions += "distribution"
+
+    productFlavors {
+        create("foss") {
+            dimension = "distribution"
+            applicationIdSuffix = ".foss"
+            versionNameSuffix = "-foss"
+        }
+        create("play") {
+            dimension = "distribution"
+        }
+    }
 }
 
 flutter {
@@ -67,6 +85,7 @@ flutter {
 
 dependencies {
     implementation("com.google.code.gson:gson:2.14.0")
-    implementation("com.google.android.gms:play-services-wearable:19.0.0")
-    implementation("com.squareup.okhttp3:okhttp:5.3.0")
+    implementation("com.squareup.okhttp3:okhttp:5.3.2")
+
+    "playImplementation"("com.google.android.gms:play-services-wearable:20.0.1")
 }

@@ -9,18 +9,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-
-import com.google.android.gms.wearable.DataMap;
-import com.google.android.gms.wearable.MessageClient;
-import com.google.android.gms.wearable.MessageEvent;
-import com.google.android.gms.wearable.PutDataMapRequest;
-import com.google.android.gms.wearable.Wearable;
 import com.google.gson.Gson;
-
 import java.util.List;
 
 import io.flutter.embedding.android.FlutterActivity;
@@ -29,7 +21,6 @@ import io.flutter.plugin.common.MethodChannel;
 import pw.dotto.netmanager.Core.Events.EventManager;
 import pw.dotto.netmanager.Core.Events.NetManagerEvent;
 import pw.dotto.netmanager.Core.Manager;
-import pw.dotto.netmanager.Core.Mobile.CellSnapshot;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
 import pw.dotto.netmanager.Core.Mobile.SimReceiverManager;
 import pw.dotto.netmanager.Fetchers.Location;
@@ -39,6 +30,7 @@ import pw.dotto.netmanager.Utils.Activities;
 import pw.dotto.netmanager.Utils.DeviceData;
 import pw.dotto.netmanager.Utils.Permissions;
 import pw.dotto.netmanager.Utils.DebugLogger;
+import pw.dotto.netmanager.WearOS.WearHandler;
 
 /**
  * NetManager's MainActivity class is the core component which coordinates
@@ -48,11 +40,12 @@ import pw.dotto.netmanager.Utils.DebugLogger;
  * @author DottoXD
  * @version 0.0.4
  */
-public class MainActivity extends FlutterActivity implements MessageClient.OnMessageReceivedListener {
-  private static final String CHANNEL = "pw.dotto.netmanager/telephony";
+public class MainActivity extends FlutterActivity {
+  private static final String CHANNEL = "pw.dotto.netmanager/bridge";
 
   private Manager core = null;
   private int selectedSim = 0;
+  private final WearHandler wearHandler = new WearHandler();
 
   private MethodChannel chn;
   private SharedPreferences sharedPreferences;
@@ -349,6 +342,10 @@ public class MainActivity extends FlutterActivity implements MessageClient.OnMes
     });
   }
 
+  public Manager getCore() {
+      return core;
+  }
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -358,6 +355,8 @@ public class MainActivity extends FlutterActivity implements MessageClient.OnMes
 
     if (core == null)
       core = new Manager(this);
+
+    wearHandler.onCreate(this);
   }
 
   @Override
@@ -373,55 +372,19 @@ public class MainActivity extends FlutterActivity implements MessageClient.OnMes
 
   @Override
   public void onResume() {
-    super.onResume();
-    Wearable.getMessageClient(this).addListener(this);
+      super.onResume();
+      wearHandler.onResume();
   }
 
-  @Override
-  public void onPause() {
-    Wearable.getMessageClient(this).removeListener(this);
-    super.onPause();
-  }
+    @Override
+    public void onPause() {
+        super.onPause();
+        wearHandler.onPause();
+    }
 
   @Override
   public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     Permissions.handleResult(this, requestCode, permissions, grantResults);
-  }
-
-  /**
-   * This method coordinates incoming communications with WearOS devices.
-   *
-   * @param messageEvent A valid MessageEvent from a WearOS device.
-   */
-  @Override
-  public void onMessageReceived(@NonNull MessageEvent messageEvent) {
-    Log.d("wear", "Message received: " + messageEvent.getPath());
-    if (messageEvent.getPath().equals("/request_wearos_data")) {
-      PutDataMapRequest request = PutDataMapRequest.create("/wearos_data");
-
-      DataMap dataMap = request.getDataMap();
-
-      byte[] data = messageEvent.getData();
-      int id = data.length > 0 ? data[0] : 0;
-
-      dataMap.putInt("id", id);
-
-      if (core != null) {
-        CellSnapshot snapshot = core.getCellSnapshot(id);
-
-        if (snapshot != null) {
-          dataMap.putString("network", snapshot.getNetwork());
-          dataMap.putString("node", snapshot.getNode());
-          dataMap.putInt("band", snapshot.getBand());
-          dataMap.putInt("networkGen", snapshot.getNetworkGen());
-          dataMap.putInt("rawSignal", snapshot.getRawSignal());
-          dataMap.putInt("processedSignal", snapshot.getProcessedSignal());
-          dataMap.putLong("timestamp", snapshot.getTimestamp());
-        }
-      }
-
-      Wearable.getDataClient(this).putDataItem(request.asPutDataRequest().setUrgent());
-    }
   }
 }
