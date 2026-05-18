@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:netmanager/components/base/body/speedtest/widgets/live_view.dart';
 import 'package:netmanager/components/base/body/speedtest/speedtest.dart';
@@ -46,16 +48,41 @@ Widget heroGauge(
             ),
             duration: Duration(milliseconds: isLatency ? 200 : 400),
             curve: Curves.easeOutCubic,
-            builder: (context, value, child) => CircularProgressIndicator(
-              value: value,
-              strokeWidth: 12,
-              strokeCap: StrokeCap.round,
-              color: stage == TestStage.LATENCY
+            builder: (context, value, child) {
+              final baseColor = stage == TestStage.LATENCY
                   ? Theme.of(context).colorScheme.secondary
                   : (stage == TestStage.UPLOAD
                         ? Theme.of(context).colorScheme.tertiary
-                        : Theme.of(context).colorScheme.primary),
-            ),
+                        : Theme.of(context).colorScheme.primary);
+
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  Positioned.fill(
+                    child: ImageFiltered(
+                      imageFilter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                      child: Transform.translate(
+                        offset: const Offset(0, 4),
+                        child: CircularProgressIndicator(
+                          value: value,
+                          strokeWidth: 14,
+                          strokeCap: StrokeCap.square,
+                          color: baseColor.withValues(alpha: 0.25),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: CircularProgressIndicator(
+                      value: value,
+                      strokeWidth: 12,
+                      strokeCap: StrokeCap.round,
+                      color: baseColor,
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
         if (stage == TestStage.DOWNLOAD || stage == TestStage.UPLOAD)

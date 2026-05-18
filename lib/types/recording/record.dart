@@ -17,12 +17,12 @@ class Record {
 
   factory Record.fromJson(Map<String, dynamic> json) {
     return Record(
-      networkGen: json['networkGen'],
-      processedSignal: json['processedSignal'],
-      usable: json['usable'] ?? true,
-      dateTime: DateTime.parse(json['dateTime']),
-      lat: json['lat'],
-      lon: json['lon'],
+      networkGen: json["networkGen"],
+      processedSignal: json["processedSignal"],
+      usable: json["usable"] ?? true,
+      dateTime: DateTime.parse(json["dateTime"]),
+      lat: json["lat"],
+      lon: json["lon"],
     );
   }
 }

@@ -40,7 +40,7 @@ import okio.BufferedSink;
  * @version 0.0.4
  */
 public class Client {
-    private static final int STREAM_COUNT = 8;
+    private static final int STREAMS = 8;
     private static final int BUFFER_SIZE = 256 * 1024;
     private static final int UPLOAD_CHUNK_SIZE = 1024 * 1024;
     private static final int UI_UPDATE_INTERVAL = 300;
@@ -48,7 +48,8 @@ public class Client {
     private static final long BATCH_UPDATE_THRESHOLD = 1024 * 1024;
 
     private static final int LATENCY_MAX_MS = 5000;
-    private static final int TRANSFER_MAX_MS = 20000;
+    private static final int PHASE_MAX_MS = 20000;
+    private static final int PHASE_MIN_MS = 4000;
     private static final int PING_COUNT = 5;
     private static final int PING_INTERVAL_MS = 50;
 
@@ -63,7 +64,7 @@ public class Client {
             .retryOnConnectionFailure(true)
             .build();
 
-    private final ExecutorService executor = Executors.newFixedThreadPool(STREAM_COUNT + 4);
+    private final ExecutorService executor = Executors.newFixedThreadPool(STREAMS + 4);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public void runSpeedTest(String pingUrl, String downloadUrl, String uploadUrl, MethodChannel channel) {
@@ -186,7 +187,7 @@ public class Client {
         long startTime = System.currentTimeMillis();
 
         List<Future<?>> futures = new ArrayList<>();
-        for (int i = 0; i < STREAM_COUNT; i++) {
+        for (int i = 0; i < STREAMS; i++) {
             futures.add(executor.submit(() -> {
                 Request request = new Request.Builder()
                         .url(downloadUrl + "?ckSize=100")
@@ -225,7 +226,7 @@ public class Client {
         new Random().nextBytes(payload);
 
         List<Future<?>> futures = new ArrayList<>();
-        for (int i = 0; i < STREAM_COUNT; i++) {
+        for (int i = 0; i < STREAMS; i++) {
             futures.add(executor.submit(() -> {
                 RequestBody requestBody = new RequestBody() {
                     @Override
@@ -266,7 +267,7 @@ public class Client {
                 STABILITY_THRESHOLD);
         long lastUpdate = 0;
 
-        while (System.currentTimeMillis() - startTime < TRANSFER_MAX_MS) {
+        while (System.currentTimeMillis() - startTime < PHASE_MAX_MS) {
             Thread.sleep(50);
             long now = System.currentTimeMillis();
 
@@ -276,7 +277,7 @@ public class Client {
                     double speed = (totalBytes.get() * 8.0 / 1_000_000.0) / timeSec;
                     updateUI(channel, stage, speed);
                     stability.record(now, speed);
-                    if (stability.isStable())
+                    if (stability.isStable() && System.currentTimeMillis() - startTime > PHASE_MIN_MS)
                         break;
                 }
                 lastUpdate = now;

@@ -64,8 +64,14 @@ jobs:
       - name: 📝 Define GIT_COMMIT
         run: echo "GIT_COMMIT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
-      - name: ⛏️ APKs (Android with Play Services + WearOS builds)
+      - name: ⛏️ App APK (Android with Play Services)
         run: flutter build apk --release --flavor play --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN }} --dart-define=flutter.flutter_map.unblockOSM=${{ secrets.UNBLOCK_OSM }} --dart-define=GIT_COMMIT=$GIT_COMMIT --target-platform android-arm,android-arm64
+
+      - name: ⛏️ App APK (WearOS)
+        run: |
+          cd android
+          ./gradlew :wear:assembleRelease
+          cd ..
 
       - name: ✔️ Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v3
@@ -75,6 +81,8 @@ jobs:
           mkdir -p artifacts
           cp build/app/outputs/flutter-apk/*.apk artifacts/
           cp build/wear/outputs/apk/release/*.apk artifacts/
+          mv artifacts/app-play-release.apk artifacts/NetManager.apk
+          mv artifacts/wear-release.apk artifacts/NetManager-WearOS.apk
 
       - name: 📤 Upload
         if: ${{ !startsWith(github.ref, 'refs/tags/v') }}

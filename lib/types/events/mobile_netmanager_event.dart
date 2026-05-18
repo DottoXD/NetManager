@@ -17,12 +17,12 @@ class MobileNetmanagerEvent extends NetmanagerEvent {
 
   factory MobileNetmanagerEvent.fromJson(Map<String, dynamic> json) {
     return MobileNetmanagerEvent(
-      eventType: eventTypeFromString(json['eventType']),
-      oldValue: json['oldValue'],
-      newValue: json['newValue'],
-      dateTime: DateTime.parse(json['dateTime']),
-      simSlot: json['simSlot'],
-      network: json['network'],
+      eventType: eventTypeFromString(json["eventType"]),
+      oldValue: json["oldValue"],
+      newValue: json["newValue"],
+      dateTime: DateTime.parse(json["dateTime"]),
+      simSlot: json["simSlot"],
+      network: json["network"],
     );
   }
 

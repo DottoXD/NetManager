@@ -1,15 +1,21 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/base/body/speedtest/widgets/hero_gauge.dart';
 import 'package:netmanager/components/base/body/speedtest/widgets/quality_metrics.dart';
 import 'package:netmanager/components/base/body/speedtest/widgets/speed_results.dart';
+import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/modals/server_modal.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum TestStage { IDLE, LATENCY, DOWNLOAD, UPLOAD, FINISHED }
 
 class SpeedtestBody extends StatefulWidget {
   final MethodChannel platform;
-  const SpeedtestBody(this.platform, {super.key});
+  final SharedPreferences sharedPreferences;
+  const SpeedtestBody(this.platform, this.sharedPreferences, {super.key});
 
   @override
   State<SpeedtestBody> createState() => _SpeedtestBodyState();
@@ -17,6 +23,9 @@ class SpeedtestBody extends StatefulWidget {
 
 class _SpeedtestBodyState extends State<SpeedtestBody> {
   late MethodChannel platform;
+  late SharedPreferences sharedPreferences;
+
+  final String defaultSpeedtestServer = "https://librespeed.org";
 
   TestStage _stage = TestStage.IDLE;
 
@@ -32,24 +41,27 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
   late ValueNotifier<Map<String, dynamic>?> selectedServerNotifier =
       ValueNotifier(null);
 
-  // todo: add server fetcher & "powered by librespeed" watermark for librespeed backends
-  final List<dynamic> _servers = [
-    {
-      "name": "Roma (GARR)",
-      "server": "https://st-be-rm2.infra.garr.it",
-      "id": 35,
-      "dlURL": "garbage.php",
-      "ulURL": "empty.php",
-      "pingURL": "empty.php",
-    },
-  ];
+  late String _speedtestServer;
+  List<dynamic> _servers = [];
 
   @override
   void initState() {
     super.initState();
     platform = widget.platform;
+    sharedPreferences = widget.sharedPreferences;
 
-    selectedServerNotifier.value = _servers[0];
+    _speedtestServer =
+        sharedPreferences.getString("speedtestInstance") ??
+        defaultSpeedtestServer;
+
+    if (_speedtestServer.endsWith("/")) {
+      _speedtestServer = _speedtestServer.substring(
+        0,
+        _speedtestServer.length - 1,
+      ); // risky? yes
+    }
+
+    _fetchServers();
 
     platform.setMethodCallHandler((call) async {
       switch (call.method) {
@@ -104,6 +116,61 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     super.dispose();
   }
 
+  Future<void> _fetchServers() async {
+    String primaryUrl = "$_speedtestServer/server-list.json";
+    String fallbackUrl = "$_speedtestServer/backend-servers/servers.php";
+
+    try {
+      final response = await http.get(Uri.parse(primaryUrl));
+
+      if (response.statusCode == 200) {
+        _updateServers(response.body);
+      } else {
+        throw Exception("");
+      }
+    } catch (e) {
+      try {
+        final response = await http.get(Uri.parse(fallbackUrl));
+
+        if (response.statusCode == 200) {
+          _updateServers(response.body);
+        } else {
+          throw Exception("The speed test server is unreachable.");
+        }
+      } catch (e) {
+        if (context.mounted) {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return errorDialog(context, e);
+            },
+          );
+        }
+      }
+    }
+  }
+
+  void _updateServers(String body) async {
+    try {
+      final List<dynamic> data = json.decode(body);
+      if (data.isNotEmpty) {
+        setState(() {
+          _servers = data;
+          selectedServerNotifier.value = _servers[0];
+        });
+      }
+    } catch (e) {
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return errorDialog(context, e);
+          },
+        );
+      }
+    }
+  }
+
   void _startTest() {
     if (selectedServerNotifier.value == null) return;
 
@@ -115,18 +182,21 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
       _jitter = 0;
     });
 
-    String baseUrl = selectedServerNotifier.value!['server'];
+    String baseUrl = selectedServerNotifier.value!["server"];
     if (!baseUrl.endsWith('/')) baseUrl += '/';
+    if (baseUrl.startsWith("//")) baseUrl = "https:$baseUrl";
 
     platform.invokeMethod("startTest", {
-      "pingUrl": baseUrl + selectedServerNotifier.value!['pingURL'],
-      "downloadUrl": baseUrl + selectedServerNotifier.value!['dlURL'],
-      "uploadUrl": baseUrl + selectedServerNotifier.value!['ulURL'],
+      "pingUrl": baseUrl + selectedServerNotifier.value!["pingURL"],
+      "downloadUrl": baseUrl + selectedServerNotifier.value!["dlURL"],
+      "uploadUrl": baseUrl + selectedServerNotifier.value!["ulURL"],
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool isDefaultServer = _speedtestServer == defaultSpeedtestServer;
+
     return Column(
       children: [
         Expanded(
@@ -166,7 +236,11 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                                 );
                               },
                         icon: const Icon(Icons.dns_outlined, size: 18),
-                        label: Text(selectedServer!['name']),
+                        label: Text(
+                          selectedServer != null
+                              ? "${selectedServer["sponsorName"]} (${selectedServer["name"]})"
+                              : "No server",
+                        ),
                         style: OutlinedButton.styleFrom(
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -199,6 +273,24 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
           _uploadResult,
           _startTest,
         ),
+        if (isDefaultServer)
+          Container(
+            width: double.maxFinite,
+            padding: const EdgeInsets.all(12),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
+            ),
+            child: Text(
+              "Powered by LibreSpeed",
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.4),
+                fontSize: 11,
+              ),
+            ),
+          ),
       ],
     );
   }

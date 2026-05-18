@@ -16,10 +16,10 @@ class NetmanagerEvent {
 
   factory NetmanagerEvent.fromJson(Map<String, dynamic> json) {
     return NetmanagerEvent(
-      eventType: eventTypeFromString(json['eventType']),
-      oldValue: json['oldValue'],
-      newValue: json['newValue'],
-      dateTime: DateTime.parse(json['dateTime']),
+      eventType: eventTypeFromString(json["eventType"]),
+      oldValue: json["oldValue"],
+      newValue: json["newValue"],
+      dateTime: DateTime.parse(json["dateTime"]),
     );
   }
 

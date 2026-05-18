@@ -10,8 +10,9 @@ Widget speedResults(
   VoidCallback startTest,
 ) {
   bool isRunning = stage != TestStage.IDLE && stage != TestStage.FINISHED;
+
   return Container(
-    padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
+    padding: const EdgeInsets.all(24),
     decoration: BoxDecoration(
       color: Theme.of(context).colorScheme.surfaceContainerLow,
       borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),

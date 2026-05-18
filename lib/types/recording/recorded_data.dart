@@ -17,7 +17,7 @@ class RecordedData {
     return RecordedData(
       operator: json["operator"],
       network: json["network"],
-      date: DateTime.parse(json['date']),
+      date: DateTime.parse(json["date"]),
       records: (json["records"] as List<dynamic>? ?? [])
           .map((e) => Record.fromJson(e))
           .toList(),

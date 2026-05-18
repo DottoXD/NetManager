@@ -97,7 +97,7 @@ class _HomeState extends State<Home> {
           setState(() => _recordCallback = callback);
         },
       ),
-      SpeedtestBody(widget.platform),
+      SpeedtestBody(widget.platform, widget.sharedPreferences),
       SettingsBody(
         widget.platform,
         widget.sharedPreferences,

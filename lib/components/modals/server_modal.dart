@@ -10,7 +10,7 @@ Widget serverModal(
     itemCount: servers.length,
     itemBuilder: (context, i) => ListTile(
       leading: const Icon(Icons.location_on_outlined),
-      title: Text(servers[i]['name']),
+      title: Text("${servers[i]["sponsorName"]} (${servers[i]["name"]})"),
       onTap: () {
         selectedServerNotifier.value = servers[i];
         Navigator.pop(context);
