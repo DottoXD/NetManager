@@ -4,8 +4,12 @@ import 'package:flutter/services.dart';
 enum HapticType { SELECTION, LIGHT, MEDIUM, HEAVY }
 
 Future<void> triggerHaptic(HapticType type, BuildContext? context) async {
-  if (context != null) {
-    await Feedback.forTap(context);
+  if (context != null && context.mounted) {
+    try {
+      await Feedback.forTap(context);
+    } catch (e) {
+      //todo
+    }
   }
 
   switch (type) {

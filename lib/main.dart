@@ -22,7 +22,7 @@ void main() async {
   if (!analytics || sentryDsn.isEmpty) {
     runApp(NetManager(prefs: sharedPreferences));
   } else {
-    FlutterError.onError = (FlutterErrorDetails details) async {
+    /*FlutterError.onError = (FlutterErrorDetails details) async {
       await Sentry.captureException(
         details.exception,
         stackTrace: details.stack,
@@ -33,13 +33,12 @@ void main() async {
     PlatformDispatcher.instance.onError = (error, stack) {
       Sentry.captureException(error, stackTrace: stack);
       return true;
-    };
+    };*/
 
     await SentryFlutter.init((options) {
       options.dsn = sentryDsn;
       options.sendDefaultPii = false;
       options.tracesSampleRate = 1;
-      options.debug = true;
     }, appRunner: () => runApp(NetManager(prefs: sharedPreferences)));
   }
 
@@ -96,7 +95,10 @@ class _NetManagerState extends State<NetManager> {
 
             if (_dynamicSupported != dynamicAvailable) {
               _dynamicSupported = dynamicAvailable;
-              widget.prefs.setBool("dynamicSupported", dynamicAvailable);
+
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                widget.prefs.setBool("dynamicSupported", dynamicAvailable);
+              });
             }
 
             final bool useDynamic =
@@ -120,14 +122,22 @@ class _NetManagerState extends State<NetManager> {
               );
             }
 
+            const transitionTheme = PageTransitionsTheme(
+              builders: <TargetPlatform, PageTransitionsBuilder>{
+                TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
+              },
+            );
+
             return MaterialApp(
               theme: ThemeData(
                 colorScheme: lightScheme,
                 useMaterial3: material3Notifier.value,
+                pageTransitionsTheme: transitionTheme,
               ),
               darkTheme: ThemeData(
                 colorScheme: darkScheme,
                 useMaterial3: material3Notifier.value,
+                pageTransitionsTheme: transitionTheme,
               ),
               home: Perms(
                 widget.prefs,

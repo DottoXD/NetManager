@@ -153,6 +153,13 @@ class _HomeBodyState extends State<HomeBody> {
         _progressIndicator = LinearProgressIndicator();
       });
 
+      if (jsonStr == null || jsonStr.isEmpty) {
+        setState(() {
+          _debug = "No network data.";
+        });
+        return;
+      }
+
       final Map<String, dynamic> map = json.decode(jsonStr);
       late final SIMData simData;
 

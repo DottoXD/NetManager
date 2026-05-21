@@ -54,7 +54,7 @@ public class Client {
     private static final int PING_INTERVAL_MS = 50;
 
     private static final int STABILITY_WINDOW_MS = 3000;
-    private static final double STABILITY_THRESHOLD = 0.075;
+    private static final double STABILITY_THRESHOLD = 0.065;
     private static final int STABILITY_MIN_SAMPLES = 10;
 
     private final OkHttpClient httpClient = new OkHttpClient.Builder()

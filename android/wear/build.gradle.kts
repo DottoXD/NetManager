@@ -54,12 +54,12 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 
 dependencies {
     implementation("com.google.android.gms:play-services-wearable:20.0.1")
-    implementation("androidx.wear.compose:compose-material3:1.6.0-rc01")
+    implementation("androidx.wear.compose:compose-material3:1.6.1")
 }

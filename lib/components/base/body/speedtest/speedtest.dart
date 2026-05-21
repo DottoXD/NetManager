@@ -153,11 +153,61 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
   void _updateServers(String body) async {
     try {
       final List<dynamic> data = json.decode(body);
+
       if (data.isNotEmpty) {
+        List<dynamic> validServers = [];
+
+        int lowestLatency = double.maxFinite.toInt();
+        dynamic bestServer;
+
         setState(() {
           _servers = data;
+
           selectedServerNotifier.value = _servers[0];
         });
+
+        for (var server in data) {
+          String serverUrl = server["server"];
+          if (serverUrl.isEmpty) continue;
+
+          if (!serverUrl.endsWith('/')) serverUrl += '/';
+          if (serverUrl.startsWith("//")) serverUrl = "https:$serverUrl";
+
+          serverUrl += server["dlURL"];
+
+          try {
+            final stopwatch = Stopwatch()..start();
+            final response = await http
+                .head(Uri.parse(serverUrl))
+                .timeout(Duration(milliseconds: 400));
+
+            stopwatch.stop();
+
+            if (response.statusCode >= 200 && response.statusCode < 300) {
+              validServers.add(server);
+
+              final int latestLatency = stopwatch.elapsedMilliseconds;
+              if (latestLatency < lowestLatency) {
+                lowestLatency = latestLatency;
+                bestServer = server;
+              }
+            }
+          } catch (e) {
+            //todo
+          }
+        }
+
+        if (mounted) {
+          setState(() {
+            _servers = validServers;
+
+            if (_servers.isNotEmpty) {
+              selectedServerNotifier.value = bestServer ?? _servers[0];
+            } else {
+              selectedServerNotifier.value = null;
+            }
+          });
+        }
       }
     } catch (e) {
       if (context.mounted) {
@@ -276,7 +326,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
         if (isDefaultServer)
           Container(
             width: double.maxFinite,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(12.0, 8.0, 12.0, 24.0),
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerLow,
@@ -284,10 +334,8 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
             child: Text(
               "Powered by LibreSpeed",
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.4),
-                fontSize: 11,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 12,
               ),
             ),
           ),
