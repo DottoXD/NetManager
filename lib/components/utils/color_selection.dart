@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:netmanager/components/utils/haptic_utils.dart';
+import 'package:netmanager/components/utils/haptic_service.dart';
 
 const List<int> themeColors = [
   0xFFD1C4E9, // Purple
@@ -46,7 +46,10 @@ Widget colorSelector(
                   ? BorderSide(color: primaryColor)
                   : BorderSide.none,
               onSelected: (_) async {
-                await triggerHaptic(HapticType.SELECTION, context);
+                await HapticService().triggerHaptic(
+                  HapticType.SELECTION,
+                  context,
+                );
 
                 onColorChanged(color);
               },

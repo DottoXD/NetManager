@@ -36,11 +36,11 @@ class TopBar extends StatefulWidget implements PreferredSizeWidget {
 class _TopBarState extends State<TopBar> {
   late MethodChannel platform;
   late SharedPreferences sharedPreferences;
-  late Timer timer;
   late ValueNotifier<int> platformSignalNotifier;
   late ValueNotifier<bool> logsNotifier;
 
   final ValueNotifier<String> title = ValueNotifier("NetManager is loading...");
+  late Timer _timer;
   String _carrier = "NetManager";
   String _plmn = "00000";
   int _gen = 0;
@@ -54,24 +54,23 @@ class _TopBarState extends State<TopBar> {
     platformSignalNotifier = widget.platformSignalNotifier;
     logsNotifier = widget.logsNotifier;
 
-    startTimer();
-    platformSignalNotifier.addListener(() => restartTimer());
-    logsNotifier.addListener(() {
-      if (mounted) setState(() {});
-    });
+    platformSignalNotifier.addListener(() => _restartTimer());
 
-    init();
+    _startTimer();
+    _init();
   }
 
   @override
   void dispose() {
-    widget.platformSignalNotifier.removeListener(restartTimer);
+    widget.platformSignalNotifier.removeListener(_restartTimer);
 
-    timer.cancel();
+    _timer.cancel();
+    title.dispose();
+
     super.dispose();
   }
 
-  Future<void> init() async {
+  Future<void> _init() async {
     final count = await platform.invokeMethod("getSimCount") ?? 0;
     if (mounted && count != simCount) setState(() => simCount = count);
 
@@ -90,6 +89,8 @@ class _TopBarState extends State<TopBar> {
       _plmn = (await platform.invokeMethod<String>("getPlmn")) ?? "00000";
       _gen = await platform.invokeMethod<int>("getNetworkGen") as int;
 
+      if (!mounted) return;
+
       if (_gen > 0 && _plmn != "00000" && _carrier.trim().isNotEmpty) {
         title.value = "${"$_carrier $_gen"}G ($_plmn)";
       } else {
@@ -102,6 +103,7 @@ class _TopBarState extends State<TopBar> {
 
   void switchSim() async {
     await platform.invokeMethod("switchSim");
+    //await update(); - 0.0.5, after refactoring home; otherwise it'd be inconsistent with current home updates
   }
 
   void openInfo() async {
@@ -195,28 +197,33 @@ class _TopBarState extends State<TopBar> {
               icon: const Icon(Icons.sim_card_outlined),
               tooltip: "Switch SIM card",
             ),
-          if (widget.logsNotifier.value)
-            IconButton(
-              onPressed: openLogs,
-              icon: const Icon(Icons.my_library_books_outlined),
-              tooltip: "Event logs",
-            ),
+          ValueListenableBuilder(
+            valueListenable: logsNotifier,
+            builder: (context, showLogs, _) {
+              if (!showLogs) return const SizedBox.shrink();
+
+              return IconButton(
+                onPressed: openLogs,
+                icon: const Icon(Icons.my_library_books_outlined),
+                tooltip: "Event logs",
+              );
+            },
+          ),
         ],
       ),
     );
   }
 
-  void startTimer() {
+  void _startTimer() {
     update();
 
-    timer = Timer.periodic(
-      Duration(seconds: sharedPreferences.getInt("updateInterval") ?? 3),
-      (Timer t) => update(),
-    );
+    final interval = sharedPreferences.getInt("updateInterval") ?? 3;
+
+    _timer = Timer.periodic(Duration(seconds: interval), (Timer t) => update());
   }
 
-  void restartTimer() {
-    if (timer.isActive) timer.cancel();
-    startTimer();
+  void _restartTimer() {
+    if (_timer.isActive) _timer.cancel();
+    _startTimer();
   }
 }

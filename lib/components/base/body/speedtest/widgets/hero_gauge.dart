@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:netmanager/components/base/body/speedtest/widgets/live_view.dart';
 import 'package:netmanager/components/base/body/speedtest/speedtest.dart';
 import 'package:netmanager/components/base/body/speedtest/widgets/summary_view.dart';
+import 'package:netmanager/components/utils/speed_methods.dart';
 
 Widget heroGauge(
   BuildContext context,
@@ -14,6 +15,7 @@ Widget heroGauge(
   int ping,
   double downloadResult,
   double uploadResult,
+  int unitIndex,
 ) {
   bool isLatency = stage == TestStage.LATENCY;
   bool isFinished = stage == TestStage.FINISHED;
@@ -46,7 +48,7 @@ Widget heroGauge(
               begin: 0,
               end: isFinished ? 0 : gaugePercentage,
             ),
-            duration: Duration(milliseconds: isLatency ? 200 : 400),
+            duration: Duration(milliseconds: 200),
             curve: Curves.easeOutCubic,
             builder: (context, value, child) {
               final baseColor = stage == TestStage.LATENCY
@@ -89,7 +91,7 @@ Widget heroGauge(
           Positioned(
             bottom: 40,
             child: Text(
-              "0 — ${maxSpeedScale.toInt()} Mbps",
+              "0 — ${formatSpeed(maxSpeedScale, unitIndex)} ${getUnitString(unitIndex)}",
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: Theme.of(context).colorScheme.outlineVariant,
               ),
@@ -98,8 +100,8 @@ Widget heroGauge(
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 500),
           child: isFinished
-              ? summaryView(context, downloadResult, uploadResult)
-              : liveView(context, stage, ping, currentSpeed),
+              ? summaryView(context, downloadResult, uploadResult, unitIndex)
+              : liveView(context, stage, ping, currentSpeed, unitIndex),
         ),
       ],
     ),

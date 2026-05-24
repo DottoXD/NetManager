@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/utils/check_update.dart';
-import 'package:netmanager/components/utils/haptic_utils.dart';
+import 'package:netmanager/components/utils/haptic_service.dart';
 import 'package:netmanager/home.dart';
 import 'package:netmanager/types/device/permissions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -123,7 +123,10 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
                 const SizedBox(height: 32),
                 OutlinedButton(
                   onPressed: () async {
-                    await triggerHaptic(HapticType.LIGHT, context);
+                    await HapticService().triggerHaptic(
+                      HapticType.LIGHT,
+                      context,
+                    );
 
                     await _requestPermissions();
                     await _checkPermissions();

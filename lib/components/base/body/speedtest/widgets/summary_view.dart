@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:netmanager/components/utils/speed_methods.dart';
 
 Widget summaryView(
   BuildContext context,
   double downloadResult,
   double uploadResult,
+  int unitIndex,
 ) {
   return Column(
     key: const ValueKey("summary"),
@@ -25,13 +27,16 @@ Widget summaryView(
           ),
           const SizedBox(width: 8),
           Text(
-            downloadResult.toStringAsFixed(1),
+            formatSpeed(downloadResult, unitIndex),
             style: Theme.of(
               context,
             ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(width: 4),
-          Text("Mbps", style: Theme.of(context).textTheme.labelSmall),
+          Text(
+            getUnitString(unitIndex),
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
         ],
       ),
       const SizedBox(height: 4),
@@ -45,13 +50,16 @@ Widget summaryView(
           ),
           const SizedBox(width: 8),
           Text(
-            uploadResult.toStringAsFixed(1),
+            formatSpeed(uploadResult, unitIndex),
             style: Theme.of(
               context,
             ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(width: 4),
-          Text("Mbps", style: Theme.of(context).textTheme.labelSmall),
+          Text(
+            getUnitString(unitIndex),
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
         ],
       ),
       const SizedBox(height: 8),

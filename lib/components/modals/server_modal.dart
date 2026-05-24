@@ -7,10 +7,10 @@ Widget serverModal(
   ValueNotifier<Map<String, dynamic>?> selectedServerNotifier,
 ) {
   return ListView.builder(
+    shrinkWrap: true,
     padding: const EdgeInsets.symmetric(vertical: 16),
     itemCount: servers.length,
     itemBuilder: (context, i) => ListTile(
-      leading: const Icon(Icons.open_in_new),
       title: Text("${servers[i]["sponsorName"]} (${servers[i]["name"]})"),
       trailing: servers[i]["sponsorURL"] != null
           ? IconButton(

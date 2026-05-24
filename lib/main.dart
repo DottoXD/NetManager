@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/services.dart';
+import 'package:netmanager/components/utils/haptic_service.dart';
 import 'package:netmanager/perms.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,6 +14,9 @@ void main() async {
 
   final SharedPreferences sharedPreferences =
       await SharedPreferences.getInstance();
+
+  await HapticService().init(sharedPreferences);
+
   final bool analytics = sharedPreferences.getBool("analytics") ?? false;
   const String sentryDsn = String.fromEnvironment(
     "SENTRY_DSN",

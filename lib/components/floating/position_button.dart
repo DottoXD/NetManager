@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:netmanager/components/utils/haptic_utils.dart';
+import 'package:netmanager/components/utils/haptic_service.dart';
 
 class PositionButton extends StatelessWidget {
   final VoidCallback? onPressed;
@@ -11,7 +11,7 @@ class PositionButton extends StatelessWidget {
     return FloatingActionButton(
       elevation: 1,
       onPressed: () async {
-        await triggerHaptic(HapticType.LIGHT, context);
+        await HapticService().triggerHaptic(HapticType.LIGHT, context);
         onPressed!();
       },
       tooltip: 'Reposition location',

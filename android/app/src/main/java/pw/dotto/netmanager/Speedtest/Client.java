@@ -29,7 +29,7 @@ import okio.BufferedSink;
 
 /**
  * NetManager's Speed test client class is the speed test component which
- * currently does pretty much everything for in-app speedtest.
+ * currently does pretty much everything for in-app speed test.
  * This component is heavily WIP and should be considered in an early testing
  * stage.
  * Data may be inaccurate or straight up wrong.
@@ -43,7 +43,7 @@ public class Client {
     private static final int STREAMS = 8;
     private static final int BUFFER_SIZE = 256 * 1024;
     private static final int UPLOAD_CHUNK_SIZE = 1024 * 1024;
-    private static final int UI_UPDATE_INTERVAL = 300;
+    private static final int UI_UPDATE_INTERVAL = 200;
 
     private static final long BATCH_UPDATE_THRESHOLD = 1024 * 1024;
 
@@ -56,6 +56,7 @@ public class Client {
     private static final int STABILITY_WINDOW_MS = 3000;
     private static final double STABILITY_THRESHOLD = 0.065;
     private static final int STABILITY_MIN_SAMPLES = 10;
+    private static final int GLOBAL_PING_INTERVAL_MS = 500;
 
     private final OkHttpClient httpClient = new OkHttpClient.Builder()
             .connectTimeout(5, TimeUnit.SECONDS)
@@ -67,10 +68,16 @@ public class Client {
     private final ExecutorService executor = Executors.newFixedThreadPool(STREAMS + 4);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
+    private final AtomicLong globalPingsSent = new AtomicLong(0);
+    private final AtomicLong globalPingsFailed = new AtomicLong(0);
+
     public void runSpeedTest(String pingUrl, String downloadUrl, String uploadUrl, MethodChannel channel) {
         executor.execute(() -> {
             try {
-                updateUI(channel, "LATENCY", 0);
+                globalPingsSent.set(0);
+                globalPingsFailed.set(0);
+
+                updateUI(channel, "LATENCY", 0, 0.0);
                 LatencyResult latency = measureLatency(pingUrl, channel);
 
                 mainHandler.post(() -> {
@@ -83,18 +90,26 @@ public class Client {
 
                 Thread.sleep(1000);
 
-                updateUI(channel, "DOWNLOAD", 0);
+                AtomicBoolean transitActive = new AtomicBoolean(true);
+                trackPacketLoss(pingUrl, transitActive);
+
+                updateUI(channel, "DOWNLOAD", 0, 0.0);
                 double dlSpeed = measureDownload(downloadUrl, channel);
 
                 Thread.sleep(1500);
 
-                updateUI(channel, "UPLOAD", 0);
+                updateUI(channel, "UPLOAD", 0, 0.0);
                 double ulSpeed = measureUpload(uploadUrl, channel);
+
+                Thread.sleep(1000);
+
+                transitActive.set(false);
 
                 mainHandler.post(() -> {
                     Map<String, Object> res = new HashMap<>();
                     res.put("download", dlSpeed);
                     res.put("upload", ulSpeed);
+                    res.put("packetLoss", getPacketLoss());
                     channel.invokeMethod("complete", res);
                 });
 
@@ -119,6 +134,7 @@ public class Client {
             Request request = new Request.Builder().url(pingUrl).head().build();
             long start = System.currentTimeMillis();
             sent++;
+            globalPingsSent.incrementAndGet();
 
             try (Response response = httpClient.newCall(request).execute()) {
                 long rtt = System.currentTimeMillis() - start;
@@ -126,14 +142,14 @@ public class Client {
                     pings.add(rtt);
                 } else {
                     failed++;
+                    globalPingsFailed.incrementAndGet();
                 }
             } catch (IOException e) {
                 failed++;
+                globalPingsFailed.incrementAndGet();
             }
 
             final double progress = (double) sent / PING_COUNT;
-            final int currentSent = sent;
-            final int currentFailed = failed;
             final List<Long> currentPings = new ArrayList<>(pings);
 
             mainHandler.post(() -> {
@@ -152,7 +168,7 @@ public class Client {
 
                 data.put("ping", avg);
                 data.put("jitter", jitter);
-                data.put("packetLoss", (currentFailed * 100.0) / currentSent);
+                data.put("packetLoss", getPacketLoss());
                 data.put("progress", progress);
                 channel.invokeMethod("latency", data);
             });
@@ -266,19 +282,36 @@ public class Client {
         StabilityTracker stability = new StabilityTracker(STABILITY_WINDOW_MS, STABILITY_MIN_SAMPLES,
                 STABILITY_THRESHOLD);
         long lastUpdate = 0;
+        long timeBonus = 0;
 
-        while (System.currentTimeMillis() - startTime < PHASE_MAX_MS) {
+        while (true) {
             Thread.sleep(50);
             long now = System.currentTimeMillis();
+            long elapsedTime = now - startTime;
+            long calculatedElapsedTime = elapsedTime + timeBonus;
+
+            if (calculatedElapsedTime >= PHASE_MAX_MS && elapsedTime >= PHASE_MIN_MS) {
+                break;
+            }
 
             if (now - lastUpdate > UI_UPDATE_INTERVAL) {
                 double timeSec = (now - startTime) / 1000.0;
                 if (timeSec > 0.1) {
                     double speed = (totalBytes.get() * 8.0 / 1_000_000.0) / timeSec;
-                    updateUI(channel, stage, speed);
                     stability.record(now, speed);
-                    if (stability.isStable() && System.currentTimeMillis() - startTime > PHASE_MIN_MS)
-                        break;
+
+                    if (stability.isStable()) {
+                        timeBonus += 750;
+                    }
+
+                    calculatedElapsedTime = elapsedTime + timeBonus;
+                    double progress = Math.min(1.0, (double) calculatedElapsedTime / PHASE_MAX_MS);
+
+                    if (elapsedTime < PHASE_MIN_MS && progress >= 1.0) {
+                        progress = 0.99;
+                    }
+
+                    updateUI(channel, stage, speed, progress);
                 }
                 lastUpdate = now;
             }
@@ -286,14 +319,49 @@ public class Client {
 
         running.set(false);
         double finalTime = (System.currentTimeMillis() - startTime) / 1000.0;
-        return (totalBytes.get() * 8.0 / 1_000_000.0) / finalTime;
+        double finalSpeed = (totalBytes.get() * 8.0 / 1_000_000.0) / finalTime;
+        updateUI(channel, stage, finalSpeed, 1.0);
+
+        return finalSpeed;
     }
 
-    private void updateUI(MethodChannel channel, String stage, double speed) {
+    private void trackPacketLoss(String pingUrl, AtomicBoolean isTrackerActive) {
+        executor.execute(() -> {
+            while (isTrackerActive.get()) {
+                Request request = new Request.Builder().url(pingUrl).head().build();
+                globalPingsSent.incrementAndGet();
+                try (Response response = httpClient.newCall(request).execute()) {
+                    if (!response.isSuccessful()) {
+                        globalPingsFailed.incrementAndGet();
+                    }
+                } catch (IOException e) {
+                    globalPingsFailed.incrementAndGet();
+                }
+
+                try {
+                    Thread.sleep(GLOBAL_PING_INTERVAL_MS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        });
+    }
+
+    private double getPacketLoss() {
+        long sent = globalPingsSent.get();
+        if (sent == 0)
+            return 0.0;
+        return (globalPingsFailed.get() * 100.0) / sent;
+    }
+
+    private void updateUI(MethodChannel channel, String stage, double speed, double progress) {
         mainHandler.post(() -> {
             Map<String, Object> data = new HashMap<>();
             data.put("stage", stage);
             data.put("speed", speed);
+            data.put("progress", progress);
+            data.put("packetLoss", getPacketLoss());
             channel.invokeMethod("update", data);
         });
     }

@@ -39,7 +39,6 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   int _currentPage = 0;
-  late List<Widget> _pages;
   final ValueNotifier<bool> homeLoadedNotifier = ValueNotifier(false);
   final ValueNotifier<int> platformSignalNotifier = ValueNotifier(0);
 
@@ -48,21 +47,20 @@ class _HomeState extends State<Home> {
 
   final ValueNotifier<bool> recordingActionNotifier = ValueNotifier(false);
 
-  VoidCallback? _homeUpdateCallback;
-  VoidCallback? _screenshotCallback;
-  VoidCallback? _mapPositionCallback;
-  VoidCallback? _recordCallback;
+  final ValueNotifier<VoidCallback?> _homeUpdateNotifier = ValueNotifier(null);
+  final ValueNotifier<VoidCallback?> _screenshotNotifier = ValueNotifier(null);
+  final ValueNotifier<VoidCallback?> _mapPositionNotifier = ValueNotifier(null);
+  final ValueNotifier<VoidCallback?> _recordNotifier = ValueNotifier(null);
 
   @override
   void initState() {
     super.initState();
 
-    cleanOldExports();
+    _cleanOldExports();
 
     widget.platform.setMethodCallHandler((call) {
       if (call.method == "restartTimer") {
         platformSignalNotifier.value++;
-        return Future.value();
       }
 
       return Future.value();
@@ -70,44 +68,6 @@ class _HomeState extends State<Home> {
 
     debugNotifier.value = widget.sharedPreferences.getBool("debug") ?? false;
     logsNotifier.value = widget.sharedPreferences.getBool("logEvents") ?? false;
-
-    _pages = [
-      HomeBody(
-        widget.platform,
-        widget.sharedPreferences,
-        homeLoadedNotifier,
-        platformSignalNotifier,
-        debugNotifier,
-        onUpdateButtonPressed: (callback) {
-          setState(() => _homeUpdateCallback = callback);
-        },
-        onScreenshotButtonPressed: (callback) {
-          setState(() => _screenshotCallback = callback);
-        },
-      ),
-      MapBody(
-        widget.platform,
-        widget.sharedPreferences,
-        platformSignalNotifier,
-        recordingActionNotifier,
-        onPositionButtonPressed: (callback) {
-          setState(() => _mapPositionCallback = callback);
-        },
-        onRecordButtonPressed: (callback) {
-          setState(() => _recordCallback = callback);
-        },
-      ),
-      SpeedtestBody(widget.platform, widget.sharedPreferences),
-      SettingsBody(
-        widget.platform,
-        widget.sharedPreferences,
-        widget.dynamicThemeNotifier,
-        widget.themeColorNotifier,
-        widget.material3Notifier,
-        debugNotifier,
-        logsNotifier,
-      ),
-    ];
 
     try {
       widget.platform.invokeMethod<bool>("requestPermissions", {
@@ -122,7 +82,7 @@ class _HomeState extends State<Home> {
     }
   }
 
-  Future<void> cleanOldExports() async {
+  Future<void> _cleanOldExports() async {
     final tempDir = await getTemporaryDirectory();
     final exportDir = Directory("${tempDir.path}/exports");
 
@@ -141,10 +101,17 @@ class _HomeState extends State<Home> {
     logsNotifier.dispose();
     recordingActionNotifier.dispose();
 
+    _homeUpdateNotifier.dispose();
+    _screenshotNotifier.dispose();
+    _mapPositionNotifier.dispose();
+    _recordNotifier.dispose();
+
     super.dispose();
   }
 
   void updatePage(int page) {
+    if (_currentPage == page) return;
+
     setState(() {
       _currentPage = page;
     });
@@ -169,7 +136,46 @@ class _HomeState extends State<Home> {
           logsNotifier,
         ),
         bottomNavigationBar: NavBar(updatePage, _currentPage),
-        body: IndexedStack(index: _currentPage, children: _pages),
+        body: IndexedStack(
+          index: _currentPage,
+          children: [
+            HomeBody(
+              widget.platform,
+              widget.sharedPreferences,
+              homeLoadedNotifier,
+              platformSignalNotifier,
+              debugNotifier,
+              onUpdateButtonPressed: (callback) {
+                _homeUpdateNotifier.value = callback;
+              },
+              onScreenshotButtonPressed: (callback) {
+                _screenshotNotifier.value = callback;
+              },
+            ),
+            MapBody(
+              widget.platform,
+              widget.sharedPreferences,
+              platformSignalNotifier,
+              recordingActionNotifier,
+              onPositionButtonPressed: (callback) {
+                _mapPositionNotifier.value = callback;
+              },
+              onRecordButtonPressed: (callback) {
+                _recordNotifier.value = callback;
+              },
+            ),
+            SpeedtestBody(widget.platform, widget.sharedPreferences),
+            SettingsBody(
+              widget.platform,
+              widget.sharedPreferences,
+              widget.dynamicThemeNotifier,
+              widget.themeColorNotifier,
+              widget.material3Notifier,
+              debugNotifier,
+              logsNotifier,
+            ),
+          ],
+        ),
         floatingActionButton: Container(
           margin: const EdgeInsets.only(bottom: 4.0),
           child: Column(
@@ -177,18 +183,31 @@ class _HomeState extends State<Home> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               if (_currentPage == 0) ...[
-                ScreenshotButton(onPressed: _screenshotCallback),
-                const SizedBox(height: 4),
-                UpdateButton(onPressed: _homeUpdateCallback),
-              ] else if (_currentPage == 1) ...[
-                RecordButton(
-                  onPressed: () {
-                    _recordCallback?.call();
-                  },
-                  recordingActionNotifier: recordingActionNotifier,
+                ValueListenableBuilder(
+                  valueListenable: _screenshotNotifier,
+                  builder: (context, callback, _) =>
+                      ScreenshotButton(onPressed: callback),
                 ),
                 const SizedBox(height: 4),
-                PositionButton(onPressed: _mapPositionCallback),
+                ValueListenableBuilder(
+                  valueListenable: _homeUpdateNotifier,
+                  builder: (context, callback, _) =>
+                      UpdateButton(onPressed: callback),
+                ),
+              ] else if (_currentPage == 1) ...[
+                ValueListenableBuilder(
+                  valueListenable: _recordNotifier,
+                  builder: (context, callback, _) => RecordButton(
+                    onPressed: callback,
+                    recordingActionNotifier: recordingActionNotifier,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                ValueListenableBuilder(
+                  valueListenable: _mapPositionNotifier,
+                  builder: (context, callback, _) =>
+                      PositionButton(onPressed: callback),
+                ),
               ],
             ],
           ),

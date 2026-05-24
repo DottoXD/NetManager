@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:netmanager/components/base/body/speedtest/speedtest.dart';
+import 'package:netmanager/components/utils/speed_methods.dart';
 
 Widget liveView(
   BuildContext context,
   TestStage stage,
   int ping,
   double currentSpeed,
+  int unitIndex,
 ) {
   bool showingLatency = stage == TestStage.LATENCY;
   return Column(
@@ -26,9 +28,7 @@ Widget liveView(
       ),
       const SizedBox(height: 8),
       Text(
-        showingLatency
-            ? "$ping"
-            : currentSpeed.toStringAsFixed(currentSpeed > 10 ? 1 : 2),
+        showingLatency ? "$ping" : formatSpeed(currentSpeed, unitIndex),
         style: Theme.of(context).textTheme.displayLarge?.copyWith(
           fontSize: 72,
           fontWeight: FontWeight.w300,
@@ -36,7 +36,7 @@ Widget liveView(
         ),
       ),
       Text(
-        showingLatency ? "ms" : "Mbps",
+        showingLatency ? "ms" : getUnitString(unitIndex),
         style: Theme.of(context).textTheme.titleMedium?.copyWith(
           color: Theme.of(context).colorScheme.outline,
         ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:netmanager/components/utils/haptic_utils.dart';
+import 'package:netmanager/components/utils/haptic_service.dart';
 
 class RecordButton extends StatelessWidget {
   final VoidCallback? onPressed;
@@ -19,7 +19,7 @@ class RecordButton extends StatelessWidget {
       onPressed: () async {
         if (onPressed == null) return;
 
-        await triggerHaptic(HapticType.SELECTION, context);
+        await HapticService().triggerHaptic(HapticType.SELECTION, context);
         onPressed?.call();
       },
       tooltip: 'Cell coverage recording',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:netmanager/components/utils/speed_methods.dart';
 
 Widget resultsColumn(
   BuildContext context,
@@ -6,6 +7,7 @@ Widget resultsColumn(
   double value,
   IconData icon,
   Color color,
+  int unitIndex,
 ) {
   return Expanded(
     child: Column(
@@ -19,7 +21,7 @@ Widget resultsColumn(
           ],
         ),
         Text(
-          "${value.toStringAsFixed(1)} Mbps",
+          "${formatSpeed(value, unitIndex)} ${getUnitString(unitIndex)}",
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),

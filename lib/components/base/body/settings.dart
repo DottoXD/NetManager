@@ -7,7 +7,7 @@ import 'package:netmanager/components/dialogs/debug_log.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/utils/color_selection.dart';
 import 'package:netmanager/components/utils/event_selection.dart';
-import 'package:netmanager/components/utils/haptic_utils.dart';
+import 'package:netmanager/components/utils/haptic_service.dart';
 import 'package:netmanager/types/device/permissions.dart';
 import 'package:netmanager/types/events/event_types.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -395,7 +395,10 @@ class _SettingsBodyState extends State<SettingsBody> {
                         trailing: Switch(
                           value: _analytics,
                           onChanged: (bool value) async {
-                            await triggerHaptic(HapticType.SELECTION, context);
+                            await HapticService().triggerHaptic(
+                              HapticType.SELECTION,
+                              context,
+                            );
 
                             setBool("analytics", value);
                             updateData();
@@ -410,7 +413,10 @@ class _SettingsBodyState extends State<SettingsBody> {
                         trailing: Switch(
                           value: _checkUpdates,
                           onChanged: (bool value) async {
-                            await triggerHaptic(HapticType.SELECTION, context);
+                            await HapticService().triggerHaptic(
+                              HapticType.SELECTION,
+                              context,
+                            );
 
                             setBool("checkUpdates", value);
                             updateData();
@@ -443,7 +449,10 @@ class _SettingsBodyState extends State<SettingsBody> {
                         trailing: Switch(
                           value: _startupMonitoring,
                           onChanged: (bool value) async {
-                            await triggerHaptic(HapticType.SELECTION, context);
+                            await HapticService().triggerHaptic(
+                              HapticType.SELECTION,
+                              context,
+                            );
 
                             await onToggleStartupMonitoring(value);
                           },
@@ -457,7 +466,10 @@ class _SettingsBodyState extends State<SettingsBody> {
                         trailing: Switch(
                           value: _backgroundService,
                           onChanged: (bool value) async {
-                            await triggerHaptic(HapticType.SELECTION, context);
+                            await HapticService().triggerHaptic(
+                              HapticType.SELECTION,
+                              context,
+                            );
 
                             await onToggleBackgroundService(value);
                           },
@@ -511,7 +523,11 @@ class _SettingsBodyState extends State<SettingsBody> {
                         trailing: Switch(
                           value: _hapticFeedback,
                           onChanged: (bool value) async {
-                            await triggerHaptic(HapticType.SELECTION, context);
+                            await HapticService().setHapticEnabled(value);
+                            await HapticService().triggerHaptic(
+                              HapticType.SELECTION,
+                              context,
+                            );
 
                             setBool("hapticFeedback", value);
                             updateData();
@@ -526,7 +542,10 @@ class _SettingsBodyState extends State<SettingsBody> {
                         trailing: Switch(
                           value: _material3,
                           onChanged: (bool value) async {
-                            await triggerHaptic(HapticType.SELECTION, context);
+                            await HapticService().triggerHaptic(
+                              HapticType.SELECTION,
+                              context,
+                            );
 
                             setBool("material3", value);
                             updateData();
@@ -544,7 +563,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                             ? Switch(
                                 value: _dynamicTheme,
                                 onChanged: (bool value) async {
-                                  await triggerHaptic(
+                                  await HapticService().triggerHaptic(
                                     HapticType.SELECTION,
                                     context,
                                   );
@@ -581,7 +600,10 @@ class _SettingsBodyState extends State<SettingsBody> {
                         trailing: Switch(
                           value: _logEvents,
                           onChanged: (bool value) async {
-                            await triggerHaptic(HapticType.SELECTION, context);
+                            await HapticService().triggerHaptic(
+                              HapticType.SELECTION,
+                              context,
+                            );
 
                             setBool("logEvents", value);
                             updateData();
@@ -634,7 +656,10 @@ class _SettingsBodyState extends State<SettingsBody> {
                         trailing: Switch(
                           value: _metricSystem,
                           onChanged: (bool value) async {
-                            await triggerHaptic(HapticType.SELECTION, context);
+                            await HapticService().triggerHaptic(
+                              HapticType.SELECTION,
+                              context,
+                            );
 
                             setBool("metricSystem", value);
                             updateData();
@@ -663,7 +688,10 @@ class _SettingsBodyState extends State<SettingsBody> {
                             border: UnderlineInputBorder(),
                           ),
                           onChanged: (String value) async {
-                            await triggerHaptic(HapticType.SELECTION, context);
+                            await HapticService().triggerHaptic(
+                              HapticType.SELECTION,
+                              context,
+                            );
 
                             setString("mapTilesTemplate", value);
                           },
@@ -709,7 +737,10 @@ class _SettingsBodyState extends State<SettingsBody> {
                             border: UnderlineInputBorder(),
                           ),
                           onChanged: (String value) async {
-                            await triggerHaptic(HapticType.SELECTION, context);
+                            await HapticService().triggerHaptic(
+                              HapticType.SELECTION,
+                              context,
+                            );
 
                             setString("speedtestInstance", value);
                           },
@@ -773,7 +804,10 @@ class _SettingsBodyState extends State<SettingsBody> {
                         trailing: Switch(
                           value: _debug,
                           onChanged: (bool value) async {
-                            await triggerHaptic(HapticType.SELECTION, context);
+                            await HapticService().triggerHaptic(
+                              HapticType.SELECTION,
+                              context,
+                            );
 
                             setBool("debug", value);
                             updateData();

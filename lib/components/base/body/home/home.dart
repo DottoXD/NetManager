@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/utils/cell_utils.dart';
-import 'package:netmanager/components/utils/haptic_utils.dart';
+import 'package:netmanager/components/utils/haptic_service.dart';
 import 'package:netmanager/types/cell/cell_data.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
 import 'package:path_provider/path_provider.dart';
@@ -207,7 +207,10 @@ class _HomeBodyState extends State<HomeBody> {
                       ).colorScheme.primaryContainer,
                     ),
                     onPressed: () async {
-                      await triggerHaptic(HapticType.SELECTION, context);
+                      await HapticService().triggerHaptic(
+                        HapticType.SELECTION,
+                        context,
+                      );
 
                       setState(() {
                         altCellView = !altCellView;

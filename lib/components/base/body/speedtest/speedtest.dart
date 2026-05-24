@@ -8,6 +8,7 @@ import 'package:netmanager/components/base/body/speedtest/widgets/quality_metric
 import 'package:netmanager/components/base/body/speedtest/widgets/speed_results.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/modals/server_modal.dart';
+import 'package:netmanager/types/speedtest/metrics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum TestStage { IDLE, LATENCY, DOWNLOAD, UPLOAD, FINISHED }
@@ -27,22 +28,15 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
 
   final String defaultSpeedtestServer = "https://librespeed.org";
 
-  TestStage _stage = TestStage.IDLE;
-
-  double _currentSpeed = 0.0;
-  int _ping = 0;
-  double _latencyProgress = 0.0;
-  int _jitter = 0;
-  double _packetLoss = 0.0;
-  double _downloadResult = 0.0;
-  double _uploadResult = 0.0;
-  double _maxSpeedScale = 100.0;
-
-  late ValueNotifier<Map<String, dynamic>?> selectedServerNotifier =
+  final ValueNotifier<SpeedtestMetrics> _metricsNotifier = ValueNotifier(
+    SpeedtestMetrics(),
+  );
+  final ValueNotifier<Map<String, dynamic>?> _selectedServerNotifier =
       ValueNotifier(null);
 
   late String _speedtestServer;
   List<dynamic> _servers = [];
+  int _unitIndex = 1;
 
   @override
   void initState() {
@@ -54,6 +48,8 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
         sharedPreferences.getString("speedtestInstance") ??
         defaultSpeedtestServer;
 
+    _unitIndex = widget.sharedPreferences.getInt("speedMeasurementUnit") ?? 1;
+
     if (_speedtestServer.endsWith("/")) {
       _speedtestServer = _speedtestServer.substring(
         0,
@@ -64,47 +60,78 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     _fetchServers();
 
     platform.setMethodCallHandler((call) async {
+      final currentMetrics = _metricsNotifier.value;
+
       switch (call.method) {
         case "update":
           final String newStageStr = call.arguments["stage"];
           final double newSpeed = (call.arguments["speed"] as num).toDouble();
+          final double newProgress =
+              (call.arguments["progress"] as num?)?.toDouble() ?? 0.0;
+          final double currentLoss =
+              (call.arguments["packetLoss"] as num?)?.toDouble() ??
+              currentMetrics.packetLoss;
+          final TestStage nextStage = TestStage.values.byName(newStageStr);
+          double nextScale = currentMetrics.maxSpeedScale;
 
-          setState(() {
-            if (_stage == TestStage.DOWNLOAD && newStageStr == "UPLOAD") {
-              _maxSpeedScale = 100.0;
-            }
+          if (currentMetrics.stage == TestStage.DOWNLOAD &&
+              nextStage == TestStage.UPLOAD) {
+            nextScale = 100.0;
+          }
 
-            _stage = TestStage.values.byName(newStageStr);
-            _currentSpeed = newSpeed;
+          if (newSpeed > nextScale) {
+            nextScale = switch (newSpeed) {
+              > 2500 => 5000,
+              > 1000 => 2500,
+              > 300 => 1000,
+              > 100 => 300,
+              _ => 100,
+            };
+          }
 
-            if (_currentSpeed > _maxSpeedScale) {
-              _maxSpeedScale = switch (_currentSpeed) {
-                > 2500 => 5000,
-                > 1000 => 2500,
-                > 300 => 1000,
-                > 100 => 300,
-                _ => 100,
-              };
-            }
-          });
+          _metricsNotifier.value = currentMetrics.copyWith(
+            currentSpeed: newSpeed,
+            maxSpeedScale: nextScale,
+            stage: nextStage,
+            progress: newProgress,
+            packetLoss: currentLoss,
+          );
           break;
 
         case "latency":
-          setState(() {
-            _ping = call.arguments["ping"];
-            _jitter = call.arguments["jitter"];
-            _packetLoss = (call.arguments["packetLoss"] as num).toDouble();
-            _latencyProgress = (call.arguments["progress"] as num).toDouble();
-          });
+          _metricsNotifier.value = currentMetrics.copyWith(
+            ping: call.arguments["ping"],
+            jitter: call.arguments["jitter"],
+            packetLoss: (call.arguments["packetLoss"] as num).toDouble(),
+            latencyProgress: (call.arguments["progress"] as num).toDouble(),
+          );
           break;
 
         case "complete":
-          setState(() {
-            _downloadResult = (call.arguments["download"] as num).toDouble();
-            _uploadResult = (call.arguments["upload"] as num).toDouble();
-            _stage = TestStage.FINISHED;
-            _currentSpeed = 0.0;
-          });
+          _metricsNotifier.value = currentMetrics.copyWith(
+            downloadResult: (call.arguments["download"] as num).toDouble(),
+            uploadResult: (call.arguments["upload"] as num).toDouble(),
+            stage: TestStage.FINISHED,
+            currentSpeed: 0.0,
+            progress: 0.0,
+          );
+          break;
+
+        case "error":
+          _metricsNotifier.value = currentMetrics.copyWith(
+            stage: TestStage.IDLE,
+            currentSpeed: 0.0,
+            progress: 0.0,
+            latencyProgress: 0.0,
+          );
+          if (mounted) {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return errorDialog(context, call.arguments);
+              },
+            );
+          }
           break;
       }
     });
@@ -112,7 +139,9 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
 
   @override
   void dispose() {
-    selectedServerNotifier.dispose();
+    _selectedServerNotifier.dispose();
+    _metricsNotifier.dispose();
+    platform.setMethodCallHandler(null);
     super.dispose();
   }
 
@@ -121,7 +150,9 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     String fallbackUrl = "$_speedtestServer/backend-servers/servers.php";
 
     try {
-      final response = await http.get(Uri.parse(primaryUrl));
+      final response = await http
+          .get(Uri.parse(primaryUrl))
+          .timeout(Duration(milliseconds: 1500));
 
       if (response.statusCode == 200) {
         _updateServers(response.body);
@@ -130,7 +161,9 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
       }
     } catch (e) {
       try {
-        final response = await http.get(Uri.parse(fallbackUrl));
+        final response = await http
+            .get(Uri.parse(fallbackUrl))
+            .timeout(Duration(milliseconds: 1500));
 
         if (response.statusCode == 200) {
           _updateServers(response.body);
@@ -138,7 +171,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
           throw Exception("The speed test server is unreachable.");
         }
       } catch (e) {
-        if (context.mounted) {
+        if (mounted) {
           showDialog(
             context: context,
             builder: (BuildContext context) {
@@ -156,19 +189,19 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
 
       if (data.isNotEmpty) {
         List<dynamic> validServers = [];
-
         int lowestLatency = double.maxFinite.toInt();
         dynamic bestServer;
 
         setState(() {
           _servers = data;
-
-          selectedServerNotifier.value = _servers[0];
+          _selectedServerNotifier.value = _servers[0];
         });
 
-        for (var server in data) {
-          String serverUrl = server["server"];
-          if (serverUrl.isEmpty) continue;
+        final List<Future<Map<String, dynamic>?>> futureServers = data.map((
+          server,
+        ) async {
+          String serverUrl = server["server"] ?? "";
+          if (serverUrl.isEmpty) return null;
 
           if (!serverUrl.endsWith('/')) serverUrl += '/';
           if (serverUrl.startsWith("//")) serverUrl = "https:$serverUrl";
@@ -179,21 +212,33 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
             final stopwatch = Stopwatch()..start();
             final response = await http
                 .head(Uri.parse(serverUrl))
-                .timeout(Duration(milliseconds: 400));
+                .timeout(Duration(milliseconds: 1500));
 
             stopwatch.stop();
 
             if (response.statusCode >= 200 && response.statusCode < 300) {
-              validServers.add(server);
-
-              final int latestLatency = stopwatch.elapsedMilliseconds;
-              if (latestLatency < lowestLatency) {
-                lowestLatency = latestLatency;
-                bestServer = server;
-              }
+              return {
+                "server": server,
+                "latency": stopwatch.elapsedMilliseconds,
+              };
             }
           } catch (e) {
             //todo
+          }
+        }).toList();
+
+        final results = await Future.wait(futureServers);
+
+        for (var result in results) {
+          if (result != null) {
+            final server = result["server"];
+            final latency = result["latency"] as int;
+            validServers.add(server);
+
+            if (latency < lowestLatency) {
+              lowestLatency = latency;
+              bestServer = server;
+            }
           }
         }
 
@@ -202,15 +247,15 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
             _servers = validServers;
 
             if (_servers.isNotEmpty) {
-              selectedServerNotifier.value = bestServer ?? _servers[0];
+              _selectedServerNotifier.value = bestServer ?? _servers[0];
             } else {
-              selectedServerNotifier.value = null;
+              _selectedServerNotifier.value = null;
             }
           });
         }
       }
     } catch (e) {
-      if (context.mounted) {
+      if (mounted) {
         showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -222,24 +267,18 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
   }
 
   void _startTest() {
-    if (selectedServerNotifier.value == null) return;
+    if (_selectedServerNotifier.value == null) return;
 
-    setState(() {
-      _stage = TestStage.LATENCY;
-      _currentSpeed = 0.0;
-      _maxSpeedScale = 100.0;
-      _ping = 0;
-      _jitter = 0;
-    });
+    _metricsNotifier.value = SpeedtestMetrics(stage: TestStage.LATENCY);
 
-    String baseUrl = selectedServerNotifier.value!["server"];
+    String baseUrl = _selectedServerNotifier.value!["server"];
     if (!baseUrl.endsWith('/')) baseUrl += '/';
     if (baseUrl.startsWith("//")) baseUrl = "https:$baseUrl";
 
     platform.invokeMethod("startTest", {
-      "pingUrl": baseUrl + selectedServerNotifier.value!["pingURL"],
-      "downloadUrl": baseUrl + selectedServerNotifier.value!["dlURL"],
-      "uploadUrl": baseUrl + selectedServerNotifier.value!["ulURL"],
+      "pingUrl": baseUrl + _selectedServerNotifier.value!["pingURL"],
+      "downloadUrl": baseUrl + _selectedServerNotifier.value!["dlURL"],
+      "uploadUrl": baseUrl + _selectedServerNotifier.value!["ulURL"],
     });
   }
 
@@ -256,77 +295,107 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
               children: [
                 const SizedBox(height: 24),
                 ValueListenableBuilder(
-                  valueListenable: selectedServerNotifier,
+                  valueListenable: _selectedServerNotifier,
                   builder: (context, selectedServer, child) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 32),
-                      child: OutlinedButton.icon(
-                        onPressed:
-                            _stage != TestStage.IDLE &&
-                                _stage != TestStage.FINISHED
-                            ? null
-                            : () {
-                                showModalBottomSheet(
-                                  context: context,
-                                  shape: const RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.vertical(
-                                      top: Radius.circular(24.0),
-                                    ),
-                                  ),
-                                  backgroundColor: Theme.of(
-                                    context,
-                                  ).colorScheme.surface,
-                                  builder: (BuildContext context) {
-                                    return serverModal(
-                                      context,
-                                      _servers,
-                                      selectedServerNotifier,
+                    return ValueListenableBuilder(
+                      valueListenable: _metricsNotifier,
+                      builder: (context, metrics, child) {
+                        final bool isRunning =
+                            metrics.stage != TestStage.IDLE &&
+                            metrics.stage != TestStage.FINISHED;
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 32),
+                          child: OutlinedButton.icon(
+                            onPressed: isRunning
+                                ? null
+                                : () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      shape: const RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.vertical(
+                                          top: Radius.circular(24.0),
+                                        ),
+                                      ),
+                                      backgroundColor: Theme.of(
+                                        context,
+                                      ).colorScheme.surface,
+                                      builder: (BuildContext context) {
+                                        return serverModal(
+                                          context,
+                                          _servers,
+                                          _selectedServerNotifier,
+                                        );
+                                      },
                                     );
                                   },
-                                );
-                              },
-                        icon: const Icon(Icons.dns_outlined, size: 18),
-                        label: Text(
-                          selectedServer != null
-                              ? "${selectedServer["sponsorName"]} (${selectedServer["name"]})"
-                              : "No server",
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            icon: const Icon(Icons.dns_outlined, size: 18),
+                            label: Text(
+                              selectedServer != null
+                                  ? "${selectedServer["sponsorName"]} (${selectedServer["name"]})"
+                                  : "No server",
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     );
                   },
                 ),
-                heroGauge(
-                  context,
-                  _stage,
-                  _latencyProgress,
-                  _currentSpeed,
-                  _maxSpeedScale,
-                  _ping,
-                  _downloadResult,
-                  _uploadResult,
+                ValueListenableBuilder(
+                  valueListenable: _metricsNotifier,
+                  builder: (context, metrics, child) {
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        heroGauge(
+                          context,
+                          metrics.stage,
+                          metrics.latencyProgress,
+                          metrics.currentSpeed,
+                          metrics.maxSpeedScale,
+                          metrics.ping,
+                          metrics.downloadResult,
+                          metrics.uploadResult,
+                          _unitIndex,
+                        ),
+                        const SizedBox(height: 48),
+                        qualityMetrics(
+                          context,
+                          metrics.ping,
+                          metrics.jitter,
+                          metrics.packetLoss,
+                        ),
+                      ],
+                    );
+                  },
                 ),
-                const SizedBox(height: 48),
-                qualityMetrics(context, _ping, _jitter, _packetLoss),
               ],
             ),
           ),
         ),
-        speedResults(
-          context,
-          _stage,
-          _downloadResult,
-          _uploadResult,
-          _startTest,
+        ValueListenableBuilder(
+          valueListenable: _metricsNotifier,
+          builder: (context, metrics, child) {
+            return speedResults(
+              context,
+              metrics.stage,
+              metrics.downloadResult,
+              metrics.uploadResult,
+              metrics.progress,
+              _startTest,
+              _unitIndex,
+            );
+          },
         ),
         if (isDefaultServer)
           Container(
             width: double.maxFinite,
-            padding: const EdgeInsets.fromLTRB(12.0, 8.0, 12.0, 24.0),
+            padding: const EdgeInsets.fromLTRB(12.0, 6.0, 12.0, 24.0),
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerLow,

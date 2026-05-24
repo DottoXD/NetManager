@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:netmanager/components/utils/haptic_utils.dart';
+import 'package:netmanager/components/utils/haptic_service.dart';
 import 'package:netmanager/types/events/event_types.dart';
 
 Widget eventSelection(
@@ -29,7 +29,10 @@ Widget eventSelection(
                   ? BorderSide(color: primaryColor)
                   : BorderSide.none,
               onSelected: (_) async {
-                await triggerHaptic(HapticType.SELECTION, context);
+                await HapticService().triggerHaptic(
+                  HapticType.SELECTION,
+                  context,
+                );
 
                 onEventsChanged(eventType);
               },

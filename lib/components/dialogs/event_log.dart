@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:netmanager/components/utils/haptic_utils.dart';
+import 'package:netmanager/components/utils/haptic_service.dart';
 import 'package:netmanager/types/events/event_types.dart';
 import 'package:netmanager/types/events/mobile_netmanager_event.dart';
 import 'package:netmanager/types/events/netmanager_event.dart';
@@ -69,7 +69,7 @@ Widget eventLogDialog(
       ),
       FilledButton.icon(
         onPressed: () async {
-          await triggerHaptic(HapticType.SELECTION, context);
+          await HapticService().triggerHaptic(HapticType.SELECTION, context);
           final dir = await getTemporaryDirectory();
 
           final exportFolder = Directory("${dir.path}/exports");

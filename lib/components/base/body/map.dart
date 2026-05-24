@@ -114,7 +114,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
             );
           }
         } catch (e) {
-          if (!_dialogOpen && context.mounted) {
+          if (!_dialogOpen && mounted) {
             _dialogOpen = true;
             showDialog(
               context: context,
