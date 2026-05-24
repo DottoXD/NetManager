@@ -10,22 +10,28 @@ Widget serverModal(
     shrinkWrap: true,
     padding: const EdgeInsets.symmetric(vertical: 16),
     itemCount: servers.length,
-    itemBuilder: (context, i) => ListTile(
-      title: Text("${servers[i]["sponsorName"]} (${servers[i]["name"]})"),
-      trailing: servers[i]["sponsorURL"] != null
-          ? IconButton(
-              onPressed: () {
-                Uri url = Uri.parse(servers[i]["sponsorURL"]);
-                launchUrl(url);
-              },
-              icon: Icon(Icons.open_in_new),
-              tooltip: "Visit the server's host in a browser",
-            )
-          : null,
-      onTap: () {
-        selectedServerNotifier.value = servers[i];
-        Navigator.pop(context);
-      },
-    ),
+    itemBuilder: (context, i) {
+      final sponsorName = servers[i]["sponsorName"];
+
+      return ListTile(
+        title: Text(
+          "$sponsorName (${(servers[i]["name"]).toString().replaceAll(" ($sponsorName)", "")})",
+        ),
+        trailing: servers[i]["sponsorURL"] != null
+            ? IconButton(
+                onPressed: () {
+                  Uri url = Uri.parse(servers[i]["sponsorURL"]);
+                  launchUrl(url);
+                },
+                icon: Icon(Icons.open_in_new),
+                tooltip: "Visit the server's host in a browser",
+              )
+            : null,
+        onTap: () {
+          selectedServerNotifier.value = servers[i];
+          Navigator.pop(context);
+        },
+      );
+    },
   );
 }

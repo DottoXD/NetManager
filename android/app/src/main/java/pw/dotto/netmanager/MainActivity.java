@@ -328,6 +328,16 @@ public class MainActivity extends FlutterActivity {
           result.success(true);
           break;
 
+        case "getLiveRecording":
+          pw.dotto.netmanager.Recording.Service serviceInstance = pw.dotto.netmanager.Recording.Service.getInstance();
+          if (serviceInstance != null && serviceInstance.getRecordedData() != null) {
+            String jsonStr = gson.toJson(serviceInstance.getRecordedData());
+            result.success(jsonStr);
+          } else {
+            result.success(null);
+          }
+          break;
+
         case "startTest":
           Client client = new Client();
           client.runSpeedTest(call.argument("pingUrl"), call.argument("downloadUrl"), call.argument("uploadUrl"),
@@ -343,7 +353,7 @@ public class MainActivity extends FlutterActivity {
   }
 
   public Manager getCore() {
-      return core;
+    return core;
   }
 
   @Override
@@ -372,15 +382,15 @@ public class MainActivity extends FlutterActivity {
 
   @Override
   public void onResume() {
-      super.onResume();
-      wearHandler.onResume();
+    super.onResume();
+    wearHandler.onResume();
   }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        wearHandler.onPause();
-    }
+  @Override
+  public void onPause() {
+    super.onPause();
+    wearHandler.onPause();
+  }
 
   @Override
   public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {

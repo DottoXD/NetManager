@@ -11,6 +11,7 @@ Widget recordModal(
   MethodChannel platform,
   ValueNotifier<bool> recordingActionNotifier,
   Function(RecordedData) onDataLoaded,
+  Function() triggerPooler,
 ) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 24.0),
@@ -143,6 +144,8 @@ Widget recordModal(
                   ),
                 );
               }
+
+              triggerPooler();
             }
 
             nameController.dispose();

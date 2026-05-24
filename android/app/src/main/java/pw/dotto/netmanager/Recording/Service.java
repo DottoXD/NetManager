@@ -40,6 +40,8 @@ import pw.dotto.netmanager.R;
  * @version 0.0.4
  */
 public class Service extends android.app.Service {
+    private static Service instance = null;
+
     private Manager core;
     private RecordedData recordedData;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -54,6 +56,10 @@ public class Service extends android.app.Service {
 
     private String path;
 
+    public static Service getInstance() {
+        return instance;
+    }
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -64,6 +70,11 @@ public class Service extends android.app.Service {
     public void onCreate() {
         super.onCreate();
         core = new Manager(this);
+        instance = this;
+    }
+
+    public RecordedData getRecordedData() {
+        return this.recordedData;
     }
 
     @Override
@@ -171,6 +182,8 @@ public class Service extends android.app.Service {
     public void onDestroy() {
         super.onDestroy();
         saveToFile();
+
+        instance = null;
 
         if (core != null) {
             SimReceiverManager simReceiverManager = core.getSimReceiverManager();

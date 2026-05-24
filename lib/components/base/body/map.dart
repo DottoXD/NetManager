@@ -11,6 +11,7 @@ import 'package:netmanager/components/utils/map_overlay.dart';
 import 'package:netmanager/components/utils/map_tile_builder.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
 import 'package:netmanager/types/recording/recorded_data.dart';
+import 'package:netmanager/types/recording/record.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -49,8 +50,11 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
       "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
   RecordedData? _activeReplayData;
+  List<Record> _liveRecords = [];
+  Record? _selectedRecord;
 
   Timer? _timer;
+  Timer? _liveRecordTimer;
   LatLng? _currentLocation;
 
   LatLng? _lastLocation;
@@ -100,6 +104,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
           updateLocation();
         });
 
+        if (mounted) recenterMap();
+
         return;
       }
 
@@ -112,6 +118,9 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("Recording stopped and saved.")),
             );
+
+            recenterMap();
+            _liveRecordTimer?.cancel();
           }
         } catch (e) {
           if (!_dialogOpen && mounted) {
@@ -137,40 +146,46 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
         builder: (BuildContext context) {
-          return recordModal(context, platform, recordingActionNotifier, (
-            data,
-          ) {
-            if (data.records.isNotEmpty) {
-              displayTitlesNotifier.value = ["Carrier", "PLMN", "Date"];
-              displayValuesNotifier.value = [
-                data.operator,
-                data.network,
-                sharedPreferences.getBool("metricSystem") ?? true
-                    ? "${data.date.month}/${data.date.day}"
-                    : "${data.date.day}/${data.date.month}",
-              ];
+          return recordModal(
+            context,
+            platform,
+            recordingActionNotifier,
+            (data) {
+              if (data.records.isNotEmpty) {
+                displayTitlesNotifier.value = ["Carrier", "PLMN", "Date"];
+                displayValuesNotifier.value = [
+                  data.operator,
+                  data.network,
+                  sharedPreferences.getBool("metricSystem") ?? true
+                      ? "${data.date.month}/${data.date.day}"
+                      : "${data.date.day}/${data.date.month}",
+                ];
 
-              setState(() {
-                _activeReplayData = data;
-                recordingActionNotifier.value = true;
-              });
-              if (_currentLocation != null) {
-                animatedUpdate(
-                  _currentLocation!,
-                  LatLng(data.records.first.lat, data.records.first.lon),
-                  Duration(milliseconds: 500),
-                );
-              } else {
-                mapController.move(
-                  LatLng(data.records.first.lat, data.records.first.lon),
-                  mapController.camera.zoom,
-                );
+                setState(() {
+                  _activeReplayData = data;
+                  recordingActionNotifier.value = true;
+                });
+                if (_currentLocation != null) {
+                  animatedUpdate(
+                    _currentLocation!,
+                    LatLng(data.records.first.lat, data.records.first.lon),
+                    Duration(milliseconds: 500),
+                  );
+                } else {
+                  mapController.move(
+                    LatLng(data.records.first.lat, data.records.first.lon),
+                    mapController.camera.zoom,
+                  );
+                }
               }
-            }
 
-            _timer?.cancel();
-            _cellTimer?.cancel();
-          });
+              _timer?.cancel();
+              _cellTimer?.cancel();
+            },
+            () {
+              liveRecordDataPoller();
+            },
+          );
         },
       );
     });
@@ -194,6 +209,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
   void dispose() {
     _timer?.cancel();
     _cellTimer?.cancel();
+    _liveRecordTimer?.cancel();
 
     widget.platformSignalNotifier.removeListener(_signalListener);
     mapController.dispose();
@@ -365,6 +381,45 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     tempController.forward().then((_) => tempController.dispose());
   }
 
+  void liveRecordDataPoller() {
+    if (_liveRecordTimer != null) return;
+    _liveRecordTimer = Timer.periodic(const Duration(seconds: 3), (
+      timer,
+    ) async {
+      if (!mounted) return;
+
+      if (recordingActionNotifier.value && _activeReplayData == null) {
+        try {
+          final String jsonStr = await platform.invokeMethod(
+            "getLiveRecording",
+          );
+          if (jsonStr != null) {
+            final Map<String, dynamic> parsedJson = json.decode(jsonStr);
+            final List<dynamic> recordsList = parsedJson["records"] ?? [];
+
+            setState(() {
+              _liveRecords = recordsList
+                  .map((item) => Record.fromJson(item as Map<String, dynamic>))
+                  .toList();
+            });
+          }
+        } catch (e) {
+          if (!_dialogOpen && mounted) {
+            _dialogOpen = true;
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return errorDialog(context, e);
+              },
+            ).then((_) {
+              _dialogOpen = false;
+            });
+          }
+        }
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -390,6 +445,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                   );
                 },
               ),
+
+              if (_selectedRecord != null) buildRecordCard(),
             ],
           ),
         ),
@@ -402,6 +459,24 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
       'GIT_COMMIT',
       defaultValue: 'development',
     );
+
+    final List<Record> visualPoints = [];
+    if (_activeReplayData != null) {
+      visualPoints.addAll(
+        _activeReplayData!.records.map(
+          (r) => Record(
+            networkGen: r.networkGen,
+            processedSignal: r.processedSignal,
+            usable: r.usable,
+            dateTime: r.dateTime,
+            lat: r.lat,
+            lon: r.lon,
+          ),
+        ),
+      );
+    } else if (recordingActionNotifier.value) {
+      visualPoints.addAll(_liveRecords);
+    }
 
     return FlutterMap(
       mapController: mapController,
@@ -449,6 +524,46 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
           userAgentPackageName:
               "pw.dotto.netmanager ($gitCommit) ${sharedPreferences.getString("mapTilesTemplate") != defaultMapTilesTemplate ? "(Customised by user)" : ""}",
         ),
+        if (visualPoints.isNotEmpty)
+          MarkerLayer(
+            markers: visualPoints.map((record) {
+              return Marker(
+                point: LatLng(record.lat, record.lon),
+                width: 14,
+                height: 14,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedRecord = record;
+                      _follow = false;
+                    });
+                    animatedUpdate(
+                      _currentLocation!,
+                      LatLng(record.lat, record.lon),
+                      Duration(milliseconds: 500),
+                    );
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: _getSignalColor(
+                        record.networkGen,
+                        record.processedSignal,
+                      ),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
         if (_currentLocation != null)
           MarkerLayer(
             markers: [
@@ -471,22 +586,6 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
               ),
             ],
           ),
-        if (_activeReplayData != null)
-          CircleLayer(
-            circles: _activeReplayData!.records.map((record) {
-              return CircleMarker(
-                point: LatLng(record.lat, record.lon),
-                radius: 5,
-                useRadiusInMeter: false,
-                color: _getSignalColor(
-                  record.networkGen,
-                  record.processedSignal,
-                ),
-                borderStrokeWidth: 1,
-                borderColor: Colors.white, //color to be changed
-              );
-            }).toList(),
-          ),
         SafeArea(
           child: Align(
             alignment: Alignment.bottomLeft,
@@ -505,6 +604,29 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
           ),
         ),
       ],
+    );
+  }
+
+  Widget buildRecordCard() {
+    final record = _selectedRecord!;
+
+    return Positioned(
+      bottom: 24,
+      left: 16,
+      right: 16,
+      child: Card(
+        elevation: 1,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        color: Theme.of(context).colorScheme.onSurface,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [],
+          ),
+        ),
+      ),
     );
   }
 

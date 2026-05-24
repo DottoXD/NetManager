@@ -304,6 +304,11 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                             metrics.stage != TestStage.IDLE &&
                             metrics.stage != TestStage.FINISHED;
 
+                        String sponsorName = "";
+                        if (selectedServer != null) {
+                          sponsorName = selectedServer["sponsorName"];
+                        }
+
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 32),
                           child: OutlinedButton.icon(
@@ -332,7 +337,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                             icon: const Icon(Icons.dns_outlined, size: 18),
                             label: Text(
                               selectedServer != null
-                                  ? "${selectedServer["sponsorName"]} (${selectedServer["name"]})"
+                                  ? "$sponsorName (${(selectedServer["name"]).toString().replaceAll(" ($sponsorName)", "")})"
                                   : "No server",
                             ),
                             style: OutlinedButton.styleFrom(

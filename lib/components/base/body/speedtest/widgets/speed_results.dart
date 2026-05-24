@@ -24,7 +24,7 @@ Widget speedResults(
     progressColor = Theme.of(context).colorScheme.secondary;
   }
 
-  const topRadius = BorderRadius.vertical(top: Radius.circular(32));
+  const topRadius = BorderRadius.vertical(top: Radius.circular(24));
 
   return Stack(
     children: [
@@ -89,7 +89,7 @@ Widget speedResults(
                       left: 0,
                       right: 0,
                       child: ImageFiltered(
-                        imageFilter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
+                        imageFilter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
                         child: Align(
                           alignment: Alignment.topLeft,
                           child: FractionallySizedBox(

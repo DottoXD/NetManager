@@ -2,7 +2,7 @@ String formatSpeed(double speedInMbps, int unitIndex) {
   switch (unitIndex) {
     case 0:
       double gbps = speedInMbps / 1000;
-      return gbps.toStringAsFixed(gbps > 0.1 ? 2 : 3);
+      return gbps.toStringAsFixed(2);
     case 2:
       double kbps = speedInMbps * 1000;
       return kbps.toStringAsFixed(0);
