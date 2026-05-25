@@ -296,6 +296,8 @@ public class MainActivity extends FlutterActivity {
           String recordingName = call.argument("name");
           int recordingInterval = call.argument("interval");
           String recordingPath = call.argument("path");
+          boolean trackUsable = call.argument("trackUsable");
+          String usabilityTestUrl = call.argument("usabilityTestUrl");
 
           if (recordingInterval < 1 || recordingInterval > 300 || recordingName == null || recordingPath == null) {
             result.error(
@@ -309,6 +311,8 @@ public class MainActivity extends FlutterActivity {
             recordingIntent.putExtra("interval", recordingInterval);
             recordingIntent.putExtra("path", recordingPath);
             recordingIntent.putExtra("selectedSim", selectedSim);
+            recordingIntent.putExtra("trackUsable", trackUsable);
+            recordingIntent.putExtra("usabilityTestUrl", usabilityTestUrl);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
               startForegroundService(recordingIntent);

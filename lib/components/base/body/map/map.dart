@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:intl/intl.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/modals/record_modal.dart';
 import 'package:netmanager/components/utils/cell_utils.dart';
@@ -102,6 +103,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
           startCellTimer();
           updateLocation();
+          _selectedRecord = null;
+          _liveRecords = [];
         });
 
         if (mounted) recenterMap();
@@ -120,6 +123,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
             );
 
             recenterMap();
+            _selectedRecord = null;
+            _liveRecords = [];
             _liveRecordTimer?.cancel();
           }
         } catch (e) {
@@ -157,8 +162,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                   data.operator,
                   data.network,
                   sharedPreferences.getBool("metricSystem") ?? true
-                      ? "${data.date.month}/${data.date.day}"
-                      : "${data.date.day}/${data.date.month}",
+                      ? "${data.date.day}/${data.date.month}"
+                      : "${data.date.month}/${data.date.day}",
                 ];
 
                 setState(() {
@@ -435,18 +440,43 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
           child: Stack(
             children: [
               getMap(context),
-              ValueListenableBuilder(
-                valueListenable: displayValuesNotifier,
-                builder: (context, values, child) {
-                  return mapOverlay(
-                    context,
-                    displayTitlesNotifier.value,
-                    values,
-                  );
-                },
-              ),
 
-              if (_selectedRecord != null) buildRecordCard(),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ValueListenableBuilder(
+                      valueListenable: displayValuesNotifier,
+                      builder: (context, values, child) {
+                        return mapOverlay(
+                          context,
+                          displayTitlesNotifier.value,
+                          values,
+                        );
+                      },
+                    ),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      reverseDuration: const Duration(milliseconds: 200),
+                      switchInCurve: Curves.easeInOutCubic,
+                      switchOutCurve: Curves.easeInOutCubic,
+                      transitionBuilder:
+                          (Widget child, Animation<double> animation) {
+                            return FadeTransition(
+                              opacity: animation,
+                              child: child,
+                            );
+                          },
+                      child: _selectedRecord != null
+                          ? buildRecordCard()
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -462,18 +492,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
     final List<Record> visualPoints = [];
     if (_activeReplayData != null) {
-      visualPoints.addAll(
-        _activeReplayData!.records.map(
-          (r) => Record(
-            networkGen: r.networkGen,
-            processedSignal: r.processedSignal,
-            usable: r.usable,
-            dateTime: r.dateTime,
-            lat: r.lat,
-            lon: r.lon,
-          ),
-        ),
-      );
+      visualPoints.addAll(_activeReplayData!.records);
     } else if (recordingActionNotifier.value) {
       visualPoints.addAll(_liveRecords);
     }
@@ -514,6 +533,13 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
             }
           }
         },
+        onTap: (tapPosition, point) {
+          if (_selectedRecord != null) {
+            setState(() {
+              _selectedRecord = null;
+            });
+          }
+        },
       ),
       children: <Widget>[
         TileLayer(
@@ -527,18 +553,23 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
         if (visualPoints.isNotEmpty)
           MarkerLayer(
             markers: visualPoints.map((record) {
+              final isSelected =
+                  _selectedRecord != null &&
+                  _selectedRecord!.dateTime == record.dateTime;
+
               return Marker(
                 point: LatLng(record.lat, record.lon),
-                width: 14,
-                height: 14,
+                width: isSelected ? 20 : 14,
+                height: isSelected ? 20 : 14,
                 child: GestureDetector(
                   onTap: () {
                     setState(() {
                       _selectedRecord = record;
                       _follow = false;
                     });
+
                     animatedUpdate(
-                      _currentLocation!,
+                      mapController.camera.center,
                       LatLng(record.lat, record.lon),
                       Duration(milliseconds: 500),
                     );
@@ -548,13 +579,20 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                       color: _getSignalColor(
                         record.networkGen,
                         record.processedSignal,
-                      ),
+                      ).withValues(alpha: record.usable ? 1.0 : 0.2),
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 1.5),
+                      border: Border.all(
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.white,
+                        width: isSelected ? 2.5 : 1.5,
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 2,
+                          color: Colors.black.withValues(
+                            alpha: isSelected ? 0.4 : 0.2,
+                          ),
+                          blurRadius: isSelected ? 4 : 2,
                           offset: const Offset(0, 1),
                         ),
                       ],
@@ -610,20 +648,118 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
   Widget buildRecordCard() {
     final record = _selectedRecord!;
 
-    return Positioned(
-      bottom: 24,
-      left: 16,
-      right: 16,
+    int index = -1;
+    if (_liveRecords.isNotEmpty) {
+      index = _liveRecords.indexOf(_selectedRecord!);
+    } else if (_activeReplayData != null &&
+        _activeReplayData!.records.isNotEmpty) {
+      index = _activeReplayData!.records.indexOf(_selectedRecord!);
+    }
+
+    return Padding(
+      key: ValueKey(record.dateTime.toString()),
+      padding: const EdgeInsets.only(top: 8.0, left: 16.0, right: 16.0),
       child: Card(
         elevation: 1,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        color: Theme.of(context).colorScheme.onSurface,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [],
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "${index >= 0 ? "Record #$index - " : ""}${record.networkGen < 2 ? "N/A" : "${record.networkGen}G"}",
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_outlined, size: 24),
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints(),
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      setState(() {
+                        _selectedRecord = null;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              const Divider(height: 8),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Signal Strength",
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          "Timestamp",
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                        if (!record.usable) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            "Network was unusable (Ping timed out)",
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        "${record.processedSignal}dBm",
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        DateFormat(
+                          "dd/MM/yyyy HH:mm:ss",
+                        ).format(record.dateTime.toLocal()),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),

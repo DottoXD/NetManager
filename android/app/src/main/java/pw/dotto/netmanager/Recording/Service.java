@@ -6,7 +6,9 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -23,7 +25,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import pw.dotto.netmanager.Core.Manager;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
 import pw.dotto.netmanager.Core.Mobile.SimReceiverManager;
@@ -41,20 +49,30 @@ import pw.dotto.netmanager.R;
  */
 public class Service extends android.app.Service {
     private static Service instance = null;
+    private ScheduledExecutorService executorService;
 
     private Manager core;
     private RecordedData recordedData;
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private Runnable runnable;
     private int selectedSim = 0;
 
     private Gson gson = new Gson();
-
     private int selectedId = -1;
+    private String path;
+    private boolean trackUsable = false;
+    private String usabilityTestUrl = "";
 
     public static final String NOTIFICATION_CHANNEL = "netmanager-rec";
+    private static final String DEFAULT_USABILITY_TEST_URL = "https://connectivitycheck.gstatic.com/generate_204";
 
-    private String path;
+    private final OkHttpClient httpClient = new OkHttpClient.Builder()
+            .connectTimeout(2, TimeUnit.SECONDS)
+            .readTimeout(2, TimeUnit.SECONDS)
+            .writeTimeout(2, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(false)
+            .followRedirects(false)
+            .followSslRedirects(false)
+            .build();
 
     public static Service getInstance() {
         return instance;
@@ -79,13 +97,24 @@ public class Service extends android.app.Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (executorService == null || executorService.isShutdown()) {
+            executorService = Executors.newSingleThreadScheduledExecutor();
+        }
+
         String name = intent.getStringExtra("name");
         int intervalSeconds = intent.getIntExtra("interval", 10);
         String path = intent.getStringExtra("path");
         int selectedSim = intent.getIntExtra("selectedSim", 0);
+        boolean trackUsable = intent.getBooleanExtra("trackUsable", false);
+        String usabilityTestUrl = intent.getStringExtra("usabilityTestUrl");
+
+        if (usabilityTestUrl == null)
+            usabilityTestUrl = DEFAULT_USABILITY_TEST_URL;
 
         this.selectedSim = selectedSim;
         this.path = path + "/" + name;
+        this.trackUsable = trackUsable;
+        this.usabilityTestUrl = usabilityTestUrl;
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
@@ -135,15 +164,12 @@ public class Service extends android.app.Service {
         startForeground(selectedId, notification1);
 
         recordedData = new RecordedData(core.getSimOperator(selectedSim), core.getPlmn(selectedSim));
-
-        runnable = new Runnable() {
+        executorService.scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {
                 record();
-                handler.postDelayed(this, intervalSeconds * 1000L);
             }
-        };
-        handler.post(runnable);
+        }, 0, intervalSeconds, TimeUnit.SECONDS);
 
         return START_NOT_STICKY;
     }
@@ -158,14 +184,24 @@ public class Service extends android.app.Service {
             if (gen == 4 && core.getNsaStatus(selectedSim))
                 gen++;
 
-            int processedSignal = -1;
+            int processedSignal;
             if (data.getPrimaryCell() != null) {
                 processedSignal = data.getPrimaryCell().getProcessedSignal();
+            } else {
+                processedSignal = -1;
             }
 
-            Record record = new Record(gen, processedSignal, true, loc.getLatitude(), loc.getLongitude());
-            recordedData.addRecord(record);
-            saveToFile();
+            boolean isUsable = true;
+            if (trackUsable) {
+                isUsable = testUsability();
+            }
+
+            Record record = new Record(gen, processedSignal, isUsable, loc.getLatitude(), loc.getLongitude());
+
+            synchronized (recordedData) {
+                recordedData.addRecord(record);
+                saveToFile();
+            }
         }
     }
 
@@ -175,6 +211,41 @@ public class Service extends android.app.Service {
             fos.write(json.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             // todo
+        }
+    }
+
+    private boolean testUsability() {
+        ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (manager == null)
+            return false;
+
+        Network[] networks = manager.getAllNetworks();
+
+        for (Network network : networks) {
+            NetworkCapabilities capabilities = manager.getNetworkCapabilities(network);
+            if (capabilities != null && capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+                if (capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) {
+                    return ping(network);
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private boolean ping(Network network) {
+        OkHttpClient betterClient = httpClient;
+
+        if (network != null) {
+            betterClient = httpClient.newBuilder().socketFactory(network.getSocketFactory()).build();
+        }
+
+        Request request = new Request.Builder().url(usabilityTestUrl).build();
+
+        try (Response response = betterClient.newCall(request).execute()) {
+            return response.code() == 204 || response.code() == 200;
+        } catch (Exception e) {
+            return false;
         }
     }
 
@@ -191,8 +262,17 @@ public class Service extends android.app.Service {
                 simReceiverManager.unregisterStateReceiver();
         }
 
-        if (handler != null && runnable != null)
-            handler.removeCallbacks(runnable);
+        if (executorService != null) {
+            executorService.shutdown();
+
+            try {
+                if (!executorService.awaitTermination(2, TimeUnit.SECONDS)) {
+                    executorService.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                executorService.shutdownNow();
+            }
+        }
 
         stopForeground(STOP_FOREGROUND_REMOVE);
     }

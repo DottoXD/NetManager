@@ -30,14 +30,20 @@ Widget recordModal(
             );
             final TextEditingController intervalController =
                 TextEditingController(text: "10");
+            final TextEditingController
+            usabilityTestUrlController = TextEditingController(
+              text: "https://connectivitycheck.grapheneos.network/generate_204",
+            );
             final ValueNotifier<String?> directoryPathNotifier = ValueNotifier(
               null,
+            );
+            final ValueNotifier<bool> trackUsableNotifier = ValueNotifier(
+              false,
             );
 
             final bool? start = await showDialog(
               context: context,
               builder: (BuildContext context) {
-                // todo: add usable toggle for the 'usable' tracker
                 return AlertDialog(
                   title: const Text("New recording"),
                   content: SingleChildScrollView(
@@ -63,6 +69,33 @@ Widget recordModal(
                             labelText: "Interval between recordings",
                             border: OutlineInputBorder(),
                           ),
+                        ),
+                        const SizedBox(height: 16),
+                        ValueListenableBuilder<bool>(
+                          valueListenable: trackUsableNotifier,
+                          builder: (context, trackUsable, _) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SwitchListTile(
+                                  title: const Text("Track usability"),
+                                  value: trackUsable,
+                                  onChanged: (bool value) {
+                                    trackUsableNotifier.value = value;
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                TextField(
+                                  controller: usabilityTestUrlController,
+                                  decoration: const InputDecoration(
+                                    labelText: "Usability Test URL",
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  enabled: trackUsable,
+                                ),
+                              ],
+                            );
+                          },
                         ),
                         const SizedBox(height: 16),
                         ValueListenableBuilder<String?>(
@@ -130,6 +163,8 @@ Widget recordModal(
                 "name": nameController.text,
                 "interval": int.tryParse(intervalController.text) ?? 10,
                 "path": directoryPathNotifier.value,
+                "trackUsable": trackUsableNotifier.value,
+                "usabilityTestUrl": usabilityTestUrlController.text,
               });
 
               recordingActionNotifier.value = true;
@@ -151,6 +186,8 @@ Widget recordModal(
             nameController.dispose();
             intervalController.dispose();
             directoryPathNotifier.dispose();
+            trackUsableNotifier.dispose();
+            usabilityTestUrlController.dispose();
           },
         ),
         ListTile(

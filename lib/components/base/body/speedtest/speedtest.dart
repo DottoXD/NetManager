@@ -188,10 +188,6 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
       final List<dynamic> data = json.decode(body);
 
       if (data.isNotEmpty) {
-        List<dynamic> validServers = [];
-        int lowestLatency = double.maxFinite.toInt();
-        dynamic bestServer;
-
         setState(() {
           _servers = data;
           _selectedServerNotifier.value = _servers[0];
@@ -229,25 +225,25 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
 
         final results = await Future.wait(futureServers);
 
-        for (var result in results) {
-          if (result != null) {
-            final server = result["server"];
-            final latency = result["latency"] as int;
-            validServers.add(server);
+        final List<Map<String, dynamic>> validResults = results
+            .where((result) => result != null)
+            .cast<Map<String, dynamic>>()
+            .toList();
 
-            if (latency < lowestLatency) {
-              lowestLatency = latency;
-              bestServer = server;
-            }
-          }
-        }
+        validResults.sort(
+          (a, b) => (a["latency"] as int).compareTo(b["latency"] as int),
+        );
+
+        final List<dynamic> sortedServers = validResults
+            .map((result) => result["server"])
+            .toList();
 
         if (mounted) {
           setState(() {
-            _servers = validServers;
+            _servers = sortedServers;
 
             if (_servers.isNotEmpty) {
-              _selectedServerNotifier.value = bestServer ?? _servers[0];
+              _selectedServerNotifier.value = _servers[0];
             } else {
               _selectedServerNotifier.value = null;
             }
@@ -255,14 +251,11 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
         }
       }
     } catch (e) {
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return errorDialog(context, e);
-          },
-        );
-      }
+      Future.delayed(const Duration(seconds: 2)).then((val) {
+        if (mounted) {
+          _updateServers(body);
+        }
+      });
     }
   }
 
@@ -400,7 +393,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
         if (isDefaultServer)
           Container(
             width: double.maxFinite,
-            padding: const EdgeInsets.fromLTRB(12.0, 6.0, 12.0, 24.0),
+            padding: const EdgeInsets.fromLTRB(12.0, 6.0, 12.0, 20.0),
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerLow,

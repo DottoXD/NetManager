@@ -29,7 +29,7 @@ Widget speedResults(
   return Stack(
     children: [
       Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(30.0, 24.0, 24.0, 24.0),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surfaceContainerLow,
           borderRadius: topRadius,
@@ -89,14 +89,18 @@ Widget speedResults(
                       left: 0,
                       right: 0,
                       child: ImageFiltered(
-                        imageFilter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
+                        imageFilter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
                         child: Align(
                           alignment: Alignment.topLeft,
                           child: FractionallySizedBox(
                             widthFactor: animatedProgress,
                             child: AnimatedContainer(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(1.5),
+                                color: progressColor,
+                              ),
                               duration: const Duration(milliseconds: 200),
-                              height: 2.0,
+                              height: 3.0,
                               color: progressColor,
                               alignment: Alignment.centerLeft,
                             ),
@@ -109,9 +113,12 @@ Widget speedResults(
                       child: FractionallySizedBox(
                         widthFactor: animatedProgress,
                         child: AnimatedContainer(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(1.5),
+                            color: progressColor,
+                          ),
                           duration: const Duration(milliseconds: 200),
-                          height: 2.0,
-                          color: progressColor,
+                          height: 3.0,
                         ),
                       ),
                     ),
