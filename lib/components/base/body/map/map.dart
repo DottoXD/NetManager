@@ -658,12 +658,12 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
     return Padding(
       key: ValueKey(record.dateTime.toString()),
-      padding: const EdgeInsets.only(top: 8.0, left: 16.0, right: 16.0),
+      padding: const EdgeInsets.only(top: 8.0, left: 12.0, right: 12.0),
       child: Card(
         elevation: 1,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(14.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -675,13 +675,12 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                     "${index >= 0 ? "Record #$index - " : ""}${record.networkGen < 2 ? "N/A" : "${record.networkGen}G"}",
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurface,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close_outlined, size: 24),
-                    visualDensity: VisualDensity.compact,
-                    constraints: const BoxConstraints(),
+                    tooltip: "Close record card",
                     padding: EdgeInsets.zero,
                     onPressed: () {
                       setState(() {
@@ -691,7 +690,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                   ),
                 ],
               ),
-              const Divider(height: 8),
+              const Divider(height: 4),
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -740,7 +739,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                     children: [
                       Text(
                         "${record.processedSignal}dBm",
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: Theme.of(context).colorScheme.secondary,
                         ),
@@ -750,7 +749,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                         DateFormat(
                           "dd/MM/yyyy HH:mm:ss",
                         ).format(record.dateTime.toLocal()),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: Theme.of(context).colorScheme.secondary,
                         ),

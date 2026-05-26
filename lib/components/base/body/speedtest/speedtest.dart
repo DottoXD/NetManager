@@ -37,6 +37,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
   late String _speedtestServer;
   List<dynamic> _servers = [];
   int _unitIndex = 1;
+  int _fetchServersRetries = 0;
 
   @override
   void initState() {
@@ -152,7 +153,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     try {
       final response = await http
           .get(Uri.parse(primaryUrl))
-          .timeout(Duration(milliseconds: 1500));
+          .timeout(Duration(milliseconds: 2000));
 
       if (response.statusCode == 200) {
         _updateServers(response.body);
@@ -163,7 +164,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
       try {
         final response = await http
             .get(Uri.parse(fallbackUrl))
-            .timeout(Duration(milliseconds: 1500));
+            .timeout(Duration(milliseconds: 2000));
 
         if (response.statusCode == 200) {
           _updateServers(response.body);
@@ -171,14 +172,22 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
           throw Exception("The speed test server is unreachable.");
         }
       } catch (e) {
-        if (mounted) {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return errorDialog(context, e);
-            },
-          );
-        }
+        _fetchServersRetries++;
+
+        Future.delayed(const Duration(milliseconds: 2000)).then((val) {
+          if (mounted) {
+            if (_fetchServersRetries >= 3) {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return errorDialog(context, e);
+                },
+              );
+            } else {
+              _fetchServers();
+            }
+          }
+        });
       }
     }
   }
@@ -208,7 +217,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
             final stopwatch = Stopwatch()..start();
             final response = await http
                 .head(Uri.parse(serverUrl))
-                .timeout(Duration(milliseconds: 1500));
+                .timeout(Duration(milliseconds: 2000));
 
             stopwatch.stop();
 
@@ -238,6 +247,13 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
             .map((result) => result["server"])
             .toList();
 
+        if (sortedServers.isEmpty) {
+          _fetchServersRetries++;
+          throw Error();
+        } else {
+          _fetchServersRetries = 0;
+        }
+
         if (mounted) {
           setState(() {
             _servers = sortedServers;
@@ -253,7 +269,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     } catch (e) {
       Future.delayed(const Duration(seconds: 2)).then((val) {
         if (mounted) {
-          _updateServers(body);
+          _fetchServers();
         }
       });
     }

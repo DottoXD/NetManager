@@ -9,8 +9,7 @@ Widget mapOverlay(
 
   return Card(
     margin: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 4.0),
-    elevation: 2,
-    shadowColor: Colors.transparent,
+    elevation: 1,
     //color: theme.colorScheme.surfaceContainerHighest,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
     child: Padding(

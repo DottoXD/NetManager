@@ -51,9 +51,9 @@ public class Service extends android.app.Service {
     private static Service instance = null;
     private ScheduledExecutorService executorService;
 
+    private Location serviceLocationFetcher;
     private Manager core;
     private RecordedData recordedData;
-    private final Handler handler = new Handler(Looper.getMainLooper());
     private int selectedSim = 0;
 
     private Gson gson = new Gson();
@@ -89,6 +89,7 @@ public class Service extends android.app.Service {
         super.onCreate();
         core = new Manager(this);
         instance = this;
+        serviceLocationFetcher = Location.getInstance(this);
     }
 
     public RecordedData getRecordedData() {
@@ -175,8 +176,13 @@ public class Service extends android.app.Service {
     }
 
     private void record() {
-        Location locationFetcher = Location.getInstance(this);
-        android.location.Location loc = locationFetcher.getLastLocation();
+        if (serviceLocationFetcher != null) {
+            serviceLocationFetcher.updateAccess();
+        } else {
+            serviceLocationFetcher = Location.getInstance(this);
+        }
+        android.location.Location loc = serviceLocationFetcher.getLastLocation();
+
         SIMData data = core.getSimNetworkData(selectedSim);
 
         if (loc != null && data != null) {
@@ -206,11 +212,13 @@ public class Service extends android.app.Service {
     }
 
     private void saveToFile() {
-        try (FileOutputStream fos = new FileOutputStream(new File(path))) {
-            String json = gson.toJson(recordedData);
-            fos.write(json.getBytes(StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            // todo
+        synchronized (recordedData) {
+            try (FileOutputStream fos = new FileOutputStream(new File(path))) {
+                String json = gson.toJson(recordedData);
+                fos.write(json.getBytes(StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                // todo
+            }
         }
     }
 
@@ -251,10 +259,14 @@ public class Service extends android.app.Service {
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
         saveToFile();
 
         instance = null;
+
+        if (serviceLocationFetcher != null) {
+            serviceLocationFetcher.destroy();
+            serviceLocationFetcher = null;
+        }
 
         if (core != null) {
             SimReceiverManager simReceiverManager = core.getSimReceiverManager();
@@ -275,5 +287,6 @@ public class Service extends android.app.Service {
         }
 
         stopForeground(STOP_FOREGROUND_REMOVE);
+        super.onDestroy();
     }
 }

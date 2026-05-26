@@ -47,6 +47,14 @@ public class Service extends android.app.Service {
         } catch (Exception e) {
             DebugLogger.add("Unexpected error while creating the notifications channel: " + e.getMessage());
         }
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (manager == null) {
+            manager = new pw.dotto.netmanager.Core.Manager(this);
+            sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
+        }
 
         Notification bootstrap = notification.buildBootstrapNotification();
 
@@ -55,14 +63,6 @@ public class Service extends android.app.Service {
                     ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL);
         } else {
             startForeground(notification.getSelectedId(), bootstrap);
-        }
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        if (manager == null) {
-            manager = new pw.dotto.netmanager.Core.Manager(this);
-            sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
         }
 
         if (!notification.send()) {
@@ -110,8 +110,6 @@ public class Service extends android.app.Service {
      */
     @Override
     public void onDestroy() {
-        super.onDestroy();
-
         if (manager != null) {
             SimReceiverManager simReceiverManager = manager.getSimReceiverManager();
             if (simReceiverManager != null)
@@ -122,6 +120,8 @@ public class Service extends android.app.Service {
             handler.removeCallbacks(notificationRunnable);
         if (notification != null)
             notification.cancel();
+
+        super.onDestroy();
     }
 
     public pw.dotto.netmanager.Core.Manager getManager() {

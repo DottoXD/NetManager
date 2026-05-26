@@ -40,7 +40,6 @@ import okio.BufferedSink;
  * @version 0.0.4
  */
 public class Client {
-    private static final int STREAMS = 8;
     private static final int BUFFER_SIZE = 256 * 1024;
     private static final int UPLOAD_CHUNK_SIZE = 1024 * 1024;
     private static final int UI_UPDATE_INTERVAL = 200;
@@ -59,13 +58,15 @@ public class Client {
     private static final int GLOBAL_PING_INTERVAL_MS = 500;
 
     private final OkHttpClient httpClient = new OkHttpClient.Builder()
-            .connectTimeout(5, TimeUnit.SECONDS)
-            .readTimeout(10, TimeUnit.SECONDS)
-            .writeTimeout(10, TimeUnit.SECONDS)
+            .connectTimeout(4, TimeUnit.SECONDS)
+            .readTimeout(8, TimeUnit.SECONDS)
+            .writeTimeout(8, TimeUnit.SECONDS)
             .retryOnConnectionFailure(true)
             .build();
 
-    private final ExecutorService executor = Executors.newFixedThreadPool(STREAMS + 4);
+    private final int streams = Math.max(2, Math.min(Runtime.getRuntime().availableProcessors(), 8));
+
+    private final ExecutorService executor = Executors.newFixedThreadPool(streams + 2);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private final AtomicLong globalPingsSent = new AtomicLong(0);
@@ -115,6 +116,8 @@ public class Client {
 
             } catch (Exception e) {
                 // todo
+            } finally {
+                shutdown();
             }
         });
     }
@@ -203,29 +206,35 @@ public class Client {
         long startTime = System.currentTimeMillis();
 
         List<Future<?>> futures = new ArrayList<>();
-        for (int i = 0; i < STREAMS; i++) {
+        for (int i = 0; i < streams; i++) {
             futures.add(executor.submit(() -> {
                 Request request = new Request.Builder()
                         .url(downloadUrl + "?ckSize=100")
                         .addHeader("Accept-Encoding", "identity")
                         .build();
 
-                try (Response response = httpClient.newCall(request).execute()) {
-                    InputStream is = response.body().byteStream();
-                    byte[] buf = new byte[BUFFER_SIZE];
-                    int read;
-                    long tempBytes = 0;
+                while (running.get()) {
+                    try (Response response = httpClient.newCall(request).execute()) {
+                        InputStream is = response.body().byteStream();
+                        byte[] buf = new byte[BUFFER_SIZE];
+                        int read;
+                        long tempBytes = 0;
 
-                    while (running.get() && (read = is.read(buf)) != -1) {
-                        tempBytes += read;
-                        if (tempBytes >= BATCH_UPDATE_THRESHOLD) {
-                            totalBytes.addAndGet(tempBytes);
-                            tempBytes = 0;
+                        while (running.get() && (read = is.read(buf)) != -1) {
+                            tempBytes += read;
+                            if (tempBytes >= BATCH_UPDATE_THRESHOLD) {
+                                totalBytes.addAndGet(tempBytes);
+                                tempBytes = 0;
+                            }
+                        }
+                        totalBytes.addAndGet(tempBytes);
+                    } catch (Exception ignored) {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            return;
                         }
                     }
-
-                    totalBytes.addAndGet(tempBytes);
-                } catch (Exception ignored) {
                 }
             }));
         }
@@ -242,7 +251,7 @@ public class Client {
         new Random().nextBytes(payload);
 
         List<Future<?>> futures = new ArrayList<>();
-        for (int i = 0; i < STREAMS; i++) {
+        for (int i = 0; i < streams; i++) {
             futures.add(executor.submit(() -> {
                 RequestBody requestBody = new RequestBody() {
                     @Override
@@ -364,5 +373,17 @@ public class Client {
             data.put("packetLoss", getPacketLoss());
             channel.invokeMethod("update", data);
         });
+    }
+
+    public void shutdown() {
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
 }

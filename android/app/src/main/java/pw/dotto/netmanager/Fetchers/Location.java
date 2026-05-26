@@ -22,7 +22,7 @@ import pw.dotto.netmanager.Utils.Permissions;
  */
 public class Location {
     private static final int UPDATES_INTERVAL = 3000;
-    private static final int DESTROY_TIMEOUT = 10000;
+    private static final int DESTROY_TIMEOUT = 45000;
 
     private static Location instance;
     private final LocationManager locationManager;
