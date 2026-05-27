@@ -18,7 +18,7 @@ import pw.dotto.netmanager.Utils.Permissions;
  * component to display the user's position.
  *
  * @author DottoXD
- * @version 0.0.4
+ * @version 0.0.5
  */
 public class Location {
     private static final int UPDATES_INTERVAL = 3000;
@@ -113,12 +113,12 @@ public class Location {
         handler.postDelayed(selfDestruct, DESTROY_TIMEOUT);
     }
 
-    private final Runnable selfDestruct = this::destroy;
+    private final Runnable selfDestruct = this::dispose;
 
     /**
      * Disposes the Location object.
      */
-    public void destroy() {
+    public void dispose() {
         if (locationManager != null) {
             locationManager.removeUpdates(locationListener);
         }

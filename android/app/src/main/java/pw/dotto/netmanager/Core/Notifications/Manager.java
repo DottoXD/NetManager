@@ -6,7 +6,6 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.service.notification.StatusBarNotification;
 import android.telephony.CellInfo;
@@ -25,6 +24,15 @@ import pw.dotto.netmanager.R;
 import pw.dotto.netmanager.Utils.Mobile;
 import pw.dotto.netmanager.MainActivity;
 
+/**
+ * NetManager's Notifications manager class is the cell monitoring notification
+ * core component
+ * which coordinates all notification related operations for the cell monitoring
+ * service.
+ *
+ * @author DottoXD
+ * @version 0.0.5
+ */
 public class Manager {
     private final Service context;
 
@@ -45,7 +53,7 @@ public class Manager {
     /**
      * Sets up NetManager's notification channel for cell monitoring notifications.
      *
-     * @return Whether or not the operation was successful.
+     * @return Whether the operation was successful.
      */
     public boolean setupChannel() {
         if (context == null)
@@ -77,7 +85,7 @@ public class Manager {
         }
 
         if (selectedId < 0)
-            selectedId = new Random().nextInt(10);
+            selectedId = new Random().nextInt(9) + 1;
 
         Intent closingIntent = new Intent(context, Receiver.class);
         closingIntent.setAction("CLOSE_NOTIFICATION");
@@ -106,7 +114,7 @@ public class Manager {
             return false;
 
         if (selectedId < 0)
-            selectedId = new Random().nextInt(10);
+            selectedId = new Random().nextInt(9) + 1;
         notificationManager.notify(selectedId, activeNotification.build());
 
         return true;

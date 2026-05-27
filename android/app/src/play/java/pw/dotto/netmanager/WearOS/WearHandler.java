@@ -15,17 +15,26 @@ import pw.dotto.netmanager.Core.Manager;
 import pw.dotto.netmanager.Core.Mobile.CellSnapshot;
 import pw.dotto.netmanager.MainActivity;
 
+/**
+ * NetManager's WearHandler Play class is the core component of the Android <->
+ * WearOS bridge for NetManager.
+ *
+ * @author DottoXD
+ * @version 0.0.5
+ */
 public class WearHandler implements WearIntegration, MessageClient.OnMessageReceivedListener {
     private Context context;
     private Manager core;
 
-    @Override public void onCreate(Context context) {
+    @Override
+    public void onCreate(Context context) {
         this.context = context;
 
         if (context instanceof MainActivity) {
             this.core = ((MainActivity) context).getCore();
         }
     }
+
     @Override
     public void onResume() {
         Wearable.getMessageClient(context).addListener(this);
@@ -34,6 +43,16 @@ public class WearHandler implements WearIntegration, MessageClient.OnMessageRece
     @Override
     public void onPause() {
         Wearable.getMessageClient(context).removeListener(this);
+    }
+
+    @Override
+    public void onDestroy() {
+        if (context != null) {
+            Wearable.getMessageClient(context).removeListener(this);
+        }
+
+        this.context = null;
+        this.core = null;
     }
 
     /**

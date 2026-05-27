@@ -38,7 +38,7 @@ import pw.dotto.netmanager.WearOS.WearHandler;
  * This class also manages communications with WearOS devices.
  *
  * @author DottoXD
- * @version 0.0.4
+ * @version 0.0.5
  */
 public class MainActivity extends FlutterActivity {
   private static final String CHANNEL = "pw.dotto.netmanager/bridge";
@@ -381,7 +381,27 @@ public class MainActivity extends FlutterActivity {
         simReceiverManager.unregisterStateReceiver();
     }
 
+    Sensors sensors = Sensors.getInstance(this);
+    if (sensors != null) {
+      sensors.destroy();
+    }
+
+    Location locationFetcher = Location.getInstance(this);
+    if (locationFetcher != null) {
+      locationFetcher.dispose();
+    }
+
     super.onStop();
+  }
+
+  @Override
+  public void onDestroy() {
+    if (wearHandler != null) {
+      wearHandler.onDestroy();
+    }
+
+    core = null;
+    super.onDestroy();
   }
 
   @Override

@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/modals/record_modal.dart';
 import 'package:netmanager/components/utils/cell_utils.dart';
+import 'package:netmanager/components/utils/haptic_service.dart';
 import 'package:netmanager/components/utils/map_overlay.dart';
 import 'package:netmanager/components/utils/map_tile_builder.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
@@ -533,7 +534,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
             }
           }
         },
-        onTap: (tapPosition, point) {
+        onTap: (tapPosition, point) async {
           if (_selectedRecord != null) {
             setState(() {
               _selectedRecord = null;
@@ -562,7 +563,12 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                 width: isSelected ? 20 : 14,
                 height: isSelected ? 20 : 14,
                 child: GestureDetector(
-                  onTap: () {
+                  onTap: () async {
+                    await HapticService().triggerHaptic(
+                      HapticType.SELECTION,
+                      context,
+                    );
+
                     setState(() {
                       _selectedRecord = record;
                       _follow = false;
@@ -682,7 +688,12 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                     icon: const Icon(Icons.close_outlined, size: 24),
                     tooltip: "Close record card",
                     padding: EdgeInsets.zero,
-                    onPressed: () {
+                    onPressed: () async {
+                      await HapticService().triggerHaptic(
+                        HapticType.SELECTION,
+                        context,
+                      );
+
                       setState(() {
                         _selectedRecord = null;
                       });
@@ -722,7 +733,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                         if (!record.usable) ...[
                           const SizedBox(height: 2),
                           Text(
-                            "Network was unusable (Ping timed out)",
+                            "Ping timed out.",
                             style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(
                                   color: Theme.of(

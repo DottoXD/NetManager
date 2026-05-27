@@ -10,9 +10,7 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.os.Build;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
 import android.service.notification.StatusBarNotification;
 
 import androidx.annotation.Nullable;
@@ -45,7 +43,7 @@ import pw.dotto.netmanager.R;
  * all cell coverage recording actions.
  *
  * @author DottoXD
- * @version 0.0.4
+ * @version 0.0.5
  */
 public class Service extends android.app.Service {
     private static Service instance = null;
@@ -87,9 +85,15 @@ public class Service extends android.app.Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        core = new Manager(this);
         instance = this;
-        serviceLocationFetcher = Location.getInstance(this);
+
+        try {
+            startForeground();
+            core = new Manager(this);
+            serviceLocationFetcher = Location.getInstance(this);
+        } catch (Exception e) {
+            stopSelf();
+        }
     }
 
     public RecordedData getRecordedData() {
@@ -98,8 +102,17 @@ public class Service extends android.app.Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent == null) {
+            stopSelf();
+            return START_NOT_STICKY;
+        }
+
         if (executorService == null || executorService.isShutdown()) {
             executorService = Executors.newSingleThreadScheduledExecutor();
+        }
+
+        if (this.recordedData != null) {
+            return START_NOT_STICKY;
         }
 
         String name = intent.getStringExtra("name");
@@ -117,31 +130,6 @@ public class Service extends android.app.Service {
         this.trackUsable = trackUsable;
         this.usabilityTestUrl = usabilityTestUrl;
 
-        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel notificationChannel = notificationManager.getNotificationChannel(NOTIFICATION_CHANNEL);
-            if (notificationChannel == null) {
-                notificationChannel = new NotificationChannel(
-                        NOTIFICATION_CHANNEL,
-                        "NetManager Recording Service",
-                        NotificationManager.IMPORTANCE_MIN);
-
-                notificationChannel.enableVibration(false);
-                notificationManager.createNotificationChannel(notificationChannel);
-            }
-
-            for (StatusBarNotification notification : notificationManager.getActiveNotifications()) {
-                if (notification.getNotification().getChannelId().equals(NOTIFICATION_CHANNEL)) {
-                    selectedId = notification.getId();
-                    break;
-                }
-            }
-        }
-
-        if (selectedId < 0)
-            selectedId = new Random().nextInt(10);
-
         Intent closingIntent = new Intent(this, Receiver.class);
         closingIntent.setAction("CLOSE_RECORDING_NOTIFICATION");
         closingIntent.putExtra("id", selectedId);
@@ -152,7 +140,7 @@ public class Service extends android.app.Service {
         PendingIntent openPendingIntent = PendingIntent.getActivity(this, 0, openIntent,
                 PendingIntent.FLAG_IMMUTABLE);
 
-        Notification notification1 = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL)
+        Notification recordingNotification = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL)
                 .setContentTitle("NetManager Recording Service")
                 .setContentText("You are currently recording all cell data (" + name + ")")
                 .setSmallIcon(R.drawable.ic_launcher_monochrome)
@@ -162,15 +150,22 @@ public class Service extends android.app.Service {
                 .addAction(R.drawable.ic_launcher_monochrome, "Close", closingPendingIntent)
                 .build();
 
-        startForeground(selectedId, notification1);
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (notificationManager != null) {
+            notificationManager.notify(selectedId, recordingNotification);
+        }
 
-        recordedData = new RecordedData(core.getSimOperator(selectedSim), core.getPlmn(selectedSim));
-        executorService.scheduleWithFixedDelay(new Runnable() {
-            @Override
-            public void run() {
-                record();
-            }
-        }, 0, intervalSeconds, TimeUnit.SECONDS);
+        try {
+            recordedData = new RecordedData(core.getSimOperator(selectedSim), core.getPlmn(selectedSim));
+            executorService.scheduleWithFixedDelay(new Runnable() {
+                @Override
+                public void run() {
+                    record();
+                }
+            }, 0, intervalSeconds, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            stopSelf();
+        }
 
         return START_NOT_STICKY;
     }
@@ -208,6 +203,49 @@ public class Service extends android.app.Service {
                 recordedData.addRecord(record);
                 saveToFile();
             }
+        }
+    }
+
+    private void startForeground() {
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (notificationManager == null)
+            return;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel notificationChannel = notificationManager.getNotificationChannel(NOTIFICATION_CHANNEL);
+            if (notificationChannel == null) {
+                notificationChannel = new NotificationChannel(
+                        NOTIFICATION_CHANNEL,
+                        "NetManager Recording Service",
+                        NotificationManager.IMPORTANCE_MIN);
+
+                notificationChannel.enableVibration(false);
+                notificationManager.createNotificationChannel(notificationChannel);
+            }
+
+            for (StatusBarNotification notification : notificationManager.getActiveNotifications()) {
+                if (notification.getNotification().getChannelId().equals(NOTIFICATION_CHANNEL)) {
+                    selectedId = notification.getId();
+                    break;
+                }
+            }
+        }
+
+        if (selectedId < 0)
+            selectedId = new Random().nextInt(9) + 1;
+
+        Notification notification = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL)
+                .setContentTitle("NetManager Recording Service")
+                .setContentText("Initializing...")
+                .setSmallIcon(R.drawable.ic_launcher_monochrome)
+                .setSilent(true)
+                .setOngoing(true)
+                .build();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(selectedId, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
+        } else {
+            startForeground(selectedId, notification);
         }
     }
 
@@ -264,7 +302,7 @@ public class Service extends android.app.Service {
         instance = null;
 
         if (serviceLocationFetcher != null) {
-            serviceLocationFetcher.destroy();
+            serviceLocationFetcher.dispose();
             serviceLocationFetcher = null;
         }
 
