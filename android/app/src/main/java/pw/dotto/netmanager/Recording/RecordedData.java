@@ -2,8 +2,8 @@ package pw.dotto.netmanager.Recording;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * NetManager's RecordedData class is the component that contains all base
@@ -11,13 +11,13 @@ import java.util.List;
  * a cell coverage record.
  *
  * @author DottoXD
- * @version 0.0.4
+ * @version 0.0.5
  */
 public class RecordedData {
     private final String operator;
     private final String network;
     private final String date;
-    private final List<Record> records = new ArrayList<>();
+    private final List<Record> records = new CopyOnWriteArrayList<>();
 
     public RecordedData(String operator, String network) {
         this.operator = operator;

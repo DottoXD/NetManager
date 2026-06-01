@@ -202,42 +202,49 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
           _selectedServerNotifier.value = _servers[0];
         });
 
-        final List<Future<Map<String, dynamic>?>> futureServers = data.map((
-          server,
-        ) async {
-          String serverUrl = server["server"] ?? "";
-          if (serverUrl.isEmpty) return null;
+        final List<Map<String, dynamic>> validResults = [];
 
-          if (!serverUrl.endsWith('/')) serverUrl += '/';
-          if (serverUrl.startsWith("//")) serverUrl = "https:$serverUrl";
+        for (int i = 0; i < data.length; i += 5) {
+          final int end = i + 5 > data.length ? data.length : i + 5;
+          final List<dynamic> chunk = data.sublist(i, end);
 
-          serverUrl += server["dlURL"];
+          final List<Future<Map<String, dynamic>?>> chunkFutureServers = chunk
+              .map((server) async {
+                String serverUrl = server["server"] ?? "";
+                if (serverUrl.isEmpty) return null;
 
-          try {
-            final stopwatch = Stopwatch()..start();
-            final response = await http
-                .head(Uri.parse(serverUrl))
-                .timeout(Duration(milliseconds: 2000));
+                if (!serverUrl.endsWith('/')) serverUrl += '/';
+                if (serverUrl.startsWith("//")) serverUrl = "https:$serverUrl";
 
-            stopwatch.stop();
+                serverUrl += server["dlURL"];
 
-            if (response.statusCode >= 200 && response.statusCode < 300) {
-              return {
-                "server": server,
-                "latency": stopwatch.elapsedMilliseconds,
-              };
+                try {
+                  final stopwatch = Stopwatch()..start();
+                  final response = await http
+                      .head(Uri.parse(serverUrl))
+                      .timeout(Duration(milliseconds: 1000));
+
+                  stopwatch.stop();
+
+                  if (response.statusCode >= 200 && response.statusCode < 300) {
+                    return {
+                      "server": server,
+                      "latency": stopwatch.elapsedMilliseconds,
+                    };
+                  }
+                } catch (e) {
+                  //todo
+                }
+              })
+              .toList();
+
+          final chunkResults = await Future.wait(chunkFutureServers);
+          for (final result in chunkResults) {
+            if (result != null) {
+              validResults.add(result);
             }
-          } catch (e) {
-            //todo
           }
-        }).toList();
-
-        final results = await Future.wait(futureServers);
-
-        final List<Map<String, dynamic>> validResults = results
-            .where((result) => result != null)
-            .cast<Map<String, dynamic>>()
-            .toList();
+        }
 
         validResults.sort(
           (a, b) => (a["latency"] as int).compareTo(b["latency"] as int),
@@ -366,23 +373,21 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                     return Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        heroGauge(
-                          context,
-                          metrics.stage,
-                          metrics.latencyProgress,
-                          metrics.currentSpeed,
-                          metrics.maxSpeedScale,
-                          metrics.ping,
-                          metrics.downloadResult,
-                          metrics.uploadResult,
-                          _unitIndex,
+                        HeroGauge(
+                          stage: metrics.stage,
+                          latencyProgress: metrics.latencyProgress,
+                          currentSpeed: metrics.currentSpeed,
+                          maxSpeedScale: metrics.maxSpeedScale,
+                          ping: metrics.ping,
+                          downloadResult: metrics.downloadResult,
+                          uploadResult: metrics.uploadResult,
+                          unitIndex: _unitIndex,
                         ),
                         const SizedBox(height: 48),
-                        qualityMetrics(
-                          context,
-                          metrics.ping,
-                          metrics.jitter,
-                          metrics.packetLoss,
+                        QualityMetrics(
+                          ping: metrics.ping,
+                          jitter: metrics.jitter,
+                          packetLoss: metrics.packetLoss,
                         ),
                       ],
                     );
@@ -395,14 +400,13 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
         ValueListenableBuilder(
           valueListenable: _metricsNotifier,
           builder: (context, metrics, child) {
-            return speedResults(
-              context,
-              metrics.stage,
-              metrics.downloadResult,
-              metrics.uploadResult,
-              metrics.progress,
-              _startTest,
-              _unitIndex,
+            return SpeedResults(
+              stage: metrics.stage,
+              downloadResult: metrics.downloadResult,
+              uploadResult: metrics.uploadResult,
+              progress: metrics.progress,
+              startTest: _startTest,
+              unitIndex: _unitIndex,
             );
           },
         ),

@@ -2,45 +2,56 @@ import 'package:flutter/material.dart';
 import 'package:netmanager/components/base/body/speedtest/speedtest.dart';
 import 'package:netmanager/components/utils/speed_methods.dart';
 
-Widget liveView(
-  BuildContext context,
-  TestStage stage,
-  int ping,
-  double currentSpeed,
-  int unitIndex,
-) {
-  bool showingLatency = stage == TestStage.LATENCY;
-  return Column(
-    key: const ValueKey("live"),
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Text(
-        stage.name,
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-          letterSpacing: 4,
-          fontWeight: FontWeight.bold,
-          color: stage == TestStage.LATENCY
-              ? Theme.of(context).colorScheme.secondary
-              : (stage == TestStage.UPLOAD
-                    ? Theme.of(context).colorScheme.tertiary
-                    : Theme.of(context).colorScheme.primary),
+class LiveView extends StatelessWidget {
+  final TestStage stage;
+  final int ping;
+  final double currentSpeed;
+  final int unitIndex;
+
+  const LiveView({
+    super.key,
+    required this.stage,
+    required this.ping,
+    required this.currentSpeed,
+    required this.unitIndex,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    bool showingLatency = stage == TestStage.LATENCY;
+
+    return Column(
+      key: const ValueKey("live"),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          stage.name,
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            letterSpacing: 4,
+            fontWeight: FontWeight.bold,
+            color: stage == TestStage.LATENCY
+                ? Theme.of(context).colorScheme.secondary
+                : (stage == TestStage.UPLOAD
+                      ? Theme.of(context).colorScheme.tertiary
+                      : Theme.of(context).colorScheme.primary),
+          ),
         ),
-      ),
-      const SizedBox(height: 8),
-      Text(
-        showingLatency ? "$ping" : formatSpeed(currentSpeed, unitIndex),
-        style: Theme.of(context).textTheme.displayLarge?.copyWith(
-          fontSize: 72,
-          fontWeight: FontWeight.w300,
-          fontFeatures: [const FontFeature.tabularFigures()],
+        const SizedBox(height: 8),
+        Text(
+          showingLatency ? "$ping" : formatSpeed(currentSpeed, unitIndex),
+          style: Theme.of(context).textTheme.displayLarge?.copyWith(
+            fontSize: 72,
+            fontWeight: FontWeight.w300,
+            fontFeatures: [const FontFeature.tabularFigures()],
+          ),
         ),
-      ),
-      Text(
-        showingLatency ? "ms" : getUnitString(unitIndex),
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          color: Theme.of(context).colorScheme.outline,
+        Text(
+          showingLatency ? "ms" : getUnitString(unitIndex),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: Theme.of(context).colorScheme.outline,
+          ),
         ),
-      ),
-    ],
-  );
+      ],
+    );
+  }
 }

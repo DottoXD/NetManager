@@ -113,7 +113,12 @@ class _TopBarState extends State<TopBar> {
       return;
     }
 
-    final Map<String, dynamic> map = json.decode(rawDeviceData);
+    final device = json.decode(rawDeviceData);
+    if (device is! Map<String, dynamic>) {
+      return;
+    }
+
+    final Map<String, dynamic> map = device;
     late final DeviceData deviceData;
 
     try {

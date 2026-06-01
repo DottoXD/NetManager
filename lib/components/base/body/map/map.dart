@@ -4,13 +4,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:intl/intl.dart';
+import 'package:netmanager/components/base/body/map/widgets/live_map.dart';
+import 'package:netmanager/components/base/body/map/widgets/record_card.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/modals/record_modal.dart';
 import 'package:netmanager/components/utils/cell_utils.dart';
-import 'package:netmanager/components/utils/haptic_service.dart';
-import 'package:netmanager/components/utils/map_overlay.dart';
-import 'package:netmanager/components/utils/map_tile_builder.dart';
+import 'package:netmanager/components/base/body/map/widgets/map_overlay.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
 import 'package:netmanager/types/recording/recorded_data.dart';
 import 'package:netmanager/types/recording/record.dart';
@@ -46,10 +45,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
   late ValueNotifier<bool> recordingActionNotifier;
 
   late VoidCallback _signalListener;
-
-  final MapController mapController = MapController();
-  final String defaultMapTilesTemplate =
-      "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+  final MapController _mapController = MapController();
+  late AnimationController _animationController;
 
   RecordedData? _activeReplayData;
   List<Record> _liveRecords = [];
@@ -65,7 +62,6 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
   bool _follow = true;
   bool _dialogOpen = false;
-  bool _isLoading = true;
   bool metricSystem = true;
 
   Timer? _cellTimer;
@@ -84,9 +80,13 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     "N/A",
   ]);
 
+  final ValueNotifier<bool> mapLoadingNotifier = ValueNotifier(true);
+
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(vsync: this);
+
     platform = widget.platform;
     sharedPreferences = widget.sharedPreferences;
     recordingActionNotifier = widget.recordingActionNotifier;
@@ -178,9 +178,9 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                     Duration(milliseconds: 500),
                   );
                 } else {
-                  mapController.move(
+                  _mapController.move(
                     LatLng(data.records.first.lat, data.records.first.lon),
-                    mapController.camera.zoom,
+                    _mapController.camera.zoom,
                   );
                 }
               }
@@ -218,7 +218,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     _liveRecordTimer?.cancel();
 
     widget.platformSignalNotifier.removeListener(_signalListener);
-    mapController.dispose();
+    _mapController.dispose();
+    _animationController.dispose();
 
     super.dispose();
   }
@@ -266,7 +267,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
       if (init || _follow) {
         if (oldLocation == null) {
-          mapController.move(_currentLocation!, mapController.camera.zoom);
+          _mapController.move(_currentLocation!, _mapController.camera.zoom);
         } else {
           animatedUpdate(
             oldLocation,
@@ -349,9 +350,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
         signalStrength,
       ];
 
-      setState(() {
-        _isLoading = false;
-      });
+      mapLoadingNotifier.value = false;
     } catch (e) {
       if (!_dialogOpen) {
         _dialogOpen = true;
@@ -368,23 +367,33 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
   }
 
   void animatedUpdate(LatLng from, LatLng to, Duration duration) {
-    final tempController = AnimationController(vsync: this, duration: duration);
+    _animationController.stop();
+    _animationController.duration = duration;
+
     final latTween = Tween(begin: from.latitude, end: to.latitude);
     final lngTween = Tween(begin: from.longitude, end: to.longitude);
 
-    tempController.addListener(() {
+    late VoidCallback listener;
+
+    listener = () {
       if (mounted) {
-        mapController.move(
+        _mapController.move(
           LatLng(
-            latTween.evaluate(tempController),
-            lngTween.evaluate(tempController),
+            latTween.evaluate(_animationController),
+            lngTween.evaluate(_animationController),
           ),
-          mapController.camera.zoom,
+          _mapController.camera.zoom,
         );
       }
-    });
+    };
 
-    tempController.forward().then((_) => tempController.dispose());
+    _animationController.addListener(listener);
+
+    _animationController.forward().then((_) {
+      if (mounted) {
+        _animationController.removeListener(listener);
+      }
+    });
   }
 
   void liveRecordDataPoller() {
@@ -396,16 +405,15 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
       if (recordingActionNotifier.value && _activeReplayData == null) {
         try {
-          final String jsonStr = await platform.invokeMethod(
-            "getLiveRecording",
-          );
+          final jsonStr = await platform.invokeMethod("getLiveRecording");
           if (jsonStr != null) {
             final Map<String, dynamic> parsedJson = json.decode(jsonStr);
             final List<dynamic> recordsList = parsedJson["records"] ?? [];
 
             setState(() {
               _liveRecords = recordsList
-                  .map((item) => Record.fromJson(item as Map<String, dynamic>))
+                  .whereType<Map<String, dynamic>>()
+                  .map((item) => Record.fromJson(item))
                   .toList();
             });
           }
@@ -430,18 +438,47 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        Row(
-          children: [
-            Expanded(
-              child: _isLoading ? LinearProgressIndicator() : SizedBox.shrink(),
-            ),
-          ],
+        ValueListenableBuilder(
+          valueListenable: mapLoadingNotifier,
+          builder: (context, isLoading, _) {
+            return isLoading
+                ? const LinearProgressIndicator()
+                : const SizedBox.shrink();
+          },
         ),
         Expanded(
           child: Stack(
             children: [
-              getMap(context),
+              LiveMap(
+                mapController: _mapController,
+                currentLocation: _currentLocation,
+                selectedRecord: _selectedRecord,
+                recordingActive: recordingActionNotifier.value,
+                liveRecords: _liveRecords,
+                activeReplayData: _activeReplayData,
+                followUser: _follow,
+                sharedPreferences: sharedPreferences,
+                onMarkerTap: (record) {
+                  setState(() {
+                    _selectedRecord = record;
+                    _follow = false;
+                  });
 
+                  animatedUpdate(
+                    _mapController.camera.center,
+                    LatLng(record.lat, record.lon),
+                    const Duration(milliseconds: 500),
+                  );
+                },
+                onMapInteraction: (shouldUnfollow) {
+                  if (shouldUnfollow && _follow) {
+                    setState(() => _follow = false);
+                  }
+                },
+                onMapReady: () => mapLoadingNotifier.value = false,
+                onMapLoading: (loading) => mapLoadingNotifier.value = loading,
+                onClearSelection: () => setState(() => _selectedRecord = null),
+              ),
               Positioned(
                 top: 0,
                 left: 0,
@@ -449,31 +486,15 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    ValueListenableBuilder(
-                      valueListenable: displayValuesNotifier,
-                      builder: (context, values, child) {
-                        return mapOverlay(
-                          context,
-                          displayTitlesNotifier.value,
-                          values,
-                        );
-                      },
+                    MapOverlay(
+                      titlesNotifier: displayTitlesNotifier,
+                      valuesNotifier: displayValuesNotifier,
                     ),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      reverseDuration: const Duration(milliseconds: 200),
-                      switchInCurve: Curves.easeInOutCubic,
-                      switchOutCurve: Curves.easeInOutCubic,
-                      transitionBuilder:
-                          (Widget child, Animation<double> animation) {
-                            return FadeTransition(
-                              opacity: animation,
-                              child: child,
-                            );
-                          },
-                      child: _selectedRecord != null
-                          ? buildRecordCard()
-                          : const SizedBox.shrink(),
+                    RecordCard(
+                      selectedRecord: _selectedRecord,
+                      liveRecords: _liveRecords,
+                      activeReplayData: _activeReplayData,
+                      onClose: () => setState(() => _selectedRecord = null),
                     ),
                   ],
                 ),
@@ -482,297 +503,6 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
           ),
         ),
       ],
-    );
-  }
-
-  Widget getMap(BuildContext context) {
-    const gitCommit = String.fromEnvironment(
-      'GIT_COMMIT',
-      defaultValue: 'development',
-    );
-
-    final List<Record> visualPoints = [];
-    if (_activeReplayData != null) {
-      visualPoints.addAll(_activeReplayData!.records);
-    } else if (recordingActionNotifier.value) {
-      visualPoints.addAll(_liveRecords);
-    }
-
-    return FlutterMap(
-      mapController: mapController,
-      options: MapOptions(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        initialCenter: _currentLocation ?? LatLng(45.464664, 9.188540),
-        minZoom: 7.0,
-        maxZoom: 16.0,
-        initialZoom: 14.0,
-        interactionOptions: InteractionOptions(
-          flags:
-              InteractiveFlag.pinchZoom |
-              InteractiveFlag.drag |
-              InteractiveFlag.doubleTapZoom,
-        ),
-        onMapReady: () {
-          setState(() {
-            _isLoading = false;
-          });
-        },
-        onMapEvent: (event) {
-          if (event is MapEventMoveStart ||
-              event is MapEventMove ||
-              event is MapEventMoveEnd) {
-            _isLoading = event is! MapEventMoveEnd;
-            if (event.source == MapEventSource.multiFingerGestureStart ||
-                event.source == MapEventSource.multiFingerEnd ||
-                event.source == MapEventSource.dragStart ||
-                event.source == MapEventSource.dragEnd) {
-              if (_follow) {
-                setState(() {
-                  _follow = false;
-                });
-              }
-            }
-          }
-        },
-        onTap: (tapPosition, point) async {
-          if (_selectedRecord != null) {
-            setState(() {
-              _selectedRecord = null;
-            });
-          }
-        },
-      ),
-      children: <Widget>[
-        TileLayer(
-          urlTemplate:
-              sharedPreferences.getString("mapTilesTemplate") ??
-              defaultMapTilesTemplate,
-          tileBuilder: mapTileBuilder,
-          userAgentPackageName:
-              "pw.dotto.netmanager ($gitCommit) ${sharedPreferences.getString("mapTilesTemplate") != defaultMapTilesTemplate ? "(Customised by user)" : ""}",
-        ),
-        if (visualPoints.isNotEmpty)
-          MarkerLayer(
-            markers: visualPoints.map((record) {
-              final isSelected =
-                  _selectedRecord != null &&
-                  _selectedRecord!.dateTime == record.dateTime;
-
-              return Marker(
-                point: LatLng(record.lat, record.lon),
-                width: isSelected ? 20 : 14,
-                height: isSelected ? 20 : 14,
-                child: GestureDetector(
-                  onTap: () async {
-                    await HapticService().triggerHaptic(
-                      HapticType.SELECTION,
-                      context,
-                    );
-
-                    setState(() {
-                      _selectedRecord = record;
-                      _follow = false;
-                    });
-
-                    animatedUpdate(
-                      mapController.camera.center,
-                      LatLng(record.lat, record.lon),
-                      Duration(milliseconds: 500),
-                    );
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: _getSignalColor(
-                        record.networkGen,
-                        record.processedSignal,
-                      ).withValues(alpha: record.usable ? 1.0 : 0.2),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected
-                            ? Theme.of(context).colorScheme.primary
-                            : Colors.white,
-                        width: isSelected ? 2.5 : 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(
-                            alpha: isSelected ? 0.4 : 0.2,
-                          ),
-                          blurRadius: isSelected ? 4 : 2,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        if (_currentLocation != null)
-          MarkerLayer(
-            markers: [
-              Marker(
-                point: _currentLocation!,
-                width: 20,
-                height: 20,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primaryContainer.withValues(alpha: 0.9),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white, //color to be changed
-                      width: 2,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        SafeArea(
-          child: Align(
-            alignment: Alignment.bottomLeft,
-            child: ColoredBox(
-              color: Theme.of(context).colorScheme.surface,
-              child: GestureDetector(
-                child: Padding(
-                  padding: const EdgeInsets.all(3),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [const Text("© OpenStreetMap")],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget buildRecordCard() {
-    final record = _selectedRecord!;
-
-    int index = -1;
-    if (_liveRecords.isNotEmpty) {
-      index = _liveRecords.indexOf(_selectedRecord!);
-    } else if (_activeReplayData != null &&
-        _activeReplayData!.records.isNotEmpty) {
-      index = _activeReplayData!.records.indexOf(_selectedRecord!);
-    }
-
-    return Padding(
-      key: ValueKey(record.dateTime.toString()),
-      padding: const EdgeInsets.only(top: 8.0, left: 12.0, right: 12.0),
-      child: Card(
-        elevation: 1,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.all(14.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "${index >= 0 ? "Record #$index - " : ""}${record.networkGen < 2 ? "N/A" : "${record.networkGen}G"}",
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close_outlined, size: 24),
-                    tooltip: "Close record card",
-                    padding: EdgeInsets.zero,
-                    onPressed: () async {
-                      await HapticService().triggerHaptic(
-                        HapticType.SELECTION,
-                        context,
-                      );
-
-                      setState(() {
-                        _selectedRecord = null;
-                      });
-                    },
-                  ),
-                ],
-              ),
-              const Divider(height: 4),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Signal Strength",
-                          style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          "Timestamp",
-                          style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                        ),
-                        if (!record.usable) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            "Ping timed out.",
-                            style: Theme.of(context).textTheme.titleSmall
-                                ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                                ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        "${record.processedSignal}dBm",
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.secondary,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        DateFormat(
-                          "dd/MM/yyyy HH:mm:ss",
-                        ).format(record.dateTime.toLocal()),
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.secondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
@@ -792,27 +522,5 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
     _cellTimer?.cancel();
     startCellTimer();
-  }
-}
-
-Color _getSignalColor(int gen, int signal) {
-  double strength;
-
-  switch (gen) {
-    case 5:
-      strength = (signal.clamp(-135, -60) + 135) / 75;
-      return const Color(0xFF00C853).withValues(alpha: 0.2 + (strength * 0.7));
-    case 4:
-      strength = (signal.clamp(-135, -60) + 135) / 75;
-      return const Color(0xFF99CC00).withValues(alpha: 0.2 + (strength * 0.7));
-    case 3:
-      strength = (signal.clamp(-115, -60) + 115) / 55;
-      return const Color(0xFFFFAB00).withValues(alpha: 0.2 + (strength * 0.7));
-    case 2:
-      strength = (signal.clamp(-110, -50) + 110) / 60;
-      return const Color(0xFFFF3D00).withValues(alpha: 0.2 + (strength * 0.7));
-
-    default:
-      return const Color(0xFF9E9E9E).withValues(alpha: 0.5);
   }
 }

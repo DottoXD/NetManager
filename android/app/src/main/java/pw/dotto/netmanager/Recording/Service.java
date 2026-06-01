@@ -61,7 +61,7 @@ public class Service extends android.app.Service {
     private String usabilityTestUrl = "";
 
     public static final String NOTIFICATION_CHANNEL = "netmanager-rec";
-    private static final String DEFAULT_USABILITY_TEST_URL = "https://connectivitycheck.gstatic.com/generate_204";
+    private static final String DEFAULT_USABILITY_TEST_URL = "https://connectivitycheck.grapheneos.network/generate_204";
 
     private final OkHttpClient httpClient = new OkHttpClient.Builder()
             .connectTimeout(2, TimeUnit.SECONDS)

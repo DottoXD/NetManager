@@ -26,19 +26,6 @@ void main() async {
   if (!analytics || sentryDsn.isEmpty) {
     runApp(NetManager(prefs: sharedPreferences));
   } else {
-    /*FlutterError.onError = (FlutterErrorDetails details) async {
-      await Sentry.captureException(
-        details.exception,
-        stackTrace: details.stack,
-      );
-      FlutterError.presentError(details);
-    };
-
-    PlatformDispatcher.instance.onError = (error, stack) {
-      Sentry.captureException(error, stackTrace: stack);
-      return true;
-    };*/
-
     await SentryFlutter.init((options) {
       options.dsn = sentryDsn;
       options.sendDefaultPii = false;
