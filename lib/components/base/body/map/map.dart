@@ -173,7 +173,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                 });
                 if (_currentLocation != null) {
                   animatedUpdate(
-                    _currentLocation!,
+                    _mapController.camera.center,
                     LatLng(data.records.first.lat, data.records.first.lon),
                     Duration(milliseconds: 500),
                   );
@@ -270,7 +270,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
           _mapController.move(_currentLocation!, _mapController.camera.zoom);
         } else {
           animatedUpdate(
-            oldLocation,
+            _mapController.camera.center,
             _currentLocation!,
             Duration(milliseconds: 500),
           );
@@ -389,7 +389,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
     _animationController.addListener(listener);
 
-    _animationController.forward().then((_) {
+    _animationController.forward(from: 0.0).then((_) {
       if (mounted) {
         _animationController.removeListener(listener);
       }

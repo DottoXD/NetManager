@@ -1,9 +1,8 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/utils/haptic_service.dart';
+import 'package:netmanager/components/utils/screen_utils.dart';
 import 'package:netmanager/perms.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,6 +15,10 @@ void main() async {
       await SharedPreferences.getInstance();
 
   await HapticService().init(sharedPreferences);
+
+  if (isPhone()) {
+    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  }
 
   final bool analytics = sharedPreferences.getBool("analytics") ?? false;
   const String sentryDsn = String.fromEnvironment(
@@ -130,6 +133,33 @@ class _NetManagerState extends State<NetManager> {
                 useMaterial3: material3Notifier.value,
                 pageTransitionsTheme: transitionTheme,
               ),
+              builder: (context, child) {
+                return Builder(
+                  builder: (innerContext) {
+                    final isDark =
+                        Theme.of(innerContext).brightness == Brightness.dark;
+
+                    return AnnotatedRegion(
+                      value: SystemUiOverlayStyle(
+                        statusBarColor: Colors.transparent,
+                        statusBarIconBrightness: isDark
+                            ? Brightness.light
+                            : Brightness.dark,
+                        statusBarBrightness: isDark
+                            ? Brightness.dark
+                            : Brightness.light,
+                        systemNavigationBarColor: Theme.of(innerContext)
+                            .colorScheme
+                            .surface, // sdk < 27 -> make it Colors.black
+                        systemNavigationBarIconBrightness: isDark
+                            ? Brightness.light
+                            : Brightness.dark,
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+              },
               home: Perms(
                 widget.prefs,
                 dynamicThemeNotifier,

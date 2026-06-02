@@ -103,7 +103,7 @@ class _TopBarState extends State<TopBar> {
 
   void switchSim() async {
     await platform.invokeMethod("switchSim");
-    //await update(); - 0.0.5, after refactoring home; otherwise it'd be inconsistent with current home updates
+    await update();
   }
 
   void openInfo() async {

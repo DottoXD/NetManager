@@ -1,16 +1,16 @@
 import 'dart:convert';
-import 'dart:io';
-import 'dart:math';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:netmanager/components/base/body/home/widgets/cell_section.dart';
+import 'package:netmanager/components/base/body/home/widgets/empty_state.dart';
+import 'package:netmanager/components/base/body/home/widgets/loading_state.dart';
+import 'package:netmanager/components/base/body/home/widgets/network_data.dart';
+import 'package:netmanager/components/base/body/home/widgets/primary_cell_card.dart';
 import 'package:netmanager/components/utils/cell_utils.dart';
 import 'package:netmanager/components/utils/haptic_service.dart';
-import 'package:netmanager/types/cell/cell_data.dart';
+import 'package:netmanager/components/utils/screenshot_helper.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'dart:async';
 
@@ -49,31 +49,21 @@ class _HomeBodyState extends State<HomeBody> {
   late ValueNotifier<int> platformSignalNotifier;
   late ValueNotifier<bool> debugNotifier;
 
+  static const double cardWidth = 185;
+  static const double cardHeight = 75;
+
   final GlobalKey _captureKey = GlobalKey();
 
-  Widget _progressIndicator = LinearProgressIndicator();
-  bool _isUpdating = false;
+  final ValueNotifier<bool> _isUpdatingNotifier = ValueNotifier(false);
+  final ValueNotifier<bool> _altCellViewNotifier = ValueNotifier(false);
 
-  final double cardWidth = 185;
-  final double cardHeight = 75;
-
-  final int minRssi = -113;
-  final int maxRssi = -51;
-
-  final int minRsrp = -140;
-  final int maxRsrp = -43;
-
-  int simCount = 0;
-
+  int _simCount = 0;
   String _debug = "";
-  String plmn = "";
-  bool pageLoaded = false;
+  String _plmn = "";
+  bool _pageLoaded = false;
 
-  bool altCellView = false;
-
-  List<Widget> _mainData = <Widget>[];
-  List<Widget> _activeData = <Widget>[];
-  List<Widget> _neighborData = <Widget>[];
+  SIMData? _simData;
+  int _factor = 1;
 
   @override
   void initState() {
@@ -84,79 +74,48 @@ class _HomeBodyState extends State<HomeBody> {
     debugNotifier = widget.debugNotifier;
 
     widget.onUpdateButtonPressed?.call(update);
-    widget.onScreenshotButtonPressed?.call(screenshot);
+    widget.onScreenshotButtonPressed?.call(
+      () => ScreenshotHelper.captureAndShare(
+        context: context,
+        captureKey: _captureKey,
+        platform: platform,
+      ),
+    );
 
     startTimer();
 
-    widget.platformSignalNotifier.addListener(() {
-      restartTimer();
-    });
+    widget.platformSignalNotifier.addListener(restartTimer);
   }
 
   @override
   void dispose() {
     widget.onUpdateButtonPressed?.call(() {});
     widget.onScreenshotButtonPressed?.call(() {});
-
     timer.cancel();
+
+    _isUpdatingNotifier.dispose();
+    _altCellViewNotifier.dispose();
+
     super.dispose();
   }
 
-  void screenshot() async {
-    try {
-      final dir = await getTemporaryDirectory();
-
-      final exportFolder = Directory("${dir.path}/exports");
-      if (!exportFolder.existsSync()) {
-        await exportFolder.create();
-      }
-
-      RenderRepaintBoundary boundary =
-          _captureKey.currentContext!.findRenderObject()
-              as RenderRepaintBoundary;
-      final image = await boundary.toImage(pixelRatio: 3.0);
-      ByteData? byteData = await image.toByteData(format: ImageByteFormat.png);
-      Uint8List pngBytes = byteData!.buffer.asUint8List();
-      final file = File(
-        "${exportFolder.path}/${DateTime.now().toIso8601String().replaceAll(":", "-")}.png",
-      );
-      await file.writeAsBytes(pngBytes);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Screenshot saved at: ${file.path}"),
-            showCloseIcon: true,
-          ),
-        );
-      }
-
-      await platform.invokeMethod("share", {"path": file.path});
-    } catch (e) {
-      await platform.invokeMethod<bool>("showToast", {
-        "message": "An unexpected error occured!",
-      });
-    }
-  }
-
   Future<void> update() async {
-    if (_isUpdating) return;
-    _isUpdating = true;
+    if (_isUpdatingNotifier.value) return;
+
+    _isUpdatingNotifier.value = true;
 
     try {
-      simCount = await platform.invokeMethod("getSimCount") ?? 0;
+      _simCount = await platform.invokeMethod("getSimCount") ?? 0;
 
-      final String jsonStr = await platform.invokeMethod("getNetworkData");
-      plmn = (await platform.invokeMethod<String>("getPlmn"))!;
-
-      setState(() {
-        _progressIndicator = LinearProgressIndicator();
-      });
+      final jsonStr = await platform.invokeMethod("getNetworkData");
+      _plmn = (await platform.invokeMethod<String>("getPlmn"))!;
 
       if (jsonStr == null || jsonStr.isEmpty) {
         setState(() {
           _debug = "No network data.";
+          _simData = null;
         });
+
         return;
       }
 
@@ -169,339 +128,25 @@ class _HomeBodyState extends State<HomeBody> {
         setState(() {
           _debug = "$jsonStr\nError: $e";
         });
+
         return;
       }
 
-      final List<Widget> mainData = [];
-
-      int factor = conversionFactor(simData.primaryCell);
-
-      mainData.add(
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 7.5, vertical: 7.5),
-                child: Tooltip(
-                  message:
-                      (simData.primaryCell.cellIdentifier.contains("-1") ||
-                          simData.primaryCell.cellIdentifier == "0"
-                      ? "Unknown"
-                      : (altCellView
-                            ? "${simData.primaryCell.cellIdentifierString} (${simData.primaryCell.cellIdentifier})"
-                            : "${simData.primaryCell.nodeIdentifierString}/CID (${(int.tryParse(simData.primaryCell.cellIdentifier)! / factor).floor()}/${int.tryParse(simData.primaryCell.cellIdentifier)! % factor})")),
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      overlayColor: Theme.of(
-                        context,
-                      ).colorScheme.onPrimaryContainer.withAlpha(35),
-                      elevation: 1,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20.0),
-                      ),
-                      //margin: EdgeInsets.only(bottom: 5),
-                      padding: EdgeInsets.zero,
-                      backgroundColor: Theme.of(
-                        context,
-                      ).colorScheme.primaryContainer,
-                    ),
-                    onPressed: () async {
-                      await HapticService().triggerHaptic(
-                        HapticType.SELECTION,
-                        context,
-                      );
-
-                      setState(() {
-                        altCellView = !altCellView;
-                      });
-                    },
-                    child: Ink(
-                      width: cardWidth * 2,
-                      height: (cardHeight * 2) - 20,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          if (!(simData.primaryCell.cellIdentifier.contains(
-                                "-1",
-                              ) ||
-                              simData.primaryCell.cellIdentifier == "0")) ...[
-                            Text(
-                              (altCellView
-                                  ? simData.primaryCell.cellIdentifierString
-                                  : "${simData.primaryCell.nodeIdentifierString}/CID"),
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onPrimaryContainer,
-                              ),
-                            ),
-                            SizedBox(height: 3),
-                          ],
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              Icon(
-                                Icons.cell_tower_outlined,
-                                size: 40,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onPrimaryContainer,
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                (simData.primaryCell.cellIdentifier.contains(
-                                          "-1",
-                                        ) ||
-                                        simData.primaryCell.cellIdentifier ==
-                                            "0"
-                                    ? "Unknown"
-                                    : (altCellView
-                                          ? simData.primaryCell.cellIdentifier
-                                          : "${(int.tryParse(simData.primaryCell.cellIdentifier)! / factor).floor()}/${int.tryParse(simData.primaryCell.cellIdentifier)! % factor}")),
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onPrimaryContainer,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-
-      int timingAdvanceDistance = 0;
-      if (simData.primaryCell.channelNumberString == "ARFCN") {
-        // terrible (yet working) way of detecting gsm...
-        timingAdvanceDistance = simData.primaryCell.timingAdvance * 550;
-      } else {
-        timingAdvanceDistance = simData.primaryCell.timingAdvance * 78; // 78.12
-      }
-
-      final List<String> elements = [
-        simData.primaryCell.rawSignalString,
-        "${simData.primaryCell.rawSignal}dBm",
-        simData.primaryCell.processedSignalString,
-        "${simData.primaryCell.processedSignal}dBm",
-        simData.primaryCell.signalQualityString,
-        "${simData.primaryCell.signalQuality}dB",
-        simData.primaryCell.signalNoiseString,
-        "${simData.primaryCell.signalNoise}dB",
-        simData.primaryCell.channelNumberString,
-        simData.primaryCell.channelNumber.toString(),
-        simData.primaryCell.stationIdentityString,
-        simData.primaryCell.stationIdentity.toString(),
-        simData.primaryCell.areaCodeString,
-        simData.primaryCell.areaCode.toString(),
-        simData.primaryCell.timingAdvanceString,
-        (timingAdvanceDistance <= 0
-            ? simData.primaryCell.timingAdvance.toString()
-            : "${simData.primaryCell.timingAdvance} (${timingAdvanceDistance}m)"),
-        simData.primaryCell.bandwidthString,
-        "${simData.activeBw}MHz",
-        simData.primaryCell.bandString,
-        simData.primaryCell.band.toString(),
-      ];
-
-      final List<Widget> validCards = [];
-
-      for (int i = 0; i < elements.length - 1; i += 2) {
-        final String label = elements[i];
-        final String val = elements[i + 1];
-
-        if (!isValidString(val) || !isValidString(label)) {
-          continue;
-        }
-
-        validCards.add(
-          Tooltip(
-            message: label,
-            child: Card(
-              elevation: 1,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20.0),
-              ),
-              color: Theme.of(
-                context,
-              ).colorScheme.primaryContainer.withAlpha(230),
-              child: Container(
-                width: cardWidth,
-                height: cardHeight,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    ListTile(
-                      title: Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      subtitle: Text(val),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Icon(
-                            getTrailingIcon(simData, label),
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onPrimaryContainer,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      }
-
-      for (int i = 0; i < validCards.length; i += 2) {
-        final Widget leftCard = validCards[i];
-        final Widget rightCard = (i + 1 < validCards.length)
-            ? validCards[i + 1]
-            : Container(
-                width: cardWidth,
-                height: cardHeight,
-                margin: EdgeInsets.symmetric(vertical: 5),
-              );
-
-        mainData.add(
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 2.5, vertical: 2.5),
-                  child: leftCard,
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 2.5, vertical: 2.5),
-                  child: rightCard,
-                ),
-              ),
-            ],
-          ),
-        );
-      }
-
+      _factor = conversionFactor(simData.primaryCell);
       int? node = int.tryParse(simData.primaryCell.cellIdentifier);
 
       if (simData.activeCells.isEmpty && node != null) {
         simData.activeCells.add(simData.primaryCell);
       }
-
-      final List<CellData> tempActiveData = simData.activeCells;
-
       if (!isValidString(simData.primaryCell.cellIdentifier)) {
-        tempActiveData.clear();
+        simData.activeCells.clear();
       }
-
-      tempActiveData.sort(
+      simData.activeCells.sort(
         (a, b) => (b.isRegistered ? 1 : 0).compareTo(a.isRegistered ? 1 : 0),
       );
 
-      final List<Widget> activeData = tempActiveData.map((cell) {
-        String cellContent = createCellContent(cell).replaceAll(
-          "%node%",
-          (node != null ? "Likely ${(node / factor).floor()}" : "Unknown cell"),
-        );
-
-        List<IconData> icons = [
-          Icons.signal_cellular_0_bar_outlined,
-          Icons.signal_cellular_4_bar_outlined,
-          Icons.auto_awesome_outlined,
-          Icons.auto_awesome_rounded,
-          Icons.question_mark,
-        ];
-
-        int index = 4;
-
-        if (isValidInt(cell.processedSignal)) {
-          index =
-              ((min(max(cell.processedSignal, minRsrp), (maxRsrp - 15)) -
-                          minRsrp) /
-                      (((maxRsrp - 15) - minRsrp) / 2))
-                  .floor();
-        } else if (isValidInt(cell.rawSignal)) {
-          index =
-              ((min(max(cell.rawSignal, minRssi), (maxRssi - 15)) - minRssi) /
-                      (((maxRssi - 15) - minRssi) / 2))
-                  .floor();
-        }
-
-        if (index != 4 && cell.isRegistered) index += 2;
-
-        return Column(
-          children: [
-            ListTile(
-              title: Text(
-                (cell.basicCellData.band > 0
-                    ? "${cell.channelNumberString == "NR-ARFCN" ? "N" : "B"}${cell.basicCellData.band} ${isValidInt(cell.basicCellData.frequency) ? "(${cell.basicCellData.frequency}MHz)" : ""}"
-                    : "Unknown band"),
-              ),
-              subtitle: Text(cellContent),
-              trailing: Icon(
-                icons[index],
-                color: Theme.of(
-                  context,
-                ).colorScheme.onPrimaryContainer.withValues(alpha: 255 * 0.85),
-              ),
-            ),
-          ],
-        );
-      }).toList();
-
-      final List<Widget> neighborData = simData.neighborCells.map((cell) {
-        int i = simData.neighborCells.indexOf(cell);
-
-        String cellContent = createCellContent(cell).replaceAll(
-          "%node%",
-          (node != null && node != 0
-              ? "Likely ${(node / factor).floor()}"
-              : "Unknown cell"),
-        );
-
-        return Column(
-          children: [
-            ListTile(
-              title: Text(
-                (cell.basicCellData.band > 0
-                    ? "${cell.channelNumberString == "NR-ARFCN" ? "N" : "B"}${cell.basicCellData.band} ${isValidInt(cell.basicCellData.frequency) ? "(${cell.basicCellData.frequency}MHz)" : ""}"
-                    : "Unknown band"),
-              ),
-              subtitle: Text(cellContent),
-            ),
-            if (i != simData.neighborCells.length - 1)
-              Container(
-                margin: EdgeInsets.only(left: 5, right: 5),
-                child: Divider(
-                  height: 0,
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                ),
-              ),
-          ],
-        );
-      }).toList();
-
       setState(() {
-        _mainData = mainData;
-        _activeData = activeData;
-        _neighborData = neighborData;
-        _progressIndicator = SizedBox.shrink();
+        _simData = simData;
         _debug = jsonStr;
       });
     } on PlatformException catch (e) {
@@ -510,7 +155,9 @@ class _HomeBodyState extends State<HomeBody> {
         _debug = "PlatformException: ${e.toString()}";
       });
     } finally {
-      _isUpdating = false;
+      if (mounted) {
+        _isUpdatingNotifier.value = false;
+      }
     }
   }
 
@@ -522,128 +169,119 @@ class _HomeBodyState extends State<HomeBody> {
         kBottomNavigationBarHeight -
         MediaQuery.of(context).padding.top;
 
+    if (!homeLoadedNotifier.value) {
+      return LoadingState(minHeight: widgetsHeight);
+    }
+
+    if (_simCount == 0) {
+      return EmptyState(
+        minHeight: widgetsHeight,
+        icon: Icons.sim_card_alert_outlined,
+        message: "No SIM card detected",
+      );
+    }
+
+    if (homeLoadedNotifier.value && _plmn.isEmpty && _pageLoaded) {
+      return EmptyState(
+        minHeight: widgetsHeight,
+        icon: Icons.airplanemode_on_outlined,
+        message: "Airplane mode ON",
+      );
+    }
+
     return SingleChildScrollView(
       scrollDirection: Axis.vertical,
       child: Column(
         children: <Widget>[
-          if (!homeLoadedNotifier.value)
-            ConstrainedBox(
-              constraints: BoxConstraints(minHeight: widgetsHeight),
-              child: Center(
-                //test
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[CircularProgressIndicator()],
-                ),
-              ),
-            )
-          else if (simCount == 0)
-            ConstrainedBox(
-              constraints: BoxConstraints(minHeight: widgetsHeight),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Icon(
-                      Icons.sim_card_alert_outlined,
-                      size: 80,
-                      //color: Theme.of(context).colorScheme.primaryContainer,
-                    ),
-                    SizedBox(height: 20),
-                    Text(
-                      "No SIM card detected",
-                      style: TextStyle(fontSize: 22),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else if (homeLoadedNotifier.value && plmn.isEmpty && pageLoaded)
-            ConstrainedBox(
-              constraints: BoxConstraints(minHeight: widgetsHeight),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Icon(
-                      Icons.airplanemode_on,
-                      size: 80,
-                      //color: Theme.of(context).colorScheme.primaryContainer,
-                    ),
-                    SizedBox(height: 20),
-                    Text("Airplane mode on", style: TextStyle(fontSize: 22)),
-                  ],
-                ),
-              ),
-            )
-          else
-            Column(
-              children: [
-                Row(children: [Expanded(child: _progressIndicator)]),
-                RepaintBoundary(
-                  key: _captureKey,
-                  child: Material(
-                    color: Theme.of(context).colorScheme.surface,
-                    child: Column(
-                      children: [
-                        Container(
-                          margin: EdgeInsets.all(10.0),
-                          child: Column(children: _mainData),
-                        ),
-                        if (_activeData.isNotEmpty) ...[
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
-                            child: Text(
-                              "Active Cells",
-                              style: Theme.of(
-                                context,
-                              ).textTheme.titleMedium?.copyWith(fontSize: 18),
-                            ),
-                          ),
-                          Container(
-                            margin: EdgeInsets.all(10.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: _activeData,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-                if (_neighborData.isNotEmpty) ...[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
-                    child: Text(
-                      "Neighbor Cells",
-                      style: Theme.of(
-                        context,
-                      ).textTheme.titleMedium?.copyWith(fontSize: 18),
-                    ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.all(10.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: _neighborData,
+          Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: ValueListenableBuilder(
+                      valueListenable: _isUpdatingNotifier,
+                      builder: (context, isUpdating, child) {
+                        return isUpdating
+                            ? const LinearProgressIndicator()
+                            : const SizedBox(height: 4);
+                      },
                     ),
                   ),
                 ],
-                if (debugNotifier.value &&
-                    _debug.isNotEmpty &&
-                    _debug != "null")
-                  Container(
-                    margin: EdgeInsets.only(
-                      top: 10,
-                      left: 20,
-                      right: 20,
-                      bottom: 20,
-                    ),
-                    child: Text("Debug: $_debug"),
+              ),
+              RepaintBoundary(
+                key: _captureKey,
+                child: Material(
+                  color: Theme.of(context).colorScheme.surface,
+                  child: Column(
+                    children: [
+                      Container(
+                        margin: EdgeInsets.all(10.0),
+                        child: Column(
+                          children: [
+                            if (_simData != null) ...[
+                              PrimaryCellCard(
+                                cell: _simData!.primaryCell,
+                                altCellView: _altCellViewNotifier,
+                                factor: _factor,
+                                onToggle: () {
+                                  HapticService().triggerHaptic(
+                                    HapticType.SELECTION,
+                                    context,
+                                  );
+
+                                  _altCellViewNotifier.value =
+                                      !_altCellViewNotifier.value;
+                                },
+                                cardWidth: cardWidth,
+                                cardHeight: cardHeight,
+                              ),
+                              NetworkData(
+                                simData: _simData!,
+                                cardWidth: cardWidth,
+                                cardHeight: cardHeight,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      if (_simData != null && _simData!.activeCells.isNotEmpty)
+                        CellSection(
+                          title: "Active Cells",
+                          cells: _simData!.activeCells,
+                          factor: _factor,
+                          isActive: true,
+                        ),
+                    ],
                   ),
+                ),
+              ),
+              if (_simData != null && _simData!.neighborCells.isNotEmpty) ...[
+                CellSection(
+                  title: "Neighbor Cells",
+                  cells: _simData!.neighborCells,
+                  factor: _factor,
+                  isActive: false,
+                ),
               ],
-            ),
+              ValueListenableBuilder(
+                valueListenable: debugNotifier,
+                builder: (context, isDebugOn, child) {
+                  return isDebugOn && _debug.isNotEmpty && _debug != "null"
+                      ? Container(
+                          margin: const EdgeInsets.only(
+                            top: 10,
+                            left: 20,
+                            right: 20,
+                            bottom: 20,
+                          ),
+                          child: Text("Debug: $_debug"),
+                        )
+                      : const SizedBox.shrink();
+                },
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -656,7 +294,7 @@ class _HomeBodyState extends State<HomeBody> {
       if (!mounted) return;
 
       update();
-      pageLoaded = true;
+      _pageLoaded = true;
       homeLoadedNotifier.value = true;
     });
 
@@ -670,7 +308,7 @@ class _HomeBodyState extends State<HomeBody> {
 
   void restartTimer() {
     timer.cancel();
-    altCellView = false;
+    _altCellViewNotifier.value = false;
     startTimer();
   }
 }
