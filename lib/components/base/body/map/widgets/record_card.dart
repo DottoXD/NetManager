@@ -1,4 +1,4 @@
-import 'package:netmanager/components/utils/haptic_service.dart';
+import 'package:netmanager/utils/haptic_service.dart';
 import 'package:netmanager/types/recording/record.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';

@@ -7,9 +7,10 @@ import 'package:netmanager/components/base/body/home/widgets/empty_state.dart';
 import 'package:netmanager/components/base/body/home/widgets/loading_state.dart';
 import 'package:netmanager/components/base/body/home/widgets/network_data.dart';
 import 'package:netmanager/components/base/body/home/widgets/primary_cell_card.dart';
-import 'package:netmanager/components/utils/cell_utils.dart';
-import 'package:netmanager/components/utils/haptic_service.dart';
-import 'package:netmanager/components/utils/screenshot_helper.dart';
+import 'package:netmanager/database/cell_database.dart';
+import 'package:netmanager/utils/cell_utils.dart';
+import 'package:netmanager/utils/haptic_service.dart';
+import 'package:netmanager/utils/screenshot_helper.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'dart:async';
@@ -65,6 +66,8 @@ class _HomeBodyState extends State<HomeBody> {
   SIMData? _simData;
   int _factor = 1;
 
+  final Map<int, String> _cellDescriptions = {};
+
   @override
   void initState() {
     super.initState();
@@ -119,8 +122,18 @@ class _HomeBodyState extends State<HomeBody> {
         return;
       }
 
-      final Map<String, dynamic> map = json.decode(jsonStr);
+      late final Map<String, dynamic> map;
       late final SIMData simData;
+
+      try {
+        map = json.decode(jsonStr);
+      } catch (e) {
+        setState(() {
+          _debug = "$jsonStr\nError: $e";
+        });
+
+        return;
+      }
 
       try {
         simData = SIMData.fromJson(map);
@@ -145,9 +158,37 @@ class _HomeBodyState extends State<HomeBody> {
         (a, b) => (b.isRegistered ? 1 : 0).compareTo(a.isRegistered ? 1 : 0),
       );
 
+      // todo check sharedpreferences!!!!
+      final Set<int> cidsToSearch = {};
+
+      for (final cell in simData.activeCells) {
+        final int? cid = int.tryParse(cell.cellIdentifier);
+        if (cid != null) cidsToSearch.add(cid);
+      }
+
+      for (final cell in simData.neighborCells) {
+        final int? cid = int.tryParse(cell.cellIdentifier);
+        if (cid != null) cidsToSearch.add(cid);
+      }
+
+      _cellDescriptions.removeWhere((cid, _) => !cidsToSearch.contains(cid));
+      final Set<int> missingCids = cidsToSearch.difference(
+        _cellDescriptions.keys.toSet(),
+      );
+
+      if (missingCids.isNotEmpty && _plmn.isNotEmpty) {
+        Map<int, String> foundData = await CellDatabase.fetchCells(
+          _plmn,
+          cidsToSearch,
+        );
+
+        _cellDescriptions.addAll(foundData);
+      }
+
       setState(() {
         _simData = simData;
         _debug = jsonStr;
+        _cellDescriptions;
       });
     } on PlatformException catch (e) {
       await Sentry.captureException(e, stackTrace: e.stacktrace);
@@ -251,6 +292,7 @@ class _HomeBodyState extends State<HomeBody> {
                           cells: _simData!.activeCells,
                           factor: _factor,
                           isActive: true,
+                          descriptions: _cellDescriptions,
                         ),
                     ],
                   ),
@@ -262,6 +304,7 @@ class _HomeBodyState extends State<HomeBody> {
                   cells: _simData!.neighborCells,
                   factor: _factor,
                   isActive: false,
+                  descriptions: _cellDescriptions,
                 ),
               ],
               ValueListenableBuilder(

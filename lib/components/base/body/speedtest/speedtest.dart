@@ -232,9 +232,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                       "latency": stopwatch.elapsedMilliseconds,
                     };
                   }
-                } catch (e) {
-                  //todo
-                }
+                } catch (e) {}
               })
               .toList();
 

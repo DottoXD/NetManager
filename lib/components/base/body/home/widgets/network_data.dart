@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:netmanager/components/utils/cell_utils.dart';
+import 'package:netmanager/utils/cell_utils.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
 
 class NetworkData extends StatelessWidget {

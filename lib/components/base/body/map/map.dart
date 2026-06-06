@@ -8,7 +8,7 @@ import 'package:netmanager/components/base/body/map/widgets/live_map.dart';
 import 'package:netmanager/components/base/body/map/widgets/record_card.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/modals/record_modal.dart';
-import 'package:netmanager/components/utils/cell_utils.dart';
+import 'package:netmanager/utils/cell_utils.dart';
 import 'package:netmanager/components/base/body/map/widgets/map_overlay.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
 import 'package:netmanager/types/recording/recorded_data.dart';

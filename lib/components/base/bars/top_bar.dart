@@ -104,6 +104,8 @@ class _TopBarState extends State<TopBar> {
   void switchSim() async {
     await platform.invokeMethod("switchSim");
     await update();
+
+    platformSignalNotifier.value++;
   }
 
   void openInfo() async {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/services.dart';
-import 'package:netmanager/components/utils/haptic_service.dart';
-import 'package:netmanager/components/utils/screen_utils.dart';
+import 'package:netmanager/utils/haptic_service.dart';
+import 'package:netmanager/utils/screen_utils.dart';
 import 'package:netmanager/perms.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:netmanager/components/utils/haptic_service.dart';
+import 'package:netmanager/utils/haptic_service.dart';
 
 class ScreenshotButton extends StatelessWidget {
   final VoidCallback? onPressed;

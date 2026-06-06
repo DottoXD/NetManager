@@ -7,6 +7,7 @@ class CellSection extends StatelessWidget {
   final List<CellData> cells;
   final int factor;
   final bool isActive;
+  final Map<int, String> descriptions;
 
   const CellSection({
     super.key,
@@ -14,6 +15,7 @@ class CellSection extends StatelessWidget {
     required this.cells,
     required this.factor,
     required this.isActive,
+    required this.descriptions,
   });
 
   @override
@@ -25,6 +27,7 @@ class CellSection extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
           child: Text(
             title,
+            textAlign: TextAlign.center,
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontSize: 18),
@@ -46,6 +49,7 @@ class CellSection extends StatelessWidget {
                 showSignalIcon: isActive,
                 showDivider:
                     !isActive && cells.indexOf(cell) != cells.length - 1,
+                description: descriptions[nodeVal],
               );
             }).toList(),
           ),

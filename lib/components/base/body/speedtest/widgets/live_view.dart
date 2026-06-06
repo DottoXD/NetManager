@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:netmanager/components/base/body/speedtest/speedtest.dart';
-import 'package:netmanager/components/utils/speed_methods.dart';
+import 'package:netmanager/utils/speed_methods.dart';
 
 class LiveView extends StatelessWidget {
   final TestStage stage;

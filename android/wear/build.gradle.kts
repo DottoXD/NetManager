@@ -21,7 +21,7 @@ android {
         applicationId = "pw.dotto.netmanager"
         minSdk = 30
         targetSdk = 37
-        versionCode = 1
+        versionCode = 5
         versionName = "0.0.5"
     }
 

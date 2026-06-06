@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:netmanager/components/utils/check_update.dart';
-import 'package:netmanager/components/utils/haptic_service.dart';
+import 'package:netmanager/utils/check_update.dart';
+import 'package:netmanager/utils/haptic_service.dart';
 import 'package:netmanager/home.dart';
 import 'package:netmanager/types/device/permissions.dart';
 import 'package:shared_preferences/shared_preferences.dart';

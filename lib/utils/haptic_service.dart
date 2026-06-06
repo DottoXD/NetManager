@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:netmanager/components/dialogs/error.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum HapticType { SELECTION, LIGHT, MEDIUM, HEAVY }
@@ -26,7 +27,14 @@ class HapticService {
       try {
         await Feedback.forTap(context);
       } catch (e) {
-        //todo
+        if (context.mounted) {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return errorDialog(context, e);
+            },
+          );
+        }
       }
     }
 

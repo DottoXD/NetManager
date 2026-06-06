@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:netmanager/components/utils/speed_methods.dart';
+import 'package:netmanager/utils/speed_methods.dart';
 
 class ResultsColumn extends StatelessWidget {
   final String label;

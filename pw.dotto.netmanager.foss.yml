@@ -1,0 +1,46 @@
+Categories:
+  - System
+  - Internet
+AuthorName: DottoXD
+AuthorEmail: hi@dotto.pw
+AuthorWebsite: https://dotto.pw
+License: GPL-3.0-or-later
+WebSite: https://netmanager.dotto.pw
+SourceCode: https://github.com/DottoXD/NetManager
+IssueTracker: https://github.com/DottoXD/NetManager/issues
+
+AutoName: NetManager
+
+RepoType: git
+Repo: https://github.com/DottoXD/NetManager.git
+
+Builds:
+  - versionName: 0.0.5
+    versionCode: 5
+    output: build/app/outputs/flutter-apk/app-foss-release.apk
+    srclibs:
+      - flutter@stable
+    rm:
+      - ios
+      - linux
+      - macos
+      - test
+      - web
+      - windows
+    prebuild:
+      - export PUB_CACHE=$(pwd)/.pub-cache
+      - $$flutter$$/bin/flutter config --no-analytics
+      - $$flutter$$/bin/flutter packages pub get
+    scandelete:
+      - .pub-cache
+    build:
+      - export PUB_CACHE=$(pwd)/.pub-cache
+      - export PATH=$$flutter$$/bin/:$PATH
+      - export GIT_COMMIT=$(git rev-parse --short HEAD)
+      - $$flutter$$/bin/flutter build apk --release --flavor foss --dart-define=SENTRY_DSN=temp --dart-define=flutter.flutter_map.unblockOSM=temp --dart-define=GIT_COMMIT=$GIT_COMMIT --target-platform android-arm,android-arm64
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+UpdateCheckData: pubspec.yaml|version:\s.+\+(\d+)|.|version:\s(.+)\+
+CurrentVersion: 0.0.5
+CurrentVersionCode: 5

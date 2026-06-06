@@ -3,7 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:netmanager/components/base/body/map/widgets/location_dot.dart';
 import 'package:netmanager/components/base/body/map/widgets/visual_records.dart';
-import 'package:netmanager/components/utils/map_tile_builder.dart';
+import 'package:netmanager/utils/map_tile_builder.dart';
 import 'package:netmanager/types/recording/record.dart';
 import 'package:netmanager/types/recording/recorded_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';

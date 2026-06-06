@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:netmanager/components/utils/cell_utils.dart';
+import 'package:netmanager/utils/cell_utils.dart';
 import 'package:netmanager/types/cell/cell_data.dart';
 
 class CellListItem extends StatelessWidget {
@@ -10,6 +10,7 @@ class CellListItem extends StatelessWidget {
   final int factor;
   final bool showSignalIcon;
   final bool showDivider;
+  final String? description;
 
   const CellListItem({
     super.key,
@@ -18,6 +19,7 @@ class CellListItem extends StatelessWidget {
     required this.factor,
     required this.showSignalIcon,
     required this.showDivider,
+    this.description,
   });
 
   int _calculateIconIndex() {
@@ -46,6 +48,10 @@ class CellListItem extends StatelessWidget {
       "%node%",
       (nodeVal != 0 ? "Likely ${(nodeVal / factor).floor()}" : "Unknown cell"),
     );
+
+    if (description != null && description!.isNotEmpty) {
+      cellContent = "$description.\n$cellContent";
+    }
 
     List<IconData> icons = [
       Icons.signal_cellular_0_bar_outlined,

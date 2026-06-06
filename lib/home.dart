@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/base/body/map/map.dart';
-import 'package:netmanager/components/base/body/settings.dart';
+import 'package:netmanager/components/base/body/settings/settings.dart';
 import 'package:netmanager/components/base/body/speedtest/speedtest.dart';
 import 'package:netmanager/components/floating/position_button.dart';
 import 'package:netmanager/components/base/bars/top_bar.dart';

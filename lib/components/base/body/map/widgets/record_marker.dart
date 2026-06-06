@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:netmanager/components/utils/haptic_service.dart';
-import 'package:netmanager/components/utils/signal_color.dart';
+import 'package:netmanager/utils/haptic_service.dart';
+import 'package:netmanager/utils/signal_color.dart';
 import 'package:netmanager/types/recording/record.dart';
 
 class RecordMarker extends StatelessWidget {
