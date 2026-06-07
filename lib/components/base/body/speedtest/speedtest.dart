@@ -331,6 +331,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                                 : () {
                                     showModalBottomSheet(
                                       context: context,
+                                      showDragHandle: true,
                                       shape: const RoundedRectangleBorder(
                                         borderRadius: BorderRadius.vertical(
                                           top: Radius.circular(24.0),

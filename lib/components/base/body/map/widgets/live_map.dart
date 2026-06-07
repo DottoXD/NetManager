@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:netmanager/components/base/body/map/widgets/cell_towers.dart';
 import 'package:netmanager/components/base/body/map/widgets/location_dot.dart';
 import 'package:netmanager/components/base/body/map/widgets/visual_records.dart';
+import 'package:netmanager/types/database/cell_tower.dart';
 import 'package:netmanager/utils/map_tile_builder.dart';
 import 'package:netmanager/types/recording/record.dart';
 import 'package:netmanager/types/recording/recorded_data.dart';
@@ -17,6 +19,8 @@ class LiveMap extends StatelessWidget {
   final RecordedData? activeReplayData;
   final bool followUser;
   final SharedPreferences sharedPreferences;
+  final List<CellTower> cellTowers;
+  final Function(MapCamera camera) onPositionChanged;
   final ValueChanged<Record> onMarkerTap;
   final ValueChanged<bool> onMapInteraction;
   final VoidCallback onMapReady;
@@ -36,6 +40,8 @@ class LiveMap extends StatelessWidget {
     required this.activeReplayData,
     required this.followUser,
     required this.sharedPreferences,
+    required this.cellTowers,
+    required this.onPositionChanged,
     required this.onMarkerTap,
     required this.onMapInteraction,
     required this.onMapReady,
@@ -65,6 +71,9 @@ class LiveMap extends StatelessWidget {
         minZoom: 7.0,
         maxZoom: 16.0,
         initialZoom: 14.0,
+        onPositionChanged: (camera, hasGesture) {
+          onPositionChanged(camera);
+        },
         interactionOptions: InteractionOptions(
           flags:
               InteractiveFlag.pinchZoom |
@@ -103,6 +112,7 @@ class LiveMap extends StatelessWidget {
             selectedRecord: selectedRecord,
             onMarkerTap: onMarkerTap,
           ),
+        if (cellTowers.isNotEmpty) CellTowers(cellTowers: cellTowers),
         if (currentLocation != null)
           MarkerLayer(
             markers: [

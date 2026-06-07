@@ -8,6 +8,8 @@ import 'package:netmanager/components/base/body/map/widgets/live_map.dart';
 import 'package:netmanager/components/base/body/map/widgets/record_card.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/modals/record_modal.dart';
+import 'package:netmanager/database/cell_database.dart';
+import 'package:netmanager/types/database/cell_tower.dart';
 import 'package:netmanager/utils/cell_utils.dart';
 import 'package:netmanager/components/base/body/map/widgets/map_overlay.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
@@ -68,6 +70,10 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
   String cellId = "N/A";
   String signalStrength = "N/A";
   String signalStrengthString = "N/A";
+
+  LatLngBounds? _cachedBounds;
+  List<CellTower> _cachedCellTowers = [];
+  String _lastPlmn = "";
 
   final ValueNotifier<List<String>> displayTitlesNotifier = ValueNotifier([
     "Speed",
@@ -147,6 +153,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
       showModalBottomSheet(
         context: context,
+        showDragHandle: true,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
         ),
@@ -315,6 +322,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
       try {
         simData = SIMData.fromJson(map);
+        _lastPlmn = simData.networkPlmn;
       } catch (e) {
         return;
       }
@@ -434,6 +442,46 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     });
   }
 
+  void checkAndLoadTowers(LatLngBounds visibleBounds) async {
+    try {
+      if (_lastPlmn.isEmpty) return;
+
+      if (_cachedBounds != null &&
+          visibleBounds.southWest.latitude >=
+              _cachedBounds!.southWest.latitude &&
+          visibleBounds.northEast.latitude <=
+              _cachedBounds!.northEast.latitude &&
+          visibleBounds.southWest.longitude >=
+              _cachedBounds!.southWest.longitude &&
+          visibleBounds.northEast.longitude <=
+              _cachedBounds!.northEast.longitude) {
+        return;
+      }
+
+      const double spatialPadding = 0.03; // todo check if that's ok
+      final double minLat = visibleBounds.southWest.latitude - spatialPadding;
+      final double maxLat = visibleBounds.northEast.latitude + spatialPadding;
+      final double minLng = visibleBounds.southWest.longitude - spatialPadding;
+      final double maxLng = visibleBounds.northEast.longitude + spatialPadding;
+
+      final towers = await CellDatabase.fetchMapCellTowers(
+        plmn: _lastPlmn,
+        minLat: minLat,
+        maxLat: maxLat,
+        minLng: minLng,
+        maxLng: maxLng,
+      );
+
+      setState(() {
+        _cachedCellTowers = towers;
+        _cachedBounds = LatLngBounds(
+          LatLng(minLat, minLng),
+          LatLng(maxLat, maxLng),
+        );
+      });
+    } catch (e) {}
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -458,6 +506,10 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                 activeReplayData: _activeReplayData,
                 followUser: _follow,
                 sharedPreferences: sharedPreferences,
+                cellTowers: _cachedCellTowers,
+                onPositionChanged: (camera) {
+                  checkAndLoadTowers(camera.visibleBounds);
+                },
                 onMarkerTap: (record) {
                   setState(() {
                     _selectedRecord = record;
