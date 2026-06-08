@@ -25,7 +25,14 @@ class SettingsBody extends StatefulWidget {
     this.themeColorNotifier,
     this.material3Notifier,
     this.debugNotifier,
-    this.logsNotifier, {
+    this.logsNotifier,
+    this.updateIntervalNotifier,
+    this.metricSystemNotifier,
+    this.mapTilesTemplateNotifier,
+    this.speedMeasurementUnitNotifier,
+    this.speedtestInstanceNotifier,
+    this.externalDatabasesNotifier,
+    this.databaseCellsInMapNotifier, {
     super.key,
   });
 
@@ -38,6 +45,14 @@ class SettingsBody extends StatefulWidget {
 
   final ValueNotifier<bool> debugNotifier;
   final ValueNotifier<bool> logsNotifier;
+
+  final ValueNotifier<int> updateIntervalNotifier;
+  final ValueNotifier<bool> metricSystemNotifier;
+  final ValueNotifier<String> mapTilesTemplateNotifier;
+  final ValueNotifier<int> speedMeasurementUnitNotifier;
+  final ValueNotifier<String> speedtestInstanceNotifier;
+  final ValueNotifier<bool> externalDatabasesNotifier;
+  final ValueNotifier<bool> databaseCellsInMapNotifier;
 
   @override
   State<SettingsBody> createState() => _SettingsBodyState();
@@ -53,6 +68,14 @@ class _SettingsBodyState extends State<SettingsBody> {
 
   late ValueNotifier<bool> debugNotifier;
   late ValueNotifier<bool> logsNotifier;
+
+  late ValueNotifier<int> updateIntervalNotifier;
+  late ValueNotifier<bool> metricSystemNotifier;
+  late ValueNotifier<String> mapTilesTemplateNotifier;
+  late ValueNotifier<int> speedMeasurementUnitNotifier;
+  late ValueNotifier<String> speedtestInstanceNotifier;
+  late ValueNotifier<bool> externalDatabasesNotifier;
+  late ValueNotifier<bool> databaseCellsInMapNotifier;
 
   late TextEditingController _mapTilesTemplateController;
   late TextEditingController _speedtestInstanceController;
@@ -81,13 +104,12 @@ class _SettingsBodyState extends State<SettingsBody> {
   bool _material3 = true;
   bool _dynamicSupported = true;
   bool _dynamicTheme = true;
+  bool _debug = false;
 
   //Temporary
   bool _useNewCore = false;
 
   List<EventTypes> _loggedEventTypes = EventTypes.values.toList();
-
-  bool _debug = false;
 
   late String _positionPrecisionSelection;
   late String _speedMeasurementUnitSelection;
@@ -102,6 +124,13 @@ class _SettingsBodyState extends State<SettingsBody> {
     material3Notifier = widget.material3Notifier;
     debugNotifier = widget.debugNotifier;
     logsNotifier = widget.logsNotifier;
+    updateIntervalNotifier = widget.updateIntervalNotifier;
+    metricSystemNotifier = widget.metricSystemNotifier;
+    mapTilesTemplateNotifier = widget.mapTilesTemplateNotifier;
+    speedMeasurementUnitNotifier = widget.speedMeasurementUnitNotifier;
+    speedtestInstanceNotifier = widget.speedtestInstanceNotifier;
+    externalDatabasesNotifier = widget.externalDatabasesNotifier;
+    databaseCellsInMapNotifier = widget.databaseCellsInMapNotifier;
 
     updateData();
     _positionPrecisionSelection = positionPrecisions[_positionPrecision];
@@ -420,6 +449,7 @@ class _SettingsBodyState extends State<SettingsBody> {
             label: _updateInterval.toString(),
             onChanged: (double value) {
               setInt("updateInterval", value.toInt());
+              updateIntervalNotifier.value = value.toInt();
               updateData();
             },
           ),
@@ -596,6 +626,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                 );
 
                 setBool("metricSystem", value);
+                metricSystemNotifier.value = value;
                 updateData();
               },
             ),
@@ -627,6 +658,7 @@ class _SettingsBodyState extends State<SettingsBody> {
 
                 setString("mapTilesTemplate", value);
                 _mapTilesTemplate = value;
+                mapTilesTemplateNotifier.value = value;
               },
             ),
           ),
@@ -654,6 +686,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                       });
 
                       setInt("speedMeasurementUnit", index);
+                      speedMeasurementUnitNotifier.value = index;
                       updateData();
                     },
                   );
@@ -690,6 +723,7 @@ class _SettingsBodyState extends State<SettingsBody> {
 
                 setString("speedtestInstance", value);
                 _speedtestInstance = value;
+                speedtestInstanceNotifier.value = value;
               },
             ),
           ),
@@ -711,6 +745,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                 );
 
                 setBool("externalDatabases", value);
+                externalDatabasesNotifier.value = value;
                 updateData();
               },
             ),
@@ -731,6 +766,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                       );
 
                       setBool("databaseCellsInMap", value);
+                      databaseCellsInMapNotifier.value = value;
                       updateData();
                     },
                   )

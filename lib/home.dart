@@ -39,18 +39,30 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   int _currentPage = 0;
-  final ValueNotifier<bool> homeLoadedNotifier = ValueNotifier(false);
-  final ValueNotifier<int> platformSignalNotifier = ValueNotifier(0);
+  final ValueNotifier<bool> _homeLoadedNotifier = ValueNotifier(false);
+  final ValueNotifier<int> _platformSignalNotifier = ValueNotifier(0);
 
-  final ValueNotifier<bool> debugNotifier = ValueNotifier(false);
-  final ValueNotifier<bool> logsNotifier = ValueNotifier(false);
+  final ValueNotifier<bool> _debugNotifier = ValueNotifier(false);
+  final ValueNotifier<bool> _logsNotifier = ValueNotifier(false);
 
-  final ValueNotifier<bool> recordingActionNotifier = ValueNotifier(false);
+  final ValueNotifier<bool> _recordingActionNotifier = ValueNotifier(false);
 
   final ValueNotifier<VoidCallback?> _homeUpdateNotifier = ValueNotifier(null);
   final ValueNotifier<VoidCallback?> _screenshotNotifier = ValueNotifier(null);
   final ValueNotifier<VoidCallback?> _mapPositionNotifier = ValueNotifier(null);
   final ValueNotifier<VoidCallback?> _recordNotifier = ValueNotifier(null);
+
+  final ValueNotifier<int> _updateIntervalNotifier = ValueNotifier(3);
+  final ValueNotifier<bool> _metricSystemNotifier = ValueNotifier(true);
+  final ValueNotifier<String> _mapTilesTemplateNotifier = ValueNotifier(
+    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+  );
+  final ValueNotifier<int> _speedMeasurementUnitNotifier = ValueNotifier(1);
+  final ValueNotifier<String> _speedtestInstanceNotifier = ValueNotifier(
+    "https://librespeed.org",
+  );
+  final ValueNotifier<bool> _externalDatabasesNotifier = ValueNotifier(true);
+  final ValueNotifier<bool> _databaseCellsInMapNotifier = ValueNotifier(true);
 
   @override
   void initState() {
@@ -60,14 +72,32 @@ class _HomeState extends State<Home> {
 
     widget.platform.setMethodCallHandler((call) {
       if (call.method == "restartTimer") {
-        platformSignalNotifier.value++;
+        _platformSignalNotifier.value++;
       }
 
       return Future.value();
     });
 
-    debugNotifier.value = widget.sharedPreferences.getBool("debug") ?? false;
-    logsNotifier.value = widget.sharedPreferences.getBool("logEvents") ?? false;
+    _debugNotifier.value = widget.sharedPreferences.getBool("debug") ?? false;
+    _logsNotifier.value =
+        widget.sharedPreferences.getBool("logEvents") ?? false;
+
+    _updateIntervalNotifier.value =
+        widget.sharedPreferences.getInt("updateInterval") ?? 3;
+    _metricSystemNotifier.value =
+        widget.sharedPreferences.getBool("metricSystem") ?? true;
+    _mapTilesTemplateNotifier.value =
+        widget.sharedPreferences.getString("mapTilesTemplate") ??
+        "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+    _speedMeasurementUnitNotifier.value =
+        widget.sharedPreferences.getInt("speedMeasurementUnit") ?? 1;
+    _speedtestInstanceNotifier.value =
+        widget.sharedPreferences.getString("speedtestInstance") ??
+        "https://librespeed.org";
+    _externalDatabasesNotifier.value =
+        widget.sharedPreferences.getBool("externalDatabases") ?? true;
+    _databaseCellsInMapNotifier.value =
+        widget.sharedPreferences.getBool("databaseCellsInMap") ?? true;
 
     try {
       widget.platform.invokeMethod<bool>("requestPermissions", {
@@ -95,16 +125,24 @@ class _HomeState extends State<Home> {
   void dispose() {
     widget.platform.setMethodCallHandler(null);
 
-    homeLoadedNotifier.dispose();
-    platformSignalNotifier.dispose();
-    debugNotifier.dispose();
-    logsNotifier.dispose();
-    recordingActionNotifier.dispose();
+    _homeLoadedNotifier.dispose();
+    _platformSignalNotifier.dispose();
+    _debugNotifier.dispose();
+    _logsNotifier.dispose();
+    _recordingActionNotifier.dispose();
 
     _homeUpdateNotifier.dispose();
     _screenshotNotifier.dispose();
     _mapPositionNotifier.dispose();
     _recordNotifier.dispose();
+
+    _updateIntervalNotifier.dispose();
+    _metricSystemNotifier.dispose();
+    _mapTilesTemplateNotifier.dispose();
+    _speedMeasurementUnitNotifier.dispose();
+    _speedtestInstanceNotifier.dispose();
+    _externalDatabasesNotifier.dispose();
+    _databaseCellsInMapNotifier.dispose();
 
     super.dispose();
   }
@@ -132,8 +170,8 @@ class _HomeState extends State<Home> {
         appBar: TopBar(
           widget.platform,
           widget.sharedPreferences,
-          platformSignalNotifier,
-          logsNotifier,
+          _platformSignalNotifier,
+          _logsNotifier,
         ),
         bottomNavigationBar: NavBar(updatePage, _currentPage),
         body: IndexedStack(
@@ -142,9 +180,11 @@ class _HomeState extends State<Home> {
             HomeBody(
               widget.platform,
               widget.sharedPreferences,
-              homeLoadedNotifier,
-              platformSignalNotifier,
-              debugNotifier,
+              _homeLoadedNotifier,
+              _platformSignalNotifier,
+              _debugNotifier,
+              _updateIntervalNotifier,
+              _externalDatabasesNotifier,
               onUpdateButtonPressed: (callback) {
                 _homeUpdateNotifier.value = callback;
               },
@@ -155,8 +195,13 @@ class _HomeState extends State<Home> {
             MapBody(
               widget.platform,
               widget.sharedPreferences,
-              platformSignalNotifier,
-              recordingActionNotifier,
+              _platformSignalNotifier,
+              _recordingActionNotifier,
+              _updateIntervalNotifier,
+              _metricSystemNotifier,
+              _mapTilesTemplateNotifier,
+              _databaseCellsInMapNotifier,
+              _externalDatabasesNotifier,
               onPositionButtonPressed: (callback) {
                 _mapPositionNotifier.value = callback;
               },
@@ -164,15 +209,27 @@ class _HomeState extends State<Home> {
                 _recordNotifier.value = callback;
               },
             ),
-            SpeedtestBody(widget.platform, widget.sharedPreferences),
+            SpeedtestBody(
+              widget.platform,
+              widget.sharedPreferences,
+              _speedMeasurementUnitNotifier,
+              _speedtestInstanceNotifier,
+            ),
             SettingsBody(
               widget.platform,
               widget.sharedPreferences,
               widget.dynamicThemeNotifier,
               widget.themeColorNotifier,
               widget.material3Notifier,
-              debugNotifier,
-              logsNotifier,
+              _debugNotifier,
+              _logsNotifier,
+              _updateIntervalNotifier,
+              _metricSystemNotifier,
+              _mapTilesTemplateNotifier,
+              _speedMeasurementUnitNotifier,
+              _speedtestInstanceNotifier,
+              _externalDatabasesNotifier,
+              _databaseCellsInMapNotifier,
             ),
           ],
         ),
@@ -199,7 +256,7 @@ class _HomeState extends State<Home> {
                   valueListenable: _recordNotifier,
                   builder: (context, callback, _) => RecordButton(
                     onPressed: callback,
-                    recordingActionNotifier: recordingActionNotifier,
+                    recordingActionNotifier: _recordingActionNotifier,
                   ),
                 ),
                 const SizedBox(height: 4),

@@ -28,19 +28,14 @@ class CellTowers extends StatelessWidget {
                 context: context,
                 showDragHandle: true,
                 isScrollControlled: true,
+                useSafeArea: true,
                 shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.vertical(
                     top: Radius.circular(24.0),
                   ),
                 ),
                 backgroundColor: Theme.of(context).colorScheme.surface,
-                builder: (BuildContext context) => DraggableScrollableSheet(
-                  builder:
-                      (
-                        BuildContext context,
-                        ScrollController scrollController,
-                      ) => towerModal(context, tower),
-                ),
+                builder: (BuildContext context) => towerModal(context, tower),
               );
 
               onTowerTap(tower.getLatLng());

@@ -16,7 +16,17 @@ enum TestStage { IDLE, LATENCY, DOWNLOAD, UPLOAD, FINISHED }
 class SpeedtestBody extends StatefulWidget {
   final MethodChannel platform;
   final SharedPreferences sharedPreferences;
-  const SpeedtestBody(this.platform, this.sharedPreferences, {super.key});
+
+  final ValueNotifier<int> speedMeasurementUnitNotifier;
+  final ValueNotifier<String> speedtestInstanceUrlNotifier;
+
+  const SpeedtestBody(
+    this.platform,
+    this.sharedPreferences,
+    this.speedMeasurementUnitNotifier,
+    this.speedtestInstanceUrlNotifier, {
+    super.key,
+  });
 
   @override
   State<SpeedtestBody> createState() => _SpeedtestBodyState();
@@ -34,10 +44,19 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
   final ValueNotifier<Map<String, dynamic>?> _selectedServerNotifier =
       ValueNotifier(null);
 
-  late String _speedtestServer;
   List<dynamic> _servers = [];
-  int _unitIndex = 1;
   int _fetchServersRetries = 0;
+
+  String _getSpeedtestServer() {
+    String url = widget.speedtestInstanceUrlNotifier.value.trim().isEmpty
+        ? defaultSpeedtestServer
+        : widget.speedtestInstanceUrlNotifier.value.trim();
+
+    if (url.endsWith("/")) {
+      url = url.substring(0, url.length - 1);
+    }
+    return url;
+  }
 
   @override
   void initState() {
@@ -45,18 +64,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     platform = widget.platform;
     sharedPreferences = widget.sharedPreferences;
 
-    _speedtestServer =
-        sharedPreferences.getString("speedtestInstance") ??
-        defaultSpeedtestServer;
-
-    _unitIndex = widget.sharedPreferences.getInt("speedMeasurementUnit") ?? 1;
-
-    if (_speedtestServer.endsWith("/")) {
-      _speedtestServer = _speedtestServer.substring(
-        0,
-        _speedtestServer.length - 1,
-      ); // risky? yes
-    }
+    widget.speedtestInstanceUrlNotifier.addListener(_onServerUrlChanged);
 
     _fetchServers();
 
@@ -143,12 +151,18 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     _selectedServerNotifier.dispose();
     _metricsNotifier.dispose();
     platform.setMethodCallHandler(null);
+    widget.speedtestInstanceUrlNotifier.removeListener(_onServerUrlChanged);
     super.dispose();
   }
 
+  void _onServerUrlChanged() {
+    _fetchServersRetries = 0;
+    _fetchServers();
+  }
+
   Future<void> _fetchServers() async {
-    String primaryUrl = "$_speedtestServer/server-list.json";
-    String fallbackUrl = "$_speedtestServer/backend-servers/servers.php";
+    String primaryUrl = "${_getSpeedtestServer()}/server-list.json";
+    String fallbackUrl = "${_getSpeedtestServer()}/backend-servers/servers.php";
 
     try {
       final response = await http
@@ -298,8 +312,6 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDefaultServer = _speedtestServer == defaultSpeedtestServer;
-
     return Column(
       children: [
         Expanded(
@@ -367,28 +379,33 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                   },
                 ),
                 ValueListenableBuilder(
-                  valueListenable: _metricsNotifier,
-                  builder: (context, metrics, child) {
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        HeroGauge(
-                          stage: metrics.stage,
-                          latencyProgress: metrics.latencyProgress,
-                          currentSpeed: metrics.currentSpeed,
-                          maxSpeedScale: metrics.maxSpeedScale,
-                          ping: metrics.ping,
-                          downloadResult: metrics.downloadResult,
-                          uploadResult: metrics.uploadResult,
-                          unitIndex: _unitIndex,
-                        ),
-                        const SizedBox(height: 48),
-                        QualityMetrics(
-                          ping: metrics.ping,
-                          jitter: metrics.jitter,
-                          packetLoss: metrics.packetLoss,
-                        ),
-                      ],
+                  valueListenable: widget.speedMeasurementUnitNotifier,
+                  builder: (context, unitIndex, child) {
+                    return ValueListenableBuilder(
+                      valueListenable: _metricsNotifier,
+                      builder: (context, metrics, child) {
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            HeroGauge(
+                              stage: metrics.stage,
+                              latencyProgress: metrics.latencyProgress,
+                              currentSpeed: metrics.currentSpeed,
+                              maxSpeedScale: metrics.maxSpeedScale,
+                              ping: metrics.ping,
+                              downloadResult: metrics.downloadResult,
+                              uploadResult: metrics.uploadResult,
+                              unitIndex: unitIndex,
+                            ),
+                            const SizedBox(height: 48),
+                            QualityMetrics(
+                              ping: metrics.ping,
+                              jitter: metrics.jitter,
+                              packetLoss: metrics.packetLoss,
+                            ),
+                          ],
+                        );
+                      },
                     );
                   },
                 ),
@@ -397,34 +414,49 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
           ),
         ),
         ValueListenableBuilder(
-          valueListenable: _metricsNotifier,
-          builder: (context, metrics, child) {
-            return SpeedResults(
-              stage: metrics.stage,
-              downloadResult: metrics.downloadResult,
-              uploadResult: metrics.uploadResult,
-              progress: metrics.progress,
-              startTest: _startTest,
-              unitIndex: _unitIndex,
+          valueListenable: widget.speedMeasurementUnitNotifier,
+          builder: (context, unitIndex, child) {
+            return ValueListenableBuilder(
+              valueListenable: _metricsNotifier,
+              builder: (context, metrics, child) {
+                return SpeedResults(
+                  stage: metrics.stage,
+                  downloadResult: metrics.downloadResult,
+                  uploadResult: metrics.uploadResult,
+                  progress: metrics.progress,
+                  startTest: _startTest,
+                  unitIndex: unitIndex,
+                );
+              },
             );
           },
         ),
-        if (isDefaultServer)
-          Container(
-            width: double.maxFinite,
-            padding: const EdgeInsets.fromLTRB(12.0, 6.0, 12.0, 20.0),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerLow,
-            ),
-            child: Text(
-              "Powered by LibreSpeed",
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 12,
+        ValueListenableBuilder(
+          valueListenable: widget.speedtestInstanceUrlNotifier,
+          builder: (context, urlValue, child) {
+            final bool isDefaultServer =
+                urlValue.trim().isEmpty ||
+                urlValue.trim() == defaultSpeedtestServer;
+
+            if (!isDefaultServer) return const SizedBox.shrink();
+
+            return Container(
+              width: double.maxFinite,
+              padding: const EdgeInsets.fromLTRB(12.0, 6.0, 12.0, 20.0),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
               ),
-            ),
-          ),
+              child: Text(
+                "Powered by LibreSpeed",
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                ),
+              ),
+            );
+          },
+        ),
       ],
     );
   }

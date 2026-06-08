@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/base/body/home/widgets/cell_section.dart';
@@ -23,7 +24,9 @@ class HomeBody extends StatefulWidget {
     this.sharedPreferences,
     this.homeLoadedNotifier,
     this.platformSignalNotifier,
-    this.debugNotifier, {
+    this.debugNotifier,
+    this.updateIntervalNotifier,
+    this.externalDatabasesNotifier, {
     super.key,
     this.onUpdateButtonPressed,
     this.onScreenshotButtonPressed,
@@ -34,6 +37,8 @@ class HomeBody extends StatefulWidget {
   final ValueNotifier<bool> homeLoadedNotifier;
   final ValueNotifier<int> platformSignalNotifier;
   final ValueNotifier<bool> debugNotifier;
+  final ValueNotifier<int> updateIntervalNotifier;
+  final ValueNotifier<bool> externalDatabasesNotifier;
 
   final ValueSetter<VoidCallback>? onUpdateButtonPressed;
   final ValueSetter<VoidCallback>? onScreenshotButtonPressed;
@@ -88,6 +93,7 @@ class _HomeBodyState extends State<HomeBody> {
     startTimer();
 
     widget.platformSignalNotifier.addListener(restartTimer);
+    widget.updateIntervalNotifier.addListener(restartTimer);
   }
 
   @override
@@ -95,6 +101,9 @@ class _HomeBodyState extends State<HomeBody> {
     widget.onUpdateButtonPressed?.call(() {});
     widget.onScreenshotButtonPressed?.call(() {});
     timer.cancel();
+
+    widget.platformSignalNotifier.removeListener(restartTimer);
+    widget.updateIntervalNotifier.removeListener(restartTimer);
 
     _isUpdatingNotifier.dispose();
     _altCellViewNotifier.dispose();
@@ -107,11 +116,11 @@ class _HomeBodyState extends State<HomeBody> {
 
     _isUpdatingNotifier.value = true;
 
+    final stopwatch = Stopwatch()..start();
+
     try {
       _simCount = await platform.invokeMethod("getSimCount") ?? 0;
-
-      final jsonStr = await platform.invokeMethod("getNetworkData");
-      _plmn = (await platform.invokeMethod<String>("getPlmn"))!;
+      final jsonStr = await platform.invokeMethod("getNetworkData") ?? "";
 
       if (jsonStr == null || jsonStr.isEmpty) {
         setState(() {
@@ -122,11 +131,10 @@ class _HomeBodyState extends State<HomeBody> {
         return;
       }
 
-      late final Map<String, dynamic> map;
-      late final SIMData simData;
+      late final SIMData? simData;
 
       try {
-        map = json.decode(jsonStr);
+        simData = await compute<String, SIMData?>(_parseSimData, jsonStr);
       } catch (e) {
         setState(() {
           _debug = "$jsonStr\nError: $e";
@@ -135,15 +143,9 @@ class _HomeBodyState extends State<HomeBody> {
         return;
       }
 
-      try {
-        simData = SIMData.fromJson(map);
-      } catch (e) {
-        setState(() {
-          _debug = "$jsonStr\nError: $e";
-        });
+      if (simData == null) return;
 
-        return;
-      }
+      _plmn = simData.networkPlmn;
 
       _factor = conversionFactor(simData.primaryCell);
       int? node = int.tryParse(simData.primaryCell.cellIdentifier);
@@ -158,7 +160,6 @@ class _HomeBodyState extends State<HomeBody> {
         (a, b) => (b.isRegistered ? 1 : 0).compareTo(a.isRegistered ? 1 : 0),
       );
 
-      // todo check sharedpreferences!!!!
       final Set<int> cidsToSearch = {};
 
       for (final cell in simData.activeCells) {
@@ -176,7 +177,9 @@ class _HomeBodyState extends State<HomeBody> {
         _cellDescriptions.keys.toSet(),
       );
 
-      if (missingCids.isNotEmpty && _plmn.isNotEmpty) {
+      if (widget.externalDatabasesNotifier.value &&
+          missingCids.isNotEmpty &&
+          _plmn.isNotEmpty) {
         Map<int, String> foundData = await CellDatabase.fetchCells(
           _plmn,
           cidsToSearch,
@@ -196,10 +199,26 @@ class _HomeBodyState extends State<HomeBody> {
         _debug = "PlatformException: ${e.toString()}";
       });
     } finally {
+      stopwatch.stop();
+      final elapsed = stopwatch.elapsedMilliseconds;
+
+      if (elapsed < 100) {
+        await Future.delayed(Duration(milliseconds: 100 - elapsed));
+      }
+
       if (mounted) {
         _isUpdatingNotifier.value = false;
       }
     }
+  }
+
+  SIMData? _parseSimData(String jsonStr) {
+    if (jsonStr == "null" || jsonStr.trim().isEmpty) {
+      return null;
+    }
+
+    final Map<String, dynamic> map = json.decode(jsonStr);
+    return SIMData.fromJson(map);
   }
 
   @override
@@ -292,7 +311,9 @@ class _HomeBodyState extends State<HomeBody> {
                           cells: _simData!.activeCells,
                           factor: _factor,
                           isActive: true,
-                          descriptions: _cellDescriptions,
+                          descriptions: widget.externalDatabasesNotifier.value
+                              ? _cellDescriptions
+                              : {},
                         ),
                     ],
                   ),
@@ -304,7 +325,9 @@ class _HomeBodyState extends State<HomeBody> {
                   cells: _simData!.neighborCells,
                   factor: _factor,
                   isActive: false,
-                  descriptions: _cellDescriptions,
+                  descriptions: widget.externalDatabasesNotifier.value
+                      ? _cellDescriptions
+                      : {},
                 ),
               ],
               ValueListenableBuilder(
@@ -342,7 +365,7 @@ class _HomeBodyState extends State<HomeBody> {
     });
 
     timer = Timer.periodic(
-      Duration(seconds: sharedPreferences.getInt("updateInterval") ?? 3),
+      Duration(seconds: widget.updateIntervalNotifier.value),
       (Timer t) {
         update();
       },

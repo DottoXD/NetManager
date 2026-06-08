@@ -23,7 +23,12 @@ class MapBody extends StatefulWidget {
     this.platform,
     this.sharedPreferences,
     this.platformSignalNotifier,
-    this.recordingActionNotifier, {
+    this.recordingActionNotifier,
+    this.updateIntervalNotifier,
+    this.metricSystemNotifier,
+    this.mapTilesTemplateNotifier,
+    this.databaseCellsInMapNotifier,
+    this.externalDatabaseNotifier, {
     super.key,
     this.onPositionButtonPressed,
     this.onRecordButtonPressed,
@@ -33,6 +38,13 @@ class MapBody extends StatefulWidget {
   final SharedPreferences sharedPreferences;
   final ValueNotifier<int> platformSignalNotifier;
   final ValueNotifier<bool> recordingActionNotifier;
+
+  final ValueNotifier<int> updateIntervalNotifier;
+  final ValueNotifier<bool> metricSystemNotifier;
+  final ValueNotifier<String> mapTilesTemplateNotifier;
+  final ValueNotifier<bool> databaseCellsInMapNotifier;
+  final ValueNotifier<bool> externalDatabaseNotifier;
+
   final ValueSetter<VoidCallback>? onPositionButtonPressed;
   final ValueSetter<VoidCallback>? onRecordButtonPressed;
 
@@ -47,6 +59,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
   late ValueNotifier<bool> recordingActionNotifier;
 
   late VoidCallback _signalListener;
+  late VoidCallback _updateIntervalListener;
+
   final MapController _mapController = MapController();
   late AnimationController _animationController;
 
@@ -64,7 +78,6 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
   bool _follow = true;
   bool _dialogOpen = false;
-  bool metricSystem = true;
 
   Timer? _cellTimer;
   String cellId = "N/A";
@@ -91,6 +104,9 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
   final ValueNotifier<bool> _mapLoadingNotifier = ValueNotifier(true);
 
+  bool get _metricSystem => widget.metricSystemNotifier.value;
+  int get _updateInterval => widget.updateIntervalNotifier.value;
+
   @override
   void initState() {
     super.initState();
@@ -100,7 +116,14 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     sharedPreferences = widget.sharedPreferences;
     recordingActionNotifier = widget.recordingActionNotifier;
 
-    metricSystem = sharedPreferences.getBool("metricSystem") ?? true;
+    _updateIntervalListener = () {
+      _cellTimer?.cancel();
+      startCellTimer();
+      _timer?.cancel();
+      updateLocation();
+    };
+
+    widget.updateIntervalNotifier.addListener(_updateIntervalListener);
 
     widget.onRecordButtonPressed?.call(() async {
       if (_activeReplayData != null) {
@@ -176,7 +199,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                 _displayValuesNotifier.value = [
                   data.operator,
                   data.network,
-                  sharedPreferences.getBool("metricSystem") ?? true
+                  _metricSystem
                       ? "${data.date.day}/${data.date.month}"
                       : "${data.date.month}/${data.date.day}",
                 ];
@@ -234,6 +257,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     _liveRecordTimer?.cancel();
 
     widget.platformSignalNotifier.removeListener(_signalListener);
+    widget.updateIntervalNotifier.removeListener(_updateIntervalListener);
+
     _mapController.dispose();
     _animationController.dispose();
 
@@ -258,33 +283,46 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
       LatLng newLocation = LatLng(lat, lon);
 
       if (_lastLocation != null && _lastUpdateTime != null) {
-        final dist = Distance().as(
-          LengthUnit.Meter,
-          _lastLocation!,
-          newLocation,
-        );
-        final time =
-            DateTime.now().difference(_lastUpdateTime!).inMilliseconds / 1000.0;
+        if (newLocation.latitude != _lastLocation!.latitude ||
+            newLocation.longitude != _lastLocation!.longitude) {
+          final dist = Distance().as(
+            LengthUnit.Meter,
+            _lastLocation!,
+            newLocation,
+          );
+          final time =
+              DateTime.now().difference(_lastUpdateTime!).inMilliseconds /
+              1000.0;
 
-        if (time > 0) {
-          final speed = dist / time;
-          _speedKmh = speed * 3.6;
+          if (time > 0) {
+            final speed = dist / time;
+            _speedKmh = speed * 3.6;
 
-          if (_speedKmh > 500) _speedKmh = 0; // hard limit of 500km/h
+            if (_speedKmh > 500) _speedKmh = 0; // hard limit of 500km/h
+          }
+
+          _lastLocation = newLocation;
+          _lastUpdateTime = DateTime.now();
+        } else {
+          if (DateTime.now().difference(_lastUpdateTime!).inSeconds > 10) {
+            _speedKmh = 0.0;
+          }
         }
+      } else {
+        _lastLocation = newLocation;
+        _lastUpdateTime = DateTime.now();
       }
-
-      _lastLocation = newLocation;
-      _lastUpdateTime = DateTime.now();
 
       LatLng? oldLocation;
       if (_currentLocation != null) {
         oldLocation = _currentLocation!;
       }
 
-      setState(() {
-        _currentLocation = LatLng(lat, lon);
-      });
+      if (mounted) {
+        setState(() {
+          _currentLocation = newLocation;
+        });
+      }
 
       if (init || _follow) {
         if (oldLocation == null) {
@@ -369,7 +407,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
       _displayTitlesNotifier.value = ["Speed", "Cell ID", signalStrengthString];
       _displayValuesNotifier.value = [
-        (metricSystem
+        (_metricSystem
             ? "${_speedKmh.toStringAsFixed(1)}km/h"
             : "${(_speedKmh / 1.609).toStringAsFixed(1)}mph"),
         cellId,
@@ -620,12 +658,11 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
   void startCellTimer() {
     updateCellInfo();
 
-    _cellTimer = Timer.periodic(
-      Duration(seconds: sharedPreferences.getInt("updateInterval") ?? 3),
-      (timer) async {
-        if (mounted) updateCellInfo();
-      },
-    );
+    _cellTimer = Timer.periodic(Duration(seconds: _updateInterval), (
+      timer,
+    ) async {
+      if (mounted) updateCellInfo();
+    });
   }
 
   void restartTimer() {
