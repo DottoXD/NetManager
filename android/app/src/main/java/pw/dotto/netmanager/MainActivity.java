@@ -381,6 +381,10 @@ public class MainActivity extends FlutterActivity {
         simReceiverManager.unregisterStateReceiver();
     }
 
+    if (core != null) {
+      core.dispose();
+    }
+
     Sensors sensors = Sensors.getInstance(this);
     if (sensors != null) {
       sensors.destroy();

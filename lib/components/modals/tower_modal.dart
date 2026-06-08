@@ -3,20 +3,16 @@ import 'package:netmanager/types/database/cell_tower.dart';
 
 Widget towerModal(BuildContext context, CellTower cellTower) {
   return Padding(
-    padding: const EdgeInsets.fromLTRB(16.0, 4.0, 16.0, 16.0),
+    padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
     child: Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Cell tower",
+          cellTower.getLatLng().toSexagesimal(),
           style: Theme.of(
             context,
           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        Text(
-          cellTower.getLatLng().toSexagesimal(),
-          style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 8),
         const Divider(),
@@ -39,7 +35,7 @@ Widget towerModal(BuildContext context, CellTower cellTower) {
                   child: Text(
                     "${cell.networkGen}G",
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: genColor,
                     ),
@@ -50,7 +46,7 @@ Widget towerModal(BuildContext context, CellTower cellTower) {
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 subtitle: Text(
-                  "CID: ${cell.cid}. ${cell.channelNumber != null ? "ARFCN: ${cell.channelNumber}" : ""}",
+                  "CID: ${cell.cid}. ${cell.channelNumber != null && cell.channelNumber != 0 ? "ARFCN: ${cell.channelNumber}" : ""}",
                 ),
               );
             },

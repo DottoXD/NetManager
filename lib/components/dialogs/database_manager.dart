@@ -72,10 +72,25 @@ class DatabaseManagerDialog extends StatelessWidget {
       final db = await CellDatabase.getDatabase();
       final file = File(selectedFile.path);
 
-      final lines = file
-          .openRead()
-          .transform(utf8.decoder)
-          .transform(const LineSplitter());
+      final Stream<String> lines;
+
+      try {
+        lines = file
+            .openRead()
+            .transform(utf8.decoder)
+            .transform(const LineSplitter());
+      } catch (e) {
+        if (context.mounted) {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return errorDialog(context, e);
+            },
+          );
+        }
+
+        return;
+      }
 
       int operationsCounter = 0;
       Batch batch = db.batch();

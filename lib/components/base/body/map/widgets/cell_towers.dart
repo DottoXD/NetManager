@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:netmanager/components/modals/tower_modal.dart';
 import 'package:netmanager/types/database/cell_tower.dart';
 
 class CellTowers extends StatelessWidget {
   final List<CellTower> cellTowers;
+  final Function(LatLng latLng) onTowerTap;
 
-  const CellTowers({super.key, required this.cellTowers});
+  const CellTowers({
+    super.key,
+    required this.cellTowers,
+    required this.onTowerTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -14,20 +20,31 @@ class CellTowers extends StatelessWidget {
       markers: cellTowers.map((tower) {
         return Marker(
           point: tower.getLatLng(),
-          width: 24,
-          height: 24,
+          width: 32,
+          height: 32,
           child: GestureDetector(
-            onTap: () => showModalBottomSheet(
-              context: context,
-              showDragHandle: true,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
-              ),
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              builder: (BuildContext context) {
-                return towerModal(context, tower);
-              },
-            ),
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                showDragHandle: true,
+                isScrollControlled: true,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(24.0),
+                  ),
+                ),
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                builder: (BuildContext context) => DraggableScrollableSheet(
+                  builder:
+                      (
+                        BuildContext context,
+                        ScrollController scrollController,
+                      ) => towerModal(context, tower),
+                ),
+              );
+
+              onTowerTap(tower.getLatLng());
+            },
             child: Container(
               decoration: BoxDecoration(
                 color: Theme.of(

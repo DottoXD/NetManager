@@ -1287,4 +1287,33 @@ public class Manager {
   public EventManager getEventManager() {
     return eventManager;
   }
+
+  public void dispose() {
+      SubscriptionManager subscriptionManager = getSubscriptionManager();
+      if (subscriptionManager != null && subscriptionChangedListener != null) {
+        try {
+          subscriptionManager.removeOnSubscriptionsChangedListener(subscriptionChangedListener);
+        } catch (Exception ignored) {}
+      }
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+      try {
+        if (firstManager != null) {
+          if (nsa[0] != null) firstManager.unregisterTelephonyCallback(nsa[0]);
+          if (serviceStates[0] != null) firstManager.unregisterTelephonyCallback(serviceStates[0]);
+          if (dataStates[0] != null) firstManager.unregisterTelephonyCallback(dataStates[0]);
+          if (signalStrengths[0] != null) firstManager.unregisterTelephonyCallback(signalStrengths[0]);
+        }
+        if (secondManager != null) {
+          if (nsa[1] != null) secondManager.unregisterTelephonyCallback(nsa[1]);
+          if (serviceStates[1] != null) secondManager.unregisterTelephonyCallback(serviceStates[1]);
+          if (dataStates[1] != null) secondManager.unregisterTelephonyCallback(dataStates[1]);
+          if (signalStrengths[1] != null) secondManager.unregisterTelephonyCallback(signalStrengths[1]);
+        }
+      } catch (Exception ignored) {}
+    }
+
+    if (physicalChannelDumpers[0] != null) physicalChannelDumpers[0].dispose();
+    if (physicalChannelDumpers[1] != null) physicalChannelDumpers[1].dispose();
+  }
 }

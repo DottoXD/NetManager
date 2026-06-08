@@ -45,7 +45,6 @@ class MapOverlay extends StatelessWidget {
                           titlesNotifier.value[index],
                           style: Theme.of(context).textTheme.labelLarge
                               ?.copyWith(
-                                //letterSpacing: 4,
                                 fontWeight: FontWeight.bold,
                                 color: Theme.of(context).colorScheme.secondary,
                               ),

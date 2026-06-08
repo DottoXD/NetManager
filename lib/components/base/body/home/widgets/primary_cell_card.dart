@@ -71,7 +71,6 @@ class PrimaryCellCard extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20.0),
                       ),
-                      //margin: EdgeInsets.only(bottom: 5),
                       padding: EdgeInsets.zero,
                       backgroundColor: Theme.of(
                         context,

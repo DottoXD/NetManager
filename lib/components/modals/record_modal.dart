@@ -14,7 +14,7 @@ Widget recordModal(
   Function() triggerPooler,
 ) {
   return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 24.0),
+    padding: const EdgeInsets.only(bottom: 16.0),
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [

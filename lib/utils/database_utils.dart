@@ -5,10 +5,16 @@ Future<String?> extractPlmnFromFirstLine(String path, bool isClf) async {
   final file = File(path);
   if (!file.existsSync()) return null;
 
-  final lines = file
-      .openRead()
-      .transform(utf8.decoder)
-      .transform(const LineSplitter());
+  final Stream<String> lines;
+
+  try {
+    lines = file
+        .openRead()
+        .transform(utf8.decoder)
+        .transform(const LineSplitter());
+  } catch (e) {
+    return null;
+  }
 
   await for (final line in lines) {
     if (line.trim().isEmpty || line.startsWith("#")) continue;

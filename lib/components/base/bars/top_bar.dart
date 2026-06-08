@@ -54,7 +54,7 @@ class _TopBarState extends State<TopBar> {
     platformSignalNotifier = widget.platformSignalNotifier;
     logsNotifier = widget.logsNotifier;
 
-    platformSignalNotifier.addListener(() => _restartTimer());
+    platformSignalNotifier.addListener(_restartTimer);
 
     _startTimer();
     _init();
@@ -87,7 +87,7 @@ class _TopBarState extends State<TopBar> {
       _carrier =
           (await platform.invokeMethod<String>("getCarrier")) ?? "Unknown";
       _plmn = (await platform.invokeMethod<String>("getPlmn")) ?? "00000";
-      _gen = await platform.invokeMethod<int>("getNetworkGen") as int;
+      _gen = await platform.invokeMethod<int>("getNetworkGen") ?? -1;
 
       if (!mounted) return;
 

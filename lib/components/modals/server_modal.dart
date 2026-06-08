@@ -8,7 +8,7 @@ Widget serverModal(
 ) {
   return ListView.builder(
     shrinkWrap: true,
-    padding: const EdgeInsets.symmetric(vertical: 16),
+    padding: const EdgeInsets.only(bottom: 16),
     itemCount: servers.length,
     itemBuilder: (context, i) {
       final sponsorName = servers[i]["sponsorName"];

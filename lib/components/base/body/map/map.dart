@@ -72,21 +72,24 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
   String signalStrengthString = "N/A";
 
   LatLngBounds? _cachedBounds;
-  List<CellTower> _cachedCellTowers = [];
   String _lastPlmn = "";
+  bool _isMapReady = false;
+  double? _lastQueryZoom;
 
-  final ValueNotifier<List<String>> displayTitlesNotifier = ValueNotifier([
+  final ValueNotifier<List<CellTower>> _cellTowersNotifier = ValueNotifier([]);
+
+  final ValueNotifier<List<String>> _displayTitlesNotifier = ValueNotifier([
     "Speed",
     "Cell ID",
     "Signal",
   ]);
-  final ValueNotifier<List<String>> displayValuesNotifier = ValueNotifier([
+  final ValueNotifier<List<String>> _displayValuesNotifier = ValueNotifier([
     "N/A",
     "N/A",
     "N/A",
   ]);
 
-  final ValueNotifier<bool> mapLoadingNotifier = ValueNotifier(true);
+  final ValueNotifier<bool> _mapLoadingNotifier = ValueNotifier(true);
 
   @override
   void initState() {
@@ -101,15 +104,19 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
     widget.onRecordButtonPressed?.call(() async {
       if (_activeReplayData != null) {
-        displayTitlesNotifier.value = <String>["Speed", "Cell ID", "Signal"];
-        displayValuesNotifier.value = <String>["N/A", "N/A", "N/A"];
+        _displayTitlesNotifier.value = <String>["Speed", "Cell ID", "Signal"];
+        _displayValuesNotifier.value = <String>["N/A", "N/A", "N/A"];
 
         setState(() {
           _activeReplayData = null;
           recordingActionNotifier.value = false;
 
+          _cellTimer?.cancel();
           startCellTimer();
+
+          _timer?.cancel();
           updateLocation();
+
           _selectedRecord = null;
           _liveRecords = [];
         });
@@ -165,8 +172,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
             recordingActionNotifier,
             (data) {
               if (data.records.isNotEmpty) {
-                displayTitlesNotifier.value = ["Carrier", "PLMN", "Date"];
-                displayValuesNotifier.value = [
+                _displayTitlesNotifier.value = ["Carrier", "PLMN", "Date"];
+                _displayValuesNotifier.value = [
                   data.operator,
                   data.network,
                   sharedPreferences.getBool("metricSystem") ?? true
@@ -209,9 +216,11 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
       });
 
       setLocation(false);
+      _timer?.cancel();
       updateLocation();
     });
 
+    _cellTimer?.cancel();
     startCellTimer();
 
     _signalListener = restartTimer;
@@ -227,6 +236,11 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     widget.platformSignalNotifier.removeListener(_signalListener);
     _mapController.dispose();
     _animationController.dispose();
+
+    _cellTowersNotifier.dispose();
+    _displayTitlesNotifier.dispose();
+    _displayValuesNotifier.dispose();
+    _mapLoadingNotifier.dispose();
 
     super.dispose();
   }
@@ -307,6 +321,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
   }
 
   void updateLocation() async {
+    _timer?.cancel();
     _timer = Timer.periodic(Duration(seconds: 3), (timer) async {
       if (mounted) await setLocation(false);
     });
@@ -322,12 +337,15 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
       try {
         simData = SIMData.fromJson(map);
-        _lastPlmn = simData.networkPlmn;
       } catch (e) {
         return;
       }
 
       if (!mounted) return;
+
+      final String currentPlmn = simData.networkPlmn;
+      final bool plmnChanged = _lastPlmn != currentPlmn;
+      _lastPlmn = currentPlmn;
 
       signalStrength = "${simData.primaryCell.processedSignal}dBm";
       signalStrengthString = simData.primaryCell.processedSignalString;
@@ -349,8 +367,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
         cellId = "N/A";
       }
 
-      displayTitlesNotifier.value = ["Speed", "Cell ID", signalStrengthString];
-      displayValuesNotifier.value = [
+      _displayTitlesNotifier.value = ["Speed", "Cell ID", signalStrengthString];
+      _displayValuesNotifier.value = [
         (metricSystem
             ? "${_speedKmh.toStringAsFixed(1)}km/h"
             : "${(_speedKmh / 1.609).toStringAsFixed(1)}mph"),
@@ -358,7 +376,16 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
         signalStrength,
       ];
 
-      mapLoadingNotifier.value = false;
+      _mapLoadingNotifier.value = false;
+
+      if (plmnChanged) {
+        _cachedBounds = null;
+        _lastQueryZoom = null;
+
+        if (_isMapReady) {
+          checkAndLoadTowers(_mapController.camera.visibleBounds);
+        }
+      }
     } catch (e) {
       if (!_dialogOpen) {
         _dialogOpen = true;
@@ -446,7 +473,12 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     try {
       if (_lastPlmn.isEmpty) return;
 
-      if (_cachedBounds != null &&
+      final double currentZoom = _mapController.camera.zoom;
+      final bool zoomChanged =
+          _lastQueryZoom == null || (currentZoom - _lastQueryZoom!).abs() > 0.5;
+
+      if (!zoomChanged &&
+          _cachedBounds != null &&
           visibleBounds.southWest.latitude >=
               _cachedBounds!.southWest.latitude &&
           visibleBounds.northEast.latitude <=
@@ -458,27 +490,39 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
         return;
       }
 
-      const double spatialPadding = 0.03; // todo check if that's ok
+      const double spatialPadding = 0.03;
       final double minLat = visibleBounds.southWest.latitude - spatialPadding;
       final double maxLat = visibleBounds.northEast.latitude + spatialPadding;
       final double minLng = visibleBounds.southWest.longitude - spatialPadding;
       final double maxLng = visibleBounds.northEast.longitude + spatialPadding;
 
+      int cellsLimit = 1000;
+      if (currentZoom < 10) {
+        cellsLimit = 1500;
+      } else if (currentZoom >= 10 && currentZoom < 13) {
+        cellsLimit = 1000;
+      } else if (currentZoom >= 13 && currentZoom < 15) {
+        cellsLimit = 800;
+      } else {
+        cellsLimit = 700;
+      }
+
       final towers = await CellDatabase.fetchMapCellTowers(
-        plmn: _lastPlmn,
-        minLat: minLat,
-        maxLat: maxLat,
-        minLng: minLng,
-        maxLng: maxLng,
+        _lastPlmn,
+        minLat,
+        maxLat,
+        minLng,
+        maxLng,
+        cellsLimit,
       );
 
-      setState(() {
-        _cachedCellTowers = towers;
-        _cachedBounds = LatLngBounds(
-          LatLng(minLat, minLng),
-          LatLng(maxLat, maxLng),
-        );
-      });
+      _cachedBounds = LatLngBounds(
+        LatLng(minLat, minLng),
+        LatLng(maxLat, maxLng),
+      );
+
+      _lastQueryZoom = currentZoom;
+      _cellTowersNotifier.value = towers;
     } catch (e) {}
   }
 
@@ -487,7 +531,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     return Column(
       children: <Widget>[
         ValueListenableBuilder(
-          valueListenable: mapLoadingNotifier,
+          valueListenable: _mapLoadingNotifier,
           builder: (context, isLoading, _) {
             return isLoading
                 ? const LinearProgressIndicator()
@@ -506,7 +550,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                 activeReplayData: _activeReplayData,
                 followUser: _follow,
                 sharedPreferences: sharedPreferences,
-                cellTowers: _cachedCellTowers,
+                cellTowersNotifier: _cellTowersNotifier,
                 onPositionChanged: (camera) {
                   checkAndLoadTowers(camera.visibleBounds);
                 },
@@ -527,9 +571,24 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                     setState(() => _follow = false);
                   }
                 },
-                onMapReady: () => mapLoadingNotifier.value = false,
-                onMapLoading: (loading) => mapLoadingNotifier.value = loading,
+                onMapReady: () {
+                  _isMapReady = true;
+                  _mapLoadingNotifier.value = false;
+                  checkAndLoadTowers(_mapController.camera.visibleBounds);
+                },
+                onMapLoading: (loading) => _mapLoadingNotifier.value = loading,
                 onClearSelection: () => setState(() => _selectedRecord = null),
+                onTowerTap: (LatLng towerLatLng) {
+                  setState(() {
+                    _follow = false;
+                  });
+
+                  animatedUpdate(
+                    _mapController.camera.center,
+                    towerLatLng,
+                    const Duration(milliseconds: 500),
+                  );
+                },
               ),
               Positioned(
                 top: 0,
@@ -539,8 +598,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     MapOverlay(
-                      titlesNotifier: displayTitlesNotifier,
-                      valuesNotifier: displayValuesNotifier,
+                      titlesNotifier: _displayTitlesNotifier,
+                      valuesNotifier: _displayValuesNotifier,
                     ),
                     RecordCard(
                       selectedRecord: _selectedRecord,

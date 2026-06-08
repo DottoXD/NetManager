@@ -36,7 +36,6 @@ class CellDatabase {
           "CREATE INDEX idx_cells_plmn_cid ON cells (plmn, cid)",
         );
 
-        // check shared preferences for map feature!!
         await db.execute(
           "CREATE INDEX idx_cells_plmn_lat_lng ON cells (plmn, latitude, longitude)",
         );
@@ -73,13 +72,14 @@ class CellDatabase {
     return results;
   }
 
-  static Future<List<CellTower>> fetchMapCellTowers({
-    required String plmn,
-    required double minLat,
-    required double maxLat,
-    required double minLng,
-    required double maxLng,
-  }) async {
+  static Future<List<CellTower>> fetchMapCellTowers(
+    String plmn,
+    double minLat,
+    double maxLat,
+    double minLng,
+    double maxLng,
+    int limit,
+  ) async {
     if (plmn.isEmpty) return [];
     Database db = await getDatabase();
 
@@ -90,9 +90,9 @@ class CellDatabase {
         WHERE plmn = ? 
           AND latitude BETWEEN ? AND ? 
           AND longitude BETWEEN ? AND ?
-        LIMIT 500
+        LIMIT ?
       ''',
-      [plmn, minLat, maxLat, minLng, maxLng],
+      [plmn, minLat, maxLat, minLng, maxLng, limit],
     );
 
     final Map<String, List<DatabaseCell>> groupedTowers = {};

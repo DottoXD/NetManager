@@ -19,13 +19,14 @@ class LiveMap extends StatelessWidget {
   final RecordedData? activeReplayData;
   final bool followUser;
   final SharedPreferences sharedPreferences;
-  final List<CellTower> cellTowers;
+  final ValueNotifier<List<CellTower>> cellTowersNotifier;
   final Function(MapCamera camera) onPositionChanged;
   final ValueChanged<Record> onMarkerTap;
   final ValueChanged<bool> onMapInteraction;
   final VoidCallback onMapReady;
   final ValueChanged<bool> onMapLoading;
   final VoidCallback onClearSelection;
+  final Function(LatLng latLng) onTowerTap;
 
   final String defaultMapTilesTemplate =
       "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
@@ -40,13 +41,14 @@ class LiveMap extends StatelessWidget {
     required this.activeReplayData,
     required this.followUser,
     required this.sharedPreferences,
-    required this.cellTowers,
+    required this.cellTowersNotifier,
     required this.onPositionChanged,
     required this.onMarkerTap,
     required this.onMapInteraction,
     required this.onMapReady,
     required this.onMapLoading,
     required this.onClearSelection,
+    required this.onTowerTap,
   });
 
   @override
@@ -112,7 +114,13 @@ class LiveMap extends StatelessWidget {
             selectedRecord: selectedRecord,
             onMarkerTap: onMarkerTap,
           ),
-        if (cellTowers.isNotEmpty) CellTowers(cellTowers: cellTowers),
+        ValueListenableBuilder(
+          valueListenable: cellTowersNotifier,
+          builder: (context, cellTowers, _) {
+            if (cellTowers.isEmpty) return const SizedBox.shrink();
+            return CellTowers(cellTowers: cellTowers, onTowerTap: onTowerTap);
+          },
+        ),
         if (currentLocation != null)
           MarkerLayer(
             markers: [
@@ -128,14 +136,11 @@ class LiveMap extends StatelessWidget {
           child: Align(
             alignment: Alignment.bottomLeft,
             child: ColoredBox(
-              color: Theme.of(context).colorScheme.surface,
+              color: Theme.of(context).colorScheme.surfaceContainer,
               child: GestureDetector(
                 child: Padding(
-                  padding: const EdgeInsets.all(3),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [const Text("© OpenStreetMap")],
-                  ),
+                  padding: const EdgeInsets.all(4.0),
+                  child: const Text("© OpenStreetMap"),
                 ),
               ),
             ),
