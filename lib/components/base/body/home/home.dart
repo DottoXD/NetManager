@@ -131,13 +131,15 @@ class _HomeBodyState extends State<HomeBody> {
         return;
       }
 
-      late final SIMData? simData;
+      final SIMData? simData;
 
       try {
         simData = await compute<String, SIMData?>(_parseSimData, jsonStr);
       } catch (e) {
+        if (!mounted) return;
+
         setState(() {
-          _debug = "$jsonStr\nError: $e";
+          _debug = "$jsonStr\nIsolate Error: $e";
         });
 
         return;
@@ -146,7 +148,6 @@ class _HomeBodyState extends State<HomeBody> {
       if (simData == null) return;
 
       _plmn = simData.networkPlmn;
-
       _factor = conversionFactor(simData.primaryCell);
       int? node = int.tryParse(simData.primaryCell.cellIdentifier);
 
@@ -213,12 +214,15 @@ class _HomeBodyState extends State<HomeBody> {
   }
 
   SIMData? _parseSimData(String jsonStr) {
-    if (jsonStr == "null" || jsonStr.trim().isEmpty) {
+    try {
+      if (jsonStr.trim().isEmpty || jsonStr == "null") {
+        return null;
+      }
+      final Map<String, dynamic> map = json.decode(jsonStr);
+      return SIMData.fromJson(map);
+    } catch (e) {
       return null;
     }
-
-    final Map<String, dynamic> map = json.decode(jsonStr);
-    return SIMData.fromJson(map);
   }
 
   @override

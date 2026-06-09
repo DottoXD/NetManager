@@ -39,7 +39,7 @@ public class Location {
 
         if (locationManager != null && Permissions.check(context,
                 Permissions.ACCESS_FINE_LOCATION | Permissions.ACCESS_BACKGROUND_LOCATION)) {
-            int minDistance = 1;
+            int minDistance = 2;
             String provider;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 provider = LocationManager.FUSED_PROVIDER;
@@ -81,7 +81,7 @@ public class Location {
                     locationListener = location -> lastLocation = location);
 
             android.location.Location cachedLocation = locationManager.getLastKnownLocation(provider);
-            if(cachedLocation != null && (System.currentTimeMillis() - cachedLocation.getTime() < 60000)) {
+            if (cachedLocation != null && (System.currentTimeMillis() - cachedLocation.getTime() < 60000)) {
                 lastLocation = cachedLocation;
             } else {
                 lastLocation = null;

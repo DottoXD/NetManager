@@ -295,18 +295,19 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
   }
 
   void _startTest() {
-    if (_selectedServerNotifier.value == null) return;
+    final server = _selectedServerNotifier.value;
+    if (server == null) return;
 
     _metricsNotifier.value = SpeedtestMetrics(stage: TestStage.LATENCY);
 
-    String baseUrl = _selectedServerNotifier.value!["server"];
+    String baseUrl = server["server"];
     if (!baseUrl.endsWith('/')) baseUrl += '/';
     if (baseUrl.startsWith("//")) baseUrl = "https:$baseUrl";
 
     platform.invokeMethod("startTest", {
-      "pingUrl": baseUrl + _selectedServerNotifier.value!["pingURL"],
-      "downloadUrl": baseUrl + _selectedServerNotifier.value!["dlURL"],
-      "uploadUrl": baseUrl + _selectedServerNotifier.value!["ulURL"],
+      "pingUrl": baseUrl + server["pingURL"],
+      "downloadUrl": baseUrl + server["dlURL"],
+      "uploadUrl": baseUrl + server["ulURL"],
     });
   }
 

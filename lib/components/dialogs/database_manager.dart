@@ -246,9 +246,10 @@ class DatabaseManagerDialog extends StatelessWidget {
 
                       return ListTile(
                         leading: const Icon(Icons.storage_outlined),
-                        title: Text("PLMN: $plmnLabel"),
+                        title: Text(plmnLabel),
                         subtitle: Text("Format: $formatType"),
                         trailing: IconButton(
+                          tooltip: "Delete database",
                           icon: const Icon(Icons.delete_outlined),
                           onPressed: () async {
                             await _handleRemove(dbName, setDialogState);

@@ -14,9 +14,15 @@ class RecordedData {
   });
 
   factory RecordedData.fromJson(Map<String, dynamic> json) {
+    if (json["operator"] == null ||
+        json["network"] == null ||
+        json["date"] == null) {
+      throw const FormatException("Invalid recording file format.");
+    }
+
     return RecordedData(
-      operator: json["operator"],
-      network: json["network"],
+      operator: json["operator"] ?? "",
+      network: json["network"] ?? "",
       date: DateTime.parse(json["date"]),
       records: (json["records"] as List<dynamic>? ?? [])
           .map((e) => Record.fromJson(e))
