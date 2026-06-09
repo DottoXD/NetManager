@@ -43,6 +43,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
   );
   final ValueNotifier<Map<String, dynamic>?> _selectedServerNotifier =
       ValueNotifier(null);
+  final ValueNotifier<bool> _serversLoadingNotifier = ValueNotifier(false);
 
   List<dynamic> _servers = [];
   int _fetchServersRetries = 0;
@@ -137,7 +138,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                return errorDialog(context, call.arguments);
+                return errorDialog(context, "Speedtest: ${call.arguments}");
               },
             );
           }
@@ -150,6 +151,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
   void dispose() {
     _selectedServerNotifier.dispose();
     _metricsNotifier.dispose();
+    _serversLoadingNotifier.dispose();
     platform.setMethodCallHandler(null);
     widget.speedtestInstanceUrlNotifier.removeListener(_onServerUrlChanged);
     super.dispose();
@@ -161,6 +163,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
   }
 
   Future<void> _fetchServers() async {
+    _serversLoadingNotifier.value = true;
     String primaryUrl = "${_getSpeedtestServer()}/server-list.json";
     String fallbackUrl = "${_getSpeedtestServer()}/backend-servers/servers.php";
 
@@ -194,7 +197,10 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
-                  return errorDialog(context, e);
+                  return errorDialog(
+                    context,
+                    "The speed test server is unreachable.",
+                  );
                 },
               );
             } else {
@@ -268,7 +274,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
 
         if (sortedServers.isEmpty) {
           _fetchServersRetries++;
-          throw Error();
+          throw Exception("No reachable servers found.");
         } else {
           _fetchServersRetries = 0;
         }
@@ -282,13 +288,28 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
             } else {
               _selectedServerNotifier.value = null;
             }
+
+            _serversLoadingNotifier.value = false;
           });
         }
       }
     } catch (e) {
+      _serversLoadingNotifier.value = false;
       Future.delayed(const Duration(seconds: 2)).then((val) {
         if (mounted) {
-          _fetchServers();
+          if (_fetchServersRetries >= 3) {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return errorDialog(
+                  context,
+                  "The speed test server is unreachable.",
+                );
+              },
+            );
+          } else {
+            _fetchServers();
+          }
         }
       });
     }
@@ -315,6 +336,14 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        ValueListenableBuilder(
+          valueListenable: _serversLoadingNotifier,
+          builder: (context, isLoading, child) {
+            return isLoading
+                ? const LinearProgressIndicator()
+                : const SizedBox(height: 4);
+          },
+        ),
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),

@@ -47,7 +47,7 @@ class DatabaseManagerDialog extends StatelessWidget {
         context: context,
         builder: (context) => errorDialog(
           context,
-          "Could not determine a valid PLMN from this database.",
+          "Could not find a valid PLMN in this database.",
         ),
       );
       return;
@@ -84,7 +84,7 @@ class DatabaseManagerDialog extends StatelessWidget {
           showDialog(
             context: context,
             builder: (BuildContext context) {
-              return errorDialog(context, e);
+              return errorDialog(context, "Import database: $e");
             },
           );
         }
@@ -189,8 +189,7 @@ class DatabaseManagerDialog extends StatelessWidget {
       if (context.mounted) {
         showDialog(
           context: context,
-          builder: (context) =>
-              errorDialog(context, "An error occurred while indexing: $e"),
+          builder: (context) => errorDialog(context, "Database indexing: $e"),
         );
       }
     } finally {

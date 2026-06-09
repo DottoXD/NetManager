@@ -220,7 +220,7 @@ Widget recordModal(
                 showDialog(
                   context: context,
                   builder: (BuildContext context) {
-                    return errorDialog(context, e);
+                    return errorDialog(context, "Replay recording: $e");
                   },
                 );
               }

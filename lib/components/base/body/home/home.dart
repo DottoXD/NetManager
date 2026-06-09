@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,6 +11,7 @@ import 'package:netmanager/utils/cell_utils.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 import 'package:netmanager/utils/screenshot_helper.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
+import 'package:netmanager/utils/simdata_parser.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'dart:async';
 
@@ -134,12 +133,12 @@ class _HomeBodyState extends State<HomeBody> {
       final SIMData? simData;
 
       try {
-        simData = await compute<String, SIMData?>(_parseSimData, jsonStr);
+        simData = await compute<String, SIMData?>(parseSimData, jsonStr);
       } catch (e) {
         if (!mounted) return;
 
         setState(() {
-          _debug = "$jsonStr\nIsolate Error: $e";
+          _debug = "$jsonStr\nError: $e";
         });
 
         return;
@@ -203,25 +202,13 @@ class _HomeBodyState extends State<HomeBody> {
       stopwatch.stop();
       final elapsed = stopwatch.elapsedMilliseconds;
 
-      if (elapsed < 100) {
-        await Future.delayed(Duration(milliseconds: 100 - elapsed));
+      if (elapsed < 200) {
+        await Future.delayed(Duration(milliseconds: 200 - elapsed));
       }
 
       if (mounted) {
         _isUpdatingNotifier.value = false;
       }
-    }
-  }
-
-  SIMData? _parseSimData(String jsonStr) {
-    try {
-      if (jsonStr.trim().isEmpty || jsonStr == "null") {
-        return null;
-      }
-      final Map<String, dynamic> map = json.decode(jsonStr);
-      return SIMData.fromJson(map);
-    } catch (e) {
-      return null;
     }
   }
 

@@ -80,12 +80,18 @@ public class Location {
                     minDistance,
                     locationListener = location -> lastLocation = location);
 
-            android.location.Location cachedLocation = locationManager.getLastKnownLocation(provider);
-            if (cachedLocation != null && (System.currentTimeMillis() - cachedLocation.getTime() < 60000)) {
-                lastLocation = cachedLocation;
-            } else {
-                lastLocation = null;
-            }
+            /*
+             * android.location.Location cachedLocation =
+             * locationManager.getLastKnownLocation(provider);
+             * if (cachedLocation != null && (System.currentTimeMillis() -
+             * cachedLocation.getTime() < 60000)) {
+             * lastLocation = cachedLocation;
+             * } else {
+             * lastLocation = null;
+             * }
+             */
+
+            lastLocation = locationManager.getLastKnownLocation(provider);
 
             updateAccess();
         } else

@@ -15,4 +15,21 @@ class CellTower {
   LatLng getLatLng() {
     return LatLng(latitude, longitude);
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (other is! CellTower) return false;
+
+    if (other.latitude != latitude || other.longitude != longitude) {
+      return false;
+    }
+
+    if (other.cells.length != cells.length) return false;
+    if (other.cells.firstOrNull != cells.firstOrNull) return false;
+
+    return true;
+  }
+
+  @override
+  int get hashCode => Object.hash(latitude, longitude, cells.length);
 }

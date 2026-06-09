@@ -151,6 +151,8 @@ class RecordCard extends StatelessWidget {
   }
 
   int _getIndex() {
+    if (selectedRecord == null) return -1;
+
     if (liveRecords.isNotEmpty) return liveRecords.indexOf(selectedRecord!);
 
     if (activeReplayData != null && activeReplayData!.records.isNotEmpty) {

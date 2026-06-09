@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -15,6 +16,7 @@ import 'package:netmanager/components/base/body/map/widgets/map_overlay.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
 import 'package:netmanager/types/recording/recorded_data.dart';
 import 'package:netmanager/types/recording/record.dart';
+import 'package:netmanager/utils/simdata_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -71,6 +73,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
   Timer? _timer;
   Timer? _liveRecordTimer;
   LatLng? _currentLocation;
+  Timer? _mapLoadingDebounce;
 
   LatLng? _lastLocation;
   DateTime? _lastUpdateTime;
@@ -88,6 +91,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
   String _lastPlmn = "";
   bool _isMapReady = false;
   double? _lastQueryZoom;
+  bool _towerQueryInProgress = false;
 
   final ValueNotifier<List<CellTower>> _cellTowersNotifier = ValueNotifier([]);
 
@@ -115,6 +119,9 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     platform = widget.platform;
     sharedPreferences = widget.sharedPreferences;
     recordingActionNotifier = widget.recordingActionNotifier;
+
+    widget.databaseCellsInMapNotifier.addListener(_onTowerSettingsChanged);
+    widget.externalDatabaseNotifier.addListener(_onTowerSettingsChanged);
 
     _updateIntervalListener = () {
       _cellTimer?.cancel();
@@ -170,7 +177,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                return errorDialog(context, e);
+                return errorDialog(context, "Stop recording: $e");
               },
             ).then((_) {
               _dialogOpen = false;
@@ -194,31 +201,48 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
             platform,
             recordingActionNotifier,
             (data) {
-              if (data.records.isNotEmpty) {
-                _displayTitlesNotifier.value = ["Carrier", "PLMN", "Date"];
-                _displayValuesNotifier.value = [
-                  data.operator,
-                  data.network,
-                  _metricSystem
-                      ? "${data.date.day}/${data.date.month}"
-                      : "${data.date.month}/${data.date.day}",
-                ];
+              try {
+                if (data.records.isNotEmpty) {
+                  _displayTitlesNotifier.value = ["Carrier", "PLMN", "Date"];
+                  _displayValuesNotifier.value = [
+                    data.operator,
+                    data.network,
+                    _metricSystem
+                        ? "${data.date.day}/${data.date.month}"
+                        : "${data.date.month}/${data.date.day}",
+                  ];
 
-                setState(() {
-                  _activeReplayData = data;
-                  recordingActionNotifier.value = true;
-                });
-                if (_currentLocation != null) {
-                  animatedUpdate(
-                    _mapController.camera.center,
-                    LatLng(data.records.first.lat, data.records.first.lon),
-                    Duration(milliseconds: 500),
-                  );
-                } else {
-                  _mapController.move(
-                    LatLng(data.records.first.lat, data.records.first.lon),
-                    _mapController.camera.zoom,
-                  );
+                  setState(() {
+                    _activeReplayData = data;
+                    recordingActionNotifier.value = true;
+                  });
+                  if (_currentLocation != null) {
+                    animatedUpdate(
+                      _mapController.camera.center,
+                      LatLng(data.records.first.lat, data.records.first.lon),
+                      Duration(milliseconds: 500),
+                    );
+                  } else {
+                    _mapController.move(
+                      LatLng(data.records.first.lat, data.records.first.lon),
+                      _mapController.camera.zoom,
+                    );
+                  }
+                }
+              } catch (e) {
+                if (!_dialogOpen && mounted) {
+                  _dialogOpen = true;
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return errorDialog(
+                        context,
+                        "Please select a valid recording.",
+                      );
+                    },
+                  ).then((_) {
+                    _dialogOpen = false;
+                  });
                 }
               }
 
@@ -255,9 +279,13 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     _timer?.cancel();
     _cellTimer?.cancel();
     _liveRecordTimer?.cancel();
+    _mapLoadingDebounce?.cancel();
 
     widget.platformSignalNotifier.removeListener(_signalListener);
     widget.updateIntervalNotifier.removeListener(_updateIntervalListener);
+
+    widget.databaseCellsInMapNotifier.removeListener(_onTowerSettingsChanged);
+    widget.externalDatabaseNotifier.removeListener(_onTowerSettingsChanged);
 
     _mapController.dispose();
     _animationController.dispose();
@@ -341,7 +369,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
         showDialog(
           context: context,
           builder: (BuildContext context) {
-            return errorDialog(context, e);
+            return errorDialog(context, "Map: $e");
           },
         ).then((_) {
           _dialogOpen = false;
@@ -370,16 +398,15 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
       final jsonStr = await platform.invokeMethod("getNetworkData");
       if (jsonStr == null) return;
 
-      final Map<String, dynamic> map = json.decode(jsonStr);
-      late final SIMData simData;
+      final SIMData? simData;
 
       try {
-        simData = SIMData.fromJson(map);
+        simData = await compute<String, SIMData?>(parseSimData, jsonStr);
       } catch (e) {
         return;
       }
 
-      if (!mounted) return;
+      if (!mounted || simData == null) return;
 
       final String currentPlmn = simData.networkPlmn;
       final bool plmnChanged = _lastPlmn != currentPlmn;
@@ -430,7 +457,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
         showDialog(
           context: context,
           builder: (BuildContext context) {
-            return errorDialog(context, e);
+            return errorDialog(context, "Map cells: $e");
           },
         ).then((_) {
           _dialogOpen = false;
@@ -496,7 +523,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                return errorDialog(context, e);
+                return errorDialog(context, "Map live recording: $e");
               },
             ).then((_) {
               _dialogOpen = false;
@@ -507,7 +534,25 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     });
   }
 
+  void _onTowerSettingsChanged() {
+    if (!widget.databaseCellsInMapNotifier.value ||
+        !widget.externalDatabaseNotifier.value) {
+      _cellTowersNotifier.value = [];
+      _cachedBounds = null;
+      _lastQueryZoom = null;
+    } else if (_isMapReady) {
+      checkAndLoadTowers(_mapController.camera.visibleBounds);
+    }
+  }
+
   void checkAndLoadTowers(LatLngBounds visibleBounds) async {
+    if (_towerQueryInProgress ||
+        !widget.externalDatabaseNotifier.value ||
+        !widget.databaseCellsInMapNotifier.value) {
+      return;
+    }
+    _towerQueryInProgress = true;
+
     try {
       if (_lastPlmn.isEmpty) return;
 
@@ -560,8 +605,14 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
       );
 
       _lastQueryZoom = currentZoom;
-      _cellTowersNotifier.value = towers;
-    } catch (e) {}
+
+      if (!listEquals(towers, _cellTowersNotifier.value)) {
+        _cellTowersNotifier.value = towers;
+      }
+    } catch (e) {
+    } finally {
+      _towerQueryInProgress = false;
+    }
   }
 
   @override
@@ -573,7 +624,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
           builder: (context, isLoading, _) {
             return isLoading
                 ? const LinearProgressIndicator()
-                : const SizedBox.shrink();
+                : const SizedBox(height: 4);
           },
         ),
         Expanded(
@@ -614,7 +665,21 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                   _mapLoadingNotifier.value = false;
                   checkAndLoadTowers(_mapController.camera.visibleBounds);
                 },
-                onMapLoading: (loading) => _mapLoadingNotifier.value = loading,
+                onMapLoading: (loading) {
+                  if (loading) {
+                    _mapLoadingDebounce ??= Timer(
+                      const Duration(milliseconds: 150),
+                      () {
+                        _mapLoadingNotifier.value = true;
+                        _mapLoadingDebounce = null;
+                      },
+                    );
+                  } else {
+                    _mapLoadingDebounce?.cancel();
+                    _mapLoadingDebounce = null;
+                    _mapLoadingNotifier.value = false;
+                  }
+                },
                 onClearSelection: () => setState(() => _selectedRecord = null),
                 onTowerTap: (LatLng towerLatLng) {
                   setState(() {

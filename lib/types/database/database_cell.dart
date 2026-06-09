@@ -10,4 +10,10 @@ class DatabaseCell {
     required this.description,
     this.channelNumber,
   });
+
+  @override
+  bool operator ==(Object other) => other is DatabaseCell && other.cid == cid;
+
+  @override
+  int get hashCode => cid.hashCode;
 }

@@ -129,7 +129,7 @@ class _TopBarState extends State<TopBar> {
       showDialog(
         context: context,
         builder: (BuildContext context) {
-          return errorDialog(context, e);
+          return errorDialog(context, "Top bar: $e");
         },
       );
 
@@ -181,7 +181,7 @@ class _TopBarState extends State<TopBar> {
       showDialog(
         context: context,
         builder: (BuildContext context) {
-          return errorDialog(context, e);
+          return errorDialog(context, "Top bar: $e");
         },
       );
     }

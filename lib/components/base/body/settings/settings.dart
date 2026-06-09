@@ -318,7 +318,7 @@ class _SettingsBodyState extends State<SettingsBody> {
       showDialog(
         context: context,
         builder: (BuildContext context) {
-          return errorDialog(context, e);
+          return errorDialog(context, "Debug logs: $e");
         },
       );
     }
