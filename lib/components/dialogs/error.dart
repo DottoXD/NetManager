@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 
 Widget errorDialog(BuildContext context, Object e) {
-  HapticService().triggerHaptic(HapticType.MEDIUM, context);
+  HapticService().triggerHaptic(HapticType.medium, context);
 
   return AlertDialog(
     title: const Text("Error"),

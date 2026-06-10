@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:netmanager/base/stack.dart';
 import 'package:netmanager/components/base/body/map/map.dart';
 import 'package:netmanager/components/base/body/settings/settings.dart';
 import 'package:netmanager/components/base/body/speedtest/speedtest.dart';
@@ -14,9 +15,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'components/base/body/home/home.dart';
-import 'components/floating/update_button.dart';
-import 'components/base/bars/nav_bar.dart';
+import '../components/base/body/home/home.dart';
+import '../components/floating/update_button.dart';
+import '../components/base/bars/nav_bar.dart';
 
 class Home extends StatefulWidget {
   const Home(
@@ -174,7 +175,7 @@ class _HomeState extends State<Home> {
           _logsNotifier,
         ),
         bottomNavigationBar: NavBar(updatePage, _currentPage),
-        body: IndexedStack(
+        body: LazyIndexedStack(
           index: _currentPage,
           children: [
             HomeBody(

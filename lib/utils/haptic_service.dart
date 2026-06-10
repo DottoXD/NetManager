@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:netmanager/components/dialogs/error.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum HapticType { SELECTION, LIGHT, MEDIUM, HEAVY }
+enum HapticType { selection, light, medium, heavy }
 
 class HapticService {
   static final HapticService _instance = HapticService._internal();
@@ -23,9 +22,9 @@ class HapticService {
   Future<void> triggerHaptic(HapticType type, BuildContext? context) async {
     if (!_hapticEnabled) return;
 
-    if (context != null && context.mounted) {
+    /*if (context != null && context.mounted) {
       try {
-        await Feedback.forTap(context);
+        if (Scrollable.maybeOf(context) != null) await Feedback.forTap(context);
       } catch (e) {
         if (context.mounted) {
           showDialog(
@@ -36,19 +35,19 @@ class HapticService {
           );
         }
       }
-    }
+    }*/
 
     switch (type) {
-      case HapticType.SELECTION:
+      case HapticType.selection:
         await HapticFeedback.selectionClick();
         break;
-      case HapticType.LIGHT:
+      case HapticType.light:
         await HapticFeedback.lightImpact();
         break;
-      case HapticType.MEDIUM:
+      case HapticType.medium:
         await HapticFeedback.mediumImpact();
         break;
-      case HapticType.HEAVY:
+      case HapticType.heavy:
         await HapticFeedback.heavyImpact();
         break;
     }

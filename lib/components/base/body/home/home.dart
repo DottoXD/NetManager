@@ -202,8 +202,8 @@ class _HomeBodyState extends State<HomeBody> {
       stopwatch.stop();
       final elapsed = stopwatch.elapsedMilliseconds;
 
-      if (elapsed < 200) {
-        await Future.delayed(Duration(milliseconds: 200 - elapsed));
+      if (elapsed < 300) {
+        await Future.delayed(Duration(milliseconds: 300 - elapsed));
       }
 
       if (mounted) {
@@ -277,7 +277,7 @@ class _HomeBodyState extends State<HomeBody> {
                                 factor: _factor,
                                 onToggle: () {
                                   HapticService().triggerHaptic(
-                                    HapticType.SELECTION,
+                                    HapticType.selection,
                                     context,
                                   );
 

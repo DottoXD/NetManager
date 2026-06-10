@@ -12,7 +12,7 @@ class ScreenshotButton extends StatelessWidget {
       elevation: 1,
       mini: true,
       onPressed: () async {
-        await HapticService().triggerHaptic(HapticType.SELECTION, context);
+        await HapticService().triggerHaptic(HapticType.selection, context);
         onPressed!();
       },
       tooltip: 'Screenshot page',

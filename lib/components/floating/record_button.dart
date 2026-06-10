@@ -19,7 +19,7 @@ class RecordButton extends StatelessWidget {
       onPressed: () async {
         if (onPressed == null) return;
 
-        await HapticService().triggerHaptic(HapticType.SELECTION, context);
+        await HapticService().triggerHaptic(HapticType.selection, context);
         onPressed?.call();
       },
       tooltip: 'Cell coverage recording',

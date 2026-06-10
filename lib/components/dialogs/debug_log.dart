@@ -46,7 +46,7 @@ Widget debugLogDialog(
       ),
       FilledButton.icon(
         onPressed: () async {
-          await HapticService().triggerHaptic(HapticType.SELECTION, context);
+          await HapticService().triggerHaptic(HapticType.selection, context);
           final dir = await getTemporaryDirectory();
 
           final exportFolder = Directory("${dir.path}/exports");

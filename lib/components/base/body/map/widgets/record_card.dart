@@ -63,7 +63,7 @@ class RecordCard extends StatelessWidget {
                       padding: EdgeInsets.zero,
                       onPressed: () async {
                         await HapticService().triggerHaptic(
-                          HapticType.SELECTION,
+                          HapticType.selection,
                           context,
                         );
 

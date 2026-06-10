@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:netmanager/base/onboarding.dart';
 import 'package:netmanager/utils/check_update.dart';
 import 'package:netmanager/utils/haptic_service.dart';
-import 'package:netmanager/home.dart';
+import 'package:netmanager/base/home.dart';
 import 'package:netmanager/types/device/permissions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -29,6 +30,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
 
   bool? hasPermissions;
   bool isRefreshing = false;
+  bool _showOnboarding = true;
 
   static final int _requiredPerms =
       Permissions.READ_PHONE_STATE |
@@ -69,10 +71,16 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
         "perms": _requiredPerms,
       });
 
+      final seenTutorial =
+          widget.sharedPreferences.getBool("seenOnboarding") ?? false;
+
       final newValue = result ?? false;
 
       if (hasPermissions != newValue && mounted) {
-        setState(() => hasPermissions = result ?? false);
+        setState(() {
+          hasPermissions = result ?? false;
+          _showOnboarding = !seenTutorial;
+        });
       }
     } on PlatformException catch (_) {
       if (mounted) setState(() => hasPermissions = false);
@@ -124,7 +132,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
                 OutlinedButton(
                   onPressed: () async {
                     await HapticService().triggerHaptic(
-                      HapticType.LIGHT,
+                      HapticType.light,
                       context,
                     );
 
@@ -143,6 +151,15 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
             ),
           ),
         ),
+      );
+    }
+
+    if (_showOnboarding) {
+      return OnboardingScreen(
+        onFinished: () async {
+          await widget.sharedPreferences.setBool("seenOnboarding", true);
+          setState(() => _showOnboarding = false);
+        },
       );
     }
 

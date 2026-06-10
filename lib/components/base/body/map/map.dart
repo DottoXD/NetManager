@@ -57,7 +57,6 @@ class MapBody extends StatefulWidget {
 class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
   late MethodChannel platform;
   late SharedPreferences sharedPreferences;
-  late ValueNotifier<int> platformSignalNotifier;
   late ValueNotifier<bool> recordingActionNotifier;
 
   late VoidCallback _signalListener;
@@ -92,6 +91,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
   bool _isMapReady = false;
   double? _lastQueryZoom;
   bool _towerQueryInProgress = false;
+  Timer? _towerDebounce;
 
   final ValueNotifier<List<CellTower>> _cellTowersNotifier = ValueNotifier([]);
 
@@ -106,7 +106,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     "N/A",
   ]);
 
-  final ValueNotifier<bool> _mapLoadingNotifier = ValueNotifier(true);
+  final ValueNotifier<bool> _mapLoadingNotifier = ValueNotifier(false);
+  bool _initialised = false;
 
   bool get _metricSystem => widget.metricSystemNotifier.value;
   int get _updateInterval => widget.updateIntervalNotifier.value;
@@ -220,7 +221,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                     animatedUpdate(
                       _mapController.camera.center,
                       LatLng(data.records.first.lat, data.records.first.lon),
-                      Duration(milliseconds: 500),
+                      const Duration(milliseconds: 500),
                     );
                   } else {
                     _mapController.move(
@@ -261,17 +262,22 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
       widget.onPositionButtonPressed?.call(() {
         if (mounted) recenterMap();
       });
-
-      setLocation(false);
-      _timer?.cancel();
-      updateLocation();
     });
-
-    _cellTimer?.cancel();
-    startCellTimer();
 
     _signalListener = restartTimer;
     widget.platformSignalNotifier.addListener(_signalListener);
+  }
+
+  void _lazyInit() {
+    if (_initialised) return;
+    _initialised = true;
+
+    setLocation(false);
+    _timer?.cancel();
+    updateLocation();
+
+    _cellTimer?.cancel();
+    startCellTimer();
   }
 
   @override
@@ -280,6 +286,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     _cellTimer?.cancel();
     _liveRecordTimer?.cancel();
     _mapLoadingDebounce?.cancel();
+    _towerDebounce?.cancel();
 
     widget.platformSignalNotifier.removeListener(_signalListener);
     widget.updateIntervalNotifier.removeListener(_updateIntervalListener);
@@ -359,7 +366,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
           animatedUpdate(
             _mapController.camera.center,
             _currentLocation!,
-            Duration(milliseconds: 500),
+            const Duration(milliseconds: 500),
           );
         }
       }
@@ -388,7 +395,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
   void updateLocation() async {
     _timer?.cancel();
-    _timer = Timer.periodic(Duration(seconds: 3), (timer) async {
+    _timer = Timer.periodic(const Duration(seconds: 3), (timer) async {
       if (mounted) await setLocation(false);
     });
   }
@@ -440,8 +447,6 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
         cellId,
         signalStrength,
       ];
-
-      _mapLoadingNotifier.value = false;
 
       if (plmnChanged) {
         _cachedBounds = null;
@@ -545,6 +550,13 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     }
   }
 
+  void _scheduleTowerCheck(LatLngBounds visibleBounds) {
+    _towerDebounce?.cancel();
+    _towerDebounce = Timer(const Duration(milliseconds: 300), () {
+      checkAndLoadTowers(visibleBounds);
+    });
+  }
+
   void checkAndLoadTowers(LatLngBounds visibleBounds) async {
     if (_towerQueryInProgress ||
         !widget.externalDatabaseNotifier.value ||
@@ -641,7 +653,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                 sharedPreferences: sharedPreferences,
                 cellTowersNotifier: _cellTowersNotifier,
                 onPositionChanged: (camera) {
-                  checkAndLoadTowers(camera.visibleBounds);
+                  _scheduleTowerCheck(camera.visibleBounds);
                 },
                 onMarkerTap: (record) {
                   setState(() {
@@ -662,7 +674,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                 },
                 onMapReady: () {
                   _isMapReady = true;
-                  _mapLoadingNotifier.value = false;
+                  _lazyInit();
                   checkAndLoadTowers(_mapController.camera.visibleBounds);
                 },
                 onMapLoading: (loading) {

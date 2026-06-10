@@ -11,7 +11,7 @@ class PositionButton extends StatelessWidget {
     return FloatingActionButton(
       elevation: 1,
       onPressed: () async {
-        await HapticService().triggerHaptic(HapticType.LIGHT, context);
+        await HapticService().triggerHaptic(HapticType.light, context);
         onPressed!();
       },
       tooltip: 'Reposition location',

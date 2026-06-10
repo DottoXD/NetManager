@@ -342,7 +342,7 @@ class _SettingsBodyState extends State<SettingsBody> {
               value: _analytics,
               onChanged: (bool value) async {
                 await HapticService().triggerHaptic(
-                  HapticType.SELECTION,
+                  HapticType.selection,
                   context,
                 );
 
@@ -360,7 +360,7 @@ class _SettingsBodyState extends State<SettingsBody> {
               value: _checkUpdates,
               onChanged: (bool value) async {
                 await HapticService().triggerHaptic(
-                  HapticType.SELECTION,
+                  HapticType.selection,
                   context,
                 );
 
@@ -411,7 +411,7 @@ class _SettingsBodyState extends State<SettingsBody> {
               value: _startupMonitoring,
               onChanged: (bool value) async {
                 await HapticService().triggerHaptic(
-                  HapticType.SELECTION,
+                  HapticType.selection,
                   context,
                 );
 
@@ -428,7 +428,7 @@ class _SettingsBodyState extends State<SettingsBody> {
               value: _backgroundService,
               onChanged: (bool value) async {
                 await HapticService().triggerHaptic(
-                  HapticType.SELECTION,
+                  HapticType.selection,
                   context,
                 );
 
@@ -488,7 +488,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                 await HapticService().setHapticEnabled(value);
                 if (context.mounted) {
                   await HapticService().triggerHaptic(
-                    HapticType.SELECTION,
+                    HapticType.selection,
                     context,
                   );
                 }
@@ -507,7 +507,7 @@ class _SettingsBodyState extends State<SettingsBody> {
               value: _material3,
               onChanged: (bool value) async {
                 await HapticService().triggerHaptic(
-                  HapticType.SELECTION,
+                  HapticType.selection,
                   context,
                 );
 
@@ -528,7 +528,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                     value: _dynamicTheme,
                     onChanged: (bool value) async {
                       await HapticService().triggerHaptic(
-                        HapticType.SELECTION,
+                        HapticType.selection,
                         context,
                       );
 
@@ -565,7 +565,7 @@ class _SettingsBodyState extends State<SettingsBody> {
               value: _logEvents,
               onChanged: (bool value) async {
                 await HapticService().triggerHaptic(
-                  HapticType.SELECTION,
+                  HapticType.selection,
                   context,
                 );
 
@@ -621,7 +621,7 @@ class _SettingsBodyState extends State<SettingsBody> {
               value: _metricSystem,
               onChanged: (bool value) async {
                 await HapticService().triggerHaptic(
-                  HapticType.SELECTION,
+                  HapticType.selection,
                   context,
                 );
 
@@ -652,7 +652,7 @@ class _SettingsBodyState extends State<SettingsBody> {
               decoration: const InputDecoration(border: UnderlineInputBorder()),
               onChanged: (String value) async {
                 await HapticService().triggerHaptic(
-                  HapticType.SELECTION,
+                  HapticType.selection,
                   context,
                 );
 
@@ -717,7 +717,7 @@ class _SettingsBodyState extends State<SettingsBody> {
               decoration: const InputDecoration(border: UnderlineInputBorder()),
               onChanged: (String value) async {
                 await HapticService().triggerHaptic(
-                  HapticType.SELECTION,
+                  HapticType.selection,
                   context,
                 );
 
@@ -740,7 +740,7 @@ class _SettingsBodyState extends State<SettingsBody> {
               value: _externalDatabases,
               onChanged: (bool value) async {
                 await HapticService().triggerHaptic(
-                  HapticType.SELECTION,
+                  HapticType.selection,
                   context,
                 );
 
@@ -761,7 +761,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                     value: _databaseCellsInMap,
                     onChanged: (bool value) async {
                       await HapticService().triggerHaptic(
-                        HapticType.SELECTION,
+                        HapticType.selection,
                         context,
                       );
 
@@ -849,7 +849,7 @@ class _SettingsBodyState extends State<SettingsBody> {
               value: _useNewCore,
               onChanged: (bool value) async {
                 await HapticService().triggerHaptic(
-                  HapticType.SELECTION,
+                  HapticType.selection,
                   context,
                 );
 
@@ -871,7 +871,7 @@ class _SettingsBodyState extends State<SettingsBody> {
               value: _debug,
               onChanged: (bool value) async {
                 await HapticService().triggerHaptic(
-                  HapticType.SELECTION,
+                  HapticType.selection,
                   context,
                 );
 

@@ -19,7 +19,7 @@ class RecordMarker extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () async {
-        await HapticService().triggerHaptic(HapticType.SELECTION, context);
+        await HapticService().triggerHaptic(HapticType.selection, context);
 
         onMarkerTap(record);
       },

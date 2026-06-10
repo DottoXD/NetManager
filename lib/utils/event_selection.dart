@@ -30,7 +30,7 @@ Widget eventSelection(
                   : BorderSide.none,
               onSelected: (_) async {
                 await HapticService().triggerHaptic(
-                  HapticType.SELECTION,
+                  HapticType.selection,
                   context,
                 );
 
