@@ -37,7 +37,7 @@ Builds:
       - export PUB_CACHE=$(pwd)/.pub-cache
       - export PATH=$$flutter$$/bin/:$PATH
       - export GIT_COMMIT=$(git rev-parse --short HEAD)
-      - $$flutter$$/bin/flutter build apk --release --flavor foss --dart-define=SENTRY_DSN=temp --dart-define=flutter.flutter_map.unblockOSM=temp --dart-define=GIT_COMMIT=$GIT_COMMIT --target-platform android-arm,android-arm64
+      - $$flutter$$/bin/flutter build apk --release --flavor foss --dart-define=SENTRY_DSN=temp --dart-define=flutter.flutter_map.unblockOSM=temp --dart-define=GIT_COMMIT=$GIT_COMMIT --dart-define=FOSS=true --target-platform android-arm,android-arm64
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags

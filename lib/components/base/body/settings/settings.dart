@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -382,24 +381,34 @@ class _SettingsBodyState extends State<SettingsBody> {
             ),
             trailing: IconButton(
               icon: Icon(Icons.edit),
-              onPressed: () => showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return positionPrecisionDialog(
-                    context,
-                    positionPrecisions,
-                    _positionPrecisionSelection,
-                    (index, value) {
-                      setState(() {
-                        _positionPrecisionSelection = value;
-                      });
+              tooltip: "Open dialog",
+              onPressed: () async {
+                await HapticService().triggerHaptic(
+                  HapticType.selection,
+                  context,
+                );
 
-                      setInt("positionPrecision", index);
-                      updateData();
+                if (context.mounted) {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return positionPrecisionDialog(
+                        context,
+                        positionPrecisions,
+                        _positionPrecisionSelection,
+                        (index, value) {
+                          setState(() {
+                            _positionPrecisionSelection = value;
+                          });
+
+                          setInt("positionPrecision", index);
+                          updateData();
+                        },
+                      );
                     },
                   );
-                },
-              ),
+                }
+              },
             ),
           ),
           ListTile(
@@ -447,7 +456,12 @@ class _SettingsBodyState extends State<SettingsBody> {
             max: 30,
             min: 1,
             label: _updateInterval.toString(),
-            onChanged: (double value) {
+            onChanged: (double value) async {
+              await HapticService().triggerHaptic(
+                HapticType.selection,
+                context,
+              );
+
               setInt("updateInterval", value.toInt());
               updateIntervalNotifier.value = value.toInt();
               updateData();
@@ -468,7 +482,12 @@ class _SettingsBodyState extends State<SettingsBody> {
               max: 30,
               min: 1,
               label: _backgroundUpdateInterval.toString(),
-              onChanged: (double value) {
+              onChanged: (double value) async {
+                await HapticService().triggerHaptic(
+                  HapticType.selection,
+                  context,
+                );
+
                 setInt("backgroundUpdateInterval", value.toInt());
                 updateData();
               },
@@ -603,7 +622,12 @@ class _SettingsBodyState extends State<SettingsBody> {
               max: 500,
               min: 10,
               label: _maximumLogs.toString(),
-              onChanged: (double value) {
+              onChanged: (double value) async {
+                await HapticService().triggerHaptic(
+                  HapticType.selection,
+                  context,
+                );
+
                 setInt("maximumLogs", value.toInt());
                 updateData();
               },
@@ -667,31 +691,43 @@ class _SettingsBodyState extends State<SettingsBody> {
             color: Theme.of(context).colorScheme.outlineVariant,
           ),
           ListTile(
-            title: Text("Speed measurement unit"),
+            title: Text(
+              "Speed measurement unit (${speedMeasurementUnits[_speedMeasurementUnit]})",
+            ),
             subtitle: Text(
               "Choose your preferred speed measurement unit for speedtests.",
             ),
             trailing: IconButton(
               icon: Icon(Icons.edit),
-              onPressed: () => showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return speedMeasurementUnitDialog(
-                    context,
-                    speedMeasurementUnits,
-                    _speedMeasurementUnitSelection,
-                    (index, value) {
-                      setState(() {
-                        _speedMeasurementUnitSelection = value;
-                      });
+              tooltip: "Open dialog",
+              onPressed: () async {
+                await HapticService().triggerHaptic(
+                  HapticType.selection,
+                  context,
+                );
 
-                      setInt("speedMeasurementUnit", index);
-                      speedMeasurementUnitNotifier.value = index;
-                      updateData();
+                if (context.mounted) {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return speedMeasurementUnitDialog(
+                        context,
+                        speedMeasurementUnits,
+                        _speedMeasurementUnitSelection,
+                        (index, value) {
+                          setState(() {
+                            _speedMeasurementUnitSelection = value;
+                          });
+
+                          setInt("speedMeasurementUnit", index);
+                          speedMeasurementUnitNotifier.value = index;
+                          updateData();
+                        },
+                      );
                     },
                   );
-                },
-              ),
+                }
+              },
             ),
           ),
           ListTile(
@@ -780,16 +816,26 @@ class _SettingsBodyState extends State<SettingsBody> {
             enabled: _externalDatabases,
             trailing: IconButton(
               icon: Icon(Icons.download_outlined),
-              onPressed: () => showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return DatabaseManagerDialog(
-                    sharedPreferences: sharedPreferences,
-                    importedDatabases: _importedDatabases,
-                    onUpdate: updateData,
+              tooltip: "Open dialog",
+              onPressed: () async {
+                await HapticService().triggerHaptic(
+                  HapticType.selection,
+                  context,
+                );
+
+                if (context.mounted) {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return DatabaseManagerDialog(
+                        sharedPreferences: sharedPreferences,
+                        importedDatabases: _importedDatabases,
+                        onUpdate: updateData,
+                      );
+                    },
                   );
-                },
-              ),
+                }
+              },
             ),
           ),
           Divider(
@@ -800,7 +846,12 @@ class _SettingsBodyState extends State<SettingsBody> {
             title: Text("Contribute"),
             subtitle: Text("Contribute to NetManager on GitHub."),
             trailing: IconButton(
-              onPressed: () {
+              onPressed: () async {
+                await HapticService().triggerHaptic(
+                  HapticType.selection,
+                  context,
+                );
+
                 Uri url = Uri.parse('https://github.com/DottoXD/NetManager');
                 launchUrl(url);
               },
@@ -814,7 +865,12 @@ class _SettingsBodyState extends State<SettingsBody> {
               "Join NetManager's Telegram for exclusive feature previews and showcases.",
             ),
             trailing: IconButton(
-              onPressed: () {
+              onPressed: () async {
+                await HapticService().triggerHaptic(
+                  HapticType.selection,
+                  context,
+                );
+
                 Uri url = Uri.parse('https://t.me/netmanagerapp');
                 launchUrl(url);
               },
@@ -828,19 +884,29 @@ class _SettingsBodyState extends State<SettingsBody> {
               "View some info about NetManager. Open source licenses and credits are included in this page.",
             ),
             trailing: IconButton(
-              onPressed: () => showDialog(
-                context: context,
-                builder: (BuildContext context) =>
-                    FullAboutDialog(platform: platform),
-              ),
+              onPressed: () async {
+                await HapticService().triggerHaptic(
+                  HapticType.selection,
+                  context,
+                );
+
+                if (context.mounted) {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) =>
+                        FullAboutDialog(platform: platform),
+                  );
+                }
+              },
               icon: Icon(Icons.question_mark_outlined),
+              tooltip: "Open dialog",
             ),
           ),
           Divider(
             height: 0,
             color: Theme.of(context).colorScheme.outlineVariant,
           ),
-          ListTile(
+          /*ListTile(
             title: Text("Use new backend (BETA)"),
             subtitle: Text(
               "Use the brand new, BETA data collection & calculation core. The brand new NetManager Core engine is lighter and faster, but you may encounter slight issues with it. Note that toggling this setting will close the app.",
@@ -861,7 +927,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                 exit(0);
               },
             ),
-          ),
+          ),*/
           ListTile(
             title: Text("Debug"),
             subtitle: Text(

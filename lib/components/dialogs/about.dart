@@ -8,9 +8,11 @@ class FullAboutDialog extends StatelessWidget {
   const FullAboutDialog({required this.platform, super.key});
 
   static const gitCommit = String.fromEnvironment(
-    'GIT_COMMIT',
-    defaultValue: 'development',
+    "GIT_COMMIT",
+    defaultValue: "development",
   );
+
+  static const isFoss = String.fromEnvironment("FOSS", defaultValue: "false");
 
   static const _darkInvertFilter = ColorFilter.matrix(<double>[
     -1, 0, 0, 0, 255, // red
@@ -57,7 +59,8 @@ class FullAboutDialog extends StatelessWidget {
               return img;
             },
           ),
-          applicationVersion: "$version ($gitCommit)",
+          applicationVersion:
+              "$version ${isFoss == "true" ? "FOSS " : ""}($gitCommit)",
         );
       },
     );

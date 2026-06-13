@@ -3,6 +3,7 @@ import java.util.Properties
 
 plugins {
     id("com.android.application")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 val keystoreProperties = Properties()
@@ -14,7 +15,7 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "pw.dotto.netmanager"
     compileSdk {
-        version = release(36)
+        version = release(37)
     }
 
     defaultConfig {
@@ -53,13 +54,33 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    buildFeatures {
+        compose = true
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 }
 
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
+}
+
 dependencies {
     implementation("com.google.android.gms:play-services-wearable:20.0.1")
-    implementation("androidx.wear.compose:compose-material3:1.6.1")
+
+    val composeBom = platform("androidx.compose:compose-bom:2026.05.01")
+
+    implementation(composeBom)
+    implementation("androidx.activity:activity-compose:1.13.0")
+
+    implementation("androidx.wear.compose:compose-material3:1.6.2")
+    implementation("androidx.wear.compose:compose-foundation:1.6.2")
+    implementation("androidx.wear.compose:compose-navigation:1.6.2")
+    implementation("androidx.wear.compose:compose-ui-tooling:1.6.2")
 }

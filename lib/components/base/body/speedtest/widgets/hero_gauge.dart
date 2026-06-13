@@ -15,6 +15,7 @@ class HeroGauge extends StatelessWidget {
   final double downloadResult;
   final double uploadResult;
   final int unitIndex;
+  final double size;
 
   const HeroGauge({
     super.key,
@@ -26,6 +27,7 @@ class HeroGauge extends StatelessWidget {
     required this.downloadResult,
     required this.uploadResult,
     required this.unitIndex,
+    required this.size,
   });
 
   @override
@@ -45,8 +47,8 @@ class HeroGauge extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           SizedBox(
-            width: 280,
-            height: 280,
+            width: size,
+            height: size,
             child: CircularProgressIndicator(
               value: 1.0,
               strokeWidth: 8,
@@ -54,8 +56,8 @@ class HeroGauge extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: 280,
-            height: 280,
+            width: size,
+            height: size,
             child: TweenAnimationBuilder<double>(
               tween: Tween<double>(
                 begin: 0,

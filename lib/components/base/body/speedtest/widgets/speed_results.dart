@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:netmanager/components/base/body/speedtest/widgets/results_column.dart';
 import 'package:netmanager/components/base/body/speedtest/speedtest.dart';
+import 'package:netmanager/utils/haptic_service.dart';
 
 class SpeedResults extends StatelessWidget {
   final TestStage stage;
@@ -11,6 +12,7 @@ class SpeedResults extends StatelessWidget {
   final double progress;
   final VoidCallback startTest;
   final int unitIndex;
+  final bool isCompact;
 
   const SpeedResults({
     super.key,
@@ -20,6 +22,7 @@ class SpeedResults extends StatelessWidget {
     required this.progress,
     required this.startTest,
     required this.unitIndex,
+    required this.isCompact,
   });
 
   @override
@@ -48,30 +51,41 @@ class SpeedResults extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                children: [
-                  ResultsColumn(
-                    label: "DOWNLOAD",
-                    value: downloadResult,
-                    icon: Icons.south_outlined,
-                    color: Theme.of(context).colorScheme.primary,
-                    unitIndex: unitIndex,
-                  ),
-                  ResultsColumn(
-                    label: "UPLOAD",
-                    value: uploadResult,
-                    icon: Icons.north_outlined,
-                    color: Theme.of(context).colorScheme.tertiary,
-                    unitIndex: unitIndex,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
+              if (!isCompact) ...[
+                Row(
+                  children: [
+                    ResultsColumn(
+                      label: "DOWNLOAD",
+                      value: downloadResult,
+                      icon: Icons.south_outlined,
+                      color: Theme.of(context).colorScheme.primary,
+                      unitIndex: unitIndex,
+                    ),
+                    ResultsColumn(
+                      label: "UPLOAD",
+                      value: uploadResult,
+                      icon: Icons.north_outlined,
+                      color: Theme.of(context).colorScheme.tertiary,
+                      unitIndex: unitIndex,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+              ],
               SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: FilledButton(
-                  onPressed: isRunning ? null : startTest,
+                  onPressed: isRunning
+                      ? null
+                      : () async {
+                          await HapticService().triggerHaptic(
+                            HapticType.light,
+                            context,
+                          );
+
+                          startTest();
+                        },
                   child: Text(isRunning ? "Running..." : "Start Speed test"),
                 ),
               ),

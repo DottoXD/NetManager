@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/types/recording/recorded_data.dart';
+import 'package:netmanager/utils/haptic_service.dart';
 
 Widget recordModal(
   BuildContext context,
@@ -80,7 +81,12 @@ Widget recordModal(
                                 SwitchListTile(
                                   title: const Text("Track usability"),
                                   value: trackUsable,
-                                  onChanged: (bool value) {
+                                  onChanged: (bool value) async {
+                                    await HapticService().triggerHaptic(
+                                      HapticType.selection,
+                                      context,
+                                    );
+
                                     trackUsableNotifier.value = value;
                                   },
                                 ),
@@ -141,15 +147,21 @@ Widget recordModal(
                     ValueListenableBuilder(
                       valueListenable: directoryPathNotifier,
                       builder: (context, path, _) {
-                        return FilledButton(
+                        return FilledButton.icon(
                           onPressed: path == null
                               ? null
-                              : () {
+                              : () async {
+                                  await HapticService().triggerHaptic(
+                                    HapticType.selection,
+                                    context,
+                                  );
+
                                   if (context.mounted) {
                                     Navigator.of(context).pop(true);
                                   }
                                 },
-                          child: const Text("Start"),
+                          icon: const Icon(Icons.fiber_smart_record_outlined),
+                          label: const Text("Start"),
                         );
                       },
                     ),

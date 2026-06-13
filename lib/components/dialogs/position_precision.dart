@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:netmanager/utils/haptic_service.dart';
 
 Widget positionPrecisionDialog(
   BuildContext context,
@@ -32,10 +33,13 @@ Widget positionPrecisionDialog(
       ),
     ),
     actions: <Widget>[
-      FilledButton(
-        child: const Text('Edit'),
-        onPressed: () {
-          Navigator.of(context).pop();
+      FilledButton.icon(
+        icon: const Icon(Icons.edit_outlined),
+        label: const Text("Edit"),
+        onPressed: () async {
+          await HapticService().triggerHaptic(HapticType.selection, context);
+
+          if (context.mounted) Navigator.of(context).pop();
         },
       ),
     ],

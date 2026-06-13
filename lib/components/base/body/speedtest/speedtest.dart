@@ -9,6 +9,7 @@ import 'package:netmanager/components/base/body/speedtest/widgets/speed_results.
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/modals/server_modal.dart';
 import 'package:netmanager/types/speedtest/metrics.dart';
+import 'package:netmanager/utils/haptic_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum TestStage { IDLE, LATENCY, DOWNLOAD, UPLOAD, FINISHED }
@@ -47,6 +48,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
 
   List<dynamic> _servers = [];
   int _fetchServersRetries = 0;
+  bool _dialogOpen = false;
 
   String _getSpeedtestServer() {
     String url = widget.speedtestInstanceUrlNotifier.value.trim().isEmpty
@@ -134,13 +136,14 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
             progress: 0.0,
             latencyProgress: 0.0,
           );
-          if (mounted) {
+          if (!_dialogOpen && mounted) {
+            _dialogOpen = true;
             showDialog(
               context: context,
               builder: (BuildContext context) {
                 return errorDialog(context, "Speedtest: ${call.arguments}");
               },
-            );
+            ).then((_) => _dialogOpen = false);
           }
           break;
       }
@@ -194,15 +197,18 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
         Future.delayed(const Duration(milliseconds: 2000)).then((val) {
           if (mounted) {
             if (_fetchServersRetries >= 3) {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return errorDialog(
-                    context,
-                    "The speed test server is unreachable.",
-                  );
-                },
-              );
+              if (!_dialogOpen) {
+                _dialogOpen = true;
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return errorDialog(
+                      context,
+                      "Speedtest: The speed test server is unreachable.",
+                    );
+                  },
+                ).then((_) => _dialogOpen = false);
+              }
             } else {
               _fetchServers();
             }
@@ -298,15 +304,18 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
       Future.delayed(const Duration(seconds: 2)).then((val) {
         if (mounted) {
           if (_fetchServersRetries >= 3) {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return errorDialog(
-                  context,
-                  "The speed test server is unreachable.",
-                );
-              },
-            );
+            if (!_dialogOpen) {
+              _dialogOpen = true;
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return errorDialog(
+                    context,
+                    "The speed test server is unreachable.",
+                  );
+                },
+              ).then((_) => _dialogOpen = false);
+            }
           } else {
             _fetchServers();
           }
@@ -334,160 +343,190 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        ValueListenableBuilder(
-          valueListenable: _serversLoadingNotifier,
-          builder: (context, isLoading, child) {
-            return isLoading
-                ? const LinearProgressIndicator()
-                : const SizedBox(height: 4);
-          },
-        ),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Column(
-              children: [
-                const SizedBox(height: 24),
-                ValueListenableBuilder(
-                  valueListenable: _selectedServerNotifier,
-                  builder: (context, selectedServer, child) {
-                    return ValueListenableBuilder(
-                      valueListenable: _metricsNotifier,
-                      builder: (context, metrics, child) {
-                        final bool isRunning =
-                            metrics.stage != TestStage.IDLE &&
-                            metrics.stage != TestStage.FINISHED;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double availableHeight = constraints.maxHeight;
+        final bool isCompact = availableHeight < 600;
+        final bool isTiny = availableHeight < 500;
 
-                        String sponsorName = "";
-                        if (selectedServer != null) {
-                          sponsorName = selectedServer["sponsorName"];
-                        }
+        final double gaugeSize = isTiny ? 200 : (isCompact ? 240 : 280);
+        final double gaugeSpacer = isTiny ? 16 : (isCompact ? 28 : 48);
+        final double serverSelectorPadding = isCompact ? 12 : 32;
 
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 32),
-                          child: OutlinedButton.icon(
-                            onPressed: isRunning
-                                ? null
-                                : () {
-                                    showModalBottomSheet(
-                                      context: context,
-                                      showDragHandle: true,
-                                      shape: const RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.vertical(
-                                          top: Radius.circular(24.0),
-                                        ),
-                                      ),
-                                      backgroundColor: Theme.of(
-                                        context,
-                                      ).colorScheme.surface,
-                                      builder: (BuildContext context) {
-                                        return serverModal(
-                                          context,
-                                          _servers,
-                                          _selectedServerNotifier,
-                                        );
-                                      },
-                                    );
-                                  },
-                            icon: const Icon(Icons.dns_outlined, size: 18),
-                            label: Text(
-                              selectedServer != null
-                                  ? "$sponsorName (${(selectedServer["name"]).toString().replaceAll(" ($sponsorName)", "")})"
-                                  : "No server",
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-                ValueListenableBuilder(
-                  valueListenable: widget.speedMeasurementUnitNotifier,
-                  builder: (context, unitIndex, child) {
-                    return ValueListenableBuilder(
-                      valueListenable: _metricsNotifier,
-                      builder: (context, metrics, child) {
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            HeroGauge(
-                              stage: metrics.stage,
-                              latencyProgress: metrics.latencyProgress,
-                              currentSpeed: metrics.currentSpeed,
-                              maxSpeedScale: metrics.maxSpeedScale,
-                              ping: metrics.ping,
-                              downloadResult: metrics.downloadResult,
-                              uploadResult: metrics.uploadResult,
-                              unitIndex: unitIndex,
-                            ),
-                            const SizedBox(height: 48),
-                            QualityMetrics(
-                              ping: metrics.ping,
-                              jitter: metrics.jitter,
-                              packetLoss: metrics.packetLoss,
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                ),
-              ],
+        return Column(
+          children: [
+            ValueListenableBuilder(
+              valueListenable: _serversLoadingNotifier,
+              builder: (context, isLoading, child) {
+                return isLoading
+                    ? const LinearProgressIndicator()
+                    : const SizedBox(height: 4);
+              },
             ),
-          ),
-        ),
-        ValueListenableBuilder(
-          valueListenable: widget.speedMeasurementUnitNotifier,
-          builder: (context, unitIndex, child) {
-            return ValueListenableBuilder(
-              valueListenable: _metricsNotifier,
-              builder: (context, metrics, child) {
-                return SpeedResults(
-                  stage: metrics.stage,
-                  downloadResult: metrics.downloadResult,
-                  uploadResult: metrics.uploadResult,
-                  progress: metrics.progress,
-                  startTest: _startTest,
-                  unitIndex: unitIndex,
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 24),
+                    ValueListenableBuilder(
+                      valueListenable: _selectedServerNotifier,
+                      builder: (context, selectedServer, child) {
+                        return ValueListenableBuilder(
+                          valueListenable: _metricsNotifier,
+                          builder: (context, metrics, child) {
+                            final bool isRunning =
+                                metrics.stage != TestStage.IDLE &&
+                                metrics.stage != TestStage.FINISHED;
+
+                            String sponsorName = "";
+                            if (selectedServer != null) {
+                              sponsorName = selectedServer["sponsorName"];
+                            }
+
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                bottom: serverSelectorPadding,
+                              ),
+                              child: OutlinedButton.icon(
+                                onPressed: isRunning
+                                    ? null
+                                    : () async {
+                                        await HapticService().triggerHaptic(
+                                          HapticType.selection,
+                                          context,
+                                        );
+
+                                        if (context.mounted) {
+                                          showModalBottomSheet(
+                                            context: context,
+                                            showDragHandle: true,
+                                            shape: const RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.vertical(
+                                                    top: Radius.circular(24.0),
+                                                  ),
+                                            ),
+                                            backgroundColor: Theme.of(
+                                              context,
+                                            ).colorScheme.surface,
+                                            builder: (BuildContext context) {
+                                              return serverModal(
+                                                context,
+                                                _servers,
+                                                _selectedServerNotifier,
+                                              );
+                                            },
+                                          );
+                                        }
+                                      },
+                                icon: const Icon(Icons.dns_outlined, size: 18),
+                                label: Text(
+                                  selectedServer != null
+                                      ? "$sponsorName (${(selectedServer["name"]).toString().replaceAll(" ($sponsorName)", "")})"
+                                      : "No server",
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    ValueListenableBuilder(
+                      valueListenable: widget.speedMeasurementUnitNotifier,
+                      builder: (context, unitIndex, child) {
+                        return ValueListenableBuilder(
+                          valueListenable: _metricsNotifier,
+                          builder: (context, metrics, child) {
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                HeroGauge(
+                                  stage: metrics.stage,
+                                  latencyProgress: metrics.latencyProgress,
+                                  currentSpeed: metrics.currentSpeed,
+                                  maxSpeedScale: metrics.maxSpeedScale,
+                                  ping: metrics.ping,
+                                  downloadResult: metrics.downloadResult,
+                                  uploadResult: metrics.uploadResult,
+                                  unitIndex: unitIndex,
+                                  size: gaugeSize,
+                                ),
+                                SizedBox(height: gaugeSpacer),
+                                if (!isTiny)
+                                  QualityMetrics(
+                                    ping: metrics.ping,
+                                    jitter: metrics.jitter,
+                                    packetLoss: metrics.packetLoss,
+                                  ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            ValueListenableBuilder(
+              valueListenable: widget.speedMeasurementUnitNotifier,
+              builder: (context, unitIndex, child) {
+                return ValueListenableBuilder(
+                  valueListenable: _metricsNotifier,
+                  builder: (context, metrics, child) {
+                    return SpeedResults(
+                      stage: metrics.stage,
+                      downloadResult: metrics.downloadResult,
+                      uploadResult: metrics.uploadResult,
+                      progress: metrics.progress,
+                      startTest: _startTest,
+                      unitIndex: unitIndex,
+                      isCompact: isCompact,
+                    );
+                  },
                 );
               },
-            );
-          },
-        ),
-        ValueListenableBuilder(
-          valueListenable: widget.speedtestInstanceUrlNotifier,
-          builder: (context, urlValue, child) {
-            final bool isDefaultServer =
-                urlValue.trim().isEmpty ||
-                urlValue.trim() == defaultSpeedtestServer;
+            ),
+            ValueListenableBuilder(
+              valueListenable: widget.speedtestInstanceUrlNotifier,
+              builder: (context, urlValue, child) {
+                final bool isDefaultServer =
+                    urlValue.trim().isEmpty ||
+                    urlValue.trim() == defaultSpeedtestServer;
 
-            if (!isDefaultServer) return const SizedBox.shrink();
+                if (!isDefaultServer) return const SizedBox.shrink();
 
-            return Container(
-              width: double.maxFinite,
-              padding: const EdgeInsets.fromLTRB(12.0, 6.0, 12.0, 20.0),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerLow,
-              ),
-              child: Text(
-                "Powered by LibreSpeed",
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontSize: 12,
-                ),
-              ),
-            );
-          },
-        ),
-      ],
+                return Container(
+                  width: double.maxFinite,
+                  padding: EdgeInsets.fromLTRB(
+                    12.0,
+                    isCompact ? 2.0 : 6.0,
+                    12.0,
+                    isCompact ? 8.0 : 20.0,
+                  ),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainerLow,
+                  ),
+                  child: Text(
+                    "Powered by LibreSpeed",
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

@@ -47,8 +47,8 @@ Widget debugLogDialog(
       FilledButton.icon(
         onPressed: () async {
           await HapticService().triggerHaptic(HapticType.selection, context);
-          final dir = await getTemporaryDirectory();
 
+          final dir = await getTemporaryDirectory();
           final exportFolder = Directory("${dir.path}/exports");
           if (!exportFolder.existsSync()) {
             await exportFolder.create();
@@ -70,7 +70,7 @@ Widget debugLogDialog(
           await platform.invokeMethod("share", {"path": file.path});
         },
         label: const Text("Export"),
-        icon: const Icon(Icons.share),
+        icon: const Icon(Icons.offline_share_outlined),
       ),
     ],
   );

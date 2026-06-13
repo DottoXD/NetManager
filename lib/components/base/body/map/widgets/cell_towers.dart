@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:netmanager/components/modals/tower_modal.dart';
 import 'package:netmanager/types/database/cell_tower.dart';
+import 'package:netmanager/utils/haptic_service.dart';
 
 class CellTowers extends StatelessWidget {
   final List<CellTower> cellTowers;
@@ -23,20 +24,27 @@ class CellTowers extends StatelessWidget {
           width: 32,
           height: 32,
           child: GestureDetector(
-            onTap: () {
-              showModalBottomSheet(
-                context: context,
-                showDragHandle: true,
-                isScrollControlled: true,
-                useSafeArea: true,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(24.0),
-                  ),
-                ),
-                backgroundColor: Theme.of(context).colorScheme.surface,
-                builder: (BuildContext context) => towerModal(context, tower),
+            onTap: () async {
+              await HapticService().triggerHaptic(
+                HapticType.selection,
+                context,
               );
+
+              if (context.mounted) {
+                showModalBottomSheet(
+                  context: context,
+                  showDragHandle: true,
+                  isScrollControlled: true,
+                  useSafeArea: true,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(24.0),
+                    ),
+                  ),
+                  backgroundColor: Theme.of(context).colorScheme.surface,
+                  builder: (BuildContext context) => towerModal(context, tower),
+                );
+              }
 
               onTowerTap(tower.getLatLng());
             },

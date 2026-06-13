@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:netmanager/utils/haptic_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 Widget serverModal(
@@ -19,7 +20,12 @@ Widget serverModal(
         ),
         trailing: servers[i]["sponsorURL"] != null
             ? IconButton(
-                onPressed: () {
+                onPressed: () async {
+                  await HapticService().triggerHaptic(
+                    HapticType.selection,
+                    context,
+                  );
+
                   Uri url = Uri.parse(servers[i]["sponsorURL"]);
                   launchUrl(url);
                 },
@@ -27,9 +33,11 @@ Widget serverModal(
                 tooltip: "Visit the server's host in a browser",
               )
             : null,
-        onTap: () {
+        onTap: () async {
+          await HapticService().triggerHaptic(HapticType.selection, context);
+
           selectedServerNotifier.value = servers[i];
-          Navigator.pop(context);
+          if (context.mounted) Navigator.pop(context);
         },
       );
     },
