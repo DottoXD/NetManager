@@ -506,7 +506,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                   width: double.maxFinite,
                   padding: EdgeInsets.fromLTRB(
                     12.0,
-                    isCompact ? 2.0 : 6.0,
+                    isCompact ? 2.0 : 4.0,
                     12.0,
                     isCompact ? 8.0 : 20.0,
                   ),

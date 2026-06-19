@@ -805,7 +805,14 @@ public class Manager {
               simData.getPrimaryCell().getBand() == -1 ? simData.getPrimaryCell().getBasicCellData().getBand()
                   : simData.getPrimaryCell().getBand(),
               simData.getNetworkGen(), simData.getPrimaryCell().getRawSignal(),
-              simData.getPrimaryCell().getProcessedSignal());
+              simData.getPrimaryCell().getRawSignalString(), simData.getPrimaryCell().getProcessedSignal(),
+              simData.getPrimaryCell().getProcessedSignalString(), simData.getPrimaryCell().getChannelNumber(),
+              simData.getPrimaryCell().getChannelNumberString(), simData.getPrimaryCell().getStationIdentity(),
+              simData.getPrimaryCell().getStationIdentityString(), simData.getPrimaryCell().getAreaCode(),
+              simData.getPrimaryCell().getAreaCodeString(), simData.getPrimaryCell().getSignalQuality(),
+              simData.getPrimaryCell().getSignalQualityString(), simData.getPrimaryCell().getSignalNoise(),
+              simData.getPrimaryCell().getSignalNoiseString(), simData.getPrimaryCell().getTimingAdvance(),
+              simData.getPrimaryCell().getTimingAdvanceString());
 
         return simData;
       case 1:
@@ -832,7 +839,14 @@ public class Manager {
               simData.getPrimaryCell().getBand() == -1 ? simData.getPrimaryCell().getBasicCellData().getBand()
                   : simData.getPrimaryCell().getBand(),
               simData.getNetworkGen(), simData.getPrimaryCell().getRawSignal(),
-              simData.getPrimaryCell().getProcessedSignal());
+              simData.getPrimaryCell().getRawSignalString(), simData.getPrimaryCell().getProcessedSignal(),
+              simData.getPrimaryCell().getProcessedSignalString(), simData.getPrimaryCell().getChannelNumber(),
+              simData.getPrimaryCell().getChannelNumberString(), simData.getPrimaryCell().getStationIdentity(),
+              simData.getPrimaryCell().getStationIdentityString(), simData.getPrimaryCell().getAreaCode(),
+              simData.getPrimaryCell().getAreaCodeString(), simData.getPrimaryCell().getSignalQuality(),
+              simData.getPrimaryCell().getSignalQualityString(), simData.getPrimaryCell().getSignalNoise(),
+              simData.getPrimaryCell().getSignalNoiseString(), simData.getPrimaryCell().getTimingAdvance(),
+              simData.getPrimaryCell().getTimingAdvanceString());
 
         return simData;
       default:
@@ -853,39 +867,22 @@ public class Manager {
       // todo: add sentry
     }
 
-    switch (networkType) {
-      case TelephonyManager.NETWORK_TYPE_UNKNOWN:
-        return 0;
-
-      case TelephonyManager.NETWORK_TYPE_GPRS:
-      case TelephonyManager.NETWORK_TYPE_EDGE:
-      case TelephonyManager.NETWORK_TYPE_CDMA:
-      case TelephonyManager.NETWORK_TYPE_1xRTT:
-      case TelephonyManager.NETWORK_TYPE_GSM:
-        return 2;
-
-      case TelephonyManager.NETWORK_TYPE_UMTS:
-      case TelephonyManager.NETWORK_TYPE_EVDO_0:
-      case TelephonyManager.NETWORK_TYPE_EVDO_A:
-      case TelephonyManager.NETWORK_TYPE_EVDO_B:
-      case TelephonyManager.NETWORK_TYPE_HSDPA:
-      case TelephonyManager.NETWORK_TYPE_HSUPA:
-      case TelephonyManager.NETWORK_TYPE_HSPA:
-      case TelephonyManager.NETWORK_TYPE_EHRPD:
-      case TelephonyManager.NETWORK_TYPE_HSPAP:
-      case TelephonyManager.NETWORK_TYPE_TD_SCDMA:
-        return 3;
-
-      case TelephonyManager.NETWORK_TYPE_LTE:
-      case TelephonyManager.NETWORK_TYPE_IWLAN:
-        return 4;
-
-      case TelephonyManager.NETWORK_TYPE_NR:
-        return 5;
-
-      default:
-        return -1;
-    }
+    return switch (networkType) {
+      case TelephonyManager.NETWORK_TYPE_UNKNOWN -> 0;
+      case TelephonyManager.NETWORK_TYPE_GPRS, TelephonyManager.NETWORK_TYPE_EDGE,
+          TelephonyManager.NETWORK_TYPE_CDMA, TelephonyManager.NETWORK_TYPE_1xRTT,
+          TelephonyManager.NETWORK_TYPE_GSM ->
+        2;
+      case TelephonyManager.NETWORK_TYPE_UMTS, TelephonyManager.NETWORK_TYPE_EVDO_0,
+          TelephonyManager.NETWORK_TYPE_EVDO_A, TelephonyManager.NETWORK_TYPE_EVDO_B,
+          TelephonyManager.NETWORK_TYPE_HSDPA, TelephonyManager.NETWORK_TYPE_HSUPA,
+          TelephonyManager.NETWORK_TYPE_HSPA, TelephonyManager.NETWORK_TYPE_EHRPD,
+          TelephonyManager.NETWORK_TYPE_HSPAP, TelephonyManager.NETWORK_TYPE_TD_SCDMA ->
+        3;
+      case TelephonyManager.NETWORK_TYPE_LTE, TelephonyManager.NETWORK_TYPE_IWLAN -> 4;
+      case TelephonyManager.NETWORK_TYPE_NR -> 5;
+      default -> -1;
+    };
   }
 
   @SuppressLint("MissingPermission")

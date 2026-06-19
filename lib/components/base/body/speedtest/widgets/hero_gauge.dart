@@ -52,7 +52,7 @@ class HeroGauge extends StatelessWidget {
             child: CircularProgressIndicator(
               value: 1.0,
               strokeWidth: 8,
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              color: Theme.of(context).colorScheme.outlineVariant,
             ),
           ),
           SizedBox(

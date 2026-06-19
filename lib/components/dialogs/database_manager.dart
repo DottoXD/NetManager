@@ -36,12 +36,12 @@ class DatabaseManagerDialog extends StatelessWidget {
     final String extension = selectedFile.name.split(".").last.toLowerCase();
     final bool isClf = extension == "clf";
 
-    final String? plmn = await extractPlmnFromFirstLine(
+    final String? firstLinePlmn = await extractPlmnFromFirstLine(
       selectedFile.path,
       isClf,
     );
 
-    if (plmn == null || plmn.trim().isEmpty) {
+    if (firstLinePlmn == null || firstLinePlmn.trim().isEmpty) {
       if (!context.mounted) return;
       showDialog(
         context: context,
@@ -95,11 +95,31 @@ class DatabaseManagerDialog extends StatelessWidget {
       int operationsCounter = 0;
       Batch batch = db.batch();
 
+      final Set<String> localImportedPlmns = {};
+
       await for (final line in lines) {
         if (line.trim().isEmpty || line.startsWith("#")) continue;
         final parts = line.split(";");
 
         try {
+          String currentPlmn = "";
+          if (isClf) {
+            if (parts.isNotEmpty && parts[0].length >= 5) {
+              currentPlmn = parts[0];
+            } else {
+              continue;
+            }
+          } else {
+            if (parts.length >= 3) {
+              currentPlmn = "${parts[1]}${parts[2]}";
+            } else {
+              continue;
+            }
+          }
+
+          if (currentPlmn.trim().isEmpty) continue;
+          localImportedPlmns.add(currentPlmn);
+
           int networkGen = -1;
           int cid = -1;
           double latitude = 0.0;
@@ -153,7 +173,7 @@ class DatabaseManagerDialog extends StatelessWidget {
 
           batch.insert("cells", {
             "networkgen": networkGen,
-            "plmn": plmn,
+            "plmn": currentPlmn,
             "cid": cid,
             "latitude": latitude,
             "longitude": longitude,
@@ -174,9 +194,16 @@ class DatabaseManagerDialog extends StatelessWidget {
 
       await batch.commit(noResult: true);
 
-      final String destinationFileName = "$plmn.$extension";
-      if (!importedDatabases.contains(destinationFileName)) {
-        importedDatabases.add(destinationFileName);
+      bool updated = false;
+      for (final foundPlmn in localImportedPlmns) {
+        final String destinationFileName = "$foundPlmn.$extension";
+        if (!importedDatabases.contains(destinationFileName)) {
+          importedDatabases.add(destinationFileName);
+          updated = true;
+        }
+      }
+
+      if (updated) {
         await sharedPreferences.setStringList(
           "importedDatabases",
           importedDatabases,
