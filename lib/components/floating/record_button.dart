@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 
 class RecordButton extends StatelessWidget {
@@ -22,7 +23,7 @@ class RecordButton extends StatelessWidget {
         await HapticService().triggerHaptic(HapticType.selection, context);
         onPressed?.call();
       },
-      tooltip: 'Cell coverage recording',
+      tooltip: AppLocalizations.of(context)!.coverageRecording,
       child: ValueListenableBuilder(
         valueListenable: recordingActionNotifier,
         builder: (context, isRecording, child) {

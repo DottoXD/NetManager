@@ -25,6 +25,7 @@ class Home extends StatefulWidget {
     this.dynamicThemeNotifier,
     this.themeColorNotifier,
     this.material3Notifier,
+    this.localeNotifier,
     this.platform, {
     super.key,
   });
@@ -32,6 +33,7 @@ class Home extends StatefulWidget {
   final ValueNotifier<bool> dynamicThemeNotifier;
   final ValueNotifier<int> themeColorNotifier;
   final ValueNotifier<bool> material3Notifier;
+  final ValueNotifier<Locale?> localeNotifier;
   final MethodChannel platform;
 
   @override
@@ -222,6 +224,7 @@ class _HomeState extends State<Home> {
               widget.dynamicThemeNotifier,
               widget.themeColorNotifier,
               widget.material3Notifier,
+              widget.localeNotifier,
               _debugNotifier,
               _logsNotifier,
               _updateIntervalNotifier,

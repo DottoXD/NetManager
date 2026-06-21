@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -10,12 +11,14 @@ Widget debugLogDialog(
   List<String> debugLogsList,
   MethodChannel platform,
 ) {
+  AppLocalizations appLocalizations = AppLocalizations.of(context)!;
+
   final outlineVariant = Theme.of(context).colorScheme.outlineVariant;
 
-  if (debugLogsList.isEmpty) throw "No debug logs";
+  if (debugLogsList.isEmpty) throw appLocalizations.noDebugLogs;
 
   return AlertDialog(
-    title: Text("Debug logs"),
+    title: Text(appLocalizations.debugLogs),
     content: SizedBox(
       width: double.maxFinite,
       child: Scrollbar(
@@ -42,7 +45,7 @@ Widget debugLogDialog(
     actions: [
       TextButton(
         onPressed: () => Navigator.of(context).pop(),
-        child: const Text("Close"),
+        child: Text(appLocalizations.close),
       ),
       FilledButton.icon(
         onPressed: () async {
@@ -61,7 +64,7 @@ Widget debugLogDialog(
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text("Debug logs saved at: ${file.path}"),
+                content: Text(appLocalizations.debugLogsSaved(file.path)),
                 showCloseIcon: true,
               ),
             );
@@ -69,7 +72,7 @@ Widget debugLogDialog(
 
           await platform.invokeMethod("share", {"path": file.path});
         },
-        label: const Text("Export"),
+        label: Text(appLocalizations.export),
         icon: const Icon(Icons.offline_share_outlined),
       ),
     ],

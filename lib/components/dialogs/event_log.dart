@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 import 'package:netmanager/types/events/event_types.dart';
 import 'package:netmanager/types/events/mobile_netmanager_event.dart';
@@ -14,13 +15,15 @@ Widget eventLogDialog(
   List<NetmanagerEvent> events,
   MethodChannel platform,
 ) {
+  AppLocalizations appLocalizations = AppLocalizations.of(context)!;
+
   final formatter = DateFormat("dd/MM/yyyy HH:mm:ss");
   final outlineVariant = Theme.of(context).colorScheme.outlineVariant;
 
-  if (events.isEmpty) throw "No events";
+  if (events.isEmpty) throw appLocalizations.noEvents;
 
   return AlertDialog(
-    title: Text("Event logs"),
+    title: Text(appLocalizations.eventLogs),
     content: SizedBox(
       width: double.maxFinite,
       child: Scrollbar(
@@ -47,7 +50,7 @@ Widget eventLogDialog(
                   Text(formatter.format(event.dateTime.toLocal())),
                   if (event is MobileNetmanagerEvent) ...[
                     Text(
-                      "SIM ${event.simSlot + 1} ${event.network.trim().isNotEmpty ? "(${event.network})" : "(Unknown)"}",
+                      "SIM ${event.simSlot + 1} ${event.network.trim().isNotEmpty ? "(${event.network})" : "(${appLocalizations.unknown})"}",
                     ),
                   ],
                   if (i < events.length - 1)
@@ -65,7 +68,7 @@ Widget eventLogDialog(
     actions: [
       TextButton(
         onPressed: () => Navigator.of(context).pop(),
-        child: Text("Close"),
+        child: Text(appLocalizations.close),
       ),
       FilledButton.icon(
         onPressed: () async {
@@ -84,7 +87,7 @@ Widget eventLogDialog(
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text("Event logs saved at: ${file.path}"),
+                content: Text(appLocalizations.eventLogsSaved(file.path)),
                 showCloseIcon: true,
               ),
             );
@@ -92,7 +95,7 @@ Widget eventLogDialog(
 
           await platform.invokeMethod("share", {"path": file.path});
         },
-        label: const Text("Export"),
+        label: Text(appLocalizations.export),
         icon: const Icon(Icons.offline_share_outlined),
       ),
     ],

@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/types/cell/cell_data.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
 
@@ -108,7 +109,8 @@ IconData getTrailingIcon(SIMData simData, String val) {
   return Icons.question_mark; //Unknown icon
 }
 
-String createCellContent(CellData cell) {
+String createCellContent(BuildContext context, CellData cell) {
+  AppLocalizations appLocalizations = AppLocalizations.of(context)!;
   String cellContent = "";
   int factor = conversionFactor(cell);
 
@@ -118,13 +120,13 @@ String createCellContent(CellData cell) {
   } else if (cell.isRegistered) {
     cellContent += "%node%, ";
   } else {
-    cellContent += "Unknown cell, ";
+    cellContent += "${appLocalizations.unknownCell}, ";
   }
 
   if (isValidInt(cell.bandwidth) && isValidString(cell.bandwidthString)) {
-    cellContent += "Bandwidth: ${cell.bandwidth}MHz";
+    cellContent += appLocalizations.cellBandwidth(cell.bandwidth);
   } else {
-    cellContent += "Unknown bandwidth";
+    cellContent += appLocalizations.unknownBandwidth;
   }
 
   cellContent += ".\n";
@@ -177,7 +179,7 @@ String createCellContent(CellData cell) {
     cellContent = "${cellContent.substring(0, cellContent.length - 2)}.";
   }
 
-  if (cellContent.isEmpty) cellContent = "No info for this cell.";
+  if (cellContent.isEmpty) cellContent = appLocalizations.noInfoCell;
 
   return cellContent;
 }

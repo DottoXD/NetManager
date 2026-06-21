@@ -1,0 +1,235 @@
+{
+  "unexpectedError": "Si è verificato un errore imprevisto!",
+  "unknownCell": "Cella sconosciuta",
+  "likely": "Probabilmente",
+  "systemLanguage": "Lingua di sistema",
+  "openDialog": "Apri finestra",
+  "view": "Visualizza",
+  "openInBrowser": "Apri in un browser",
+  "unknownBand": "Banda sconosciuta",
+  "cellBandwidth": "Larghezza di banda: {bandwidth}MHz",
+  "@cellBandwidth": {
+    "description": "A text with a cell's bandwidth in MHz.",
+    "placeholders": {
+      "bandwidth": {
+        "type": "int",
+        "example": "0"
+      }
+    }
+  },
+  "unknownBandwidth": "Larghezza di banda sconosciuta",
+  "noInfoCell": "Nessuna informazione su questa cella.",
+  "visitServerHost": "Visita l'host del server nel browser.",
+  "newRecording": "Nuova registrazione",
+  "recordingSetupDialog": "Sarai portato alla finestra di configurazione della registrazione.",
+  "fileName": "Nome del file",
+  "recordingInterval": "Intervallo tra le registrazioni",
+  "trackUsability": "Traccia usabilità",
+  "usabilityTestUrl": "URL per il test dell'usabilità",
+  "selectSaveLocation": "Seleziona il percorso di salvataggio",
+  "selectedSaveLocation": "Percorso di salvataggio selezionato:",
+  "cancel": "Annulla",
+  "start": "Inizia",
+  "recordingStarted": "Registrazione {name} iniziata...",
+  "@recordingStarted": {
+    "description": "A text telling the user that a recording started.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "NetManager_0"
+      }
+    }
+  },
+  "replayRecording": "Riproduci registrazione",
+  "selectRecording": "Ti sara chiesto di selezionare un file .nmr (NetManager Recording) valido.",
+  "updateData": "Aggiorna dati",
+  "screenshotPage": "Esegui screenshot",
+  "coverageRecording": "Registrazione della copertura e delle celle",
+  "repositionMap": "Riposiziona mappa",
+  "editSpeedMeasurementUnit": "Modifica l'unità di misura della velocità",
+  "edit": "Modifica",
+  "editPositionPrecision": "Modifica la precisione della posizione",
+  "editLanguage": "Modifica la lingua",
+  "noEvents": "Nessun evento",
+  "eventLogs": "Log degli eventi",
+  "unknown": "Sconosciuta",
+  "close": "Chiudi",
+  "eventLogsSaved": "Log degli eventi salvato a: {path}",
+  "@eventLogsSaved": {
+    "description": "An events logs got saved.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "export": "Esporta",
+  "error": "Errore",
+  "debug": "Debug",
+  "noDebugLogs": "Nessun log di debug",
+  "debugLogs": "Log di debug",
+  "debugLogsSaved": "Log di debug salvato a: {path}",
+  "@debugLogsSaved": {
+    "description": "Debug logs got saved.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "noValidPlmnInDatabase": "Impossibile trovare un PLMN valido in questo database",
+  "convertingCells": "Convertendo le tue celle...",
+  "importDatabase": "Importa database",
+  "databaseIndexing": "Indicizzazione del database",
+  "manageDatabases": "Gestisci database",
+  "noImportedDatabases": "Nessun database è ancora stato importato",
+  "databaseFormat": "Formato: {format}",
+  "@databaseFormat": {
+    "description": "A text telling the user the database's format.",
+    "placeholders": {
+      "format": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteDatabase": "Cancella database",
+  "import": "Importa",
+  "updateAvailable": "Una nuova versione di NetManager è disponibile!",
+  "missingPermissions": "Permessi mancanti",
+  "requiredPermissions": "NetManager richiede i permessi di telefono e posizione in background per funzionare.",
+  "allow": "Consenti",
+  "appBehaviourTitle": "Cambia il comportamento dell'app",
+  "appBehaviourDescription": "Personalizza i servizi in background e ottimizza gli intervalli di aggiornamento dei dati in base alle tue preferenze nelle impostazioni.",
+  "customiseAestheticsTitle": "Personalizza l'estetica",
+  "customiseAestheticsDescription": "Scegli se usare i colori dinamici di Material 3, cambiare temi o modificare il feedback aptico.",
+  "trackReplayTitle": "Traccia e riproduci i tuoi viaggi",
+  "trackReplayDescription": "Registra il segnale e la tecnologia mobile durante i tuoi viaggi nella sezione 'mappa'; puoi riprodurli quando vuoi!",
+  "importCellDatabasesTitle": "Importa database di celle",
+  "importCellDatabasesDescription": "Carica un database di celle per identificare i siti intorno a te nella mappa e mostrare informazioni extra nella home.",
+  "skip": "Salta",
+  "getStarted": "Inizia",
+  "next": "Prossimo",
+  "navData": "Dati",
+  "navMap": "Mappa",
+  "navSpeedtest": "Speed test",
+  "navSettings": "Impostazioni",
+  "topBarLoading": "NetManager sta caricando...",
+  "noService": "Nessun servizio",
+  "radioInfoSettings": "Impostazioni radio",
+  "switchSim": "Cambia SIM",
+  "topBar": "Top bar",
+  "speedtestRunning": "In corso...",
+  "speedtestStart": "Inizia Speed test",
+  "speedtestCompleted": "COMPLETATO",
+  "speedtest": "Speed test",
+  "speedtestServerUnreachable": "Il server di speed test non è raggiungibile.",
+  "noSpeedtestServers": "Nessun server raggiungibile trovato.",
+  "noSpeedtestServer": "Nessun server",
+  "speedtestLibrespeed": "Speed test by LibreSpeed",
+  "mapRecord": "Registrazione",
+  "closeMapRecord": "Chiudi scheda",
+  "mapSignalStrength": "Segnale",
+  "mapTimestamp": "Timestamp",
+  "mapPingTimeout": "Tempo di ping scaduto.",
+  "mapSpeed": "Velocità",
+  "mapCellId": "Cell ID",
+  "@mapCellId": {
+    "description": "The connected cell's ID. Should not be translated."
+  },
+  "mapSignal": "Segnale",
+  "mapRecordingStopped": "Registrazione fermata e salvata.",
+  "mapStopRecording": "Ferma registrazione",
+  "mapCarrier": "Operatore",
+  "mapPlmn": "PLMN",
+  "@mapPlmn": {
+    "description": "The connected network's MCC + MNC. Should not be translated."
+  },
+  "mapDate": "Data",
+  "mapSelectRecording": "Seleziona una registrazione valida.",
+  "map": "Mappa",
+  "mapCells": "Celle della mappa",
+  "mapLiveRecording": "Registrazione live in mappa",
+  "platformException": "PlatformException",
+  "@platformException": {
+    "description": "A platform exception. Should not be translated."
+  },
+  "homeNoData": "Nessun dato di rete.",
+  "homeNoSim": "Nessuna scheda SIM rilevata.",
+  "homeAirplane": "Modalità aereo ON",
+  "homeActiveCells": "Celle Attive",
+  "homeNeighborCells": "Celle Vicine",
+  "settingsPositionOff": "Off",
+  "@settingsPositionOff": {
+    "description": "Should not be translated."
+  },
+  "settingsPositionLow": "Bassa",
+  "settingsPositionMedium": "Media",
+  "settingsPositionHigh": "Alta",
+  "settingsLanguageTitle": "Lingua",
+  "settingsLanguageDescription": "Cambia a un'altra lingua supportata. Richiede un riavvio per la corretta applicazione.",
+  "settingsAnalyticsTitle": "Dati analitici",
+  "settingsAnalyticsDescription": "Condividi dati analitici anonimi per aiutarmi a migliorare NetManager.",
+  "settingsUpdatesTitle": "Controlla aggiornamenti",
+  "settingsUpdatesDescription": "Lascia che NetManager controlli automaticamente la disponibilità di aggiornamenti quando l'app viene avviata.",
+  "settingsPositionTitle": "Precisione della posizione",
+  "settingsPositionDescription": "La precisione della posizione determina la precisione del servizio di registrazione nella mappa.",
+  "settingsStartupMonitoringTitle": "Inizializza all'avvio",
+  "settingsStartupMonitoringDescription": "Avvia il servizio di tracking delle celle all'avvio del tuo dispositivo.",
+  "settingsBackgroundServiceTitle": "Tracking in background",
+  "settingsBackgroundServiceDescription": "Continua a tracciare le celle anche quando l'app è chiusa.",
+  "settingsUpdateIntervalTitle": "Intervallo di aggiornamento",
+  "settingsUpdateIntervalDescription": "L'intervallo in secondi tra ogni aggiornamento dei dati delle celle.",
+  "settingsBackgroundUpdateIntervalTitle": "Intervallo di aggiornamento in background",
+  "settingsBackgroundUpdateIntervalDescription": "L'intervallo in secondi tra ogni aggiornamento dei dati quando l'app non è aperta.",
+  "settingsHapticsTitle": "Feedback aptico",
+  "settingsHapticsDescription": "Rendi l'app più immersiva con il feedback aptico.",
+  "settingsMaterialYouTitle": "Material You (3)",
+  "@settingsMaterialYouTitle": {
+    "description": "Should not be translated."
+  },
+  "settingsMaterialYouDescription": "Usa Material You, l'ultimo UI kit di Android. Usa in alternativa Material 2, che non è ben supportato.",
+  "settingsDynamicThemeTitle": "Tema dinamico",
+  "settingsDynamicThemeDescription": "Usa il sistema di temi dinamici di Android. Supportato su Material You (Android 12+.).",
+  "settingsThemeColorTitle": "Colore del tema",
+  "settingsThemeColorDescription": "Seleziona manualmente un colore nel caso in cui tu non stia usando i temi dinamici.",
+  "settingsLogEventsTitle": "Logga eventi",
+  "settingsLogEventsDescription": "Logga svariati tipi di eventi, come i cambi di tecnologia o di stazione mobile.",
+  "settingsMaximumLogsTitle": "Log massimi",
+  "settingsMaximumLogsDescription": "Il numero massimo di eventi che possono essere loggati e salvati allo stesso tempo.",
+  "settingsMetricSystemTitle": "Sistema metrico",
+  "settingsMetricSystemDescription": "Usa il sistema metrico per le misurazioni di velocità nella mappa.",
+  "settingsMapTileTemplateTitle": "URL del server cartografico",
+  "settingsMapTileTemplateDescription": "L'URL del server cartografico da usare per la mappa.",
+  "settingsSpeedUnitTitle": "Unità di misura di velocità",
+  "settingsSpeedUnitDescription": "Scegli la tua unità di misura preferita per gli speed test.",
+  "settingsSpeedInstanceTitle": "URL del server di Speed test",
+  "settingsSpeedInstanceDescription": "L'URL del tuo server di speed test. (Backend supportati: LibreSpeed).",
+  "settingsExternalDatabasesTitle": "Database esterni",
+  "settingsExternalDatabasesDescription": "Usa un database per mostrare informazioni aggiuntive riguardo alle celle nella home.",
+  "settingsDatabaseInMapTitle": "Celle dei database nella mappa",
+  "settingsDatabaseInMapDescription": "Mostra le celle dei database importati nella mappa.",
+  "settingsImportDatabaseTitle": "Importa un database",
+  "settingsImportDatabaseDescription": "Importa dei database esterni per più reti mobili. Hai già importato {importedDatabases} database.",
+  "@settingsImportDatabaseDescription": {
+    "description": "A text with how many databases have been imported so far.",
+    "placeholders": {
+      "importedDatabases": {
+        "type": "int",
+        "example": "0"
+      }
+    }
+  },
+  "settingsContributeTitle": "Contribuisci",
+  "settingsContributeDescription": "Contribuisci allo sviluppo di NetManager su GitHub.",
+  "settingsTelegramTitle": "Telegram",
+  "@settingsTelegramTitle": {
+    "description": "Should not be translated."
+  },
+  "settingsTelegramDescription": "Entra nel canale Telegram di NetManager per preview esclusive delle nuove funzionalità.",
+  "settingsAboutTitle": "Info",
+  "settingsAboutDescription": "Visualizza alcune informazioni riguardanti NetManager. Le licenze open source e i crediti sono in questa pagina.",
+  "settingsDebugTitle": "Debug",
+  "settingsDebugDescription": "Gestisci la modalità debug di NetManager. L'abilitazione di questa impostazione farà mostrare alcuni dati grezzi in alcune parti dell'app.",
+  "settingsDebugLogsTitle": "Log di debug",
+  "settingsDebugLogsDescription": "Visualizza i log di debug di NetManager. Utile per visualizzare informazioni in più o fare debugging."
+}

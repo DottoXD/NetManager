@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 
 Widget speedMeasurementUnitDialog(
@@ -7,8 +8,10 @@ Widget speedMeasurementUnitDialog(
   String currentSelection,
   Function(int index, String value) onChanged,
 ) {
+  AppLocalizations appLocalizations = AppLocalizations.of(context)!;
+
   return AlertDialog(
-    title: const Text('Edit speed measurement unit'),
+    title: Text(appLocalizations.editSpeedMeasurementUnit),
     content: SingleChildScrollView(
       child: StatefulBuilder(
         builder: (BuildContext context, StateSetter setState) {
@@ -35,7 +38,7 @@ Widget speedMeasurementUnitDialog(
     actions: <Widget>[
       FilledButton.icon(
         icon: const Icon(Icons.edit_outlined),
-        label: const Text("Edit"),
+        label: Text(appLocalizations.edit),
         onPressed: () async {
           await HapticService().triggerHaptic(HapticType.selection, context);
 

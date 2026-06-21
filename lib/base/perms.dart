@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/base/onboarding.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/check_update.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 import 'package:netmanager/base/home.dart';
@@ -12,7 +13,8 @@ class Perms extends StatefulWidget {
     this.sharedPreferences,
     this.dynamicThemeNotifier,
     this.themeColorNotifier,
-    this.material3Notifier, {
+    this.material3Notifier,
+    this.localeNotifier, {
     super.key,
   });
   final SharedPreferences sharedPreferences;
@@ -20,6 +22,7 @@ class Perms extends StatefulWidget {
   final ValueNotifier<bool> dynamicThemeNotifier;
   final ValueNotifier<int> themeColorNotifier;
   final ValueNotifier<bool> material3Notifier;
+  final ValueNotifier<Locale?> localeNotifier;
 
   @override
   State<Perms> createState() => _PermsState();
@@ -41,6 +44,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
     _checkPermissions();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -51,9 +55,9 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
       if (widget.sharedPreferences.getBool("checkUpdates") != true) return;
       bool updateAvailable = await checkForUpdate();
 
-      if (updateAvailable) {
+      if (updateAvailable && mounted) {
         await platform.invokeMethod<bool>("showToast", {
-          "message": "A new version of NetManager is available!",
+          "message": AppLocalizations.of(context)!.updateAvailable,
         });
       }
     });
@@ -95,6 +99,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    AppLocalizations appLocalizations = AppLocalizations.of(context)!;
     if (hasPermissions == null || isRefreshing == true) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -114,7 +119,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  "Missing permissions",
+                  appLocalizations.missingPermissions,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: Theme.of(context).colorScheme.onPrimaryContainer,
                     fontWeight: FontWeight.bold,
@@ -122,7 +127,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  "NetManager requires background location and phone permissions to operate.",
+                  appLocalizations.requiredPermissions,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onPrimaryContainer,
                   ),
@@ -145,7 +150,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Text("Allow"),
+                  child: Text(appLocalizations.allow),
                 ),
               ],
             ),
@@ -156,6 +161,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
 
     if (_showOnboarding) {
       return OnboardingScreen(
+        appLocalizations: appLocalizations,
         onFinished: () async {
           await widget.sharedPreferences.setBool("seenOnboarding", true);
           setState(() => _showOnboarding = false);
@@ -168,6 +174,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
       widget.dynamicThemeNotifier,
       widget.themeColorNotifier,
       widget.material3Notifier,
+      widget.localeNotifier,
       platform,
     );
   }

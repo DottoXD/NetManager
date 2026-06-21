@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:netmanager/components/base/body/speedtest/widgets/results_column.dart';
 import 'package:netmanager/components/base/body/speedtest/speedtest.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 
 class SpeedResults extends StatelessWidget {
@@ -27,6 +28,8 @@ class SpeedResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppLocalizations appLocalizations = AppLocalizations.of(context)!;
+
     bool isRunning = stage != TestStage.IDLE && stage != TestStage.FINISHED;
 
     Color progressColor;
@@ -86,7 +89,11 @@ class SpeedResults extends StatelessWidget {
 
                           startTest();
                         },
-                  child: Text(isRunning ? "Running..." : "Start Speed test"),
+                  child: Text(
+                    isRunning
+                        ? appLocalizations.speedtestRunning
+                        : appLocalizations.speedtestStart,
+                  ),
                 ),
               ),
             ],

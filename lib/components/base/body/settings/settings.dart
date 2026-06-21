@@ -6,8 +6,10 @@ import 'package:netmanager/components/dialogs/about.dart';
 import 'package:netmanager/components/dialogs/database_manager.dart';
 import 'package:netmanager/components/dialogs/debug_log.dart';
 import 'package:netmanager/components/dialogs/error.dart';
+import 'package:netmanager/components/dialogs/language.dart';
 import 'package:netmanager/components/dialogs/position_precision.dart';
 import 'package:netmanager/components/dialogs/speed_unit.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/color_selection.dart';
 import 'package:netmanager/utils/event_selection.dart';
 import 'package:netmanager/utils/haptic_service.dart';
@@ -23,6 +25,7 @@ class SettingsBody extends StatefulWidget {
     this.dynamicThemeNotifier,
     this.themeColorNotifier,
     this.material3Notifier,
+    this.localeNotifier,
     this.debugNotifier,
     this.logsNotifier,
     this.updateIntervalNotifier,
@@ -41,6 +44,7 @@ class SettingsBody extends StatefulWidget {
   final ValueNotifier<bool> dynamicThemeNotifier;
   final ValueNotifier<int> themeColorNotifier;
   final ValueNotifier<bool> material3Notifier;
+  final ValueNotifier<Locale?> localeNotifier;
 
   final ValueNotifier<bool> debugNotifier;
   final ValueNotifier<bool> logsNotifier;
@@ -64,6 +68,7 @@ class _SettingsBodyState extends State<SettingsBody> {
   late ValueNotifier<bool> dynamicThemeNotifier;
   late ValueNotifier<int> themeColorNotifier;
   late ValueNotifier<bool> material3Notifier;
+  late ValueNotifier<Locale?> localeNotifier;
 
   late ValueNotifier<bool> debugNotifier;
   late ValueNotifier<bool> logsNotifier;
@@ -79,8 +84,10 @@ class _SettingsBodyState extends State<SettingsBody> {
   late TextEditingController _mapTilesTemplateController;
   late TextEditingController _speedtestInstanceController;
 
-  final List<String> positionPrecisions = ["Off", "Low", "Medium", "High"];
+  late List<String> positionPrecisions;
   final List<String> speedMeasurementUnits = ["Gbps", "Mbps", "Kbps"];
+
+  late AppLocalizations _appLocalizations;
 
   bool _startupMonitoring = false;
   bool _backgroundService = false;
@@ -116,11 +123,20 @@ class _SettingsBodyState extends State<SettingsBody> {
   @override
   void initState() {
     super.initState();
+    _appLocalizations = AppLocalizations.of(context)!;
+    positionPrecisions = [
+      _appLocalizations.settingsPositionOff,
+      _appLocalizations.settingsPositionLow,
+      _appLocalizations.settingsPositionMedium,
+      _appLocalizations.settingsPositionHigh,
+    ];
+
     platform = widget.platform;
     sharedPreferences = widget.sharedPreferences;
     dynamicThemeNotifier = widget.dynamicThemeNotifier;
     themeColorNotifier = widget.themeColorNotifier;
     material3Notifier = widget.material3Notifier;
+    localeNotifier = widget.localeNotifier;
     debugNotifier = widget.debugNotifier;
     logsNotifier = widget.logsNotifier;
     updateIntervalNotifier = widget.updateIntervalNotifier;
@@ -317,7 +333,7 @@ class _SettingsBodyState extends State<SettingsBody> {
       showDialog(
         context: context,
         builder: (BuildContext context) {
-          return errorDialog(context, "Debug logs: $e");
+          return errorDialog(context, "${_appLocalizations.debugLogs}: $e");
         },
       );
     }
@@ -333,10 +349,46 @@ class _SettingsBodyState extends State<SettingsBody> {
         physics: ClampingScrollPhysics(),
         children: <Widget>[
           ListTile(
-            title: Text("Analytics"),
-            subtitle: Text(
-              "Share anonymous insights to help me improve NetManager.",
+            title: Text(
+              "${_appLocalizations.settingsLanguageTitle} ${localeNotifier.value != null ? "(${localeNotifier.value!.languageCode.toUpperCase()})" : ""}",
             ),
+            subtitle: Text(_appLocalizations.settingsLanguageDescription),
+            trailing: IconButton(
+              icon: Icon(Icons.edit),
+              tooltip: _appLocalizations.openDialog,
+              onPressed: () async {
+                await HapticService().triggerHaptic(
+                  HapticType.selection,
+                  context,
+                );
+
+                if (context.mounted) {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return languageDialog(context, localeNotifier.value, (
+                        Locale? selectedLocale,
+                      ) {
+                        if (selectedLocale == null) {
+                          sharedPreferences.remove("languageCode");
+                          localeNotifier.value = null;
+                        } else {
+                          sharedPreferences.setString(
+                            "languageCode",
+                            selectedLocale.languageCode,
+                          );
+                          localeNotifier.value = selectedLocale;
+                        }
+                      });
+                    },
+                  );
+                }
+              },
+            ),
+          ),
+          ListTile(
+            title: Text(_appLocalizations.settingsAnalyticsTitle),
+            subtitle: Text(_appLocalizations.settingsAnalyticsDescription),
             trailing: Switch(
               value: _analytics,
               onChanged: (bool value) async {
@@ -351,10 +403,8 @@ class _SettingsBodyState extends State<SettingsBody> {
             ),
           ),
           ListTile(
-            title: Text("Check for updates"),
-            subtitle: Text(
-              "Let NetManager automatically look for updates when the app is opened.",
-            ),
+            title: Text(_appLocalizations.settingsUpdatesTitle),
+            subtitle: Text(_appLocalizations.settingsUpdatesDescription),
             trailing: Switch(
               value: _checkUpdates,
               onChanged: (bool value) async {
@@ -374,14 +424,12 @@ class _SettingsBodyState extends State<SettingsBody> {
           ),
           ListTile(
             title: Text(
-              "Position precision (${positionPrecisions[_positionPrecision]})",
+              "${_appLocalizations.settingsPositionTitle} (${positionPrecisions[_positionPrecision]})",
             ),
-            subtitle: Text(
-              "The precision of your position determines the precision of the map tracking service.",
-            ),
+            subtitle: Text(_appLocalizations.settingsPositionDescription),
             trailing: IconButton(
               icon: Icon(Icons.edit),
-              tooltip: "Open dialog",
+              tooltip: _appLocalizations.openDialog,
               onPressed: () async {
                 await HapticService().triggerHaptic(
                   HapticType.selection,
@@ -412,9 +460,9 @@ class _SettingsBodyState extends State<SettingsBody> {
             ),
           ),
           ListTile(
-            title: Text("Startup monitoring"),
+            title: Text(_appLocalizations.settingsStartupMonitoringTitle),
             subtitle: Text(
-              "Start the monitoring service with your device. The map tracking service still needs to be manually started in the app.",
+              _appLocalizations.settingsStartupMonitoringDescription,
             ),
             trailing: Switch(
               value: _startupMonitoring,
@@ -429,9 +477,9 @@ class _SettingsBodyState extends State<SettingsBody> {
             ),
           ),
           ListTile(
-            title: Text("Background service"),
+            title: Text(_appLocalizations.settingsBackgroundServiceTitle),
             subtitle: Text(
-              "Keep the monitoring service running even when you shut down the app.",
+              _appLocalizations.settingsBackgroundServiceDescription,
             ),
             trailing: Switch(
               value: _backgroundService,
@@ -446,10 +494,10 @@ class _SettingsBodyState extends State<SettingsBody> {
             ),
           ),
           ListTile(
-            title: Text("Update interval (${_updateInterval}s)"),
-            subtitle: Text(
-              "The interval in seconds between each monitoring service data update.",
+            title: Text(
+              "${_appLocalizations.settingsUpdateIntervalTitle} (${_updateInterval}s)",
             ),
+            subtitle: Text(_appLocalizations.settingsUpdateIntervalDescription),
           ),
           Slider(
             value: _updateInterval.toDouble(),
@@ -469,10 +517,10 @@ class _SettingsBodyState extends State<SettingsBody> {
           ),
           ListTile(
             title: Text(
-              "Background update interval (${_backgroundUpdateInterval}s)",
+              "${_appLocalizations.settingsBackgroundUpdateIntervalTitle} (${_backgroundUpdateInterval}s)",
             ),
             subtitle: Text(
-              "The interval between each monitoring service data update when it is running in the background or on startup.",
+              _appLocalizations.settingsBackgroundUpdateIntervalDescription,
             ),
             enabled: (_backgroundService || _startupMonitoring),
           ),
@@ -497,10 +545,8 @@ class _SettingsBodyState extends State<SettingsBody> {
             color: Theme.of(context).colorScheme.outlineVariant,
           ),
           ListTile(
-            title: Text("Haptics"),
-            subtitle: Text(
-              "Haptic feedback allows the app to feel more immersive.",
-            ),
+            title: Text(_appLocalizations.settingsHapticsTitle),
+            subtitle: Text(_appLocalizations.settingsHapticsDescription),
             trailing: Switch(
               value: _hapticFeedback,
               onChanged: (bool value) async {
@@ -518,10 +564,8 @@ class _SettingsBodyState extends State<SettingsBody> {
             ),
           ),
           ListTile(
-            title: Text("Material You (3)"),
-            subtitle: Text(
-              "Use Material You, Android's latest UI kit. Do note that Material 2 is not well unsupported.",
-            ),
+            title: Text(_appLocalizations.settingsMaterialYouTitle),
+            subtitle: Text(_appLocalizations.settingsMaterialYouDescription),
             trailing: Switch(
               value: _material3,
               onChanged: (bool value) async {
@@ -537,10 +581,8 @@ class _SettingsBodyState extends State<SettingsBody> {
             ),
           ),
           ListTile(
-            title: Text("Dynamic theme"),
-            subtitle: Text(
-              "Use Android's dynamic theme system. Supported on Material You (Android 12+.).",
-            ),
+            title: Text(_appLocalizations.settingsDynamicThemeTitle),
+            subtitle: Text(_appLocalizations.settingsDynamicThemeDescription),
             enabled: _dynamicSupported && _material3,
             trailing: (_dynamicSupported && _material3
                 ? Switch(
@@ -559,10 +601,8 @@ class _SettingsBodyState extends State<SettingsBody> {
                 : const SizedBox.shrink()),
           ),
           ListTile(
-            title: Text("Theme color"),
-            subtitle: Text(
-              "Choose a custom theme color if you are not using Android's dynamic theme feature.",
-            ),
+            title: Text(_appLocalizations.settingsThemeColorTitle),
+            subtitle: Text(_appLocalizations.settingsThemeColorDescription),
             enabled: (!_dynamicTheme || !_dynamicSupported),
           ),
           if (!_dynamicTheme || !_dynamicSupported)
@@ -576,10 +616,8 @@ class _SettingsBodyState extends State<SettingsBody> {
             color: Theme.of(context).colorScheme.outlineVariant,
           ),
           ListTile(
-            title: Text("Log events"),
-            subtitle: Text(
-              "Log various events such as changes between mobile cells and technologies.",
-            ),
+            title: Text(_appLocalizations.settingsLogEventsTitle),
+            subtitle: Text(_appLocalizations.settingsLogEventsDescription),
             trailing: Switch(
               value: _logEvents,
               onChanged: (bool value) async {
@@ -610,10 +648,10 @@ class _SettingsBodyState extends State<SettingsBody> {
               updateData();
             }),
           ListTile(
-            title: Text("Maximum logs ($_maximumLogs)"),
-            subtitle: Text(
-              "The maximum amount of events that should be logged and stored.",
+            title: Text(
+              "${_appLocalizations.settingsMaximumLogsTitle} ($_maximumLogs)",
             ),
+            subtitle: Text(_appLocalizations.settingsMaximumLogsDescription),
             enabled: _logEvents,
           ),
           if (_logEvents)
@@ -637,10 +675,8 @@ class _SettingsBodyState extends State<SettingsBody> {
             color: Theme.of(context).colorScheme.outlineVariant,
           ),
           ListTile(
-            title: Text("Metric system"),
-            subtitle: Text(
-              "Use the metric system for speed measurements in the map.",
-            ),
+            title: Text(_appLocalizations.settingsMetricSystemTitle),
+            subtitle: Text(_appLocalizations.settingsMetricSystemDescription),
             trailing: Switch(
               value: _metricSystem,
               onChanged: (bool value) async {
@@ -656,8 +692,10 @@ class _SettingsBodyState extends State<SettingsBody> {
             ),
           ),
           ListTile(
-            title: Text("Map tiles template URL"),
-            subtitle: Text("The custom map tiles template URL."),
+            title: Text(_appLocalizations.settingsMapTileTemplateTitle),
+            subtitle: Text(
+              _appLocalizations.settingsMapTileTemplateDescription,
+            ),
           ),
           Padding(
             padding: const EdgeInsets.only(
@@ -692,14 +730,12 @@ class _SettingsBodyState extends State<SettingsBody> {
           ),
           ListTile(
             title: Text(
-              "Speed measurement unit (${speedMeasurementUnits[_speedMeasurementUnit]})",
+              "${_appLocalizations.settingsSpeedUnitTitle} (${speedMeasurementUnits[_speedMeasurementUnit]})",
             ),
-            subtitle: Text(
-              "Choose your preferred speed measurement unit for speedtests.",
-            ),
+            subtitle: Text(_appLocalizations.settingsSpeedUnitDescription),
             trailing: IconButton(
               icon: Icon(Icons.edit),
-              tooltip: "Open dialog",
+              tooltip: _appLocalizations.openDialog,
               onPressed: () async {
                 await HapticService().triggerHaptic(
                   HapticType.selection,
@@ -731,10 +767,8 @@ class _SettingsBodyState extends State<SettingsBody> {
             ),
           ),
           ListTile(
-            title: Text("Speed test instance URL"),
-            subtitle: Text(
-              "Your speed test server instance URL. (Supported backends: LibreSpeed).",
-            ),
+            title: Text(_appLocalizations.settingsSpeedInstanceTitle),
+            subtitle: Text(_appLocalizations.settingsSpeedInstanceDescription),
           ),
           Padding(
             padding: const EdgeInsets.only(
@@ -768,9 +802,9 @@ class _SettingsBodyState extends State<SettingsBody> {
             color: Theme.of(context).colorScheme.outlineVariant,
           ),
           ListTile(
-            title: Text("External databases"),
+            title: Text(_appLocalizations.settingsExternalDatabasesTitle),
             subtitle: Text(
-              "Use external databases to show additional info about cell towers in the home screen.",
+              _appLocalizations.settingsExternalDatabasesDescription,
             ),
             trailing: Switch(
               value: _externalDatabases,
@@ -787,10 +821,8 @@ class _SettingsBodyState extends State<SettingsBody> {
             ),
           ),
           ListTile(
-            title: Text("Database cells in map"),
-            subtitle: Text(
-              "Show the cells imported from a database in the map.",
-            ),
+            title: Text(_appLocalizations.settingsDatabaseInMapTitle),
+            subtitle: Text(_appLocalizations.settingsDatabaseInMapDescription),
             enabled: _externalDatabases,
             trailing: _externalDatabases
                 ? Switch(
@@ -809,14 +841,16 @@ class _SettingsBodyState extends State<SettingsBody> {
                 : const SizedBox.shrink(),
           ),
           ListTile(
-            title: Text("Import database"),
+            title: Text(_appLocalizations.settingsImportDatabaseTitle),
             subtitle: Text(
-              "Import external databases for various mobile networks. You have imported ${_importedDatabases.length} databases so far.",
+              _appLocalizations.settingsImportDatabaseDescription(
+                _importedDatabases.length,
+              ),
             ),
             enabled: _externalDatabases,
             trailing: IconButton(
               icon: Icon(Icons.download_outlined),
-              tooltip: "Open dialog",
+              tooltip: _appLocalizations.openDialog,
               onPressed: () async {
                 await HapticService().triggerHaptic(
                   HapticType.selection,
@@ -843,8 +877,8 @@ class _SettingsBodyState extends State<SettingsBody> {
             color: Theme.of(context).colorScheme.outlineVariant,
           ),
           ListTile(
-            title: Text("Contribute"),
-            subtitle: Text("Contribute to NetManager on GitHub."),
+            title: Text(_appLocalizations.settingsContributeTitle),
+            subtitle: Text(_appLocalizations.settingsContributeDescription),
             trailing: IconButton(
               onPressed: () async {
                 await HapticService().triggerHaptic(
@@ -856,14 +890,12 @@ class _SettingsBodyState extends State<SettingsBody> {
                 launchUrl(url);
               },
               icon: Icon(Icons.open_in_new),
-              tooltip: "Open in a browser",
+              tooltip: _appLocalizations.openInBrowser,
             ),
           ),
           ListTile(
-            title: Text("Telegram"),
-            subtitle: Text(
-              "Join NetManager's Telegram for exclusive feature previews and showcases.",
-            ),
+            title: Text(_appLocalizations.settingsTelegramTitle),
+            subtitle: Text(_appLocalizations.settingsTelegramDescription),
             trailing: IconButton(
               onPressed: () async {
                 await HapticService().triggerHaptic(
@@ -875,14 +907,12 @@ class _SettingsBodyState extends State<SettingsBody> {
                 launchUrl(url);
               },
               icon: Icon(Icons.message_outlined),
-              tooltip: "Open in a browser",
+              tooltip: _appLocalizations.openInBrowser,
             ),
           ),
           ListTile(
-            title: Text("About"),
-            subtitle: Text(
-              "View some info about NetManager. Open source licenses and credits are included in this page.",
-            ),
+            title: Text(_appLocalizations.settingsAboutTitle),
+            subtitle: Text(_appLocalizations.settingsAboutDescription),
             trailing: IconButton(
               onPressed: () async {
                 await HapticService().triggerHaptic(
@@ -899,7 +929,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                 }
               },
               icon: Icon(Icons.question_mark_outlined),
-              tooltip: "Open dialog",
+              tooltip: _appLocalizations.openDialog,
             ),
           ),
           Divider(
@@ -929,10 +959,8 @@ class _SettingsBodyState extends State<SettingsBody> {
             ),
           ),*/
           ListTile(
-            title: Text("Debug"),
-            subtitle: Text(
-              "Manage NetManager's debug mode. Enabling this setting will show raw debug data in some parts of the app.",
-            ),
+            title: Text(_appLocalizations.settingsDebugTitle),
+            subtitle: Text(_appLocalizations.settingsDebugDescription),
             trailing: Switch(
               value: _debug,
               onChanged: (bool value) async {
@@ -949,15 +977,13 @@ class _SettingsBodyState extends State<SettingsBody> {
           ),
           if (_debug)
             ListTile(
-              title: Text("Debug Logs"),
-              subtitle: Text(
-                "View NetManager's debug logs. Useful for debugging issues or viewing additional info.",
-              ),
+              title: Text(_appLocalizations.settingsDebugLogsTitle),
+              subtitle: Text(_appLocalizations.settingsDebugLogsDescription),
               enabled: _debug,
               trailing: IconButton(
                 onPressed: openDebugLogs,
                 icon: Icon(Icons.pageview_outlined),
-                tooltip: "View",
+                tooltip: _appLocalizations.view,
               ),
             ),
         ],

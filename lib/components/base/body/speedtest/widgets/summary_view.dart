@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/speed_methods.dart';
 
 class SummaryView extends StatelessWidget {
@@ -15,6 +16,8 @@ class SummaryView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppLocalizations appLocalizations = AppLocalizations.of(context)!;
+
     return Column(
       key: const ValueKey("summary"),
       mainAxisSize: MainAxisSize.min,
@@ -72,7 +75,7 @@ class SummaryView extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          "COMPLETED",
+          appLocalizations.speedtestCompleted,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
             letterSpacing: 2,
             color: Theme.of(context).colorScheme.outline,

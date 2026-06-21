@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/types/base/onboarding_item.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 
 class OnboardingScreen extends StatefulWidget {
+  final AppLocalizations appLocalizations;
   final VoidCallback onFinished;
 
-  const OnboardingScreen({super.key, required this.onFinished});
+  const OnboardingScreen({
+    super.key,
+    required this.appLocalizations,
+    required this.onFinished,
+  });
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -13,34 +19,39 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
+  late AppLocalizations appLocalizations;
+  late List<OnboardingItem> _slides;
+
   int _currentPage = 0;
 
-  final List<OnboardingItem> _slides = [
-    OnboardingItem(
-      icon: Icons.settings_suggest_outlined,
-      title: "Control app behaviour",
-      description:
-          "Fine-tune background services and optimise data update intervals exactly to your preference inside settings.",
-    ),
-    OnboardingItem(
-      icon: Icons.palette_outlined,
-      title: "Customise aesthetics",
-      description:
-          "Toggle Material 3 dynamic color matching, switch themes, and adjust tactile haptic feedback responses.",
-    ),
-    OnboardingItem(
-      icon: Icons.fiber_smart_record_outlined,
-      title: "Track & replay trips",
-      description:
-          "Record your signal strength and cellular technology live during trips on the map tab, then replay your routes later.",
-    ),
-    OnboardingItem(
-      icon: Icons.storage_outlined,
-      title: "Import cell databases",
-      description:
-          "Load an offline cell database to identify towers around you on the map and show extra data on your home dashboard.",
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    appLocalizations = widget.appLocalizations;
+
+    _slides = [
+      OnboardingItem(
+        icon: Icons.settings_suggest_outlined,
+        title: appLocalizations.appBehaviourTitle,
+        description: appLocalizations.appBehaviourDescription,
+      ),
+      OnboardingItem(
+        icon: Icons.palette_outlined,
+        title: appLocalizations.customiseAestheticsTitle,
+        description: appLocalizations.customiseAestheticsDescription,
+      ),
+      OnboardingItem(
+        icon: Icons.fiber_smart_record_outlined,
+        title: appLocalizations.trackReplayTitle,
+        description: appLocalizations.trackReplayDescription,
+      ),
+      OnboardingItem(
+        icon: Icons.storage_outlined,
+        title: appLocalizations.importCellDatabasesTitle,
+        description: appLocalizations.importCellDatabasesDescription,
+      ),
+    ];
+  }
 
   @override
   void dispose() {
@@ -73,7 +84,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
                     widget.onFinished();
                   },
-                  child: const Text("Skip"),
+                  child: Text(appLocalizations.skip),
                 ),
               ),
             ),
@@ -170,8 +181,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                     label: Text(
                       _currentPage == _slides.length - 1
-                          ? "Get started"
-                          : "Next",
+                          ? appLocalizations.getStarted
+                          : appLocalizations.next,
                     ),
                   ),
                 ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 
 class ScreenshotButton extends StatelessWidget {
@@ -15,7 +16,7 @@ class ScreenshotButton extends StatelessWidget {
         await HapticService().triggerHaptic(HapticType.selection, context);
         onPressed!();
       },
-      tooltip: 'Screenshot page',
+      tooltip: AppLocalizations.of(context)!.screenshotPage,
       child: const Icon(Icons.save_outlined, size: 18),
     );
   }

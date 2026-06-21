@@ -1,29 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 
 class NavBar extends StatelessWidget {
   const NavBar(this.home, this.currentPage, {super.key});
 
-  final Function home;
+  final Function(int) home;
   final int currentPage;
 
   @override
   Widget build(BuildContext context) {
+    AppLocalizations appLocalizations = AppLocalizations.of(context)!;
     int page = currentPage;
 
     return NavigationBar(
-      destinations: const [
-        NavigationDestination(icon: Icon(Icons.person_outlined), label: "Data"),
+      destinations: [
+        NavigationDestination(
+          icon: Icon(Icons.person_outlined),
+          label: appLocalizations.navData,
+        ),
         NavigationDestination(
           icon: Icon(Icons.location_searching_outlined),
-          label: "Map",
+          label: appLocalizations.navMap,
         ),
         NavigationDestination(
           icon: Icon(Icons.speed_outlined),
-          label: "Speed test",
+          label: appLocalizations.navSpeedtest,
         ),
         NavigationDestination(
           icon: Icon(Icons.settings_outlined),
-          label: "Settings",
+          label: appLocalizations.navSettings,
         ),
       ],
       selectedIndex: page,

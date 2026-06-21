@@ -1,3 +1,4 @@
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 import 'package:netmanager/types/recording/record.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +21,8 @@ class RecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppLocalizations appLocalizations = AppLocalizations.of(context)!;
+
     if (selectedRecord == null) return const SizedBox.shrink();
 
     final record = selectedRecord!;
@@ -51,7 +54,7 @@ class RecordCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "${index >= 0 ? "Record #$index - " : ""}${record.networkGen < 2 ? "N/A" : "${record.networkGen}G"}",
+                      "${index >= 0 ? "${appLocalizations.mapRecord} #$index - " : ""}${record.networkGen < 2 ? "N/A" : "${record.networkGen}G"}",
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -59,7 +62,7 @@ class RecordCard extends StatelessWidget {
                     ),
                     IconButton(
                       icon: const Icon(Icons.close_outlined, size: 24),
-                      tooltip: "Close record card",
+                      tooltip: appLocalizations.closeMapRecord,
                       padding: EdgeInsets.zero,
                       onPressed: () async {
                         await HapticService().triggerHaptic(
@@ -83,7 +86,7 @@ class RecordCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Signal Strength",
+                            appLocalizations.mapSignalStrength,
                             style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(
                                   color: Theme.of(
@@ -93,7 +96,7 @@ class RecordCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            "Timestamp",
+                            appLocalizations.mapTimestamp,
                             style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(
                                   color: Theme.of(
@@ -104,7 +107,7 @@ class RecordCard extends StatelessWidget {
                           if (!record.usable) ...[
                             const SizedBox(height: 2),
                             Text(
-                              "Ping timed out.",
+                              appLocalizations.mapPingTimeout,
                               style: Theme.of(context).textTheme.titleSmall
                                   ?.copyWith(
                                     color: Theme.of(

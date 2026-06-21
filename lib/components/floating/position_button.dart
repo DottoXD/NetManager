@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 
 class PositionButton extends StatelessWidget {
@@ -14,7 +15,7 @@ class PositionButton extends StatelessWidget {
         await HapticService().triggerHaptic(HapticType.light, context);
         onPressed!();
       },
-      tooltip: 'Reposition location',
+      tooltip: AppLocalizations.of(context)!.repositionMap,
       child: const Icon(Icons.location_searching_outlined),
     );
   }

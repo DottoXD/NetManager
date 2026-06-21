@@ -1,0 +1,235 @@
+{
+  "unexpectedError": "An unexpected error occured!",
+  "unknownCell": "Unknown cell",
+  "likely": "Likely",
+  "systemLanguage": "System language",
+  "openDialog": "Open dialog",
+  "view": "View",
+  "openInBrowser": "Open in a browser",
+  "unknownBand": "Unknown band",
+  "cellBandwidth": "Bandwidth: {bandwidth}MHz",
+  "@cellBandwidth": {
+    "description": "A text with a cell's bandwidth in MHz.",
+    "placeholders": {
+      "bandwidth": {
+        "type": "int",
+        "example": "0"
+      }
+    }
+  },
+  "unknownBandwidth": "Unknown bandwidth",
+  "noInfoCell": "No info for this cell.",
+  "visitServerHost": "Visit the server's host in a browser.",
+  "newRecording": "New recording",
+  "recordingSetupDialog": "You will be taken to the recording setup dialog.",
+  "fileName": "File name",
+  "recordingInterval": "Interval between recordings",
+  "trackUsability": "Track usability",
+  "usabilityTestUrl": "Usability Test URL",
+  "selectSaveLocation": "Select save location",
+  "selectedSaveLocation": "Selected save location:",
+  "cancel": "Cancel",
+  "start": "Start",
+  "recordingStarted": "Recording {name} started...",
+  "@recordingStarted": {
+    "description": "A text telling the user that a recording started.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "NetManager_0"
+      }
+    }
+  },
+  "replayRecording": "Replay recording",
+  "selectRecording": "You will be asked to select a valid .nmr (NetManager Recording) file.",
+  "updateData": "Update data",
+  "screenshotPage": "Screenshot page",
+  "coverageRecording": "Cell coverage recording",
+  "repositionMap": "Reposition map",
+  "editSpeedMeasurementUnit": "Edit speed measurement unit",
+  "edit": "Edit",
+  "editPositionPrecision": "Edit position precision",
+  "editLanguage": "Edit language",
+  "noEvents": "No events",
+  "eventLogs": "Event logs",
+  "unknown": "Unknown",
+  "close": "Close",
+  "eventLogsSaved": "Event logs saved at: {path}",
+  "@eventLogsSaved": {
+    "description": "An events logs got saved.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "export": "Export",
+  "error": "Error",
+  "debug": "Debug",
+  "noDebugLogs": "No debug logs",
+  "debugLogs": "Debug logs",
+  "debugLogsSaved": "Debug logs saved at: {path}",
+  "@debugLogsSaved": {
+    "description": "Debug logs got saved.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "noValidPlmnInDatabase": "Could not find a valid PLMN in this database",
+  "convertingCells": "Converting your cells...",
+  "importDatabase": "Import database",
+  "databaseIndexing": "Database indexing",
+  "manageDatabases": "Manage databases",
+  "noImportedDatabases": "No databases have been imported yet",
+  "databaseFormat": "Format: {format}",
+  "@databaseFormat": {
+    "description": "A text telling the user the database's format.",
+    "placeholders": {
+      "format": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteDatabase": "Delete database",
+  "import": "Import",
+  "updateAvailable": "A new version of NetManager is available!",
+  "missingPermissions": "Missing permissions",
+  "requiredPermissions": "NetManager requires background location and phone permissions to operate.",
+  "allow": "Allow",
+  "appBehaviourTitle": "Control app behaviour",
+  "appBehaviourDescription": "Fine-tune background services and optimise data update intervals exactly to your preference inside settings.",
+  "customiseAestheticsTitle": "Customise aesthetics",
+  "customiseAestheticsDescription": "Toggle Material 3 dynamic color matching, switch themes, and adjust tactile haptic feedback responses.",
+  "trackReplayTitle": "Track & replay trips",
+  "trackReplayDescription": "Record your signal strength and cellular technology live during trips on the map tab, then replay your routes later.",
+  "importCellDatabasesTitle": "Import cell databases",
+  "importCellDatabasesDescription": "Load an offline cell database to identify towers around you on the map and show extra data on your home dashboard.",
+  "skip": "Skip",
+  "getStarted": "Get started",
+  "next": "Next",
+  "navData": "Data",
+  "navMap": "Map",
+  "navSpeedtest": "Speed test",
+  "navSettings": "Settings",
+  "topBarLoading": "NetManager is loading...",
+  "noService": "No service",
+  "radioInfoSettings": "Radio info settings",
+  "switchSim": "Switch SIM card",
+  "topBar": "Top bar",
+  "speedtestRunning": "Running...",
+  "speedtestStart": "Start Speed test",
+  "speedtestCompleted": "COMPLETED",
+  "speedtest": "Speed test",
+  "speedtestServerUnreachable": "The speed test server is unreachable.",
+  "noSpeedtestServers": "No reachable servers found.",
+  "noSpeedtestServer": "No server",
+  "speedtestLibrespeed": "Powered by LibreSpeed",
+  "mapRecord": "Record",
+  "closeMapRecord": "Close record card",
+  "mapSignalStrength": "Signal Strength",
+  "mapTimestamp": "Timestamp",
+  "mapPingTimeout": "Ping timed out.",
+  "mapSpeed": "Speed",
+  "mapCellId": "Cell ID",
+  "@mapCellId": {
+    "description": "The connected cell's ID. Should not be translated."
+  },
+  "mapSignal": "Signal",
+  "mapRecordingStopped": "Recording stopped and saved.",
+  "mapStopRecording": "Stop recording",
+  "mapCarrier": "Carrier",
+  "mapPlmn": "PLMN",
+  "@mapPlmn": {
+    "description": "The connected network's MCC + MNC. Should not be translated."
+  },
+  "mapDate": "Date",
+  "mapSelectRecording": "Please select a valid recording.",
+  "map": "Map",
+  "mapCells": "Map cells",
+  "mapLiveRecording": "Map live recording",
+  "platformException": "PlatformException",
+  "@platformException": {
+    "description": "A platform exception. Should not be translated."
+  },
+  "homeNoData": "No network data.",
+  "homeNoSim": "No SIM card detected",
+  "homeAirplane": "Airplane mode ON",
+  "homeActiveCells": "Active Cells",
+  "homeNeighborCells": "Neighbor Cells",
+  "settingsPositionOff": "Off",
+  "@settingsPositionOff": {
+    "description": "Should not be translated."
+  },
+  "settingsPositionLow": "Low",
+  "settingsPositionMedium": "Medium",
+  "settingsPositionHigh": "High",
+  "settingsLanguageTitle": "Language",
+  "settingsLanguageDescription": "Change to another supported language. Requires a restart for full effect.",
+  "settingsAnalyticsTitle": "Analytics",
+  "settingsAnalyticsDescription": "Share anonymous insights to help me improve NetManager.",
+  "settingsUpdatesTitle": "Check for updates",
+  "settingsUpdatesDescription": "Let NetManager automatically look for updates when the app is opened.",
+  "settingsPositionTitle": "Position precision",
+  "settingsPositionDescription": "The precision of your position determines the precision of the map tracking service.",
+  "settingsStartupMonitoringTitle": "Startup monitoring",
+  "settingsStartupMonitoringDescription": "Start the monitoring service with your device. The map tracking service still needs to be manually started in the app.",
+  "settingsBackgroundServiceTitle": "Background service",
+  "settingsBackgroundServiceDescription": "Keep the monitoring service running even when you shut down the app.",
+  "settingsUpdateIntervalTitle": "Update interval",
+  "settingsUpdateIntervalDescription": "The interval in seconds between each monitoring service data update.",
+  "settingsBackgroundUpdateIntervalTitle": "Background update interval",
+  "settingsBackgroundUpdateIntervalDescription": "The interval between each monitoring service data update when it is running in the background or on startup.",
+  "settingsHapticsTitle": "Haptics",
+  "settingsHapticsDescription": "Haptic feedback allows the app to feel more immersive.",
+  "settingsMaterialYouTitle": "Material You (3)",
+  "@settingsMaterialYouTitle": {
+    "description": "Should not be translated."
+  },
+  "settingsMaterialYouDescription": "Use Material You, Android's latest UI kit. Do note that Material 2 is not well unsupported.",
+  "settingsDynamicThemeTitle": "Dynamic theme",
+  "settingsDynamicThemeDescription": "Use Android's dynamic theme system. Supported on Material You (Android 12+.).",
+  "settingsThemeColorTitle": "Theme color",
+  "settingsThemeColorDescription": "Choose a custom theme color if you are not using Android's dynamic theme feature.",
+  "settingsLogEventsTitle": "Log events",
+  "settingsLogEventsDescription": "Log various events such as changes between mobile cells and technologies.",
+  "settingsMaximumLogsTitle": "Maximum logs",
+  "settingsMaximumLogsDescription": "The maximum amount of events that should be logged and stored.",
+  "settingsMetricSystemTitle": "Metric system",
+  "settingsMetricSystemDescription": "Use the metric system for speed measurements in the map.",
+  "settingsMapTileTemplateTitle": "Map tiles template URL",
+  "settingsMapTileTemplateDescription": "The custom map tiles template URL.",
+  "settingsSpeedUnitTitle": "Speed measurement unit",
+  "settingsSpeedUnitDescription": "Choose your preferred speed measurement unit for speedtests.",
+  "settingsSpeedInstanceTitle": "Speed test instance URL",
+  "settingsSpeedInstanceDescription": "Your speed test server instance URL. (Supported backends: LibreSpeed).",
+  "settingsExternalDatabasesTitle": "External databases",
+  "settingsExternalDatabasesDescription": "Use external databases to show additional info about cell towers in the home screen.",
+  "settingsDatabaseInMapTitle": "Database cells in map",
+  "settingsDatabaseInMapDescription": "Show the cells imported from a database in the map.",
+  "settingsImportDatabaseTitle": "Import database",
+  "settingsImportDatabaseDescription": "Import external databases for various mobile networks. You have imported {importedDatabases} databases so far.",
+  "@settingsImportDatabaseDescription": {
+    "description": "A text with how many databases have been imported so far.",
+    "placeholders": {
+      "importedDatabases": {
+        "type": "int",
+        "example": "0"
+      }
+    }
+  },
+  "settingsContributeTitle": "Contribute",
+  "settingsContributeDescription": "Contribute to NetManager on GitHub.",
+  "settingsTelegramTitle": "Telegram",
+  "@settingsTelegramTitle": {
+    "description": "Should not be translated."
+  },
+  "settingsTelegramDescription": "Join NetManager's Telegram for exclusive feature previews and showcases.",
+  "settingsAboutTitle": "About",
+  "settingsAboutDescription": "View some info about NetManager. Open source licenses and credits are included in this page.",
+  "settingsDebugTitle": "Debug",
+  "settingsDebugDescription": "Manage NetManager's debug mode. Enabling this setting will show raw debug data in some parts of the app.",
+  "settingsDebugLogsTitle": "Debug logs",
+  "settingsDebugLogsDescription": "View NetManager's debug logs. Useful for debugging issues or viewing additional info."
+}

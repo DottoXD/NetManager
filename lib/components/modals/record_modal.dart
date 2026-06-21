@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/types/recording/recorded_data.dart';
 import 'package:netmanager/utils/haptic_service.dart';
@@ -14,6 +15,7 @@ Widget recordModal(
   Function(RecordedData) onDataLoaded,
   Function() triggerPooler,
 ) {
+  AppLocalizations appLocalizations = AppLocalizations.of(context)!;
   return Padding(
     padding: const EdgeInsets.only(bottom: 16.0),
     child: Column(
@@ -21,10 +23,8 @@ Widget recordModal(
       children: [
         ListTile(
           leading: const Icon(Icons.fiber_smart_record_outlined),
-          title: const Text("New recording"),
-          subtitle: const Text(
-            "You will be taken to the recording setup dialog.",
-          ),
+          title: Text(appLocalizations.newRecording),
+          subtitle: Text(appLocalizations.recordingSetupDialog),
           onTap: () async {
             final TextEditingController nameController = TextEditingController(
               text: "NetManager_${DateTime.now().millisecondsSinceEpoch}",
@@ -46,15 +46,15 @@ Widget recordModal(
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  title: const Text("New recording"),
+                  title: Text(appLocalizations.newRecording),
                   content: SingleChildScrollView(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         TextField(
                           controller: nameController,
-                          decoration: const InputDecoration(
-                            labelText: "File name",
+                          decoration: InputDecoration(
+                            labelText: appLocalizations.fileName,
                             suffixText: ".nmr",
                             border: OutlineInputBorder(),
                           ),
@@ -66,8 +66,8 @@ Widget recordModal(
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
                           ],
-                          decoration: const InputDecoration(
-                            labelText: "Interval between recordings",
+                          decoration: InputDecoration(
+                            labelText: appLocalizations.recordingInterval,
                             border: OutlineInputBorder(),
                           ),
                         ),
@@ -79,7 +79,7 @@ Widget recordModal(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 SwitchListTile(
-                                  title: const Text("Track usability"),
+                                  title: Text(appLocalizations.trackUsability),
                                   value: trackUsable,
                                   onChanged: (bool value) async {
                                     await HapticService().triggerHaptic(
@@ -93,8 +93,9 @@ Widget recordModal(
                                 const SizedBox(height: 16),
                                 TextField(
                                   controller: usabilityTestUrlController,
-                                  decoration: const InputDecoration(
-                                    labelText: "Usability Test URL",
+                                  decoration: InputDecoration(
+                                    labelText:
+                                        appLocalizations.usabilityTestUrl,
                                     border: OutlineInputBorder(),
                                   ),
                                   enabled: trackUsable,
@@ -120,13 +121,15 @@ Widget recordModal(
                                     }
                                   },
                                   icon: const Icon(Icons.folder_open),
-                                  label: const Text("Select save location"),
+                                  label: Text(
+                                    appLocalizations.selectSaveLocation,
+                                  ),
                                 ),
                                 if (path != null)
                                   Padding(
                                     padding: const EdgeInsets.only(top: 8.0),
                                     child: Text(
-                                      "Selected save location: ...${path.characters.takeLast(15)}",
+                                      "${appLocalizations.selectedSaveLocation} ...${path.characters.takeLast(15)}",
                                       style: Theme.of(
                                         context,
                                       ).textTheme.bodySmall,
@@ -142,7 +145,7 @@ Widget recordModal(
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(false),
-                      child: const Text("Cancel"),
+                      child: Text(appLocalizations.cancel),
                     ),
                     ValueListenableBuilder(
                       valueListenable: directoryPathNotifier,
@@ -161,7 +164,7 @@ Widget recordModal(
                                   }
                                 },
                           icon: const Icon(Icons.fiber_smart_record_outlined),
-                          label: const Text("Start"),
+                          label: Text(appLocalizations.start),
                         );
                       },
                     ),
@@ -186,7 +189,7 @@ Widget recordModal(
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      "Recording ${nameController.text} started...",
+                      appLocalizations.recordingStarted(nameController.text),
                     ),
                   ),
                 );
@@ -204,10 +207,8 @@ Widget recordModal(
         ),
         ListTile(
           leading: const Icon(Icons.replay_outlined),
-          title: const Text("Replay recording"),
-          subtitle: const Text(
-            "You will be asked to select a valid .nmr (NetManager Recording) file.",
-          ),
+          title: Text(appLocalizations.replayRecording),
+          subtitle: Text(appLocalizations.selectRecording),
           onTap: () async {
             const XTypeGroup typeGroup = XTypeGroup(
               label: "NetManager Recording",
@@ -232,7 +233,10 @@ Widget recordModal(
                 showDialog(
                   context: context,
                   builder: (BuildContext context) {
-                    return errorDialog(context, "Replay recording: $e");
+                    return errorDialog(
+                      context,
+                      "${appLocalizations.replayRecording}: $e",
+                    );
                   },
                 );
               }

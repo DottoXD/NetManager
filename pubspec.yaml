@@ -23,6 +23,8 @@ dependencies:
   path_provider: 2.1.5
   file_selector: 1.1.0
   sqflite: 2.4.3
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:
@@ -32,6 +34,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
 
   assets:
     - assets/icon.png

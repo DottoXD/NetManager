@@ -10,6 +10,7 @@ import 'package:netmanager/components/base/body/map/widgets/record_card.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/modals/record_modal.dart';
 import 'package:netmanager/database/cell_database.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/types/database/cell_tower.dart';
 import 'package:netmanager/utils/cell_utils.dart';
 import 'package:netmanager/components/base/body/map/widgets/map_overlay.dart';
@@ -64,6 +65,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
   final MapController _mapController = MapController();
   late AnimationController _animationController;
+  late AppLocalizations _appLocalizations;
 
   RecordedData? _activeReplayData;
   List<Record> _liveRecords = [];
@@ -96,9 +98,9 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
   final ValueNotifier<List<CellTower>> _cellTowersNotifier = ValueNotifier([]);
 
   final ValueNotifier<List<String>> _displayTitlesNotifier = ValueNotifier([
-    "Speed",
-    "Cell ID",
-    "Signal",
+    "N/A",
+    "N/A",
+    "N/A",
   ]);
   final ValueNotifier<List<String>> _displayValuesNotifier = ValueNotifier([
     "N/A",
@@ -115,6 +117,14 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _appLocalizations = AppLocalizations.of(context)!;
+
+    _displayTitlesNotifier.value = <String>[
+      _appLocalizations.mapSpeed,
+      _appLocalizations.mapCellId,
+      _appLocalizations.mapSignal,
+    ];
+
     _animationController = AnimationController(vsync: this);
 
     platform = widget.platform;
@@ -135,7 +145,11 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
     widget.onRecordButtonPressed?.call(() async {
       if (_activeReplayData != null) {
-        _displayTitlesNotifier.value = <String>["Speed", "Cell ID", "Signal"];
+        _displayTitlesNotifier.value = <String>[
+          _appLocalizations.mapSpeed,
+          _appLocalizations.mapCellId,
+          _appLocalizations.mapSignal,
+        ];
         _displayValuesNotifier.value = <String>["N/A", "N/A", "N/A"];
 
         setState(() {
@@ -164,7 +178,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Recording stopped and saved.")),
+              SnackBar(content: Text(_appLocalizations.mapRecordingStopped)),
             );
 
             recenterMap();
@@ -178,7 +192,10 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                return errorDialog(context, "Stop recording: $e");
+                return errorDialog(
+                  context,
+                  "${_appLocalizations.mapStopRecording}: $e",
+                );
               },
             ).then((_) {
               _dialogOpen = false;
@@ -204,7 +221,11 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
             (data) {
               try {
                 if (data.records.isNotEmpty) {
-                  _displayTitlesNotifier.value = ["Carrier", "PLMN", "Date"];
+                  _displayTitlesNotifier.value = [
+                    _appLocalizations.mapCarrier,
+                    _appLocalizations.mapPlmn,
+                    _appLocalizations.mapDate,
+                  ];
                   _displayValuesNotifier.value = [
                     data.operator,
                     data.network,
@@ -238,7 +259,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                     builder: (BuildContext context) {
                       return errorDialog(
                         context,
-                        "Please select a valid recording.",
+                        _appLocalizations.mapSelectRecording,
                       );
                     },
                   ).then((_) {
@@ -376,7 +397,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
         showDialog(
           context: context,
           builder: (BuildContext context) {
-            return errorDialog(context, "Map: $e");
+            return errorDialog(context, "${_appLocalizations.map}: $e");
           },
         ).then((_) {
           _dialogOpen = false;
@@ -439,7 +460,11 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
         cellId = "N/A";
       }
 
-      _displayTitlesNotifier.value = ["Speed", "Cell ID", signalStrengthString];
+      _displayTitlesNotifier.value = [
+        _appLocalizations.mapSpeed,
+        _appLocalizations.mapCellId,
+        signalStrengthString,
+      ];
       _displayValuesNotifier.value = [
         (_metricSystem
             ? "${_speedKmh.toStringAsFixed(1)}km/h"
@@ -462,7 +487,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
         showDialog(
           context: context,
           builder: (BuildContext context) {
-            return errorDialog(context, "Map cells: $e");
+            return errorDialog(context, "${_appLocalizations.mapCells}: $e");
           },
         ).then((_) {
           _dialogOpen = false;
@@ -528,7 +553,10 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                return errorDialog(context, "Map live recording: $e");
+                return errorDialog(
+                  context,
+                  "${_appLocalizations.mapLiveRecording}: $e",
+                );
               },
             ).then((_) {
               _dialogOpen = false;

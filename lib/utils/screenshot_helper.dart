@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:path_provider/path_provider.dart';
 
 class ScreenshotHelper {
@@ -42,9 +43,11 @@ class ScreenshotHelper {
 
       await platform.invokeMethod("share", {"path": file.path});
     } catch (e) {
-      await platform.invokeMethod<bool>("showToast", {
-        "message": "An unexpected error occured!",
-      });
+      if (context.mounted) {
+        await platform.invokeMethod<bool>("showToast", {
+          "message": AppLocalizations.of(context)!.unexpectedError,
+        });
+      }
     }
   }
 }

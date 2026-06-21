@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 
 class UpdateButton extends StatelessWidget {
@@ -14,7 +15,7 @@ class UpdateButton extends StatelessWidget {
         await HapticService().triggerHaptic(HapticType.light, context);
         onPressed!();
       },
-      tooltip: 'Update data',
+      tooltip: AppLocalizations.of(context)!.updateData,
       child: const Icon(Icons.update_outlined),
     );
   }

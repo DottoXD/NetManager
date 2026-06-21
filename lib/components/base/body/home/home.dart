@@ -7,6 +7,7 @@ import 'package:netmanager/components/base/body/home/widgets/loading_state.dart'
 import 'package:netmanager/components/base/body/home/widgets/network_data.dart';
 import 'package:netmanager/components/base/body/home/widgets/primary_cell_card.dart';
 import 'package:netmanager/database/cell_database.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/cell_utils.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 import 'package:netmanager/utils/screenshot_helper.dart';
@@ -62,6 +63,8 @@ class _HomeBodyState extends State<HomeBody> {
   final ValueNotifier<bool> _isUpdatingNotifier = ValueNotifier(false);
   final ValueNotifier<bool> _altCellViewNotifier = ValueNotifier(false);
 
+  late AppLocalizations _appLocalizations;
+
   int _simCount = 0;
   String _debug = "";
   String _plmn = "";
@@ -75,6 +78,7 @@ class _HomeBodyState extends State<HomeBody> {
   @override
   void initState() {
     super.initState();
+    _appLocalizations = AppLocalizations.of(context)!;
     platform = widget.platform;
     sharedPreferences = widget.sharedPreferences;
     homeLoadedNotifier = widget.homeLoadedNotifier;
@@ -123,7 +127,7 @@ class _HomeBodyState extends State<HomeBody> {
 
       if (jsonStr == null || jsonStr.isEmpty) {
         setState(() {
-          _debug = "No network data.";
+          _debug = _appLocalizations.homeNoData;
           _simData = null;
         });
 
@@ -138,7 +142,7 @@ class _HomeBodyState extends State<HomeBody> {
         if (!mounted) return;
 
         setState(() {
-          _debug = "$jsonStr\nError: $e";
+          _debug = "$jsonStr\n${_appLocalizations.error}: $e";
         });
 
         return;
@@ -196,7 +200,7 @@ class _HomeBodyState extends State<HomeBody> {
     } on PlatformException catch (e) {
       await Sentry.captureException(e, stackTrace: e.stacktrace);
       setState(() {
-        _debug = "PlatformException: ${e.toString()}";
+        _debug = "${_appLocalizations.platformException}: ${e.toString()}";
       });
     } finally {
       stopwatch.stop();
@@ -228,7 +232,7 @@ class _HomeBodyState extends State<HomeBody> {
       return EmptyState(
         minHeight: widgetsHeight,
         icon: Icons.sim_card_alert_outlined,
-        message: "No SIM card detected",
+        message: _appLocalizations.homeNoSim,
       );
     }
 
@@ -236,7 +240,7 @@ class _HomeBodyState extends State<HomeBody> {
       return EmptyState(
         minHeight: widgetsHeight,
         icon: Icons.airplanemode_on_outlined,
-        message: "Airplane mode ON",
+        message: _appLocalizations.homeAirplane,
       );
     }
 
@@ -298,7 +302,7 @@ class _HomeBodyState extends State<HomeBody> {
                       ),
                       if (_simData != null && _simData!.activeCells.isNotEmpty)
                         CellSection(
-                          title: "Active Cells",
+                          title: _appLocalizations.homeActiveCells,
                           cells: _simData!.activeCells,
                           factor: _factor,
                           isActive: true,
@@ -312,7 +316,7 @@ class _HomeBodyState extends State<HomeBody> {
               ),
               if (_simData != null && _simData!.neighborCells.isNotEmpty) ...[
                 CellSection(
-                  title: "Neighbor Cells",
+                  title: _appLocalizations.homeNeighborCells,
                   cells: _simData!.neighborCells,
                   factor: _factor,
                   isActive: false,
@@ -332,7 +336,7 @@ class _HomeBodyState extends State<HomeBody> {
                             right: 20,
                             bottom: 20,
                           ),
-                          child: Text("Debug: $_debug"),
+                          child: Text("${_appLocalizations.debug}: $_debug"),
                         )
                       : const SizedBox.shrink();
                 },

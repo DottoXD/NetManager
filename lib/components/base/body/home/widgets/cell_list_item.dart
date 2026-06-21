@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/cell_utils.dart';
 import 'package:netmanager/types/cell/cell_data.dart';
 
@@ -44,9 +45,13 @@ class CellListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String cellContent = createCellContent(cell).replaceAll(
+    AppLocalizations appLocalizations = AppLocalizations.of(context)!;
+
+    String cellContent = createCellContent(context, cell).replaceAll(
       "%node%",
-      (nodeVal != 0 ? "Likely ${(nodeVal / factor).floor()}" : "Unknown cell"),
+      (nodeVal != 0
+          ? "${appLocalizations.likely} ${(nodeVal / factor).floor()}"
+          : appLocalizations.unknownCell),
     );
 
     if (description != null && description!.isNotEmpty) {
@@ -67,7 +72,7 @@ class CellListItem extends StatelessWidget {
           title: Text(
             (cell.basicCellData.band > 0
                 ? "${cell.channelNumberString == "NR-ARFCN" ? "N" : "B"}${cell.basicCellData.band} ${isValidInt(cell.basicCellData.frequency) ? "(${cell.basicCellData.frequency}MHz)" : ""}"
-                : "Unknown band"),
+                : appLocalizations.unknownBand),
           ),
           subtitle: Text(cellContent),
           trailing: showSignalIcon

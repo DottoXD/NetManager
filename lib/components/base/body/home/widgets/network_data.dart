@@ -70,7 +70,7 @@ class NetworkData extends StatelessWidget {
             color: Theme.of(
               context,
             ).colorScheme.primaryContainer.withAlpha(230),
-            child: Container(
+            child: SizedBox(
               width: cardWidth,
               height: cardHeight,
               child: Column(

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/dialogs/event_log.dart';
 import 'package:netmanager/components/modals/info_modal.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/types/device/data.dart';
 import 'package:netmanager/types/events/mobile_netmanager_event.dart';
 import 'package:netmanager/types/events/netmanager_event.dart';
@@ -39,12 +40,12 @@ class _TopBarState extends State<TopBar> {
   late ValueNotifier<int> platformSignalNotifier;
   late ValueNotifier<bool> logsNotifier;
 
-  final ValueNotifier<String> title = ValueNotifier("NetManager is loading...");
   late Timer _timer;
-  String _carrier = "NetManager";
+  String _carrier = "Unknown";
   String _plmn = "00000";
   int _gen = 0;
   int simCount = 0;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -65,7 +66,6 @@ class _TopBarState extends State<TopBar> {
     widget.platformSignalNotifier.removeListener(_restartTimer);
 
     _timer.cancel();
-    title.dispose();
 
     super.dispose();
   }
@@ -78,7 +78,7 @@ class _TopBarState extends State<TopBar> {
       final activeSelected =
           await platform.invokeMethod("isActiveSubscriptionSelected") ?? true;
 
-      if (!activeSelected) switchSim();
+      if (!activeSelected) _switchSim();
     }
   }
 
@@ -91,24 +91,25 @@ class _TopBarState extends State<TopBar> {
 
       if (!mounted) return;
 
-      if (_gen > 0 && _plmn != "00000" && _carrier.trim().isNotEmpty) {
-        title.value = "${"$_carrier $_gen"}G ($_plmn)";
-      } else {
-        title.value = "No service";
-      }
+      setState(() {
+        _carrier;
+        _plmn;
+        _gen;
+        _isLoading = false;
+      });
     } on PlatformException catch (e) {
       await Sentry.captureException(e, stackTrace: e.stacktrace);
     }
   }
 
-  void switchSim() async {
+  void _switchSim() async {
     await platform.invokeMethod("switchSim");
     await update();
 
     platformSignalNotifier.value++;
   }
 
-  void openInfo() async {
+  void _openInfo(AppLocalizations appLocalizations) async {
     String? rawDeviceData = sharedPreferences.getString("deviceData");
     if (rawDeviceData == null) {
       await platform.invokeMethod("openRadioInfo");
@@ -129,7 +130,7 @@ class _TopBarState extends State<TopBar> {
       showDialog(
         context: context,
         builder: (BuildContext context) {
-          return errorDialog(context, "Top bar: $e");
+          return errorDialog(context, "${appLocalizations.topBar}: $e");
         },
       );
 
@@ -155,7 +156,7 @@ class _TopBarState extends State<TopBar> {
     }
   }
 
-  void openLogs() async {
+  void _openLogs(AppLocalizations appLocalizations) async {
     try {
       final String logs = await platform.invokeMethod("getEvents");
       if (logs.trim().isEmpty) return;
@@ -181,7 +182,7 @@ class _TopBarState extends State<TopBar> {
       showDialog(
         context: context,
         builder: (BuildContext context) {
-          return errorDialog(context, "Top bar: $e");
+          return errorDialog(context, "${appLocalizations.topBar}: $e");
         },
       );
     }
@@ -189,36 +190,47 @@ class _TopBarState extends State<TopBar> {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: title,
-      builder: (context, title, _) => AppBar(
-        title: Text(title),
-        actions: [
-          IconButton(
-            onPressed: openInfo,
-            icon: const Icon(Icons.info_outlined),
-            tooltip: "Radio info settings",
-          ),
-          if (simCount > 1)
-            IconButton(
-              onPressed: switchSim,
-              icon: const Icon(Icons.sim_card_outlined),
-              tooltip: "Switch SIM card",
-            ),
-          ValueListenableBuilder(
-            valueListenable: logsNotifier,
-            builder: (context, showLogs, _) {
-              if (!showLogs) return const SizedBox.shrink();
+    AppLocalizations appLocalizations = AppLocalizations.of(context)!;
 
-              return IconButton(
-                onPressed: openLogs,
-                icon: const Icon(Icons.my_library_books_outlined),
-                tooltip: "Event logs",
-              );
-            },
+    String titleText;
+    if (_isLoading) {
+      titleText = appLocalizations.topBarLoading;
+    } else if (_gen > 0 && _plmn != "00000" && _carrier.trim().isNotEmpty) {
+      final displayCarrier = _carrier == "Unknown"
+          ? appLocalizations.unknown
+          : _carrier;
+      titleText = "$displayCarrier ${_gen}G ($_plmn)";
+    } else {
+      titleText = appLocalizations.noService;
+    }
+
+    return AppBar(
+      title: Text(titleText),
+      actions: [
+        IconButton(
+          onPressed: () => _openInfo(appLocalizations),
+          icon: const Icon(Icons.info_outlined),
+          tooltip: appLocalizations.radioInfoSettings,
+        ),
+        if (simCount > 1)
+          IconButton(
+            onPressed: _switchSim,
+            icon: const Icon(Icons.sim_card_outlined),
+            tooltip: appLocalizations.switchSim,
           ),
-        ],
-      ),
+        ValueListenableBuilder(
+          valueListenable: logsNotifier,
+          builder: (context, showLogs, _) {
+            if (!showLogs) return const SizedBox.shrink();
+
+            return IconButton(
+              onPressed: () => _openLogs(appLocalizations),
+              icon: const Icon(Icons.my_library_books_outlined),
+              tooltip: appLocalizations.eventLogs,
+            );
+          },
+        ),
+      ],
     );
   }
 

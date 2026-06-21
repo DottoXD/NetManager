@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/services.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 import 'package:netmanager/utils/screen_utils.dart';
 import 'package:netmanager/base/perms.dart';
@@ -55,6 +56,7 @@ class _NetManagerState extends State<NetManager> {
   final ValueNotifier<bool> dynamicThemeNotifier = ValueNotifier<bool>(true);
   final ValueNotifier<int> themeColorNotifier = ValueNotifier<int>(0xFFE6F0F2);
   final ValueNotifier<bool> material3Notifier = ValueNotifier<bool>(true);
+  final ValueNotifier<Locale?> localeNotifier = ValueNotifier<Locale?>(null);
 
   @override
   void initState() {
@@ -63,6 +65,9 @@ class _NetManagerState extends State<NetManager> {
     dynamicThemeNotifier.value = widget.prefs.getBool("dynamicTheme") ?? true;
     themeColorNotifier.value = widget.prefs.getInt("themeColor") ?? 0xFFE6F0F2;
     material3Notifier.value = widget.prefs.getBool("material3") ?? true;
+
+    final String? langCode = widget.prefs.getString("languageCode");
+    localeNotifier.value = langCode != null ? Locale(langCode) : null;
   }
 
   @override
@@ -70,6 +75,7 @@ class _NetManagerState extends State<NetManager> {
     dynamicThemeNotifier.dispose();
     themeColorNotifier.dispose();
     material3Notifier.dispose();
+    localeNotifier.dispose();
     super.dispose();
   }
 
@@ -80,6 +86,7 @@ class _NetManagerState extends State<NetManager> {
         dynamicThemeNotifier,
         themeColorNotifier,
         material3Notifier,
+        localeNotifier,
       ]),
       builder: (context, _) {
         return DynamicColorBuilder(
@@ -165,8 +172,12 @@ class _NetManagerState extends State<NetManager> {
                 dynamicThemeNotifier,
                 themeColorNotifier,
                 material3Notifier,
+                localeNotifier,
               ),
               debugShowCheckedModeBanner: false,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              locale: localeNotifier.value,
             );
           },
         );

@@ -5,6 +5,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/database/cell_database.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/database_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
@@ -24,6 +25,7 @@ class DatabaseManagerDialog extends StatelessWidget {
   Future<void> _handleImport(
     BuildContext context,
     StateSetter setDialogState,
+    AppLocalizations appLocalizations,
   ) async {
     const XTypeGroup typeGroup = XTypeGroup(
       label: "Cell Databases",
@@ -45,10 +47,8 @@ class DatabaseManagerDialog extends StatelessWidget {
       if (!context.mounted) return;
       showDialog(
         context: context,
-        builder: (context) => errorDialog(
-          context,
-          "Could not find a valid PLMN in this database.",
-        ),
+        builder: (context) =>
+            errorDialog(context, appLocalizations.noValidPlmnInDatabase),
       );
       return;
     }
@@ -57,12 +57,12 @@ class DatabaseManagerDialog extends StatelessWidget {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const AlertDialog(
+      builder: (context) => AlertDialog(
         content: Row(
           children: [
             CircularProgressIndicator(),
             SizedBox(width: 20),
-            Expanded(child: Text("Converting your cells...")),
+            Expanded(child: Text(appLocalizations.convertingCells)),
           ],
         ),
       ),
@@ -84,7 +84,10 @@ class DatabaseManagerDialog extends StatelessWidget {
           showDialog(
             context: context,
             builder: (BuildContext context) {
-              return errorDialog(context, "Import database: $e");
+              return errorDialog(
+                context,
+                "${appLocalizations.importDatabase} $e",
+              );
             },
           );
         }
@@ -216,7 +219,8 @@ class DatabaseManagerDialog extends StatelessWidget {
       if (context.mounted) {
         showDialog(
           context: context,
-          builder: (context) => errorDialog(context, "Database indexing: $e"),
+          builder: (context) =>
+              errorDialog(context, "${appLocalizations.databaseIndexing}: $e"),
         );
       }
     } finally {
@@ -247,17 +251,19 @@ class DatabaseManagerDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppLocalizations appLocalizations = AppLocalizations.of(context)!;
+
     return StatefulBuilder(
       builder: (context, setDialogState) {
         return AlertDialog(
-          title: const Text("Manage databases"),
+          title: Text(appLocalizations.manageDatabases),
           content: SizedBox(
             width: double.maxFinite,
             child: importedDatabases.isEmpty
-                ? const Padding(
+                ? Padding(
                     padding: EdgeInsets.symmetric(vertical: 24.0),
                     child: Text(
-                      "No databases have been imported yet.",
+                      appLocalizations.noImportedDatabases,
                       textAlign: TextAlign.center,
                     ),
                   )
@@ -273,9 +279,11 @@ class DatabaseManagerDialog extends StatelessWidget {
                       return ListTile(
                         leading: const Icon(Icons.storage_outlined),
                         title: Text(plmnLabel),
-                        subtitle: Text("Format: $formatType"),
+                        subtitle: Text(
+                          appLocalizations.databaseFormat(formatType),
+                        ),
                         trailing: IconButton(
-                          tooltip: "Delete database",
+                          tooltip: appLocalizations.deleteDatabase,
                           icon: const Icon(Icons.delete_outlined),
                           onPressed: () async {
                             await _handleRemove(dbName, setDialogState);
@@ -288,14 +296,14 @@ class DatabaseManagerDialog extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text("Close"),
+              child: Text(appLocalizations.close),
             ),
             FilledButton.icon(
               onPressed: () async {
-                await _handleImport(context, setDialogState);
+                await _handleImport(context, setDialogState, appLocalizations);
               },
               icon: const Icon(Icons.file_download_outlined),
-              label: const Text("Import"),
+              label: Text(appLocalizations.import),
             ),
           ],
         );

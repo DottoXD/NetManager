@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/types/cell/cell_data.dart';
 
 class PrimaryCellCard extends StatelessWidget {
@@ -23,9 +24,9 @@ class PrimaryCellCard extends StatelessWidget {
     return cell.cellIdentifier.contains("-1") || cell.cellIdentifier == "0";
   }
 
-  String _getTooltip(bool altCellView) {
+  String _getTooltip(AppLocalizations appLocalizations, bool altCellView) {
     if (isUnknown()) {
-      return "Unknown";
+      return appLocalizations.unknown;
     } else {
       return altCellView
           ? "${cell.cellIdentifierString} (${cell.cellIdentifier})"
@@ -39,9 +40,9 @@ class PrimaryCellCard extends StatelessWidget {
         : "${cell.nodeIdentifierString}/CID";
   }
 
-  String _getTitle(bool altCellView) {
+  String _getTitle(AppLocalizations appLocalizations, bool altCellView) {
     if (isUnknown()) {
-      return "Unknown";
+      return appLocalizations.unknown;
     } else {
       return altCellView
           ? cell.cellIdentifier
@@ -51,6 +52,8 @@ class PrimaryCellCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppLocalizations appLocalizations = AppLocalizations.of(context)!;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -61,7 +64,7 @@ class PrimaryCellCard extends StatelessWidget {
               valueListenable: altCellView,
               builder: (context, altCellView, child) {
                 return Tooltip(
-                  message: _getTooltip(altCellView),
+                  message: _getTooltip(appLocalizations, altCellView),
                   child: FilledButton(
                     style: FilledButton.styleFrom(
                       overlayColor: Theme.of(
@@ -107,7 +110,7 @@ class PrimaryCellCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                _getTitle(altCellView),
+                                _getTitle(appLocalizations, altCellView),
                                 style: TextStyle(
                                   fontSize: 24,
                                   color: Theme.of(

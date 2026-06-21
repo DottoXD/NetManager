@@ -8,6 +8,7 @@ import 'package:netmanager/components/base/body/speedtest/widgets/quality_metric
 import 'package:netmanager/components/base/body/speedtest/widgets/speed_results.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/modals/server_modal.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/types/speedtest/metrics.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -45,6 +46,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
   final ValueNotifier<Map<String, dynamic>?> _selectedServerNotifier =
       ValueNotifier(null);
   final ValueNotifier<bool> _serversLoadingNotifier = ValueNotifier(false);
+  late AppLocalizations _appLocalizations;
 
   List<dynamic> _servers = [];
   int _fetchServersRetries = 0;
@@ -64,6 +66,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
   @override
   void initState() {
     super.initState();
+    _appLocalizations = AppLocalizations.of(context)!;
     platform = widget.platform;
     sharedPreferences = widget.sharedPreferences;
 
@@ -141,7 +144,10 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                return errorDialog(context, "Speedtest: ${call.arguments}");
+                return errorDialog(
+                  context,
+                  "${_appLocalizations.speedtest}: ${call.arguments}",
+                );
               },
             ).then((_) => _dialogOpen = false);
           }
@@ -189,7 +195,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
         if (response.statusCode == 200) {
           _updateServers(response.body);
         } else {
-          throw Exception("The speed test server is unreachable.");
+          throw Exception(_appLocalizations.speedtestServerUnreachable);
         }
       } catch (e) {
         _fetchServersRetries++;
@@ -204,7 +210,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                   builder: (BuildContext context) {
                     return errorDialog(
                       context,
-                      "Speedtest: The speed test server is unreachable.",
+                      "${_appLocalizations.speedtest}: ${_appLocalizations.speedtestServerUnreachable}",
                     );
                   },
                 ).then((_) => _dialogOpen = false);
@@ -280,7 +286,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
 
         if (sortedServers.isEmpty) {
           _fetchServersRetries++;
-          throw Exception("No reachable servers found.");
+          throw Exception(_appLocalizations.noSpeedtestServers);
         } else {
           _fetchServersRetries = 0;
         }
@@ -311,7 +317,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                 builder: (BuildContext context) {
                   return errorDialog(
                     context,
-                    "The speed test server is unreachable.",
+                    _appLocalizations.speedtestServerUnreachable,
                   );
                 },
               ).then((_) => _dialogOpen = false);
@@ -424,7 +430,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                                 label: Text(
                                   selectedServer != null
                                       ? "$sponsorName (${(selectedServer["name"]).toString().replaceAll(" ($sponsorName)", "")})"
-                                      : "No server",
+                                      : _appLocalizations.noSpeedtestServer,
                                 ),
                                 style: OutlinedButton.styleFrom(
                                   shape: RoundedRectangleBorder(
@@ -515,7 +521,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                     color: Theme.of(context).colorScheme.surfaceContainerLow,
                   ),
                   child: Text(
-                    "Powered by LibreSpeed",
+                    _appLocalizations.speedtestLibrespeed,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 12,

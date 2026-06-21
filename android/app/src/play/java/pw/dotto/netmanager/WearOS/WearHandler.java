@@ -77,6 +77,7 @@ public class WearHandler implements WearIntegration, MessageClient.OnMessageRece
 
             if (core != null) {
                 CellSnapshot snapshot = core.getCellSnapshot(id);
+                int simCount = core.getSimCount();
 
                 if (snapshot != null) {
                     int gen = snapshot.getNetworkGen();
@@ -86,6 +87,7 @@ public class WearHandler implements WearIntegration, MessageClient.OnMessageRece
                     dataMap.putInt("band", snapshot.getBand());
                     dataMap.putInt("networkGen", gen);
                     dataMap.putInt("processedSignal", snapshot.getProcessedSignal());
+                    dataMap.putInt("simCount", simCount);
                     dataMap.putLong("timestamp", snapshot.getTimestamp());
 
                     ArrayList<DataMap> metricsList = new ArrayList<>();

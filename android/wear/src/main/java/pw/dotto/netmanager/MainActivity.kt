@@ -96,6 +96,9 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
         val simId = map.getInt("id", -1)
         if (simId != currentSim) return
 
+        val totalSims = map.getInt("simCount", 1)
+        simCountState.intValue = totalSims
+
         val serializedMetrics = map.getDataMapArrayList("metrics") ?: ArrayList()
         val parsedMetrics = serializedMetrics.map { metricMap ->
             NetworkMetric(

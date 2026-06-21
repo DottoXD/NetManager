@@ -22,21 +22,6 @@ class HapticService {
   Future<void> triggerHaptic(HapticType type, BuildContext? context) async {
     if (!_hapticEnabled) return;
 
-    /*if (context != null && context.mounted) {
-      try {
-        if (Scrollable.maybeOf(context) != null) await Feedback.forTap(context);
-      } catch (e) {
-        if (context.mounted) {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return errorDialog(context, "Haptic service: $e");
-            },
-          );
-        }
-      }
-    }*/
-
     switch (type) {
       case HapticType.selection:
         await HapticFeedback.selectionClick();

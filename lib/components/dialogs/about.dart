@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 class FullAboutDialog extends StatelessWidget {
@@ -21,19 +22,21 @@ class FullAboutDialog extends StatelessWidget {
     0, 0, 0, 1, 0,
   ]);
 
-  Future<String> getVersion() async {
+  Future<String> _getVersion(BuildContext context) async {
+    AppLocalizations appLocalizations = AppLocalizations.of(context)!;
+
     try {
       final version = await platform.invokeMethod("getVersion");
-      return version ?? "Unknown";
+      return version ?? appLocalizations.unknown;
     } on PlatformException catch (e) {
       await Sentry.captureException(e, stackTrace: e.stacktrace);
-      return "Unknown";
+      return appLocalizations.unknown;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final Future<String> versionFuture = getVersion();
+    final Future<String> versionFuture = _getVersion(context);
 
     return FutureBuilder(
       future: versionFuture,

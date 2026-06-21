@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -30,7 +31,7 @@ Widget serverModal(
                   launchUrl(url);
                 },
                 icon: Icon(Icons.open_in_new),
-                tooltip: "Visit the server's host in a browser",
+                tooltip: AppLocalizations.of(context)!.visitServerHost,
               )
             : null,
         onTap: () async {
