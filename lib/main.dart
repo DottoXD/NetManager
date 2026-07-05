@@ -56,6 +56,7 @@ class _NetManagerState extends State<NetManager> {
   final ValueNotifier<bool> dynamicThemeNotifier = ValueNotifier<bool>(true);
   final ValueNotifier<int> themeColorNotifier = ValueNotifier<int>(0xFFE6F0F2);
   final ValueNotifier<bool> material3Notifier = ValueNotifier<bool>(true);
+  final ValueNotifier<bool> darkThemeNotifier = ValueNotifier<bool>(true);
   final ValueNotifier<Locale?> localeNotifier = ValueNotifier<Locale?>(null);
 
   @override
@@ -65,6 +66,7 @@ class _NetManagerState extends State<NetManager> {
     dynamicThemeNotifier.value = widget.prefs.getBool("dynamicTheme") ?? true;
     themeColorNotifier.value = widget.prefs.getInt("themeColor") ?? 0xFFE6F0F2;
     material3Notifier.value = widget.prefs.getBool("material3") ?? true;
+    darkThemeNotifier.value = widget.prefs.getBool("darkTheme") ?? true;
 
     final String? langCode = widget.prefs.getString("languageCode");
     localeNotifier.value = langCode != null ? Locale(langCode) : null;
@@ -75,6 +77,7 @@ class _NetManagerState extends State<NetManager> {
     dynamicThemeNotifier.dispose();
     themeColorNotifier.dispose();
     material3Notifier.dispose();
+    darkThemeNotifier.dispose();
     localeNotifier.dispose();
     super.dispose();
   }
@@ -86,6 +89,7 @@ class _NetManagerState extends State<NetManager> {
         dynamicThemeNotifier,
         themeColorNotifier,
         material3Notifier,
+        darkThemeNotifier,
         localeNotifier,
       ]),
       builder: (context, _) {
@@ -140,6 +144,9 @@ class _NetManagerState extends State<NetManager> {
                 useMaterial3: material3Notifier.value,
                 pageTransitionsTheme: transitionTheme,
               ),
+              themeMode: darkThemeNotifier.value
+                  ? ThemeMode.dark
+                  : ThemeMode.light,
               builder: (context, child) {
                 return Builder(
                   builder: (innerContext) {
@@ -172,6 +179,7 @@ class _NetManagerState extends State<NetManager> {
                 dynamicThemeNotifier,
                 themeColorNotifier,
                 material3Notifier,
+                darkThemeNotifier,
                 localeNotifier,
               ),
               debugShowCheckedModeBanner: false,

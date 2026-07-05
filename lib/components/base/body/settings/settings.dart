@@ -25,6 +25,7 @@ class SettingsBody extends StatefulWidget {
     this.dynamicThemeNotifier,
     this.themeColorNotifier,
     this.material3Notifier,
+    this.darkThemeNotifier,
     this.localeNotifier,
     this.debugNotifier,
     this.logsNotifier,
@@ -44,6 +45,7 @@ class SettingsBody extends StatefulWidget {
   final ValueNotifier<bool> dynamicThemeNotifier;
   final ValueNotifier<int> themeColorNotifier;
   final ValueNotifier<bool> material3Notifier;
+  final ValueNotifier<bool> darkThemeNotifier;
   final ValueNotifier<Locale?> localeNotifier;
 
   final ValueNotifier<bool> debugNotifier;
@@ -68,6 +70,7 @@ class _SettingsBodyState extends State<SettingsBody> {
   late ValueNotifier<bool> dynamicThemeNotifier;
   late ValueNotifier<int> themeColorNotifier;
   late ValueNotifier<bool> material3Notifier;
+  late ValueNotifier<bool> darkThemeNotifier;
   late ValueNotifier<Locale?> localeNotifier;
 
   late ValueNotifier<bool> debugNotifier;
@@ -108,6 +111,7 @@ class _SettingsBodyState extends State<SettingsBody> {
   int _themeColor = 0xFFE6F0F2;
   bool _hapticFeedback = true;
   bool _material3 = true;
+  bool _darkTheme = true;
   bool _dynamicSupported = true;
   bool _dynamicTheme = true;
   bool _debug = false;
@@ -136,6 +140,7 @@ class _SettingsBodyState extends State<SettingsBody> {
     dynamicThemeNotifier = widget.dynamicThemeNotifier;
     themeColorNotifier = widget.themeColorNotifier;
     material3Notifier = widget.material3Notifier;
+    darkThemeNotifier = widget.darkThemeNotifier;
     localeNotifier = widget.localeNotifier;
     debugNotifier = widget.debugNotifier;
     logsNotifier = widget.logsNotifier;
@@ -205,6 +210,7 @@ class _SettingsBodyState extends State<SettingsBody> {
           sharedPreferences.getStringList("importedDatabases") ??
           _importedDatabases;
       _material3 = sharedPreferences.getBool("material3") ?? _material3;
+      _darkTheme = sharedPreferences.getBool("darkTheme") ?? _darkTheme;
       _hapticFeedback =
           sharedPreferences.getBool("hapticFeedback") ?? _hapticFeedback;
       _dynamicTheme =
@@ -577,6 +583,23 @@ class _SettingsBodyState extends State<SettingsBody> {
                 setBool("material3", value);
                 updateData();
                 material3Notifier.value = value;
+              },
+            ),
+          ),
+          ListTile(
+            title: Text(_appLocalizations.settingsDarkThemeTitle),
+            subtitle: Text(_appLocalizations.settingsDarkThemeDescription),
+            trailing: Switch(
+              value: _darkTheme,
+              onChanged: (bool value) async {
+                await HapticService().triggerHaptic(
+                  HapticType.selection,
+                  context,
+                );
+
+                setBool("darkTheme", value);
+                updateData();
+                darkThemeNotifier.value = value;
               },
             ),
           ),

@@ -188,6 +188,8 @@
     "description": "Should not be translated."
   },
   "settingsMaterialYouDescription": "Use Material You, Android's latest UI kit. Do note that Material 2 is not well unsupported.",
+  "settingsDarkThemeTitle": "Dark theme",
+  "settingsDarkThemeDescription": "Use the dark theme color scheme in NetManager.",
   "settingsDynamicThemeTitle": "Dynamic theme",
   "settingsDynamicThemeDescription": "Use Android's dynamic theme system. Supported on Material You (Android 12+.).",
   "settingsThemeColorTitle": "Theme color",

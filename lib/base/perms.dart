@@ -14,6 +14,7 @@ class Perms extends StatefulWidget {
     this.dynamicThemeNotifier,
     this.themeColorNotifier,
     this.material3Notifier,
+    this.darkThemeNotifier,
     this.localeNotifier, {
     super.key,
   });
@@ -22,6 +23,7 @@ class Perms extends StatefulWidget {
   final ValueNotifier<bool> dynamicThemeNotifier;
   final ValueNotifier<int> themeColorNotifier;
   final ValueNotifier<bool> material3Notifier;
+  final ValueNotifier<bool> darkThemeNotifier;
   final ValueNotifier<Locale?> localeNotifier;
 
   @override
@@ -174,6 +176,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
       widget.dynamicThemeNotifier,
       widget.themeColorNotifier,
       widget.material3Notifier,
+      widget.darkThemeNotifier,
       widget.localeNotifier,
       platform,
     );

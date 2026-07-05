@@ -26,7 +26,7 @@
   "recordingInterval": "Intervallo tra le registrazioni",
   "trackUsability": "Traccia usabilità",
   "usabilityTestUrl": "URL per il test dell'usabilità",
-  "selectSaveLocation": "Seleziona il percorso di salvataggio",
+  "selectSaveLocation": "Percorso di salvataggio",
   "selectedSaveLocation": "Percorso di salvataggio selezionato:",
   "cancel": "Annulla",
   "start": "Inizia",
@@ -41,7 +41,7 @@
     }
   },
   "replayRecording": "Riproduci registrazione",
-  "selectRecording": "Ti sara chiesto di selezionare un file .nmr (NetManager Recording) valido.",
+  "selectRecording": "Ti sarà chiesto di selezionare un file .nmr (NetManager Recording) valido.",
   "updateData": "Aggiorna dati",
   "screenshotPage": "Esegui screenshot",
   "coverageRecording": "Registrazione della copertura e delle celle",
@@ -188,6 +188,8 @@
     "description": "Should not be translated."
   },
   "settingsMaterialYouDescription": "Usa Material You, l'ultimo UI kit di Android. Usa in alternativa Material 2, che non è ben supportato.",
+  "settingsDarkThemeTitle": "Tema scuro",
+  "settingsDarkThemeDescription": "Usa lo schema di colori scuro in NetManager.",
   "settingsDynamicThemeTitle": "Tema dinamico",
   "settingsDynamicThemeDescription": "Usa il sistema di temi dinamici di Android. Supportato su Material You (Android 12+.).",
   "settingsThemeColorTitle": "Colore del tema",
