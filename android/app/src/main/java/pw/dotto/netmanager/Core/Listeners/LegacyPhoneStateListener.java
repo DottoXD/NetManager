@@ -1,6 +1,7 @@
 package pw.dotto.netmanager.Core.Listeners;
 
 import android.os.Build;
+import android.telephony.CellInfo;
 import android.telephony.CellSignalStrength;
 import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
@@ -16,8 +17,9 @@ import pw.dotto.netmanager.Utils.DebugLogger;
  * NetManager's LegacyPhoneStateListener is a core component for cell data
  * collection which is useful to acquire extra information such as a SIM card's
  * connection status (just like DataStateListener), mobile cell bandwidth info
- * (just like ServiceStateListener) and extra signal strength data
- * (SignalStrengthsListener) on older Android versions that don't support
+ * (just like ServiceStateListener), extra signal strength data
+ * (SignalStrengthsListener) and additional cells (CellInfoListener) on older
+ * Android versions that don't support
  * TelephonyCallback.
  *
  * @author DottoXD
@@ -27,6 +29,7 @@ public class LegacyPhoneStateListener extends PhoneStateListener {
     private int dataState = -1;
     private int[] updatedCellBandwidths = {};
     private List<CellSignalStrength> latestSignalStrengths = new ArrayList<>();
+    private List<CellInfo> latestCellInfo = new ArrayList<>();
 
     public LegacyPhoneStateListener(int subscriptionId) {
         try {
@@ -67,6 +70,13 @@ public class LegacyPhoneStateListener extends PhoneStateListener {
         }
     }
 
+    @Override
+    public void onCellInfoChanged(List<CellInfo> cellInfo) {
+        if (cellInfo != null) {
+            this.latestCellInfo = cellInfo;
+        }
+    }
+
     public int getDataState() {
         return dataState;
     }
@@ -77,5 +87,9 @@ public class LegacyPhoneStateListener extends PhoneStateListener {
 
     public CellSignalStrength[] getLatestSignalStrengths() {
         return latestSignalStrengths.toArray(new CellSignalStrength[0]);
+    }
+
+    public List<CellInfo> getLatestCellInfo() {
+        return latestCellInfo;
     }
 }

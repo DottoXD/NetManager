@@ -4,6 +4,8 @@ import static android.content.Context.MODE_PRIVATE;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,6 +62,7 @@ public class NetManagerCore {
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(
             r -> new Thread(r, "NetManagerCore-poll"));
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private final Map<String, Integer> intervalRequests = new ConcurrentHashMap<>();
     private volatile int currentIntervalSeconds = DEFAULT_INTERVAL_SECONDS;
@@ -86,7 +89,7 @@ public class NetManagerCore {
         this.subscriptionTracker.setOnSlotRemovedListener(simId -> {
             simStateCache.clear(simId);
             lastEventValues.keySet().removeIf(key -> key.startsWith(simId + ":"));
-            if(sourceSelector.select() instanceof TelephonyCellDataSource) {
+            if (sourceSelector.select() instanceof TelephonyCellDataSource) {
                 TelephonyCellDataSource telephonyCellDataSource = (TelephonyCellDataSource) sourceSelector.select();
                 telephonyCellDataSource.clearSlotState(simId);
             }
@@ -180,16 +183,28 @@ public class NetManagerCore {
     private void updateForegroundTools(SIMSlotState slot, boolean foreground) {
         if (foreground) {
             if (slot.physicalChannelDumper == null) {
-                try {
-                    slot.physicalChannelDumper = new PhysicalChannelDumper(slot.telephony, appContext);
-                } catch (Exception e) {
-                    DebugLogger.add("PhysicalChannelDumper registration exception: " + e.getMessage());
-                }
+                mainHandler.post(() -> {
+                    if (slot.physicalChannelDumper == null && isForegroundActive()) {
+                        try {
+                            slot.physicalChannelDumper = new PhysicalChannelDumper(slot.telephony, appContext);
+                        } catch (Exception e) {
+                            DebugLogger.add("PhysicalChannelDumper registration exception: " + e.getMessage());
+                        }
+                    }
+                });
             }
         } else if (slot.physicalChannelDumper != null) {
-            slot.physicalChannelDumper.dispose();
+            PhysicalChannelDumper dumperToDispose = slot.physicalChannelDumper;
             slot.physicalChannelDumper = null;
             slot.latestSnapshot = null;
+
+            mainHandler.post(() -> {
+                try {
+                    dumperToDispose.dispose();
+                } catch (Exception e) {
+                    DebugLogger.add("PhysicalChannelDumper disposal exception: " + e.getMessage());
+                }
+            });
         }
     }
 
@@ -352,7 +367,7 @@ public class NetManagerCore {
         subscriptionTracker.dispose();
 
         synchronized (NetManagerCore.class) {
-            if(instance == this)
+            if (instance == this)
                 instance = null;
         }
     }

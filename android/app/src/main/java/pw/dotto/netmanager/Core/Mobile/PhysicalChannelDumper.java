@@ -29,7 +29,7 @@ import pw.dotto.netmanager.Utils.DebugLogger;
  * PhysicalChannelDumper...
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.1.0
  */
 public class PhysicalChannelDumper {
     private static final int LISTEN_PHYSICAL_CHANNEL_CONFIGURATION = 0x00100000;
@@ -52,10 +52,12 @@ public class PhysicalChannelDumper {
                 .add("Registering PhysicalChannelDumper for Telephony " + telephonyManager.getNetworkOperator()
                         + "...");
 
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) {
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
+            setupModernDumper();
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             setupLegacyDumper();
         } else {
-            setupModernDumper();
+            DebugLogger.add("No PhysicalChannelDumper methods for this Android version.");
         }
     }
 

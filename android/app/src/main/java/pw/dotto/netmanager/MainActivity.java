@@ -68,10 +68,6 @@ public class MainActivity extends FlutterActivity {
         flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL);
 
     chn.setMethodCallHandler((call, result) -> {
-      if (core == null) {
-        core = new Manager(this);
-      }
-
       switch (call.method) {
         case "checkPermissions":
           boolean perms;
@@ -94,72 +90,12 @@ public class MainActivity extends FlutterActivity {
           result.success(null);
           break;
 
-        case "getOperator":
-          String operator = core.getSimOperator(selectedSim);
-          if (!"NetManager".equals(operator)) {
-            result.success(operator);
-          } else {
-            result.error(
-                "Unknown", "Unknown", null); // add proper error handling
-          }
-          break;
-
-        case "getCarrier":
-          String carrier = core.getSimCarrier(selectedSim);
-          if (!"NetManager".equals(carrier)) {
-            result.success(carrier);
-          } else {
-            result.error(
-                "Unknown", "Unknown", null); // add proper error handling
-          }
-          break;
-
-        case "getNetworkData":
-          SIMData simData = core.getSimNetworkData(selectedSim);
-          result.success(gson.toJson(simData));
-          break;
-
-        case "getNetworkGen":
-          int gen = core.getSimNetworkGen(selectedSim);
-          if (core.getNsaStatus(selectedSim))
-            gen = 5;
-          result.success(gen);
-          break;
-
-        case "getPlmn":
-          String plmn = core.getPlmn(selectedSim);
-          result.success(plmn);
-          break;
-
-        case "sendNotification":
-          try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-              startForegroundService(new Intent(this, pw.dotto.netmanager.Core.Notifications.Service.class));
-            } else {
-              startService(new Intent(this, pw.dotto.netmanager.Core.Notifications.Service.class));
-            }
-
-            result.success(null);
-          } catch (Exception e) {
-            result.error("Unknown", e.getMessage(), null); // add proper error handling
-          }
-          break;
-
-        case "cancelNotification":
-          try {
-            stopService(new Intent(this, pw.dotto.netmanager.Core.Notifications.Service.class));
-            result.success(null);
-          } catch (Exception e) {
-            result.error("Unknown", e.getMessage(), null); // add proper error handling
-          }
-          break;
-
         case "openRadioInfo":
           try {
             boolean success = Activities.openRadioInfo(this);
             result.success(success);
           } catch (Exception e) {
-            result.error("Unknown", e.getMessage(), null); // add proper error handling
+            result.error("MENU_RADIO_INFO", e.getMessage(), e.getStackTrace());
           }
           break;
 
@@ -168,7 +104,7 @@ public class MainActivity extends FlutterActivity {
             boolean success = Activities.openSamsungInfo(this);
             result.success(success);
           } catch (Exception e) {
-            result.error("Unknown", e.getMessage(), null); // add proper error handling
+            result.error("MENU_SAMSUNG_INFO", e.getMessage(), e.getStackTrace());
           }
           break;
 
@@ -177,7 +113,7 @@ public class MainActivity extends FlutterActivity {
             boolean success = Activities.openHuaweiInfo(this);
             result.success(success);
           } catch (Exception e) {
-            result.error("Unknown", e.getMessage(), null); // add proper error handling
+            result.error("MENU_HUAWEI_INFO", e.getMessage(), e.getStackTrace());
           }
           break;
 
@@ -186,7 +122,7 @@ public class MainActivity extends FlutterActivity {
             boolean success = Activities.openMediatekInfo(this);
             result.success(success);
           } catch (Exception e) {
-            result.error("Unknown", e.getMessage(), null); // add proper error handling
+            result.error("MENU_MEDIATEK_INFO", e.getMessage(), e.getStackTrace());
           }
           break;
 
@@ -195,38 +131,8 @@ public class MainActivity extends FlutterActivity {
             boolean success = Activities.openXiaomiInfo(this);
             result.success(success);
           } catch (Exception e) {
-            result.error("Unknown", e.getMessage(), null); // add proper error handling
+            result.error("MENU_XIAOMI_INFO", e.getMessage(), e.getStackTrace());
           }
-          break;
-
-        case "switchSim":
-          if (core.getSimCount() > 1) {
-            if (selectedSim == 0)
-              selectedSim = 1;
-            else
-              selectedSim = 0;
-          } else {
-            selectedSim = 0;
-          }
-
-          chn.invokeMethod("restartTimer", null);
-          result.success(null);
-          break;
-
-        case "getSimCount":
-          int count = core.getSimCount();
-          result.success(count);
-          break;
-
-        case "getEvents":
-          EventManager eventManager = core.getEventManager();
-          if (eventManager == null) {
-            result.success(gson.toJson(List.of()));
-            break;
-          }
-
-          NetManagerEvent[] events = eventManager.getEvents();
-          result.success(gson.toJson(events));
           break;
 
         case "getDebugLogs":
@@ -239,7 +145,7 @@ public class MainActivity extends FlutterActivity {
 
           if (locationFetcher == null || locationFetcher.getLastLocation() == null) {
             result.success(gson.toJson(new double[] { 0.000000, 0.000000 })); // hopefully nobody will ever use
-                                                                              // netmanager there...
+            // netmanager there...
             break;
           }
 
@@ -278,29 +184,6 @@ public class MainActivity extends FlutterActivity {
           result.success(null);
           break;
 
-        case "isActiveSubscriptionSelected":
-          boolean inactive = false;
-
-          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            int status = core.getDataStatus(selectedSim);
-
-            switch (status) {
-              case TelephonyManager.DATA_DISCONNECTED:
-              case TelephonyManager.DATA_DISCONNECTING:
-              case TelephonyManager.DATA_SUSPENDED:
-              case TelephonyManager.DATA_UNKNOWN:
-                inactive = true;
-                break;
-            }
-          } else if (Build.VERSION.SDK_INT == Build.VERSION_CODES.R) {
-            TelephonyManager subscription = core.getSubscription(selectedSim);
-            if (subscription != null)
-              inactive = !(SubscriptionManager.getActiveDataSubscriptionId() == subscription.getSubscriptionId());
-          }
-
-          result.success(!inactive);
-          break;
-
         case "share":
           String path = call.argument("path");
 
@@ -313,57 +196,7 @@ public class MainActivity extends FlutterActivity {
             result.success(null);
           } else {
             result.error(
-                "Unknown", "Unknown", null); // add proper error handling
-          }
-          break;
-
-        case "startRecording":
-          String recordingName = call.argument("name");
-          int recordingInterval = call.argument("interval");
-          String recordingPath = call.argument("path");
-          boolean trackUsable = call.argument("trackUsable");
-          String usabilityTestUrl = call.argument("usabilityTestUrl");
-
-          if (recordingInterval < 1 || recordingInterval > 300 || recordingName == null || recordingPath == null) {
-            result.error(
-                "Unknown", "Unknown", null); // add proper error handling
-            return;
-          }
-
-          try {
-            Intent recordingIntent = new Intent(this, pw.dotto.netmanager.Recording.Service.class);
-            recordingIntent.putExtra("name", recordingName);
-            recordingIntent.putExtra("interval", recordingInterval);
-            recordingIntent.putExtra("path", recordingPath);
-            recordingIntent.putExtra("selectedSim", selectedSim);
-            recordingIntent.putExtra("trackUsable", trackUsable);
-            recordingIntent.putExtra("usabilityTestUrl", usabilityTestUrl);
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-              startForegroundService(recordingIntent);
-            } else {
-              startService(recordingIntent);
-            }
-          } catch (Exception e) {
-            result.error(
-                "Unknown", "Unknown", null); // add proper error handling
-          }
-          result.success(null);
-          break;
-
-        case "stopRecording":
-          Intent stopIntent = new Intent(this, pw.dotto.netmanager.Recording.Service.class);
-          stopService(stopIntent);
-          result.success(true);
-          break;
-
-        case "getLiveRecording":
-          pw.dotto.netmanager.Recording.Service serviceInstance = pw.dotto.netmanager.Recording.Service.getInstance();
-          if (serviceInstance != null && serviceInstance.getRecordedData() != null) {
-            String jsonStr = gson.toJson(serviceInstance.getRecordedData());
-            result.success(jsonStr);
-          } else {
-            result.success(null);
+                "BACKEND_SHARE", "Path is null.", null);
           }
           break;
 
@@ -375,7 +208,181 @@ public class MainActivity extends FlutterActivity {
           break;
 
         default:
-          result.notImplemented();
+          if (!Permissions.check(this, Permissions.READ_PHONE_STATE)) {
+            result.error("BACKEND_PERMISSIONS", "App is missing READ_PHONE_STATE permissions.", null);
+            return;
+          }
+
+          if (core == null) {
+            core = new Manager(this);
+          }
+
+          switch (call.method) {
+            case "getOperator":
+              String operator = core.getSimOperator(selectedSim);
+              if ("NetManager".equals(operator))
+                DebugLogger.add("Could not detect SIM operator...");
+
+              result.success(operator);
+
+            case "getCarrier":
+              String carrier = core.getSimCarrier(selectedSim);
+              if ("NetManager".equals(carrier))
+                DebugLogger.add("Could not detect SIM carrier...");
+
+              result.success(carrier);
+
+              break;
+
+            case "getNetworkData":
+              SIMData simData = core.getSimNetworkData(selectedSim);
+              result.success(gson.toJson(simData));
+              break;
+
+            case "getNetworkGen":
+              int gen = core.getSimNetworkGen(selectedSim);
+              if (core.getNsaStatus(selectedSim))
+                gen = 5;
+              result.success(gen);
+              break;
+
+            case "getPlmn":
+              String plmn = core.getPlmn(selectedSim);
+              result.success(plmn);
+              break;
+
+            case "sendNotification":
+              try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                  startForegroundService(new Intent(this, pw.dotto.netmanager.Core.Notifications.Service.class));
+                } else {
+                  startService(new Intent(this, pw.dotto.netmanager.Core.Notifications.Service.class));
+                }
+
+                result.success(null);
+              } catch (Exception e) {
+                result.error("BACKEND_NOTIFICATION_SEND", e.getMessage(), e.getStackTrace());
+              }
+              break;
+
+            case "cancelNotification":
+              try {
+                stopService(new Intent(this, pw.dotto.netmanager.Core.Notifications.Service.class));
+                result.success(null);
+              } catch (Exception e) {
+                result.error("BACKEND_NOTIFICATION_CANCEL", e.getMessage(), e.getStackTrace());
+              }
+              break;
+
+            case "switchSim":
+              if (core.getSimCount() > 1) {
+                if (selectedSim == 0)
+                  selectedSim = 1;
+                else
+                  selectedSim = 0;
+              } else {
+                selectedSim = 0;
+              }
+
+              chn.invokeMethod("restartTimer", null);
+              result.success(null);
+              break;
+
+            case "getSimCount":
+              int count = core.getSimCount();
+              result.success(count);
+              break;
+
+            case "getEvents":
+              EventManager eventManager = core.getEventManager();
+              if (eventManager == null) {
+                result.success(gson.toJson(List.of()));
+                break;
+              }
+
+              NetManagerEvent[] events = eventManager.getEvents();
+              result.success(gson.toJson(events));
+              break;
+
+            case "isActiveSubscriptionSelected":
+              boolean inactive = false;
+
+              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                int status = core.getDataStatus(selectedSim);
+
+                switch (status) {
+                  case TelephonyManager.DATA_DISCONNECTED:
+                  case TelephonyManager.DATA_DISCONNECTING:
+                  case TelephonyManager.DATA_SUSPENDED:
+                  case TelephonyManager.DATA_UNKNOWN:
+                    inactive = true;
+                    break;
+                }
+              } else if (Build.VERSION.SDK_INT == Build.VERSION_CODES.R) {
+                TelephonyManager subscription = core.getSubscription(selectedSim);
+                if (subscription != null)
+                  inactive = !(SubscriptionManager.getActiveDataSubscriptionId() == subscription.getSubscriptionId());
+              }
+
+              result.success(!inactive);
+              break;
+
+            case "startRecording":
+              String recordingName = call.argument("name");
+              int recordingInterval = call.argument("interval");
+              String recordingPath = call.argument("path");
+              boolean trackUsable = call.argument("trackUsable");
+              String usabilityTestUrl = call.argument("usabilityTestUrl");
+
+              if (recordingInterval < 1 || recordingInterval > 300 || recordingName == null || recordingPath == null) {
+                result.error(
+                    "RECORDING_PARAMS", "Invalid recording params!", null);
+                return;
+              }
+
+              try {
+                Intent recordingIntent = new Intent(this, pw.dotto.netmanager.Recording.Service.class);
+                recordingIntent.putExtra("name", recordingName);
+                recordingIntent.putExtra("interval", recordingInterval);
+                recordingIntent.putExtra("path", recordingPath);
+                recordingIntent.putExtra("selectedSim", selectedSim);
+                recordingIntent.putExtra("trackUsable", trackUsable);
+                recordingIntent.putExtra("usabilityTestUrl", usabilityTestUrl);
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                  startForegroundService(recordingIntent);
+                } else {
+                  startService(recordingIntent);
+                }
+              } catch (Exception e) {
+                result.error(
+                    "BACKEND_RECORDING", e.getMessage(), e.getStackTrace());
+              }
+              result.success(null);
+              break;
+
+            case "stopRecording":
+              Intent stopIntent = new Intent(this, pw.dotto.netmanager.Recording.Service.class);
+              stopService(stopIntent);
+              result.success(true);
+              break;
+
+            case "getLiveRecording":
+              pw.dotto.netmanager.Recording.Service serviceInstance = pw.dotto.netmanager.Recording.Service
+                  .getInstance();
+              if (serviceInstance != null && serviceInstance.getRecordedData() != null) {
+                String jsonStr = gson.toJson(serviceInstance.getRecordedData());
+                result.success(jsonStr);
+              } else {
+                result.success(null);
+              }
+              break;
+
+            default:
+              result.notImplemented();
+              break;
+          }
+
           break;
       }
     });
@@ -407,7 +414,8 @@ public class MainActivity extends FlutterActivity {
 
   @Override
   public void onStop() {
-    if (sharedPreferences == null || !sharedPreferences.getBoolean("flutter.backgroundService", false)) {
+    if (core != null
+        && (sharedPreferences == null || !sharedPreferences.getBoolean("flutter.backgroundService", false))) {
       SimReceiverManager simReceiverManager = core.getSimReceiverManager();
       if (simReceiverManager != null)
         simReceiverManager.unregisterStateReceiver();

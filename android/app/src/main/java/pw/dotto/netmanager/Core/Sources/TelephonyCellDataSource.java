@@ -117,7 +117,8 @@ public class TelephonyCellDataSource implements CellDataSource {
         try {
             Date lastUpdate = lastModemUpdateBySlot.get(simId);
             boolean shouldUpdate = lastUpdate == null
-                    || lastUpdate.toInstant().plusSeconds(MODEM_REFRESH_INTERVAL_SECONDS).isBefore(new Date().toInstant());
+                    || lastUpdate.toInstant().plusSeconds(MODEM_REFRESH_INTERVAL_SECONDS)
+                            .isBefore(new Date().toInstant());
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && shouldUpdate) {
                 telephony.requestCellInfoUpdate(ContextCompat.getMainExecutor(context),
@@ -129,11 +130,20 @@ public class TelephonyCellDataSource implements CellDataSource {
                         });
             }
         } catch (Exception e) {
-            Log.w("pw.dotto.netmanager", e.getMessage() == null ? "Error." : e.getMessage());
+            DebugLogger.add(
+                    "Error while requesting SIMData update: " + (e.getMessage() == null ? "Error." : e.getMessage()));
         }
 
         List<CellInfo> cellInfo = telephony.getAllCellInfo();
         if (cellInfo != null) {
+            if (cellInfo.isEmpty()) {
+                if (simSlotState.cellInfoListener != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    cellInfo.addAll(simSlotState.cellInfoListener.getLatestCellInfo());
+                } else if (simSlotState.legacyPhoneStateListener != null) {
+                    cellInfo.addAll(simSlotState.legacyPhoneStateListener.getLatestCellInfo());
+                }
+            }
+
             for (Preprocessor preprocessor : preprocessors)
                 cellInfo = preprocessor.process(cellInfo, simId);
 
@@ -174,7 +184,8 @@ public class TelephonyCellDataSource implements CellDataSource {
         int mcc = 0;
         try {
             mcc = rawPlmn.length() >= 3 ? Integer.parseInt(rawPlmn.substring(0, 3)) : 0;
-        } catch(Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         if (data.getPrimaryCell() != null) {
             CellData primaryCell = data.getPrimaryCell();
@@ -486,7 +497,8 @@ public class TelephonyCellDataSource implements CellDataSource {
                 }
 
                 if (clearActiveCells) {
-                    DebugLogger.add("Active cells have been cleared!");
+                    DebugLogger.add(data.getActiveCells().length + "active cells have been cleared for SIM "
+                            + data.getOperator() + "!");
                     data.clearActiveCells(); // (idle sim = no CA)
                 }
                 break;

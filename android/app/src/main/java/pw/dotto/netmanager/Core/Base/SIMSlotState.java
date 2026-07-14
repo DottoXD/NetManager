@@ -3,6 +3,7 @@ package pw.dotto.netmanager.Core.Base;
 import android.os.Build;
 import android.telephony.TelephonyManager;
 
+import pw.dotto.netmanager.Core.Listeners.CellInfoListener;
 import pw.dotto.netmanager.Core.Listeners.DataStateListener;
 import pw.dotto.netmanager.Core.Listeners.DisplayInfoListener;
 import pw.dotto.netmanager.Core.Listeners.LegacyPhoneStateListener;
@@ -28,6 +29,7 @@ public class SIMSlotState {
     public ServiceStateListener serviceStateListener;
     public DataStateListener dataStateListener;
     public SignalStrengthsListener signalStrengthsListener;
+    public CellInfoListener cellInfoListener;
 
     public LegacyPhoneStateListener legacyPhoneStateListener;
 
@@ -41,7 +43,7 @@ public class SIMSlotState {
     public boolean hasTelephonyCallbacksRegistered() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             return nsaListener != null && serviceStateListener != null && dataStateListener != null
-                    && signalStrengthsListener != null;
+                    && signalStrengthsListener != null && cellInfoListener != null;
         } else {
             return legacyPhoneStateListener != null;
         }

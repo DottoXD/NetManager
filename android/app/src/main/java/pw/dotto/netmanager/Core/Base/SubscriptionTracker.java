@@ -3,6 +3,8 @@ package pw.dotto.netmanager.Core.Base;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.telephony.PhoneStateListener;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
@@ -18,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import pw.dotto.netmanager.Core.Listeners.CellInfoListener;
 import pw.dotto.netmanager.Core.Listeners.DataStateListener;
 import pw.dotto.netmanager.Core.Listeners.DisplayInfoListener;
 import pw.dotto.netmanager.Core.Listeners.LegacyPhoneStateListener;
@@ -66,11 +69,7 @@ public class SubscriptionTracker {
             }
         }
 
-        try {
-            Executors.newSingleThreadExecutor().execute(this::refresh);
-        } catch(Exception ignored) {
-            refresh();
-        }
+        refresh();
     }
 
     private SubscriptionManager getSubscriptionManager() {
@@ -82,70 +81,78 @@ public class SubscriptionTracker {
     }
 
     @SuppressLint("MissingPermission")
-    public synchronized void refresh() {
-        if (!Permissions.check(context, Permissions.READ_PHONE_STATE)) {
-            destroyAll();
+    public void refresh() {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            new Handler(Looper.getMainLooper()).post(this::refresh);
             return;
         }
 
-        SubscriptionManager manager = getSubscriptionManager();
-        List<SubscriptionInfo> subscriptions = manager == null ? null : manager.getActiveSubscriptionInfoList();
+        synchronized (this) {
+            if (!Permissions.check(context, Permissions.READ_PHONE_STATE)) {
+                destroyAll();
+                return;
+            }
 
-        if (subscriptions == null || subscriptions.isEmpty()) {
-            destroyAll();
-            return;
-        }
+            SubscriptionManager manager = getSubscriptionManager();
+            List<SubscriptionInfo> subscriptions = manager == null ? null : manager.getActiveSubscriptionInfoList();
 
-        Set<Integer> seenSlotIds = new HashSet<>();
+            if (subscriptions == null || subscriptions.isEmpty()) {
+                destroyAll();
+                return;
+            }
 
-        for (SubscriptionInfo info : subscriptions) {
-            int slotId = info.getSimSlotIndex();
-            seenSlotIds.add(slotId);
+            Set<Integer> seenSlotIds = new HashSet<>();
 
-            SIMSlotState simSlotState = simSlots.computeIfAbsent(slotId, SIMSlotState::new);
+            for (SubscriptionInfo info : subscriptions) {
+                int slotId = info.getSimSlotIndex();
+                seenSlotIds.add(slotId);
 
-            boolean subscriptionSwapped = simSlotState.subscriptionId != info.getSubscriptionId();
-            if (subscriptionSwapped || simSlotState.telephony == null) {
-                unregisterCallbacks(simSlotState);
+                SIMSlotState simSlotState = simSlots.computeIfAbsent(slotId, SIMSlotState::new);
 
-                if (simSlotState.physicalChannelDumper != null) {
-                    simSlotState.physicalChannelDumper.dispose();
-                    simSlotState.physicalChannelDumper = null;
-                }
+                boolean subscriptionSwapped = simSlotState.subscriptionId != info.getSubscriptionId();
+                if (subscriptionSwapped || simSlotState.telephony == null) {
+                    unregisterCallbacks(simSlotState);
 
-                simSlotState.latestSnapshot = null;
+                    if (simSlotState.physicalChannelDumper != null) {
+                        simSlotState.physicalChannelDumper.dispose();
+                        simSlotState.physicalChannelDumper = null;
+                    }
 
-                try {
-                    TelephonyManager base = getTelephony();
-                    simSlotState.telephony = base == null ? null
-                            : base.createForSubscriptionId(info.getSubscriptionId());
-                    simSlotState.subscriptionId = info.getSubscriptionId();
-                    simSlotState.simId = slotId;
-                } catch (Exception e) {
-                    simSlotState.telephony = null;
-                    DebugLogger.add("Failed creating a TelephonyManager for slot "
-                            + slotId + ": " + e.getMessage() + ".");
-                    continue;
-                }
+                    simSlotState.latestSnapshot = null;
 
-                registerCallbacks(simSlotState);
+                    try {
+                        TelephonyManager base = getTelephony();
+                        simSlotState.telephony = base == null ? null
+                                : base.createForSubscriptionId(info.getSubscriptionId());
+                        simSlotState.subscriptionId = info.getSubscriptionId();
+                        simSlotState.simId = slotId;
+                    } catch (Exception e) {
+                        simSlotState.telephony = null;
+                        DebugLogger.add("Failed creating a TelephonyManager for slot "
+                                + slotId + ": " + e.getMessage() + ".");
+                        continue;
+                    }
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !simSlotState.hasTelephonyCallbacksRegistered()) {
-                    DebugLogger.add("Callbacks registration failed for SIM slot " + slotId + ".");
+                    registerCallbacks(simSlotState);
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                            && !simSlotState.hasTelephonyCallbacksRegistered()) {
+                        DebugLogger.add("Callbacks registration failed for SIM slot " + slotId + ".");
+                    }
                 }
             }
-        }
 
-        for (Integer knownSimId : new HashSet<>(simSlots.keySet())) {
-            if (!seenSlotIds.contains(knownSimId)) {
-                SIMSlotState slot = simSlots.remove(knownSimId);
+            for (Integer knownSimId : new HashSet<>(simSlots.keySet())) {
+                if (!seenSlotIds.contains(knownSimId)) {
+                    SIMSlotState slot = simSlots.remove(knownSimId);
 
-                if (slot != null) {
-                    unregisterCallbacks(slot);
-                    if (slot.physicalChannelDumper != null)
-                        slot.physicalChannelDumper.dispose();
-                    if (onSlotRemoved != null)
-                        onSlotRemoved.accept(knownSimId);
+                    if (slot != null) {
+                        unregisterCallbacks(slot);
+                        if (slot.physicalChannelDumper != null)
+                            slot.physicalChannelDumper.dispose();
+                        if (onSlotRemoved != null)
+                            onSlotRemoved.accept(knownSimId);
+                    }
                 }
             }
         }
@@ -165,11 +172,13 @@ public class SubscriptionTracker {
                 simSlotState.serviceStateListener = new ServiceStateListener();
                 simSlotState.dataStateListener = new DataStateListener();
                 simSlotState.signalStrengthsListener = new SignalStrengthsListener();
+                simSlotState.cellInfoListener = new CellInfoListener();
 
                 simSlotState.telephony.registerTelephonyCallback(executor, simSlotState.nsaListener);
                 simSlotState.telephony.registerTelephonyCallback(executor, simSlotState.serviceStateListener);
                 simSlotState.telephony.registerTelephonyCallback(executor, simSlotState.dataStateListener);
                 simSlotState.telephony.registerTelephonyCallback(executor, simSlotState.signalStrengthsListener);
+                simSlotState.telephony.registerTelephonyCallback(executor, simSlotState.cellInfoListener);
             } catch (Exception e) {
                 DebugLogger.add("Callback registration exception for SIM slot "
                         + simSlotState.simId + ": " + e.getMessage() + ".");
@@ -180,7 +189,7 @@ public class SubscriptionTracker {
 
                 int events = PhoneStateListener.LISTEN_SERVICE_STATE
                         | PhoneStateListener.LISTEN_SIGNAL_STRENGTHS
-                        | PhoneStateListener.LISTEN_DATA_CONNECTION_STATE;
+                        | PhoneStateListener.LISTEN_DATA_CONNECTION_STATE | PhoneStateListener.LISTEN_CELL_INFO;
 
                 simSlotState.telephony.listen(simSlotState.legacyPhoneStateListener, events);
             } catch (Exception e) {
@@ -204,6 +213,8 @@ public class SubscriptionTracker {
                     simSlotState.telephony.unregisterTelephonyCallback(simSlotState.dataStateListener);
                 if (simSlotState.signalStrengthsListener != null)
                     simSlotState.telephony.unregisterTelephonyCallback(simSlotState.signalStrengthsListener);
+                if (simSlotState.cellInfoListener != null)
+                    simSlotState.telephony.unregisterTelephonyCallback(simSlotState.cellInfoListener);
             } catch (Exception e) {
                 DebugLogger.add("Callback unregistration exception for SIM slot "
                         + simSlotState.simId + ": " + e.getMessage() + ".");
@@ -212,6 +223,7 @@ public class SubscriptionTracker {
                 simSlotState.serviceStateListener = null;
                 simSlotState.dataStateListener = null;
                 simSlotState.signalStrengthsListener = null;
+                simSlotState.cellInfoListener = null;
             }
         } else {
             try {

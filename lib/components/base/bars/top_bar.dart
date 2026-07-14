@@ -99,7 +99,11 @@ class _TopBarState extends State<TopBar> {
         _isLoading = false;
       });
     } on PlatformException catch (e) {
-      await Sentry.captureException(e, stackTrace: e.stacktrace);
+      await Sentry.captureException(
+        e,
+        stackTrace: e.stacktrace,
+        message: SentryMessage(e.message ?? ""),
+      );
     }
   }
 
@@ -111,6 +115,8 @@ class _TopBarState extends State<TopBar> {
   }
 
   void _openInfo(AppLocalizations appLocalizations) async {
+    await sharedPreferences.reload();
+
     String? rawDeviceData = sharedPreferences.getString("deviceData");
     if (rawDeviceData == null) {
       await platform.invokeMethod("openRadioInfo");
