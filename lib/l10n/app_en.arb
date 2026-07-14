@@ -42,6 +42,19 @@
   },
   "replayRecording": "Replay recording",
   "selectRecording": "You will be asked to select a valid .nmr (NetManager Recording) file.",
+  "convertRecording": "Convert recording",
+  "conversionDescription": "You will convert an .nmr (NetManager Recording) file to a .csv/.kml/.kmz file.",
+  "exportFormatTitle": "Export format",
+  "exportFormatDescription": "Choose a format to convert this recording to.",
+  "exportFormatSaved": "Exported to: {path}",
+  "@exportFormatSaved": {
+    "description": "A recording converted to another format got saved.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "updateData": "Update data",
   "screenshotPage": "Screenshot page",
   "coverageRecording": "Cell coverage recording",
@@ -221,6 +234,8 @@
       }
     }
   },
+  "settingsBearingLineTitle": "Cell tower bearing line",
+  "settingsBearingLineDescription": "Show a bearing line directed to the cell tower you're connected to starting from your position inside of the map.",
   "settingsContributeTitle": "Contribute",
   "settingsContributeDescription": "Contribute to NetManager on GitHub.",
   "settingsTelegramTitle": "Telegram",

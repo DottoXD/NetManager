@@ -17,6 +17,13 @@ class RecordMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Color signalColor = getSignalColor(
+      record.networkGen,
+      record.processedSignal,
+    );
+
+    final fixedAlpha = signalColor.a * (record.usable ? 1.0 : 0.2);
+
     return GestureDetector(
       onTap: () async {
         await HapticService().triggerHaptic(HapticType.selection, context);
@@ -25,15 +32,12 @@ class RecordMarker extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: getSignalColor(
-            record.networkGen,
-            record.processedSignal,
-          ).withValues(alpha: record.usable ? 1.0 : 0.2),
+          color: signalColor.withValues(alpha: fixedAlpha),
           shape: BoxShape.circle,
           border: Border.all(
             color: isSelected
                 ? Theme.of(context).colorScheme.primary
-                : Colors.white,
+                : Colors.transparent,
             width: isSelected ? 2.5 : 1.5,
           ),
           boxShadow: [

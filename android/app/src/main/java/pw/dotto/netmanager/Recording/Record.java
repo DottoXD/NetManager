@@ -6,10 +6,10 @@ import java.time.format.DateTimeFormatter;
 /**
  * NetManager's Record class is the component that contains all base attributes
  * for
- * a single record inside of a cell coverage recording.
+ * a single record inside a cell coverage recording.
  *
  * @author DottoXD
- * @version 0.0.4
+ * @version 0.1.0
  */
 public class Record {
     private final int networkGen;

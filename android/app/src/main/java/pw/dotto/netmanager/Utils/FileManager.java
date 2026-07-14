@@ -18,11 +18,9 @@ import java.nio.charset.StandardCharsets;
  * to share debug logs + data images and eventually saving files to disk.
  *
  * @author DottoXD
- * @version 0.0.4
+ * @version 0.1.0
  */
 public class FileManager {
-    private static final Gson gson = new Gson();
-
     public static void shareLog(Context context, String path) {
         File file = new File(path);
         Uri uri = FileProvider.getUriForFile(context, context.getPackageName() + ".fileprovider", file);
@@ -39,13 +37,5 @@ public class FileManager {
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
         context.startActivity(Intent.createChooser(intent, "Share image"));
-    }
-
-    public static void writeFile(String path, String content) {
-        try (FileOutputStream fos = new FileOutputStream(path)) {
-            fos.write(content.getBytes(StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            // todo
-        }
     }
 }

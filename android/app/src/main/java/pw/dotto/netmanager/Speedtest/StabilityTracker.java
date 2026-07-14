@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * NetManager's StabilityTracker class is a an essential component for
+ * NetManager's StabilityTracker class is an essential component for
  * NetManager's Speed test module which calculates how stable a certain value is
  * during a test.
  * It is used to calculate the stability of the download and upload speed and
@@ -12,7 +12,7 @@ import java.util.List;
  * correct (and therefore stable) enough.
  *
  * @author DottoXD
- * @version 0.0.4
+ * @version 0.1.0
  */
 public class StabilityTracker {
     private final long windowMs;

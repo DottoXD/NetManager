@@ -66,7 +66,17 @@ class _NetManagerState extends State<NetManager> {
     dynamicThemeNotifier.value = widget.prefs.getBool("dynamicTheme") ?? true;
     themeColorNotifier.value = widget.prefs.getInt("themeColor") ?? 0xFFE6F0F2;
     material3Notifier.value = widget.prefs.getBool("material3") ?? true;
-    darkThemeNotifier.value = widget.prefs.getBool("darkTheme") ?? true;
+
+    if (widget.prefs.containsKey("darkTheme")) {
+      darkThemeNotifier.value = widget.prefs.getBool("darkTheme") ?? true;
+    } else {
+      final Brightness systemBrightness =
+          WidgetsBinding.instance.platformDispatcher.platformBrightness;
+      final bool systemPrefersDark = systemBrightness == Brightness.dark;
+
+      darkThemeNotifier.value = systemPrefersDark;
+      widget.prefs.setBool("darkTheme", systemPrefersDark);
+    }
 
     final String? langCode = widget.prefs.getString("languageCode");
     localeNotifier.value = langCode != null ? Locale(langCode) : null;

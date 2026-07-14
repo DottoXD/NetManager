@@ -15,8 +15,8 @@ RepoType: git
 Repo: https://github.com/DottoXD/NetManager.git
 
 Builds:
-  - versionName: 0.0.5
-    versionCode: 5
+  - versionName: 0.1.0
+    versionCode: 6
     output: build/app/outputs/flutter-apk/app-foss-release.apk
     srclibs:
       - flutter@stable
@@ -42,5 +42,5 @@ Builds:
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
 UpdateCheckData: pubspec.yaml|version:\s.+\+(\d+)|.|version:\s(.+)\+
-CurrentVersion: 0.0.5
-CurrentVersionCode: 5
+CurrentVersion: 0.1.0
+CurrentVersionCode: 6

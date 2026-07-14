@@ -23,7 +23,7 @@ android {
         minSdk = 30
         targetSdk = 37
         versionCode = 5
-        versionName = "0.0.5"
+        versionName = "0.1.0"
     }
 
     signingConfigs {
@@ -74,7 +74,7 @@ kotlin {
 dependencies {
     implementation("com.google.android.gms:play-services-wearable:20.0.1")
 
-    val composeBom = platform("androidx.compose:compose-bom:2026.05.01")
+    val composeBom = platform("androidx.compose:compose-bom:2026.06.01")
 
     implementation(composeBom)
     implementation("androidx.activity:activity-compose:1.13.0")

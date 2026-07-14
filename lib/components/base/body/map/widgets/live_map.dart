@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:netmanager/components/base/body/map/widgets/bearing_line.dart';
 import 'package:netmanager/components/base/body/map/widgets/cell_towers.dart';
 import 'package:netmanager/components/base/body/map/widgets/location_dot.dart';
 import 'package:netmanager/components/base/body/map/widgets/visual_records.dart';
@@ -27,6 +28,8 @@ class LiveMap extends StatelessWidget {
   final ValueChanged<bool> onMapLoading;
   final VoidCallback onClearSelection;
   final Function(LatLng latLng) onTowerTap;
+  final ValueNotifier<CellTower?> connectedTowerNotifier;
+  final bool showBearingLine;
 
   final String defaultMapTilesTemplate =
       "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
@@ -49,6 +52,8 @@ class LiveMap extends StatelessWidget {
     required this.onMapLoading,
     required this.onClearSelection,
     required this.onTowerTap,
+    required this.connectedTowerNotifier,
+    required this.showBearingLine,
   });
 
   @override
@@ -108,6 +113,21 @@ class LiveMap extends StatelessWidget {
           userAgentPackageName:
               "pw.dotto.netmanager ($gitCommit) ${sharedPreferences.getString("mapTilesTemplate") != defaultMapTilesTemplate ? "(Customised by user)" : ""}",
         ),
+        ValueListenableBuilder(
+          valueListenable: connectedTowerNotifier,
+          builder: (context, connectedTower, _) {
+            if (showBearingLine &&
+                currentLocation != null &&
+                connectedTowerNotifier.value != null) {
+              return BearingLine(
+                userLocation: currentLocation!,
+                towerLocation: connectedTowerNotifier.value!.getLatLng(),
+              );
+            }
+
+            return const SizedBox.shrink();
+          },
+        ),
         if (visualPoints.isNotEmpty)
           VisualRecords(
             visualPoints: visualPoints,
@@ -118,7 +138,17 @@ class LiveMap extends StatelessWidget {
           valueListenable: cellTowersNotifier,
           builder: (context, cellTowers, _) {
             if (cellTowers.isEmpty) return const SizedBox.shrink();
-            return CellTowers(cellTowers: cellTowers, onTowerTap: onTowerTap);
+
+            return ValueListenableBuilder(
+              valueListenable: connectedTowerNotifier,
+              builder: (context, connectedTower, _) {
+                return CellTowers(
+                  cellTowers: cellTowers,
+                  connectedTower: connectedTower,
+                  onTowerTap: onTowerTap,
+                );
+              },
+            );
           },
         ),
         if (currentLocation != null)

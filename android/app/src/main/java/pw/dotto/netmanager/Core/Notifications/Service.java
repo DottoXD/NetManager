@@ -13,6 +13,7 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 
 import pw.dotto.netmanager.Core.Mobile.SimReceiverManager;
+import pw.dotto.netmanager.Core.NetManagerCore;
 import pw.dotto.netmanager.Utils.DebugLogger;
 
 /**
@@ -20,7 +21,7 @@ import pw.dotto.netmanager.Utils.DebugLogger;
  * This component shuts down the notification service.
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.1.0
  */
 public class Service extends android.app.Service {
     private pw.dotto.netmanager.Core.Manager manager;
@@ -52,7 +53,8 @@ public class Service extends android.app.Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (manager == null) {
-            manager = new pw.dotto.netmanager.Core.Manager(this);
+            manager = new pw.dotto.netmanager.Core.Manager(this, "notification",
+                    NetManagerCore.DEFAULT_INTERVAL_SECONDS);
             sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
         }
 
@@ -80,25 +82,30 @@ public class Service extends android.app.Service {
         if (handler == null)
             handler = new Handler(Looper.getMainLooper());
 
-        if (notificationRunnable == null)
+        long seconds = NetManagerCore.DEFAULT_INTERVAL_SECONDS;
+        try {
+            seconds = sharedPreferences.getLong("flutter.backgroundUpdateInterval",
+                    NetManagerCore.DEFAULT_INTERVAL_SECONDS);
+            manager.updateInterval((int) seconds);
+        } catch (ClassCastException e) {
+            Log.e("pw.dotto.netmanager", "Broken SharedPreferences.", e);
+        } catch (Exception e) {
+            Log.w("pw.dotto.netmanager", e.getMessage() == null ? "No info." : e.getMessage());
+        }
+
+        if (notificationRunnable == null) {
+            long finalSeconds = seconds;
             notificationRunnable = new Runnable() {
                 @Override
                 public void run() {
                     if (notification != null)
                         notification.send();
 
-                    long millis = 3000;
-                    try {
-                        long seconds = sharedPreferences.getLong("flutter.backgroundUpdateInterval", 3);
-                        millis = seconds * 1000;
-                    } catch (ClassCastException e) {
-                        Log.e("pw.dotto.netmanager", "Broken SharedPreferences.", e);
-                    } catch (Exception e) {
-                        Log.w("pw.dotto.netmanager", e.getMessage() == null ? "No info." : e.getMessage());
-                    }
+                    long millis = finalSeconds * 1000;
                     handler.postDelayed(this, millis);
                 }
             };
+        }
 
         handler.post(notificationRunnable);
 
@@ -114,6 +121,8 @@ public class Service extends android.app.Service {
             SimReceiverManager simReceiverManager = manager.getSimReceiverManager();
             if (simReceiverManager != null)
                 simReceiverManager.unregisterStateReceiver();
+
+            manager.dispose();
         }
 
         if (handler != null)

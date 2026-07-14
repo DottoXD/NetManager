@@ -24,9 +24,6 @@
 
     <uses-permission android:name="android.permission.VIBRATE" />
 
-    <uses-feature
-        android:name="android.hardware.type.watch" />
-
     <application
         android:label="NetManager"
         android:name="${applicationName}"
@@ -92,7 +89,12 @@
             android:value="false" />
     </application>
     <queries>
-        <package android:name="com.android.phone.settings.RadioInfo" />
+        <package android:name="com.android.phone" />
+        <package android:name="com.android.settings" />
+        <package android:name="com.samsung.android.app.telephonyui" />
+        <package android:name="com.huawei.android.projectmenu" />
+        <package android:name="com.mediatek.engineermode" />
+
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>

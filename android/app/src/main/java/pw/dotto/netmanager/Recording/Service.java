@@ -27,6 +27,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import io.sentry.Sentry;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -43,18 +44,21 @@ import pw.dotto.netmanager.R;
  * all cell coverage recording actions.
  *
  * @author DottoXD
- * @version 0.0.5
+ * @version 0.1.0
  */
 public class Service extends android.app.Service {
+    private static final int DEFAULT_RECORDING_INTERVAL_SECONDS = 10;
+
     private static Service instance = null;
     private ScheduledExecutorService executorService;
 
     private Location serviceLocationFetcher;
     private Manager core;
     private RecordedData recordedData;
+    private final Object recordedDataLock = new Object();
     private int selectedSim = 0;
 
-    private Gson gson = new Gson();
+    private final Gson gson = new Gson();
     private int selectedId = -1;
     private String path;
     private boolean trackUsable = false;
@@ -89,7 +93,7 @@ public class Service extends android.app.Service {
 
         try {
             startForeground();
-            core = new Manager(this);
+            core = new Manager(this, "recording", DEFAULT_RECORDING_INTERVAL_SECONDS);
             serviceLocationFetcher = Location.getInstance(this);
         } catch (Exception e) {
             stopSelf();
@@ -116,11 +120,14 @@ public class Service extends android.app.Service {
         }
 
         String name = intent.getStringExtra("name");
-        int intervalSeconds = intent.getIntExtra("interval", 10);
+        int intervalSeconds = intent.getIntExtra("interval", DEFAULT_RECORDING_INTERVAL_SECONDS);
         String path = intent.getStringExtra("path");
         int selectedSim = intent.getIntExtra("selectedSim", 0);
         boolean trackUsable = intent.getBooleanExtra("trackUsable", false);
         String usabilityTestUrl = intent.getStringExtra("usabilityTestUrl");
+
+        if (core != null)
+            core.updateInterval(intervalSeconds);
 
         if (usabilityTestUrl == null)
             usabilityTestUrl = DEFAULT_USABILITY_TEST_URL;
@@ -199,7 +206,7 @@ public class Service extends android.app.Service {
 
             Record record = new Record(gen, processedSignal, isUsable, loc.getLatitude(), loc.getLongitude());
 
-            synchronized (recordedData) {
+            synchronized (recordedDataLock) {
                 recordedData.addRecord(record);
                 saveToFile();
             }
@@ -250,12 +257,12 @@ public class Service extends android.app.Service {
     }
 
     private void saveToFile() {
-        synchronized (recordedData) {
+        synchronized (recordedDataLock) {
             try (FileOutputStream fos = new FileOutputStream(new File(path))) {
                 String json = gson.toJson(recordedData);
                 fos.write(json.getBytes(StandardCharsets.UTF_8));
             } catch (IOException e) {
-                // todo
+                Sentry.captureException(e);
             }
         }
     }
@@ -310,6 +317,8 @@ public class Service extends android.app.Service {
             SimReceiverManager simReceiverManager = core.getSimReceiverManager();
             if (simReceiverManager != null)
                 simReceiverManager.unregisterStateReceiver();
+
+            core.dispose();
         }
 
         if (executorService != null) {

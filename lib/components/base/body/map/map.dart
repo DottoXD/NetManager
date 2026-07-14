@@ -8,7 +8,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:netmanager/components/base/body/map/widgets/live_map.dart';
 import 'package:netmanager/components/base/body/map/widgets/record_card.dart';
 import 'package:netmanager/components/dialogs/error.dart';
-import 'package:netmanager/components/modals/record_modal.dart';
+import 'package:netmanager/components/modals/record/record_modal.dart';
 import 'package:netmanager/database/cell_database.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/types/database/cell_tower.dart';
@@ -31,7 +31,8 @@ class MapBody extends StatefulWidget {
     this.metricSystemNotifier,
     this.mapTilesTemplateNotifier,
     this.databaseCellsInMapNotifier,
-    this.externalDatabaseNotifier, {
+    this.externalDatabaseNotifier,
+    this.bearingLineNotifier, {
     super.key,
     this.onPositionButtonPressed,
     this.onRecordButtonPressed,
@@ -47,6 +48,7 @@ class MapBody extends StatefulWidget {
   final ValueNotifier<String> mapTilesTemplateNotifier;
   final ValueNotifier<bool> databaseCellsInMapNotifier;
   final ValueNotifier<bool> externalDatabaseNotifier;
+  final ValueNotifier<bool> bearingLineNotifier;
 
   final ValueSetter<VoidCallback>? onPositionButtonPressed;
   final ValueSetter<VoidCallback>? onRecordButtonPressed;
@@ -95,6 +97,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
   bool _towerQueryInProgress = false;
   Timer? _towerDebounce;
 
+  final ValueNotifier<CellTower?> _connectedTowerNotifier = ValueNotifier(null);
+
   final ValueNotifier<List<CellTower>> _cellTowersNotifier = ValueNotifier([]);
 
   final ValueNotifier<List<String>> _displayTitlesNotifier = ValueNotifier([
@@ -133,6 +137,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
     widget.databaseCellsInMapNotifier.addListener(_onTowerSettingsChanged);
     widget.externalDatabaseNotifier.addListener(_onTowerSettingsChanged);
+    widget.bearingLineNotifier.addListener(_onTowerSettingsChanged);
+    _cellTowersNotifier.addListener(_onCellTowersChanged);
 
     _updateIntervalListener = () {
       _cellTimer?.cancel();
@@ -214,11 +220,10 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
         builder: (BuildContext context) {
-          return recordModal(
-            context,
-            platform,
-            recordingActionNotifier,
-            (data) {
+          return RecordModal(
+            platform: platform,
+            recordingActionNotifier: recordingActionNotifier,
+            onDataLoaded: (data) {
               try {
                 if (data.records.isNotEmpty) {
                   _displayTitlesNotifier.value = [
@@ -271,7 +276,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
               _timer?.cancel();
               _cellTimer?.cancel();
             },
-            () {
+            onRecordingStarted: () {
               liveRecordDataPoller();
             },
           );
@@ -314,6 +319,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
     widget.databaseCellsInMapNotifier.removeListener(_onTowerSettingsChanged);
     widget.externalDatabaseNotifier.removeListener(_onTowerSettingsChanged);
+    widget.bearingLineNotifier.removeListener(_onTowerSettingsChanged);
+    _cellTowersNotifier.removeListener(_onCellTowersChanged);
 
     _mapController.dispose();
     _animationController.dispose();
@@ -322,6 +329,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     _displayTitlesNotifier.dispose();
     _displayValuesNotifier.dispose();
     _mapLoadingNotifier.dispose();
+    _connectedTowerNotifier.dispose();
 
     super.dispose();
   }
@@ -459,6 +467,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
       if (!isValidString(cellId)) {
         cellId = "N/A";
       }
+
+      _connectedTowerNotifier.value = _findConnectedTower(cellId);
 
       _displayTitlesNotifier.value = [
         _appLocalizations.mapSpeed,
@@ -655,6 +665,25 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     }
   }
 
+  CellTower? _findConnectedTower(String cellIdentifier) {
+    if (cellIdentifier == "N/A" || cellIdentifier.isEmpty) return null;
+
+    final int? cid = int.tryParse(cellIdentifier);
+    if (cid == null) return null;
+
+    for (final tower in _cellTowersNotifier.value) {
+      if (tower.cells.any((cell) => cell.cid == cid)) {
+        return tower;
+      }
+    }
+
+    return null;
+  }
+
+  void _onCellTowersChanged() {
+    _connectedTowerNotifier.value = _findConnectedTower(cellId);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -732,6 +761,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                     const Duration(milliseconds: 500),
                   );
                 },
+                connectedTowerNotifier: _connectedTowerNotifier,
+                showBearingLine: widget.bearingLineNotifier.value,
               ),
               Positioned(
                 top: 0,

@@ -35,7 +35,8 @@ class SettingsBody extends StatefulWidget {
     this.speedMeasurementUnitNotifier,
     this.speedtestInstanceNotifier,
     this.externalDatabasesNotifier,
-    this.databaseCellsInMapNotifier, {
+    this.databaseCellsInMapNotifier,
+    this.bearingLineNotifier, {
     super.key,
   });
 
@@ -58,6 +59,7 @@ class SettingsBody extends StatefulWidget {
   final ValueNotifier<String> speedtestInstanceNotifier;
   final ValueNotifier<bool> externalDatabasesNotifier;
   final ValueNotifier<bool> databaseCellsInMapNotifier;
+  final ValueNotifier<bool> bearingLineNotifier;
 
   @override
   State<SettingsBody> createState() => _SettingsBodyState();
@@ -83,6 +85,7 @@ class _SettingsBodyState extends State<SettingsBody> {
   late ValueNotifier<String> speedtestInstanceNotifier;
   late ValueNotifier<bool> externalDatabasesNotifier;
   late ValueNotifier<bool> databaseCellsInMapNotifier;
+  late ValueNotifier<bool> bearingLineNotifier;
 
   late TextEditingController _mapTilesTemplateController;
   late TextEditingController _speedtestInstanceController;
@@ -107,6 +110,7 @@ class _SettingsBodyState extends State<SettingsBody> {
   String _speedtestInstance = "https://librespeed.org";
   bool _externalDatabases = true;
   bool _databaseCellsInMap = true;
+  bool _bearingLine = true;
   List<String> _importedDatabases = [];
   int _themeColor = 0xFFE6F0F2;
   bool _hapticFeedback = true;
@@ -151,6 +155,7 @@ class _SettingsBodyState extends State<SettingsBody> {
     speedtestInstanceNotifier = widget.speedtestInstanceNotifier;
     externalDatabasesNotifier = widget.externalDatabasesNotifier;
     databaseCellsInMapNotifier = widget.databaseCellsInMapNotifier;
+    bearingLineNotifier = widget.bearingLineNotifier;
 
     updateData();
     _positionPrecisionSelection = positionPrecisions[_positionPrecision];
@@ -206,6 +211,7 @@ class _SettingsBodyState extends State<SettingsBody> {
       _databaseCellsInMap =
           sharedPreferences.getBool("databaseCellsInMap") ??
           _databaseCellsInMap;
+      _bearingLine = sharedPreferences.getBool("bearingLine") ?? _bearingLine;
       _importedDatabases =
           sharedPreferences.getStringList("importedDatabases") ??
           _importedDatabases;
@@ -895,6 +901,26 @@ class _SettingsBodyState extends State<SettingsBody> {
               },
             ),
           ),
+          ListTile(
+            title: Text(_appLocalizations.settingsBearingLineTitle),
+            subtitle: Text(_appLocalizations.settingsBearingLineDescription),
+            enabled: _bearingLine,
+            trailing: _databaseCellsInMap
+                ? Switch(
+                    value: _bearingLine,
+                    onChanged: (bool value) async {
+                      await HapticService().triggerHaptic(
+                        HapticType.selection,
+                        context,
+                      );
+
+                      setBool("bearingLine", value);
+                      bearingLineNotifier.value = value;
+                      updateData();
+                    },
+                  )
+                : const SizedBox.shrink(),
+          ),
           Divider(
             height: 0,
             color: Theme.of(context).colorScheme.outlineVariant,
@@ -959,28 +985,6 @@ class _SettingsBodyState extends State<SettingsBody> {
             height: 0,
             color: Theme.of(context).colorScheme.outlineVariant,
           ),
-          /*ListTile(
-            title: Text("Use new backend (BETA)"),
-            subtitle: Text(
-              "Use the brand new, BETA data collection & calculation core. The brand new NetManager Core engine is lighter and faster, but you may encounter slight issues with it. Note that toggling this setting will close the app.",
-            ),
-            trailing: Switch(
-              value: _useNewCore,
-              onChanged: (bool value) async {
-                await HapticService().triggerHaptic(
-                  HapticType.selection,
-                  context,
-                );
-
-                setBool("useNewCore", value);
-                await updateData();
-
-                await platform.invokeMethod<void>("cancelNotification");
-                await platform.invokeMethod<void>("stopRecording");
-                exit(0);
-              },
-            ),
-          ),*/
           ListTile(
             title: Text(_appLocalizations.settingsDebugTitle),
             subtitle: Text(_appLocalizations.settingsDebugDescription),

@@ -417,10 +417,10 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                                               context,
                                             ).colorScheme.surface,
                                             builder: (BuildContext context) {
-                                              return serverModal(
-                                                context,
-                                                _servers,
-                                                _selectedServerNotifier,
+                                              return ServerModal(
+                                                servers: _servers,
+                                                selectedServerNotifier:
+                                                    _selectedServerNotifier,
                                               );
                                             },
                                           );

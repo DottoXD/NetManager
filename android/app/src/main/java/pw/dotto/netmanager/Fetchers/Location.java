@@ -18,7 +18,7 @@ import pw.dotto.netmanager.Utils.Permissions;
  * component to display the user's position.
  *
  * @author DottoXD
- * @version 0.0.5
+ * @version 0.1.0
  */
 public class Location {
     private static final int UPDATES_INTERVAL = 3000;
@@ -33,74 +33,71 @@ public class Location {
     private long lastAccess;
 
     @SuppressLint("MissingPermission")
-    public Location(Context context) {
+    private Location(Context context) {
         locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         SharedPreferences sharedPreferences = context.getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
 
-        if (locationManager != null && Permissions.check(context,
-                Permissions.ACCESS_FINE_LOCATION | Permissions.ACCESS_BACKGROUND_LOCATION)) {
-            int minDistance = 2;
-            String provider;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                provider = LocationManager.FUSED_PROVIDER;
-            } else {
-                provider = LocationManager.GPS_PROVIDER;
+        if (locationManager == null)
+            return;
+
+        int minDistance = 2;
+        String provider;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            provider = LocationManager.FUSED_PROVIDER;
+        } else {
+            provider = LocationManager.GPS_PROVIDER;
+        }
+
+        if (sharedPreferences != null) {
+            long positionPrecisionLevel;
+
+            try {
+                positionPrecisionLevel = sharedPreferences.getLong("flutter.positionPrecision", 3);
+            } catch (Exception ignored) {
+                positionPrecisionLevel = 3;
             }
 
-            if (sharedPreferences != null) {
-                long positionPrecisionLevel;
-
-                try {
-                    positionPrecisionLevel = sharedPreferences.getLong("flutter.positionPrecision", 3);
-                } catch (Exception ignored) {
-                    positionPrecisionLevel = 3;
-                }
-
-                switch ((int) positionPrecisionLevel) {
-                    case 0:
-                        provider = LocationManager.PASSIVE_PROVIDER;
-                        minDistance = 10;
-                        break;
-                    case 1:
-                        provider = LocationManager.NETWORK_PROVIDER;
-                        minDistance = 5;
-                        break;
-                    case 2:
-                        minDistance = 5;
-                        break;
-                    case 3:
-                        provider = LocationManager.GPS_PROVIDER;
-                        break;
-                }
+            switch ((int) positionPrecisionLevel) {
+                case 0:
+                    provider = LocationManager.PASSIVE_PROVIDER;
+                    minDistance = 10;
+                    break;
+                case 1:
+                    provider = LocationManager.NETWORK_PROVIDER;
+                    minDistance = 5;
+                    break;
+                case 2:
+                    minDistance = 5;
+                    break;
+                case 3:
+                    provider = LocationManager.GPS_PROVIDER;
+                    break;
             }
+        }
 
-            locationManager.requestLocationUpdates(
-                    provider,
-                    UPDATES_INTERVAL,
-                    minDistance,
-                    locationListener = location -> lastLocation = location);
+        locationManager.requestLocationUpdates(
+                provider,
+                UPDATES_INTERVAL,
+                minDistance,
+                locationListener = location -> lastLocation = location);
 
-            /*
-             * android.location.Location cachedLocation =
-             * locationManager.getLastKnownLocation(provider);
-             * if (cachedLocation != null && (System.currentTimeMillis() -
-             * cachedLocation.getTime() < 60000)) {
-             * lastLocation = cachedLocation;
-             * } else {
-             * lastLocation = null;
-             * }
-             */
+        lastLocation = locationManager.getLastKnownLocation(provider);
 
-            lastLocation = locationManager.getLastKnownLocation(provider);
-
-            updateAccess();
-        } else
-            instance = null;
+        updateAccess();
     }
 
     public static synchronized Location getInstance(Context context) {
         if (context == null)
             return null;
+
+        if (!Permissions.check(context,
+                Permissions.ACCESS_FINE_LOCATION | Permissions.ACCESS_BACKGROUND_LOCATION)) {
+            if (instance != null) {
+                instance.dispose();
+            }
+
+            return null;
+        }
 
         if (instance == null) {
             instance = new Location(context.getApplicationContext());
@@ -134,10 +131,13 @@ public class Location {
      * Disposes the Location object.
      */
     public void dispose() {
-        if (locationManager != null) {
+        if (locationManager != null && locationListener != null) {
             locationManager.removeUpdates(locationListener);
+            locationListener = null;
         }
 
-        instance = null;
+        if (instance == this) {
+            instance = null;
+        }
     }
 }

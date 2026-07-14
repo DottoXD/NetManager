@@ -7,6 +7,7 @@ import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/dialogs/event_log.dart';
 import 'package:netmanager/components/modals/info_modal.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
+import 'package:netmanager/types/base/info_menu_option.dart';
 import 'package:netmanager/types/device/data.dart';
 import 'package:netmanager/types/events/mobile_netmanager_event.dart';
 import 'package:netmanager/types/events/netmanager_event.dart';
@@ -137,9 +138,12 @@ class _TopBarState extends State<TopBar> {
       return;
     }
 
-    if (deviceData.manufacturer.toLowerCase().trim() == "samsung") {
-      if (!mounted) return;
+    final menuOptions = _resolveMenuOptions(deviceData);
+    if (!mounted) return;
 
+    if (menuOptions.length <= 1) {
+      await platform.invokeMethod(menuOptions.first.method);
+    } else {
       showModalBottomSheet(
         context: context,
         showDragHandle: true,
@@ -148,11 +152,9 @@ class _TopBarState extends State<TopBar> {
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
         builder: (BuildContext context) {
-          return infoModal(context, platform);
+          return InfoModal(platform: platform, options: menuOptions);
         },
       );
-    } else {
-      await platform.invokeMethod("openRadioInfo");
     }
   }
 
@@ -186,6 +188,65 @@ class _TopBarState extends State<TopBar> {
         },
       );
     }
+  }
+
+  List<InfoMenuOption> _resolveMenuOptions(DeviceData? deviceData) {
+    final List<InfoMenuOption> options = [
+      const InfoMenuOption(
+        title: "Radio Info",
+        icon: Icons.settings_input_antenna_outlined,
+        method: "openRadioInfo",
+      ),
+    ];
+
+    if (deviceData == null) return options;
+
+    final manufacturer = deviceData.manufacturer.toLowerCase().trim();
+    final modem = deviceData.modem.toLowerCase().trim();
+
+    if (manufacturer == "samsung") {
+      options.add(
+        const InfoMenuOption(
+          title: "Samsung ServiceMode",
+          icon: Icons.engineering_outlined,
+          method: "openSamsungInfo",
+        ),
+      );
+    }
+
+    if (modem.startsWith("mt") || manufacturer == "mediatek") {
+      options.add(
+        const InfoMenuOption(
+          title: "MTK Engineer Mode",
+          icon: Icons.build_circle_outlined,
+          method: "openMediatekInfo",
+        ),
+      );
+    }
+
+    if (manufacturer == "huawei" || manufacturer == "honor") {
+      options.add(
+        const InfoMenuOption(
+          title: "Huawei ProjectMenu",
+          icon: Icons.analytics_outlined,
+          method: "openHuaweiInfo",
+        ),
+      );
+    }
+
+    if (manufacturer == "xiaomi" ||
+        manufacturer == "redmi" ||
+        manufacturer == "poco") {
+      options.add(
+        const InfoMenuOption(
+          title: "MIUI BandMode",
+          icon: Icons.cell_tower_outlined,
+          method: "openXiaomiInfo",
+        ),
+      );
+    }
+
+    return options;
   }
 
   @override

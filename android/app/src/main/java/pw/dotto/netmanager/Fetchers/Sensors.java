@@ -13,7 +13,7 @@ import android.os.Looper;
  * data.
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.1.0
  */
 public class Sensors implements SensorEventListener {
     private static final int DESTROY_TIMEOUT = 5000;
@@ -26,7 +26,7 @@ public class Sensors implements SensorEventListener {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private long lastAccess;
 
-    public Sensors(Context context) {
+    private Sensors(Context context) {
         sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
 
         if (sensorManager != null) {

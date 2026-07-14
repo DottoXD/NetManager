@@ -42,6 +42,19 @@
   },
   "replayRecording": "Riproduci registrazione",
   "selectRecording": "Ti sarà chiesto di selezionare un file .nmr (NetManager Recording) valido.",
+  "convertRecording": "Converti registrazione",
+  "conversionDescription": "Convertirai un file .nmr (NetManager Recording) in un file .csv/.kml/.kmz.",
+  "exportFormatTitle": "Formato di esportazione",
+  "exportFormatDescription": "Scegli un formato in cui esportare questa registrazione.",
+  "exportFormatSaved": "Esportato a: {path}",
+  "@exportFormatSaved": {
+    "description": "A recording converted to another format got saved.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "updateData": "Aggiorna dati",
   "screenshotPage": "Esegui screenshot",
   "coverageRecording": "Registrazione della copertura e delle celle",
@@ -221,6 +234,8 @@
       }
     }
   },
+  "settingsBearingLineTitle": "Linea utente-antenna",
+  "settingsBearingLineDescription": "Mostra nella mappa una linea che parte dalla tua posizione e arriva alla posizione dell'antenna a cui sei collegato.",
   "settingsContributeTitle": "Contribuisci",
   "settingsContributeDescription": "Contribuisci allo sviluppo di NetManager su GitHub.",
   "settingsTelegramTitle": "Telegram",

@@ -49,3 +49,6 @@ app.*.map.json
 
 # l10n Dart files
 lib/l10n/*.dart
+
+# Problems report
+problems-report.yml

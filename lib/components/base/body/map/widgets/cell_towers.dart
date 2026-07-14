@@ -4,14 +4,17 @@ import 'package:latlong2/latlong.dart';
 import 'package:netmanager/components/modals/tower_modal.dart';
 import 'package:netmanager/types/database/cell_tower.dart';
 import 'package:netmanager/utils/haptic_service.dart';
+import 'package:netmanager/utils/tower_color.dart';
 
 class CellTowers extends StatelessWidget {
   final List<CellTower> cellTowers;
+  final CellTower? connectedTower;
   final Function(LatLng latLng) onTowerTap;
 
   const CellTowers({
     super.key,
     required this.cellTowers,
+    required this.connectedTower,
     required this.onTowerTap,
   });
 
@@ -19,6 +22,9 @@ class CellTowers extends StatelessWidget {
   Widget build(BuildContext context) {
     return MarkerLayer(
       markers: cellTowers.map((tower) {
+        final isConnected = connectedTower != null && tower == connectedTower;
+        final towerColor = getTowerColor(context, tower.getMaxGen());
+
         return Marker(
           point: tower.getLatLng(),
           width: 32,
@@ -42,7 +48,8 @@ class CellTowers extends StatelessWidget {
                     ),
                   ),
                   backgroundColor: Theme.of(context).colorScheme.surface,
-                  builder: (BuildContext context) => towerModal(context, tower),
+                  builder: (BuildContext context) =>
+                      TowerModal(cellTower: tower),
                 );
               }
 
@@ -54,9 +61,20 @@ class CellTowers extends StatelessWidget {
                   context,
                 ).colorScheme.surface.withValues(alpha: 0.8),
                 shape: BoxShape.circle,
+                border: isConnected
+                    ? Border.all(color: towerColor, width: 2.5)
+                    : null,
+                boxShadow: isConnected
+                    ? [
+                        BoxShadow(
+                          color: towerColor.withValues(alpha: 0.5),
+                          blurRadius: 6,
+                        ),
+                      ]
+                    : null,
               ),
               child: Icon(
-                Icons.cell_tower_rounded,
+                Icons.cell_tower_outlined,
                 size: 18,
                 color: Theme.of(context).colorScheme.secondary,
               ),

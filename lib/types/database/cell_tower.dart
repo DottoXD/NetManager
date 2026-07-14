@@ -16,6 +16,21 @@ class CellTower {
     return LatLng(latitude, longitude);
   }
 
+  int getMaxGen() {
+    if (cells.isEmpty) return 0;
+
+    int gen = cells
+        .map((c) {
+          if (c.description.contains("DSS") || c.description.contains("5G")) {
+            return 5;
+          }
+          return c.networkGen;
+        })
+        .reduce((a, b) => a > b ? a : b);
+
+    return gen;
+  }
+
   @override
   bool operator ==(Object other) {
     if (other is! CellTower) return false;

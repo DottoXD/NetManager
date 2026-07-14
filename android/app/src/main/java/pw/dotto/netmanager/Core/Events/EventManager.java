@@ -20,7 +20,7 @@ import pw.dotto.netmanager.Utils.DebugLogger;
  * user wants different kinds of cell events logged.
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.1.0
  */
 public class EventManager {
     private static EventManager instance;
@@ -28,7 +28,7 @@ public class EventManager {
     private final SharedPreferences sharedPreferences;
     private final Gson gson;
 
-    public EventManager(Context context) {
+    private EventManager(Context context) {
         gson = new Gson();
         sharedPreferences = context.getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
 

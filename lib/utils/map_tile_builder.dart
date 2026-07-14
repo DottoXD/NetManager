@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 
 const ColorFilter _darkMapFilter = ColorFilter.matrix(<double>[
-  -0.1, -0.5, -0.05, 0, 190, //red
-  -0.1, -0.5, -0.05, 0, 190, //green
-  -0.1, -0.5, -0.05, 0, 190, //blue
+  -0.1, -0.5, -0.05, 0, 190, // Red
+  -0.1, -0.5, -0.05, 0, 190, // Green
+  -0.1, -0.5, -0.05, 0, 190, // Blue
   0, 0, 0, 1, 0, //alpha
 ]);
 

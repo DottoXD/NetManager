@@ -68,6 +68,7 @@ class _HomeState extends State<Home> {
   );
   final ValueNotifier<bool> _externalDatabasesNotifier = ValueNotifier(true);
   final ValueNotifier<bool> _databaseCellsInMapNotifier = ValueNotifier(true);
+  final ValueNotifier<bool> _bearingLineNotifier = ValueNotifier(true);
 
   @override
   void initState() {
@@ -103,6 +104,8 @@ class _HomeState extends State<Home> {
         widget.sharedPreferences.getBool("externalDatabases") ?? true;
     _databaseCellsInMapNotifier.value =
         widget.sharedPreferences.getBool("databaseCellsInMap") ?? true;
+    _bearingLineNotifier.value =
+        widget.sharedPreferences.getBool("bearingLine") ?? true;
 
     try {
       widget.platform.invokeMethod<bool>("requestPermissions", {
@@ -148,6 +151,7 @@ class _HomeState extends State<Home> {
     _speedtestInstanceNotifier.dispose();
     _externalDatabasesNotifier.dispose();
     _databaseCellsInMapNotifier.dispose();
+    _bearingLineNotifier.dispose();
 
     super.dispose();
   }
@@ -207,6 +211,7 @@ class _HomeState extends State<Home> {
               _mapTilesTemplateNotifier,
               _databaseCellsInMapNotifier,
               _externalDatabasesNotifier,
+              _bearingLineNotifier,
               onPositionButtonPressed: (callback) {
                 _mapPositionNotifier.value = callback;
               },
@@ -237,6 +242,7 @@ class _HomeState extends State<Home> {
               _speedtestInstanceNotifier,
               _externalDatabasesNotifier,
               _databaseCellsInMapNotifier,
+              _bearingLineNotifier,
             ),
           ],
         ),

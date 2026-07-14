@@ -23,6 +23,7 @@ import pw.dotto.netmanager.Core.Events.NetManagerEvent;
 import pw.dotto.netmanager.Core.Manager;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
 import pw.dotto.netmanager.Core.Mobile.SimReceiverManager;
+import pw.dotto.netmanager.Core.Processors.DevicePatches;
 import pw.dotto.netmanager.Fetchers.Location;
 import pw.dotto.netmanager.Fetchers.Sensors;
 import pw.dotto.netmanager.Speedtest.Client;
@@ -38,7 +39,7 @@ import pw.dotto.netmanager.WearOS.WearHandler;
  * This class also manages communications with WearOS devices.
  *
  * @author DottoXD
- * @version 0.0.5
+ * @version 0.1.0
  */
 public class MainActivity extends FlutterActivity {
   private static final String CHANNEL = "pw.dotto.netmanager/bridge";
@@ -62,9 +63,6 @@ public class MainActivity extends FlutterActivity {
 
     if (sharedPreferences == null)
       sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
-
-    if (!sharedPreferences.contains("flutter.deviceData"))
-      new DeviceData(Build.MANUFACTURER, Build.HARDWARE).save(sharedPreferences);
 
     chn = new MethodChannel(
         flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL);
@@ -168,6 +166,33 @@ public class MainActivity extends FlutterActivity {
         case "openSamsungInfo":
           try {
             boolean success = Activities.openSamsungInfo(this);
+            result.success(success);
+          } catch (Exception e) {
+            result.error("Unknown", e.getMessage(), null); // add proper error handling
+          }
+          break;
+
+        case "openHuaweiInfo":
+          try {
+            boolean success = Activities.openHuaweiInfo(this);
+            result.success(success);
+          } catch (Exception e) {
+            result.error("Unknown", e.getMessage(), null); // add proper error handling
+          }
+          break;
+
+        case "openMediatekInfo":
+          try {
+            boolean success = Activities.openMediatekInfo(this);
+            result.success(success);
+          } catch (Exception e) {
+            result.error("Unknown", e.getMessage(), null); // add proper error handling
+          }
+          break;
+
+        case "openXiaomiInfo":
+          try {
+            boolean success = Activities.openXiaomiInfo(this);
             result.success(success);
           } catch (Exception e) {
             result.error("Unknown", e.getMessage(), null); // add proper error handling
@@ -364,11 +389,18 @@ public class MainActivity extends FlutterActivity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
+    DevicePatches.registerAll();
+
     if (sharedPreferences == null)
       sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
 
-    if (core == null)
-      core = new Manager(this);
+    DeviceData.getInstance(sharedPreferences);
+
+    if (Permissions.check(this, Permissions.READ_PHONE_STATE)) {
+      if (core == null) {
+        core = new Manager(this);
+      }
+    }
 
     wearHandler.onCreate(this);
   }
@@ -404,7 +436,11 @@ public class MainActivity extends FlutterActivity {
       wearHandler.onDestroy();
     }
 
-    core = null;
+    if (core != null) {
+      core.dispose();
+      core = null;
+    }
+
     super.onDestroy();
   }
 

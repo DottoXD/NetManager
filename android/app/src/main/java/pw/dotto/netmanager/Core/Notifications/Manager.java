@@ -31,7 +31,7 @@ import pw.dotto.netmanager.MainActivity;
  * service.
  *
  * @author DottoXD
- * @version 0.0.5
+ * @version 0.1.0
  */
 public class Manager {
     private final Service context;
@@ -110,7 +110,10 @@ public class Manager {
         if (activeNotification == null)
             return false;
 
-        if (notificationManager == null || notificationChannel == null)
+        if (notificationManager == null)
+            return false;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && notificationChannel == null)
             return false;
 
         if (selectedId < 0)

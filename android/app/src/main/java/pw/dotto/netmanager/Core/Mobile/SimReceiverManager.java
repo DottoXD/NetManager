@@ -7,12 +7,14 @@ import android.content.IntentFilter;
 import android.os.Build;
 import android.telephony.TelephonyManager;
 
+import io.sentry.Sentry;
+
 /**
  * NetManager's SimReceiverManager is a class used to listen to SIM/subscription
  * changes.
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.1.0
  */
 public class SimReceiverManager {
     private static SimReceiverManager instance;
@@ -21,7 +23,7 @@ public class SimReceiverManager {
     private BroadcastReceiver simReceiver;
     private boolean isRegistered = false;
 
-    public SimReceiverManager(Context context) {
+    private SimReceiverManager(Context context) {
         if (context != null)
             this.context = context.getApplicationContext();
     }
@@ -40,7 +42,7 @@ public class SimReceiverManager {
     /**
      * Registers an event receiver for Android subscription updates.
      *
-     * @param onUpdate A method that shall be ran as soon as there's an update to
+     * @param onUpdate A method that shall be run as soon as there's an update to
      *                 the SIM's subscription.
      */
     public void registerStateReceiver(Runnable onUpdate) {
@@ -74,10 +76,20 @@ public class SimReceiverManager {
                 }
                 isRegistered = true;
             }
-        } catch (IllegalArgumentException ignored) {
-            // todo add sentry
+        } catch (IllegalArgumentException e) {
+            Sentry.captureException(e);
         }
+    }
 
+
+    /**
+     * Useful to release the current SimReceiverManager instance.
+     */
+    public static synchronized void releaseInstance() {
+        if (instance != null) {
+            instance.unregisterStateReceiver();
+            instance = null;
+        }
     }
 
     /**
@@ -90,12 +102,11 @@ public class SimReceiverManager {
         try {
             if (context != null)
                 context.unregisterReceiver(simReceiver);
-        } catch (IllegalArgumentException ignored) {
-            // todo add sentry
+        } catch (IllegalArgumentException e) {
+            Sentry.captureException(e);
         } finally {
             isRegistered = false;
             simReceiver = null;
         }
-
     }
 }

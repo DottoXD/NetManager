@@ -16,7 +16,7 @@ import java.util.ArrayList;
  * permissions.
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.1.0
  */
 public class Permissions {
         private static final int REQ_FOREGROUND = 1;
@@ -32,7 +32,7 @@ public class Permissions {
          * ACCESS_BACKGROUND_LOCATION) are granted or not.
          *
          * @param context A valid Context object.
-         * @return Whether or not the permissions are granted.
+         * @return Whether the permissions are granted.
          */
         public static boolean check(Context context) {
                 return check(context, READ_PHONE_STATE | ACCESS_FINE_LOCATION
@@ -101,7 +101,7 @@ public class Permissions {
                 if (!permissions.isEmpty())
                         ActivityCompat.requestPermissions(activity,
                                         permissions.toArray(new String[0]),
-                                        1);
+                                        REQ_FOREGROUND);
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && (req & ACCESS_BACKGROUND_LOCATION) != 0) {
                         ActivityCompat.requestPermissions(activity,
@@ -117,19 +117,18 @@ public class Permissions {
          * @param activity     A valid & active Activity object.
          * @param requestCode  The request's code.
          * @param permissions  The requested permissions.
-         * @param grantResults Wether or not the permissions were granted.
+         * @param grantResults Whether the permissions were granted.
          */
         public static void handleResult(Activity activity, int requestCode, @NonNull String[] permissions,
                         @NonNull int[] grantResults) {
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
-                        return;
-
                 if (requestCode == REQ_FOREGROUND) {
-                        if (ActivityCompat.checkSelfPermission(activity,
-                                        Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                                ActivityCompat.requestPermissions(activity,
-                                                new String[] { Manifest.permission.ACCESS_BACKGROUND_LOCATION },
-                                                REQ_BACKGROUND);
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                if (ActivityCompat.checkSelfPermission(activity,
+                                                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                                        ActivityCompat.requestPermissions(activity,
+                                                        new String[] { Manifest.permission.ACCESS_BACKGROUND_LOCATION },
+                                                        REQ_BACKGROUND);
+                                }
                         }
                 }
         }
