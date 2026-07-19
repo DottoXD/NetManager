@@ -37,7 +37,7 @@ class ServerModal extends StatelessWidget {
                     Uri url = Uri.parse(servers[i]["sponsorURL"]);
                     launchUrl(url);
                   },
-                  icon: Icon(Icons.open_in_new),
+                  icon: const Icon(Icons.open_in_new),
                   tooltip: AppLocalizations.of(context)!.visitServerHost,
                 )
               : null,

@@ -86,7 +86,7 @@ class CellListItem extends StatelessWidget {
         ),
         if (showDivider)
           Container(
-            margin: EdgeInsets.symmetric(horizontal: 5),
+            margin: const EdgeInsets.symmetric(horizontal: 5),
             child: Divider(
               height: 0,
               color: Theme.of(context).colorScheme.outlineVariant,

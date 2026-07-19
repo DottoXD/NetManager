@@ -63,7 +63,7 @@ class HeroGauge extends StatelessWidget {
                 begin: 0,
                 end: isFinished ? 0 : gaugePercentage,
               ),
-              duration: Duration(milliseconds: 200),
+              duration: const Duration(milliseconds: 200),
               curve: Curves.easeOutCubic,
               builder: (context, value, child) {
                 final baseColor = stage == TestStage.LATENCY

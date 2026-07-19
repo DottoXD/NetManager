@@ -1,6 +1,10 @@
 package pw.dotto.netmanager.WearOS;
 
+import static pw.dotto.netmanager.Utils.Mobile.getGenerationLabel;
+
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -16,35 +20,47 @@ import java.util.ArrayList;
 import pw.dotto.netmanager.Core.Manager;
 import pw.dotto.netmanager.Core.Mobile.CellSnapshot;
 import pw.dotto.netmanager.MainActivity;
+import pw.dotto.netmanager.Utils.DebugLogger;
 
 /**
  * NetManager's WearHandler Play class is the core component of the Android <->
  * WearOS bridge for NetManager.
  *
  * @author DottoXD
- * @version 0.0.5
+ * @version 0.1.0
  */
 public class WearHandler implements WearIntegration, MessageClient.OnMessageReceivedListener {
     private Context context;
-    private Manager core;
+    private Manager wearManager;
+
+    private final Handler watchKeepAliveHandler = new Handler(Looper.getMainLooper());
+    private static final String WEAROS_CONSUMER_ID = "wearos";
+    private static final int DEFAULT_POLL_INTERVAL = 3;
+    private static final int KEEP_ALIVE_MS = 15000;
+    private boolean isWearActive = false;
+
+    private final Runnable stopWearPollingRunnable = () -> {
+        if (wearManager != null && isWearActive) {
+            wearManager.dispose();
+            wearManager = null;
+            isWearActive = false;
+            DebugLogger.add("WearOS background polling stopped due to watch inactivity.");
+        }
+    };
 
     @Override
     public void onCreate(Context context) {
-        this.context = context;
+        this.context = context.getApplicationContext();
 
-        if (context instanceof MainActivity) {
-            this.core = ((MainActivity) context).getCore();
-        }
+        Wearable.getMessageClient(this.context).addListener(this);
     }
 
     @Override
     public void onResume() {
-        Wearable.getMessageClient(context).addListener(this);
     }
 
     @Override
     public void onPause() {
-        Wearable.getMessageClient(context).removeListener(this);
     }
 
     @Override
@@ -53,8 +69,13 @@ public class WearHandler implements WearIntegration, MessageClient.OnMessageRece
             Wearable.getMessageClient(context).removeListener(this);
         }
 
+        watchKeepAliveHandler.removeCallbacks(stopWearPollingRunnable);
+
+        if (wearManager != null) {
+            wearManager.dispose();
+            wearManager = null;
+        }
         this.context = null;
-        this.core = null;
     }
 
     /**
@@ -64,10 +85,18 @@ public class WearHandler implements WearIntegration, MessageClient.OnMessageRece
      */
     @Override
     public void onMessageReceived(@NonNull MessageEvent messageEvent) {
-        Log.d("wear", "Message received: " + messageEvent.getPath());
+        DebugLogger.add("WearOS message received: " + messageEvent.getPath());
         if (messageEvent.getPath().equals("/request_wearos_data")) {
-            PutDataMapRequest request = PutDataMapRequest.create("/wearos_data");
+            if (!isWearActive || wearManager == null) {
+                wearManager = new Manager(context, WEAROS_CONSUMER_ID, DEFAULT_POLL_INTERVAL);
+                isWearActive = true;
+                DebugLogger.add("WearOS background polling loop started.");
+            }
 
+            watchKeepAliveHandler.removeCallbacks(stopWearPollingRunnable);
+            watchKeepAliveHandler.postDelayed(stopWearPollingRunnable, KEEP_ALIVE_MS);
+
+            PutDataMapRequest request = PutDataMapRequest.create("/wearos_data");
             DataMap dataMap = request.getDataMap();
 
             byte[] data = messageEvent.getData();
@@ -75,9 +104,9 @@ public class WearHandler implements WearIntegration, MessageClient.OnMessageRece
 
             dataMap.putInt("id", id);
 
-            if (core != null) {
-                CellSnapshot snapshot = core.getCellSnapshot(id);
-                int simCount = core.getSimCount();
+            if (wearManager != null) {
+                CellSnapshot snapshot = wearManager.getCellSnapshot(id);
+                int simCount = wearManager.getSimCount();
 
                 if (snapshot != null) {
                     int gen = snapshot.getNetworkGen();
@@ -146,15 +175,5 @@ public class WearHandler implements WearIntegration, MessageClient.OnMessageRece
 
             Wearable.getDataClient(context).putDataItem(request.asPutDataRequest().setUrgent());
         }
-    }
-
-    private String getGenerationLabel(int gen) {
-        return switch (gen) {
-            case 5 -> "5G NR";
-            case 4 -> "4G LTE";
-            case 3 -> "3G";
-            case 2 -> "2G";
-            default -> "N/A";
-        };
     }
 }

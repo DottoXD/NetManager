@@ -12,14 +12,14 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.CellData;
  * to.
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.1.0
  */
 public class SIMData {
     private final String operator;
     private final String network;
-    private final int networkGen;
+    private int networkGen;
     private final String homePlmn;
-    private final String networkPlmn;
+    private String networkPlmn;
     private CellData primaryCell;
     private float activeBw = 0;
     private final ArrayList<CellData> activeCells = new ArrayList<>();
@@ -45,6 +45,10 @@ public class SIMData {
         return networkGen;
     }
 
+    public void setNetworkGen(int networkGen) {
+        this.networkGen = networkGen;
+    }
+
     public float getActiveBw() {
         return activeBw;
     }
@@ -55,6 +59,10 @@ public class SIMData {
 
     public String getNetworkPlmn() {
         return networkPlmn;
+    }
+
+    public void setNetworkPlmn(String networkPlmn) {
+        this.networkPlmn = networkPlmn;
     }
 
     public void setPrimaryCell(CellData primaryCell) {

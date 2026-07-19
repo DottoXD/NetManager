@@ -1,16 +1,20 @@
 import 'dart:convert';
-import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/modals/record/record_modal.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/types/recording/recorded_data.dart';
 import 'package:netmanager/utils/recording_export.dart';
+import 'package:path_provider/path_provider.dart';
 
 class ConvertRecording extends StatelessWidget {
-  const ConvertRecording({super.key});
+  const ConvertRecording({super.key, required this.platform});
+
+  final MethodChannel platform;
 
   @override
   Widget build(BuildContext context) {
@@ -41,9 +45,8 @@ class ConvertRecording extends StatelessWidget {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                return errorDialog(
-                  context,
-                  "${appLocalizations.convertRecording}: $e",
+                return ErrorDialog(
+                  e: "${appLocalizations.convertRecording}: $e",
                 );
               },
             );
@@ -64,13 +67,15 @@ class ConvertRecording extends StatelessWidget {
                   onPressed: () => Navigator.of(context).pop(null),
                   child: Text(appLocalizations.cancel),
                 ),
-                TextButton(
+                FilledButton.icon(
                   onPressed: () => Navigator.of(context).pop(ExportFormat.csv),
-                  child: const Text("CSV"),
+                  icon: const Icon(Icons.file_open_outlined),
+                  label: const Text("CSV"),
                 ),
-                FilledButton(
+                FilledButton.icon(
                   onPressed: () => Navigator.of(context).pop(ExportFormat.kml),
-                  child: const Text("KML"),
+                  icon: const Icon(Icons.landscape_outlined),
+                  label: const Text("KML"),
                 ),
               ],
             );
@@ -79,42 +84,43 @@ class ConvertRecording extends StatelessWidget {
 
         if (format == null) return;
 
-        final String baseName = recordingFile.name.replaceAll(
-          RegExp(r"\.nmr$", caseSensitive: false),
-          "",
-        );
-
-        final String content = format == ExportFormat.kml
-            ? recordedDataToKml(recordedData)
-            : recordedDataToCsv(recordedData);
+        final String baseName = recordingFile.name
+            .replaceAll(RegExp(r"\.nmr$", caseSensitive: false), "")
+            .replaceAll(RegExp(r"\.bin$", caseSensitive: false), "");
 
         final String ext = format.name.toLowerCase();
 
-        final XTypeGroup group = XTypeGroup(label: ext, extensions: [ext]);
-        final FileSaveLocation? saveLocation = await getSaveLocation(
-          suggestedName: "$baseName.$ext",
-          acceptedTypeGroups: [group],
-        );
+        try {
+          final String content = format == ExportFormat.kml
+              ? recordedDataToKml(recordedData)
+              : recordedDataToCsv(recordedData);
 
-        if (saveLocation == null) return;
+          final dir = await getTemporaryDirectory();
+          final exportFolder = Directory("${dir.path}/exports");
+          if (!exportFolder.existsSync()) {
+            await exportFolder.create();
+          }
 
-        final XFile outFile = XFile.fromData(
-          Uint8List.fromList(utf8.encode(content)),
-          mimeType: format == ExportFormat.kml
-              ? "application/vnd.google-earth.kml+xml"
-              : "text/csv",
-          name: "$baseName.$ext",
-        );
-        await outFile.saveTo(saveLocation.path);
+          final savePath = "${exportFolder.path}/$baseName.$ext";
 
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                appLocalizations.exportFormatSaved(saveLocation.path),
+          final File outFile = File(savePath);
+          await outFile.writeAsString(content);
+
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(appLocalizations.exportFormatSaved(savePath)),
               ),
-            ),
-          );
+            );
+          }
+
+          await platform.invokeMethod("share", {"path": savePath});
+        } catch (e) {
+          if (context.mounted) {
+            await platform.invokeMethod<bool>("showToast", {
+              "message": AppLocalizations.of(context)!.unexpectedError,
+            });
+          }
         }
       },
     );

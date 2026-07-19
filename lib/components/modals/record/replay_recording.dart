@@ -43,9 +43,8 @@ class ReplayRecording extends StatelessWidget {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                return errorDialog(
-                  context,
-                  "${appLocalizations.replayRecording}: $e",
+                return ErrorDialog(
+                  e: "${appLocalizations.replayRecording}: $e",
                 );
               },
             );

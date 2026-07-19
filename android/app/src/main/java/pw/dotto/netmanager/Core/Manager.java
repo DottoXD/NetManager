@@ -42,7 +42,7 @@ public class Manager {
 
     public String getSimCarrier(int simId) {
         SIMSlotState slot = core.getSlot(simId);
-        return slot == null ? "NetManager" : TelephonyCellDataSource.getSimCarrier(context, slot.telephony);
+        return slot == null ? "NetManager" : TelephonyCellDataSource.getSimCarrier(context, slot.telephony, slot);
     }
 
     public String getPlmn(int simId) {
@@ -51,7 +51,7 @@ public class Manager {
             return cached.getNetworkPlmn();
 
         SIMSlotState slot = core.getSlot(simId);
-        return slot == null ? "00000" : TelephonyCellDataSource.getPlmn(context, slot.telephony);
+        return slot == null ? "00000" : TelephonyCellDataSource.getPlmn(context, slot.telephony, slot);
     }
 
     public int getSimNetworkGen(int simId) {
@@ -76,6 +76,11 @@ public class Manager {
     public TelephonyManager getSubscription(int simId) {
         SIMSlotState slot = core.getSlot(simId);
         return slot == null ? null : slot.telephony;
+    }
+
+    public boolean getEmergencyStatus(int simId) {
+        SIMSlotState slot = core.getSlot(simId);
+        return slot != null && TelephonyCellDataSource.isEmergencyOnly(context, slot.telephony, slot);
     }
 
     public String getFullHeaderString() {

@@ -10,6 +10,8 @@
         tools:ignore="BackgroundLocationPolicy" />
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -77,6 +79,23 @@
         <service android:name=".Core.Startup.DelayedServiceStarter" android:foregroundServiceType="specialUse" android:exported="false" />
         <service android:name=".Core.Notifications.Service" android:foregroundServiceType="phoneCall" android:exported="false" />
         <service android:name=".Recording.Service" android:foregroundServiceType="location" android:exported="false" />
+
+        <receiver android:name=".Widgets.SIMWidgetProvider" android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="pw.dotto.netmanager.ACTION_REFRESH_DUALSIM" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_dualsim_info" />
+        </receiver>
+        <receiver android:name=".Widgets.EventWidgetProvider" android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="pw.dotto.netmanager.ACTION_REFRESH_TICKER" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_events_info" />
+        </receiver>
+
+        <service android:name=".Widgets.EventWidgetService" android:permission="android.permission.BIND_REMOTEVIEWS" />
 
         <meta-data
             android:name="flutterEmbedding"

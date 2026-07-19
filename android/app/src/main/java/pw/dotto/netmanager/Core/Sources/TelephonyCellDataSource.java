@@ -7,7 +7,11 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
 import android.telephony.CellIdentity;
+import android.telephony.CellIdentityGsm;
+import android.telephony.CellIdentityLte;
 import android.telephony.CellIdentityNr;
+import android.telephony.CellIdentityTdscdma;
+import android.telephony.CellIdentityWcdma;
 import android.telephony.CellInfo;
 import android.telephony.CellInfoCdma;
 import android.telephony.CellInfoGsm;
@@ -55,6 +59,7 @@ import pw.dotto.netmanager.Core.Mobile.Extractors.Cells.NrExtractor;
 import pw.dotto.netmanager.Core.Mobile.Extractors.Cells.TdscdmaExtractor;
 import pw.dotto.netmanager.Core.Mobile.Extractors.Cells.WcdmaExtractor;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
+import pw.dotto.netmanager.Core.NetManagerCore;
 import pw.dotto.netmanager.Core.Processors.Preprocessors.Preprocessor;
 import pw.dotto.netmanager.Utils.DebugLogger;
 import pw.dotto.netmanager.Utils.Permissions;
@@ -108,9 +113,6 @@ public class TelephonyCellDataSource implements CellDataSource {
 
         TelephonyManager telephony = simSlotState.telephony;
         int simId = simSlotState.simId;
-
-        SIMData data = new SIMData(getSimCarrier(context, telephony), getSimOperator(context, telephony),
-                getSimNetworkGen(context, telephony), telephony.getSimOperator(), getPlmn(context, telephony));
 
         String simOperator = telephony.getNetworkOperator();
         if ((simOperator == null || simOperator.isEmpty())
@@ -187,21 +189,49 @@ public class TelephonyCellDataSource implements CellDataSource {
         for (Preprocessor preprocessor : preprocessors)
             cellInfo = preprocessor.process(cellInfo, simId);
 
+        SIMData data = new SIMData(getSimCarrier(context, telephony, simSlotState), getSimOperator(context, telephony),
+                getSimNetworkGen(context, telephony), telephony.getSimOperator(),
+                getPlmn(context, telephony, simSlotState));
+
         for (CellInfo baseCell : cellInfo) {
             classifyCell(context, baseCell, data, simOperator, telephony, simSlotState);
         }
 
         if (data.getActiveCells().length == 0) {
             for (CellData neighborCell : data.getNeighborCells()) {
-                if (neighborCell.isRegistered()) {
-                    if (data.getPrimaryCell() == null)
+                if (neighborCell.isRegistered()
+                        || !neighborCell.getCellIdentifier().equals(String.valueOf(Integer.MAX_VALUE))) {
+                    if (data.getPrimaryCell() == null) {
                         data.setPrimaryCell(neighborCell);
-                    else
+                        break;
+                    } else
                         data.addActiveCell(neighborCell);
 
                     data.removeNeighborCell(neighborCell);
                 }
             }
+        }
+
+        if ("00000".equals(data.getNetworkPlmn())) {
+            String cellDerivedPlmn = resolvePlmnForPrimaryCell(data.getPrimaryCell(), cellInfo);
+            if (cellDerivedPlmn != null && !cellDerivedPlmn.isEmpty())
+                data.setNetworkPlmn(cellDerivedPlmn);
+        }
+
+        if (data.getNetworkGen() == 0 && data.getPrimaryCell() != null) {
+            CellData primaryCell = data.getPrimaryCell();
+            if (primaryCell instanceof GsmCellData)
+                data.setNetworkGen(2);
+            else if (primaryCell instanceof CdmaCellData)
+                data.setNetworkGen(3);
+            else if (primaryCell instanceof TdscdmaCellData)
+                data.setNetworkGen(3);
+            else if (primaryCell instanceof WcdmaCellData)
+                data.setNetworkGen(3);
+            else if (primaryCell instanceof LteCellData)
+                data.setNetworkGen(4);
+            else if (primaryCell instanceof NrCellData)
+                data.setNetworkGen(5);
         }
 
         for (CellData cell : data.getActiveCells()) {
@@ -219,7 +249,7 @@ public class TelephonyCellDataSource implements CellDataSource {
 
         List<Integer> cellBandwidths = readCellBandwidths(telephony, simSlotState, context);
 
-        String rawPlmn = getPlmn(context, telephony);
+        String rawPlmn = data.getNetworkPlmn();
         int mcc = 0;
         try {
             mcc = rawPlmn.length() >= 3 ? Integer.parseInt(rawPlmn.substring(0, 3)) : 0;
@@ -252,7 +282,7 @@ public class TelephonyCellDataSource implements CellDataSource {
 
         filterImpossibleBands(context, data, telephony, simSlotState, cellBandwidths);
         assignBandwidths(data, cellBandwidths);
-        fixNrSignal(data, telephony);
+        fixNrSignal(context, data, telephony, simSlotState);
         computeActiveBandwidth(data);
 
         return data;
@@ -272,17 +302,19 @@ public class TelephonyCellDataSource implements CellDataSource {
                         ((CellInfoGsm) baseCell).getCellIdentity().getMnc(),
                         simOperator);
 
-                if (data.getPrimaryCell() == null && getSimNetworkGen(context, telephony) == 2
-                        && mccMnc.equals(simOperator))
+                if (data.getPrimaryCell() == null || (getSimNetworkGen(context, telephony) == 2
+                        && mccMnc.equals(simOperator)))
                     data.setPrimaryCell(gsmCellData);
             } else if (baseCell instanceof CellInfoCdma) {
-                data.setPrimaryCell(CdmaExtractor.get((CellInfoCdma) baseCell));
+                if (data.getPrimaryCell() == null)
+                    data.setPrimaryCell(CdmaExtractor.get((CellInfoCdma) baseCell));
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && baseCell instanceof CellInfoTdscdma) {
                 TdscdmaCellData tdscdmaCellData = TdscdmaExtractor.get((CellInfoTdscdma) baseCell);
                 String mccMnc = ((CellInfoTdscdma) baseCell).getCellIdentity().getMccString()
                         + ((CellInfoTdscdma) baseCell).getCellIdentity().getMncString();
 
-                if (data.getPrimaryCell() == null && mccMnc.equals(simOperator))
+                if (data.getPrimaryCell() == null
+                        || (getSimNetworkGen(context, telephony) == 3 && mccMnc.equals(simOperator)))
                     data.setPrimaryCell(tdscdmaCellData);
             } else if (baseCell instanceof CellInfoWcdma) {
                 WcdmaCellData wcdmaCellData = WcdmaExtractor.get((CellInfoWcdma) baseCell);
@@ -291,7 +323,8 @@ public class TelephonyCellDataSource implements CellDataSource {
                         ((CellInfoWcdma) baseCell).getCellIdentity().getMnc(),
                         simOperator);
 
-                if (data.getPrimaryCell() == null && mccMnc.equals(simOperator))
+                if (data.getPrimaryCell() == null
+                        || (getSimNetworkGen(context, telephony) == 3 && mccMnc.equals(simOperator)))
                     data.setPrimaryCell(wcdmaCellData);
             } else if (baseCell instanceof CellInfoLte) {
                 LteCellData lteCellData = LteExtractor.get((CellInfoLte) baseCell);
@@ -300,7 +333,7 @@ public class TelephonyCellDataSource implements CellDataSource {
                         ((CellInfoLte) baseCell).getCellIdentity().getMnc(),
                         simOperator);
 
-                if (mccMnc.equals(simOperator))
+                if (data.getPrimaryCell() == null || mccMnc.equals(simOperator))
                     data.setPrimaryCell(lteCellData);
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && baseCell instanceof CellInfoNr) {
                 NrCellData nrCellData = NrExtractor.get((CellInfoNr) baseCell);
@@ -347,6 +380,7 @@ public class TelephonyCellDataSource implements CellDataSource {
                     ((CellInfoGsm) baseCell).getCellIdentity().getMcc(),
                     ((CellInfoGsm) baseCell).getCellIdentity().getMnc(),
                     simOperator);
+
             if (!mccMnc.contains(UNKNOWN_MCCMNC)) {
                 if (mccMnc.equals(simOperator))
                     data.addActiveCell(gsmCellData);
@@ -358,6 +392,7 @@ public class TelephonyCellDataSource implements CellDataSource {
             TdscdmaCellData tdscdmaCellData = TdscdmaExtractor.get((CellInfoTdscdma) baseCell);
             String mccMnc = ((CellInfoTdscdma) baseCell).getCellIdentity().getMccString()
                     + ((CellInfoTdscdma) baseCell).getCellIdentity().getMncString();
+
             if (!mccMnc.contains("null")) {
                 if (mccMnc.equals(simOperator))
                     data.addActiveCell(tdscdmaCellData);
@@ -369,6 +404,7 @@ public class TelephonyCellDataSource implements CellDataSource {
                     ((CellInfoWcdma) baseCell).getCellIdentity().getMcc(),
                     ((CellInfoWcdma) baseCell).getCellIdentity().getMnc(),
                     simOperator);
+
             if (!mccMnc.contains(UNKNOWN_MCCMNC)) {
                 if (mccMnc.equals(simOperator))
                     data.addActiveCell(wcdmaCellData);
@@ -380,6 +416,7 @@ public class TelephonyCellDataSource implements CellDataSource {
                     ((CellInfoLte) baseCell).getCellIdentity().getMcc(),
                     ((CellInfoLte) baseCell).getCellIdentity().getMnc(),
                     simOperator);
+
             if (!mccMnc.contains(UNKNOWN_MCCMNC)) {
                 if (mccMnc.equals(simOperator))
                     data.addActiveCell(lteCellData);
@@ -390,6 +427,7 @@ public class TelephonyCellDataSource implements CellDataSource {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 CellIdentityNr identity = (CellIdentityNr) baseCell.getCellIdentity();
                 String mccMnc = identity.getMccString() + identity.getMncString();
+
                 if (!mccMnc.contains("null")) {
                     if (mccMnc.equals(simOperator))
                         data.addActiveCell(nrCellData);
@@ -407,8 +445,9 @@ public class TelephonyCellDataSource implements CellDataSource {
                     ((CellInfoGsm) baseCell).getCellIdentity().getMcc(),
                     ((CellInfoGsm) baseCell).getCellIdentity().getMnc(),
                     simOperator);
+
             if (!mccMnc.contains(UNKNOWN_MCCMNC)) {
-                if (mccMnc.equals(simOperator))
+                if (mccMnc.equals(simOperator) || simOperator.equals("00000"))
                     data.addNeighborCell(gsmCellData);
             } else
                 data.addNeighborCell(gsmCellData);
@@ -418,8 +457,9 @@ public class TelephonyCellDataSource implements CellDataSource {
             TdscdmaCellData tdscdmaCellData = TdscdmaExtractor.get((CellInfoTdscdma) baseCell);
             String mccMnc = ((CellInfoTdscdma) baseCell).getCellIdentity().getMccString()
                     + ((CellInfoTdscdma) baseCell).getCellIdentity().getMncString();
+
             if (!mccMnc.contains("null")) {
-                if (mccMnc.equals(simOperator))
+                if (mccMnc.equals(simOperator) || simOperator.equals("00000"))
                     data.addNeighborCell(tdscdmaCellData);
             } else
                 data.addNeighborCell(tdscdmaCellData);
@@ -429,8 +469,9 @@ public class TelephonyCellDataSource implements CellDataSource {
                     ((CellInfoWcdma) baseCell).getCellIdentity().getMcc(),
                     ((CellInfoWcdma) baseCell).getCellIdentity().getMnc(),
                     simOperator);
+
             if (!mccMnc.contains(UNKNOWN_MCCMNC)) {
-                if (mccMnc.equals(simOperator))
+                if (mccMnc.equals(simOperator) || simOperator.equals("00000"))
                     data.addNeighborCell(wcdmaCellData);
             } else
                 data.addNeighborCell(wcdmaCellData);
@@ -440,8 +481,9 @@ public class TelephonyCellDataSource implements CellDataSource {
                     ((CellInfoLte) baseCell).getCellIdentity().getMcc(),
                     ((CellInfoLte) baseCell).getCellIdentity().getMnc(),
                     simOperator);
+
             if (!mccMnc.contains(UNKNOWN_MCCMNC)) {
-                if (mccMnc.equals(simOperator))
+                if (mccMnc.equals(simOperator) || simOperator.equals("00000"))
                     data.addNeighborCell(lteCellData);
             } else
                 data.addNeighborCell(lteCellData);
@@ -450,8 +492,9 @@ public class TelephonyCellDataSource implements CellDataSource {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 CellIdentityNr identity = (CellIdentityNr) baseCell.getCellIdentity();
                 String mccMnc = identity.getMccString() + identity.getMncString();
+
                 if (!mccMnc.contains("null")) {
-                    if (mccMnc.equals(simOperator))
+                    if (mccMnc.equals(simOperator) || simOperator.equals("00000"))
                         data.addNeighborCell(nrCellData);
                 } else
                     data.addNeighborCell(nrCellData);
@@ -472,7 +515,7 @@ public class TelephonyCellDataSource implements CellDataSource {
 
                 DebugLogger.add("Service state bandwidth for SIM " + slot.simId + ": " + Arrays.toString(bandwidths));
 
-                if (context instanceof Activity) {
+                if (NetManagerCore.getInstance(context).isForegroundActive()) {
                     // todo: test if anything breaks on snapdragon samsungs
                     if (bandwidths == null) {
                         ServiceState state = telephony.getServiceState();
@@ -511,8 +554,10 @@ public class TelephonyCellDataSource implements CellDataSource {
         switch (data.getNetworkGen()) {
             case 2: // 2G cannot use multiple bands at the same time
                 for (CellData cellData : data.getActiveCells())
-                    if (cellData != data.getPrimaryCell())
+                    if (cellData != data.getPrimaryCell()) {
                         data.removeActiveCell(cellData);
+                        data.addNeighborCell(cellData);
+                    }
                 break;
 
             case 3:
@@ -624,7 +669,7 @@ public class TelephonyCellDataSource implements CellDataSource {
         }
     }
 
-    private void fixNrSignal(SIMData data, TelephonyManager telephony) {
+    private void fixNrSignal(Context context, SIMData data, TelephonyManager telephony, SIMSlotState simSlotState) {
         if (data.getPrimaryCell() == null || !(data.getPrimaryCell() instanceof LteCellData))
             return;
 
@@ -647,13 +692,14 @@ public class TelephonyCellDataSource implements CellDataSource {
             return;
 
         List<CellSignalStrengthNr> signalStrengths = new ArrayList<>();
-        SignalStrength signalStrength = telephony.getSignalStrength();
-        if (signalStrength != null) {
-            for (CellSignalStrength cellSignalStrength : signalStrength.getCellSignalStrengths()) {
+        CellSignalStrength[] rawSignalStrengths = getSignalStrengths(context, simSlotState, telephony);
+        if (rawSignalStrengths != null) {
+            for (CellSignalStrength cellSignalStrength : rawSignalStrengths) {
                 if (cellSignalStrength instanceof CellSignalStrengthNr)
                     signalStrengths.add((CellSignalStrengthNr) cellSignalStrength);
             }
         }
+
         signalStrengths.sort(Comparator.comparingInt(CellSignalStrengthNr::getSsRsrp)); // -110dBm -> -99dBm -> -78dBm
 
         int limit = Math.min(nrCells.size(), signalStrengths.size());
@@ -709,10 +755,96 @@ public class TelephonyCellDataSource implements CellDataSource {
     }
 
     @SuppressLint("MissingPermission")
-    public static String getSimCarrier(Context context, TelephonyManager telephony) {
+    public static String getSimCarrier(Context context, TelephonyManager telephony, SIMSlotState simSlotState) {
         if (telephony == null || (context != null && !Permissions.check(context, Permissions.READ_PHONE_STATE)))
             return "NetManager";
-        return telephony.getNetworkOperatorName();
+
+        String name = telephony.getNetworkOperatorName();
+
+        if (name == null || name.isEmpty() || name.equalsIgnoreCase("Unknown")) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                    && NetManagerCore.getInstance(context).isForegroundActive()) {
+                try {
+                    ServiceState state = telephony.getServiceState();
+                    if (state != null) {
+                        if (state.getOperatorAlphaLong() != null && !state.getOperatorAlphaLong().isEmpty()) {
+                            name = state.getOperatorAlphaLong();
+                        } else if (state.getOperatorAlphaShort() != null && !state.getOperatorAlphaShort().isEmpty()) {
+                            name = state.getOperatorAlphaShort();
+                        }
+                    }
+                } catch (Exception ignored) {
+                }
+            } else {
+                String updatedOperatorAlphaLong = simSlotState.serviceStateListener != null
+                        && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                                ? simSlotState.serviceStateListener.getUpdatedOperatorAlphaLong()
+                                : simSlotState.legacyPhoneStateListener.getUpdatedOperatorAlphaLong();
+                String updatedOperatorAlphaShort = simSlotState.serviceStateListener != null
+                        && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                                ? simSlotState.serviceStateListener.getUpdatedOperatorAlphaShort()
+                                : simSlotState.legacyPhoneStateListener.getUpdatedOperatorAlphaShort();
+
+                if (updatedOperatorAlphaLong != null && !updatedOperatorAlphaLong.isEmpty()) {
+                    name = updatedOperatorAlphaLong;
+                } else if (updatedOperatorAlphaShort != null && !updatedOperatorAlphaShort.isEmpty()) {
+                    name = updatedOperatorAlphaShort;
+                }
+            }
+        }
+
+        if ((name == null || name.isEmpty() || name.equalsIgnoreCase("Unknown"))
+                && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            try {
+                List<CellInfo> cells = telephony.getAllCellInfo();
+
+                if (cells != null) {
+                    for (CellInfo cell : cells) {
+                        if (cell != null) {
+                            CellIdentity identity = null;
+
+                            if (cell instanceof CellInfoGsm) {
+                                CellInfoGsm cellGsm = (CellInfoGsm) cell;
+                                identity = cellGsm.getCellIdentity();
+                            } else if (cell instanceof CellInfoCdma) {
+                                CellInfoCdma cellCdma = (CellInfoCdma) cell;
+                                identity = cellCdma.getCellIdentity();
+                            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+                                    && cell instanceof CellInfoTdscdma) {
+                                CellInfoTdscdma cellTdscdma = (CellInfoTdscdma) cell;
+                                identity = cellTdscdma.getCellIdentity();
+                            } else if (cell instanceof CellInfoWcdma) {
+                                CellInfoWcdma cellWcdma = (CellInfoWcdma) cell;
+                                identity = cellWcdma.getCellIdentity();
+                            } else if (cell instanceof CellInfoLte) {
+                                CellInfoLte cellLte = (CellInfoLte) cell;
+                                identity = cellLte.getCellIdentity();
+                            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && cell instanceof CellInfoNr) {
+                                CellInfoNr cellNr = (CellInfoNr) cell;
+                                identity = cellNr.getCellIdentity();
+                            }
+
+                            if (identity == null)
+                                continue;
+
+                            CharSequence alphaLong = identity.getOperatorAlphaLong();
+                            CharSequence alphaShort = identity.getOperatorAlphaShort();
+
+                            if (alphaLong != null && !alphaLong.toString().isEmpty()) {
+                                name = alphaLong.toString();
+                                break;
+                            } else if (alphaShort != null && !alphaShort.toString().isEmpty()) {
+                                name = alphaShort.toString();
+                                break;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        return (name == null || name.isEmpty()) ? "NetManager" : name;
     }
 
     @SuppressLint("MissingPermission")
@@ -723,7 +855,7 @@ public class TelephonyCellDataSource implements CellDataSource {
     }
 
     @SuppressLint("MissingPermission")
-    public static String getPlmn(Context context, TelephonyManager telephony) {
+    public static String getPlmn(Context context, TelephonyManager telephony, SIMSlotState simSlotState) {
         if (telephony == null || (context != null && !Permissions.check(context, Permissions.READ_PHONE_STATE)))
             return "00000";
 
@@ -732,7 +864,91 @@ public class TelephonyCellDataSource implements CellDataSource {
             plmn = telephony.getNetworkOperator();
         } catch (Exception ignored) {
         }
+
+        if (plmn == null || plmn.isEmpty()) {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                        && NetManagerCore.getInstance(context).isForegroundActive()) {
+                    ServiceState state = telephony.getServiceState();
+                    if (state != null) {
+                        String numeric = state.getOperatorNumeric();
+                        if (numeric != null && !numeric.isEmpty())
+                            plmn = numeric;
+                    }
+                } else {
+                    String updatedPlmn = simSlotState.serviceStateListener != null
+                            && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                                    ? simSlotState.serviceStateListener.getOperatorNumeric()
+                                    : simSlotState.legacyPhoneStateListener.getOperatorNumeric();
+
+                    if (updatedPlmn != null && !updatedPlmn.isEmpty()) {
+                        plmn = updatedPlmn;
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
         return plmn == null || plmn.isEmpty() ? "00000" : plmn;
+    }
+
+    private String resolvePlmnForPrimaryCell(CellData primaryCell, List<CellInfo> cellInfo) {
+        if (primaryCell == null || cellInfo == null)
+            return null;
+
+        for (CellInfo cell : cellInfo) {
+            if (cell == null)
+                continue;
+
+            try {
+                String identifier;
+                int channel;
+                String mccMnc = null;
+
+                if (cell instanceof CellInfoGsm) {
+                    CellIdentityGsm id = ((CellInfoGsm) cell).getCellIdentity();
+                    identifier = String.valueOf(id.getCid());
+                    channel = id.getArfcn();
+                    mccMnc = buildMccMnc(id.getMcc(), id.getMnc(), null);
+                } else if (cell instanceof CellInfoWcdma) {
+                    CellIdentityWcdma id = ((CellInfoWcdma) cell).getCellIdentity();
+                    identifier = String.valueOf(id.getCid());
+                    channel = id.getUarfcn();
+                    mccMnc = buildMccMnc(id.getMcc(), id.getMnc(), null);
+                } else if (cell instanceof CellInfoLte) {
+                    CellIdentityLte id = ((CellInfoLte) cell).getCellIdentity();
+                    identifier = String.valueOf(id.getCi());
+                    channel = id.getEarfcn();
+                    mccMnc = buildMccMnc(id.getMcc(), id.getMnc(), null);
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && cell instanceof CellInfoTdscdma) {
+                    CellIdentityTdscdma id = ((CellInfoTdscdma) cell).getCellIdentity();
+                    identifier = String.valueOf(id.getCid());
+                    channel = id.getUarfcn();
+                    if (id.getMccString() != null && id.getMncString() != null)
+                        mccMnc = id.getMccString() + id.getMncString();
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && cell instanceof CellInfoNr) {
+                    CellIdentityNr id = (CellIdentityNr) cell.getCellIdentity();
+                    identifier = String.valueOf(id.getNci());
+                    channel = id.getNrarfcn();
+                    if (id.getMccString() != null && id.getMncString() != null)
+                        mccMnc = id.getMccString() + id.getMncString();
+                } else {
+                    continue;
+                }
+
+                if (mccMnc == null || mccMnc.isEmpty() || mccMnc.contains(UNKNOWN_MCCMNC))
+                    continue;
+
+                boolean identifierMatches = identifier != null && identifier.equals(primaryCell.getCellIdentifier());
+                boolean channelMatches = channel != CELL_INFO_UNAVAILABLE && channel == primaryCell.getChannelNumber();
+
+                if (identifierMatches && channelMatches)
+                    return mccMnc;
+            } catch (Exception ignored) {
+            }
+        }
+
+        return null;
     }
 
     @SuppressLint("MissingPermission")
@@ -743,6 +959,11 @@ public class TelephonyCellDataSource implements CellDataSource {
         int networkType = 0;
         try {
             networkType = telephony.getDataNetworkType();
+
+            if (networkType == TelephonyManager.NETWORK_TYPE_UNKNOWN) {
+                DebugLogger.add("Falling back to getVoiceNetworkType...");
+                networkType = telephony.getVoiceNetworkType();
+            }
         } catch (Exception ignored) {
         }
 
@@ -832,13 +1053,54 @@ public class TelephonyCellDataSource implements CellDataSource {
                     || (context != null && !Permissions.check(context, Permissions.READ_PHONE_STATE)))
                 return null;
 
-            SignalStrength signalStrength = telephony.getSignalStrength();
+            SignalStrength signalStrength = null;
+            if (NetManagerCore.getInstance(context).isForegroundActive()) {
+                signalStrength = telephony.getSignalStrength();
+            }
+
             if (signalStrength == null)
                 return null;
 
             result = signalStrength.getCellSignalStrengths().toArray(new CellSignalStrength[0]);
         }
         return result;
+    }
+
+    @SuppressLint("MissingPermission")
+    public static boolean isEmergencyOnly(Context context, TelephonyManager telephony, SIMSlotState simSlotState) {
+        if (telephony == null || (context != null && !Permissions.check(context, Permissions.READ_PHONE_STATE)))
+            return false;
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                    && NetManagerCore.getInstance(context).isForegroundActive()) {
+                ServiceState state = telephony.getServiceState();
+                if (state == null)
+                    return false;
+
+                if (state.getState() == ServiceState.STATE_EMERGENCY_ONLY)
+                    return true;
+
+                String s = state.toString();
+                if (s.contains("mIsEmergencyOnly=true") || s.contains("EmergOnly=true"))
+                    return true;
+            } else {
+                int state = simSlotState.serviceStateListener != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                        ? simSlotState.serviceStateListener.getState()
+                        : simSlotState.legacyPhoneStateListener.getState();
+                boolean isEmergency = simSlotState.serviceStateListener != null
+                        && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                                ? simSlotState.serviceStateListener.getIsEmergency()
+                                : simSlotState.legacyPhoneStateListener.getIsEmergency();
+
+                if (state == ServiceState.STATE_EMERGENCY_ONLY)
+                    return true;
+                return isEmergency;
+            }
+        } catch (Exception ignored) {
+        }
+
+        return false;
     }
 
     public void clearSlotState(int simId) {

@@ -111,7 +111,7 @@ class NetworkData extends StatelessWidget {
           : Container(
               width: cardWidth,
               height: cardHeight,
-              margin: EdgeInsets.symmetric(vertical: 5),
+              margin: const EdgeInsets.symmetric(vertical: 5),
             );
 
       rows.add(
@@ -120,13 +120,19 @@ class NetworkData extends StatelessWidget {
           children: [
             Expanded(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 2.5, vertical: 2.5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 2.5,
+                  vertical: 2.5,
+                ),
                 child: leftCard,
               ),
             ),
             Expanded(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 2.5, vertical: 2.5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 2.5,
+                  vertical: 2.5,
+                ),
                 child: rightCard,
               ),
             ),

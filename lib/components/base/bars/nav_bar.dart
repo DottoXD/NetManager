@@ -15,19 +15,19 @@ class NavBar extends StatelessWidget {
     return NavigationBar(
       destinations: [
         NavigationDestination(
-          icon: Icon(Icons.person_outlined),
+          icon: const Icon(Icons.person_outlined),
           label: appLocalizations.navData,
         ),
         NavigationDestination(
-          icon: Icon(Icons.location_searching_outlined),
+          icon: const Icon(Icons.location_searching_outlined),
           label: appLocalizations.navMap,
         ),
         NavigationDestination(
-          icon: Icon(Icons.speed_outlined),
+          icon: const Icon(Icons.speed_outlined),
           label: appLocalizations.navSpeedtest,
         ),
         NavigationDestination(
-          icon: Icon(Icons.settings_outlined),
+          icon: const Icon(Icons.settings_outlined),
           label: appLocalizations.navSettings,
         ),
       ],

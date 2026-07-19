@@ -1,0 +1,99 @@
+package pw.dotto.netmanager.Widgets;
+
+import static pw.dotto.netmanager.Utils.Mobile.getGenerationLabel;
+
+import android.app.PendingIntent;
+import android.appwidget.AppWidgetManager;
+import android.appwidget.AppWidgetProvider;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.view.View;
+import android.widget.RemoteViews;
+import pw.dotto.netmanager.Core.Manager;
+import pw.dotto.netmanager.Core.Mobile.SIMData;
+import pw.dotto.netmanager.MainActivity;
+import pw.dotto.netmanager.R;
+import pw.dotto.netmanager.Widgets.Theme.ThemeEngine;
+
+public class SIMWidgetProvider extends AppWidgetProvider {
+    public static final String ACTION_REFRESH_DUALSIM = "pw.dotto.netmanager.ACTION_REFRESH_DUALSIM";
+
+    @Override
+    public void onUpdate(Context context, AppWidgetManager manager, int[] ids) {
+        for (int id : ids) {
+            RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_dualsim);
+            Manager core = new Manager(context, "widget_dualsim", 180);
+
+            String carrier1 = core.getSimCarrier(0);
+            views.setTextViewText(R.id.txt_sim1_title, "NetManager".equals(carrier1) ? "Airplane/Emergency" : carrier1);
+            SIMData data1 = core.getSimNetworkData(0);
+
+            if (data1 != null && data1.getPrimaryCell() != null) {
+                views.setTextViewText(R.id.txt_sim1_signal, data1.getPrimaryCell().getProcessedSignal() + "dBm");
+                views.setTextViewText(R.id.txt_sim1_band, "- B" + data1.getPrimaryCell().getBand());
+            }
+
+            populateChip(views, R.id.chip_sim1_tech, R.id.txt_sim1_tech, core, 0);
+
+            if (core.getSimCount() > 1) {
+                views.setViewVisibility(R.id.layout_sim2, View.VISIBLE);
+                String carrier2 = core.getSimCarrier(1);
+                views.setTextViewText(R.id.txt_sim2_title,
+                        "NetManager".equals(carrier2) ? "Airplane/Emergency" : carrier2);
+                SIMData data2 = core.getSimNetworkData(1);
+
+                if (data2 != null && data2.getPrimaryCell() != null) {
+                    views.setTextViewText(R.id.txt_sim2_signal, data2.getPrimaryCell().getProcessedSignal() + "dBm");
+                    views.setTextViewText(R.id.txt_sim2_band, "- B" + data2.getPrimaryCell().getBand());
+                }
+
+                populateChip(views, R.id.chip_sim2_tech, R.id.txt_sim2_tech, core, 1);
+            } else {
+                views.setViewVisibility(R.id.layout_sim2, View.GONE);
+            }
+
+            core.dispose();
+
+            Intent refreshIntent = new Intent(context, SIMWidgetProvider.class).setAction(ACTION_REFRESH_DUALSIM);
+            views.setOnClickPendingIntent(R.id.btn_refresh_dualsim, PendingIntent.getBroadcast(context, 1,
+                    refreshIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+
+            Intent openIntent = new Intent(context, MainActivity.class);
+            if (openIntent != null) {
+                views.setOnClickPendingIntent(R.id.widget_bg, PendingIntent.getActivity(context, 3, openIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+            }
+
+            ThemeEngine.applyTheme(context, views);
+            manager.updateAppWidget(id, views);
+        }
+    }
+
+    private void populateChip(RemoteViews views, int chipId, int textId, Manager core, int simSlot) {
+        int gen = -1;
+
+        try {
+            gen = core.getSimNetworkGen(simSlot);
+        } catch (Exception ignored) {
+        }
+
+        String label = getGenerationLabel(gen);
+        if (label.equalsIgnoreCase("N/A")) {
+            views.setViewVisibility(chipId, View.GONE);
+        } else {
+            views.setTextViewText(textId, label);
+            views.setViewVisibility(chipId, View.VISIBLE);
+        }
+    }
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        super.onReceive(context, intent);
+
+        if (ACTION_REFRESH_DUALSIM.equals(intent.getAction())) {
+            AppWidgetManager wm = AppWidgetManager.getInstance(context);
+            onUpdate(context, wm, wm.getAppWidgetIds(new ComponentName(context, SIMWidgetProvider.class)));
+        }
+    }
+}

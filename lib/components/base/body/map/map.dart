@@ -198,9 +198,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                return errorDialog(
-                  context,
-                  "${_appLocalizations.mapStopRecording}: $e",
+                return ErrorDialog(
+                  e: "${_appLocalizations.mapStopRecording}: $e",
                 );
               },
             ).then((_) {
@@ -262,9 +261,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
-                      return errorDialog(
-                        context,
-                        _appLocalizations.mapSelectRecording,
+                      return ErrorDialog(
+                        e: _appLocalizations.mapSelectRecording,
                       );
                     },
                   ).then((_) {
@@ -349,7 +347,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
       if (_lastLocation != null && _lastUpdateTime != null) {
         if (newLocation.latitude != _lastLocation!.latitude ||
             newLocation.longitude != _lastLocation!.longitude) {
-          final dist = Distance().as(
+          final dist = const Distance().as(
             LengthUnit.Meter,
             _lastLocation!,
             newLocation,
@@ -405,7 +403,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
         showDialog(
           context: context,
           builder: (BuildContext context) {
-            return errorDialog(context, "${_appLocalizations.map}: $e");
+            return ErrorDialog(e: "${_appLocalizations.map}: $e");
           },
         ).then((_) {
           _dialogOpen = false;
@@ -497,7 +495,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
         showDialog(
           context: context,
           builder: (BuildContext context) {
-            return errorDialog(context, "${_appLocalizations.mapCells}: $e");
+            return ErrorDialog(e: "${_appLocalizations.mapCells}: $e");
           },
         ).then((_) {
           _dialogOpen = false;
@@ -563,9 +561,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                return errorDialog(
-                  context,
-                  "${_appLocalizations.mapLiveRecording}: $e",
+                return ErrorDialog(
+                  e: "${_appLocalizations.mapLiveRecording}: $e",
                 );
               },
             ).then((_) {

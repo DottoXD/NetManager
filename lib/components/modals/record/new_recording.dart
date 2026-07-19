@@ -64,7 +64,7 @@ class _NewRecordingState extends State<NewRecording> {
                   decoration: InputDecoration(
                     labelText: appLocalizations.fileName,
                     suffixText: ".nmr",
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -74,7 +74,7 @@ class _NewRecordingState extends State<NewRecording> {
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: InputDecoration(
                     labelText: appLocalizations.recordingInterval,
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -101,7 +101,7 @@ class _NewRecordingState extends State<NewRecording> {
                           controller: _usabilityTestUrlController,
                           decoration: InputDecoration(
                             labelText: appLocalizations.usabilityTestUrl,
-                            border: OutlineInputBorder(),
+                            border: const OutlineInputBorder(),
                           ),
                           enabled: trackUsable,
                         ),

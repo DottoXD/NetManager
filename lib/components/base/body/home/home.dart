@@ -236,7 +236,9 @@ class _HomeBodyState extends State<HomeBody> {
       );
     }
 
-    if (homeLoadedNotifier.value && _plmn.isEmpty && _pageLoaded) {
+    if (homeLoadedNotifier.value &&
+        _pageLoaded &&
+        (_plmn.isEmpty || _plmn == "00000")) {
       return EmptyState(
         minHeight: widgetsHeight,
         icon: Icons.airplanemode_on_outlined,
@@ -271,7 +273,7 @@ class _HomeBodyState extends State<HomeBody> {
                   child: Column(
                     children: [
                       Container(
-                        margin: EdgeInsets.all(10.0),
+                        margin: const EdgeInsets.all(10.0),
                         child: Column(
                           children: [
                             if (_simData != null) ...[

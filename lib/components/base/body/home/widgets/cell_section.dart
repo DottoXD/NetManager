@@ -34,7 +34,7 @@ class CellSection extends StatelessWidget {
           ),
         ),
         Container(
-          margin: EdgeInsets.all(10.0),
+          margin: const EdgeInsets.all(10.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: cells.map((cell) {

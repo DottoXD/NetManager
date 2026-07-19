@@ -5,11 +5,10 @@ NetManager aims to be a powerful FOSS tool for everyday users, enthusiasts and p
 Built from scratch with Flutter, NetManager respects Material guidelines for user interfaces to seamlessly blend in with system applications.
 
 ## Supported platforms
-NetManager currently has stable support for Android 10+ (SDK ver. 29) and experimental support for Android 8 and 9 (SDK ver. 26, 27 and 28). 
-The app can be installed on Android 7 (SDK ver. 24 and 25), but it should be considered as unsupported as of now.
+NetManager currently has stable support for Android 7+ (SDK ver. 24). 
 A dedicated companion Wear OS app is also available with the "Play Services" flavor of NetManager.
 iOS support is currently unplanned due to missing public APIs to reliably retrieve cell data.
-Upcoming releases prior to version 1.0.0 plan to introduce support for Android auto (companion), Linux (mobile) and rooted Android devices (for raw diagnostic data; NetManager already works normally on rooted devices), along with stable support for older Android versions (Android 7+, SDK ver. 24).
+Upcoming releases prior to version 1.0.0 plan to introduce support for Android auto (companion), Linux (mobile) and rooted Android devices (for raw diagnostic data; NetManager already works normally on rooted devices).
 
 ## Data accuracy
 NetManager does its best to provide accurate and up-to-date data by filtering out invalid cell info returned by Android's Telephony service.

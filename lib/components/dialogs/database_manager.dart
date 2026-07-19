@@ -48,7 +48,7 @@ class DatabaseManagerDialog extends StatelessWidget {
       showDialog(
         context: context,
         builder: (context) =>
-            errorDialog(context, appLocalizations.noValidPlmnInDatabase),
+            ErrorDialog(e: appLocalizations.noValidPlmnInDatabase),
       );
       return;
     }
@@ -60,8 +60,8 @@ class DatabaseManagerDialog extends StatelessWidget {
       builder: (context) => AlertDialog(
         content: Row(
           children: [
-            CircularProgressIndicator(),
-            SizedBox(width: 20),
+            const CircularProgressIndicator(),
+            const SizedBox(width: 20),
             Expanded(child: Text(appLocalizations.convertingCells)),
           ],
         ),
@@ -84,10 +84,7 @@ class DatabaseManagerDialog extends StatelessWidget {
           showDialog(
             context: context,
             builder: (BuildContext context) {
-              return errorDialog(
-                context,
-                "${appLocalizations.importDatabase} $e",
-              );
+              return ErrorDialog(e: "${appLocalizations.importDatabase} $e");
             },
           );
         }
@@ -220,7 +217,7 @@ class DatabaseManagerDialog extends StatelessWidget {
         showDialog(
           context: context,
           builder: (context) =>
-              errorDialog(context, "${appLocalizations.databaseIndexing}: $e"),
+              ErrorDialog(e: "${appLocalizations.databaseIndexing}: $e"),
         );
       }
     } finally {
@@ -261,7 +258,7 @@ class DatabaseManagerDialog extends StatelessWidget {
             width: double.maxFinite,
             child: importedDatabases.isEmpty
                 ? Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24.0),
+                    padding: const EdgeInsets.symmetric(vertical: 24.0),
                     child: Text(
                       appLocalizations.noImportedDatabases,
                       textAlign: TextAlign.center,

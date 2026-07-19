@@ -6,7 +6,7 @@ import 'package:netmanager/components/base/body/map/widgets/cell_towers.dart';
 import 'package:netmanager/components/base/body/map/widgets/location_dot.dart';
 import 'package:netmanager/components/base/body/map/widgets/visual_records.dart';
 import 'package:netmanager/types/database/cell_tower.dart';
-import 'package:netmanager/utils/map_tile_builder.dart';
+import 'package:netmanager/components/base/body/map/widgets/map_tile_builder.dart';
 import 'package:netmanager/types/recording/record.dart';
 import 'package:netmanager/types/recording/recorded_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -74,14 +74,14 @@ class LiveMap extends StatelessWidget {
       mapController: mapController,
       options: MapOptions(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        initialCenter: currentLocation ?? LatLng(45.464664, 9.188540),
+        initialCenter: currentLocation ?? const LatLng(45.464664, 9.188540),
         minZoom: 7.0,
         maxZoom: 16.0,
         initialZoom: 14.0,
         onPositionChanged: (camera, hasGesture) {
           onPositionChanged(camera);
         },
-        interactionOptions: InteractionOptions(
+        interactionOptions: const InteractionOptions(
           flags:
               InteractiveFlag.pinchZoom |
               InteractiveFlag.drag |
@@ -109,7 +109,8 @@ class LiveMap extends StatelessWidget {
           urlTemplate:
               sharedPreferences.getString("mapTilesTemplate") ??
               defaultMapTilesTemplate,
-          tileBuilder: mapTileBuilder,
+          tileBuilder: (context, tileWidget, tile) =>
+              MapTileBuilder(tileWidget: tileWidget),
           userAgentPackageName:
               "pw.dotto.netmanager ($gitCommit) ${sharedPreferences.getString("mapTilesTemplate") != defaultMapTilesTemplate ? "(Customised by user)" : ""}",
         ),
@@ -168,9 +169,9 @@ class LiveMap extends StatelessWidget {
             child: ColoredBox(
               color: Theme.of(context).colorScheme.surfaceContainer,
               child: GestureDetector(
-                child: Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: const Text("© OpenStreetMap"),
+                child: const Padding(
+                  padding: EdgeInsets.all(4.0),
+                  child: Text("© OpenStreetMap"),
                 ),
               ),
             ),

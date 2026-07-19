@@ -1,11 +1,14 @@
 package pw.dotto.netmanager.Core.Listeners;
 
+import android.Manifest;
 import android.os.Build;
 import android.telephony.CellInfo;
 import android.telephony.CellSignalStrength;
 import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
+
+import androidx.annotation.RequiresPermission;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -30,6 +33,11 @@ public class LegacyPhoneStateListener extends PhoneStateListener {
     private int[] updatedCellBandwidths = {};
     private List<CellSignalStrength> latestSignalStrengths = new ArrayList<>();
     private List<CellInfo> latestCellInfo = new ArrayList<>();
+    private String updatedOperatorAlphaShort = "";
+    private String updatedOperatorAlphaLong = "";
+    private String operatorNumeric = "";
+    private int state = ServiceState.STATE_IN_SERVICE;
+    private boolean isEmergency = false;
 
     public LegacyPhoneStateListener(int subscriptionId) {
         try {
@@ -46,6 +54,8 @@ public class LegacyPhoneStateListener extends PhoneStateListener {
         this.dataState = state;
     }
 
+    @RequiresPermission(allOf = { Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION })
     @Override
     public void onServiceStateChanged(ServiceState serviceState) {
         if (serviceState == null)
@@ -55,6 +65,17 @@ public class LegacyPhoneStateListener extends PhoneStateListener {
             this.updatedCellBandwidths = serviceState.getCellBandwidths();
         } else {
             this.updatedCellBandwidths = new int[] {};
+        }
+
+        try {
+            updatedOperatorAlphaShort = serviceState.getOperatorAlphaShort();
+            updatedOperatorAlphaLong = serviceState.getOperatorAlphaLong();
+            operatorNumeric = serviceState.getOperatorNumeric();
+            state = serviceState.getState();
+
+            String s = serviceState.toString();
+            isEmergency = s.contains("mIsEmergencyOnly=true") || s.contains("EmergOnly=true");
+        } catch (Exception ignored) {
         }
     }
 
@@ -91,5 +112,25 @@ public class LegacyPhoneStateListener extends PhoneStateListener {
 
     public List<CellInfo> getLatestCellInfo() {
         return latestCellInfo;
+    }
+
+    public String getUpdatedOperatorAlphaShort() {
+        return updatedOperatorAlphaShort;
+    }
+
+    public String getUpdatedOperatorAlphaLong() {
+        return updatedOperatorAlphaLong;
+    }
+
+    public String getOperatorNumeric() {
+        return operatorNumeric;
+    }
+
+    public int getState() {
+        return state;
+    }
+
+    public boolean getIsEmergency() {
+        return isEmergency;
     }
 }

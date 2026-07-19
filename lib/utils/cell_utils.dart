@@ -5,11 +5,11 @@ import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/types/cell/cell_data.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
 
-final int minRssi = -113;
-final int maxRssi = -51;
+const int minRssi = -113;
+const int maxRssi = -51;
 
-final int minRsrp = -140;
-final int maxRsrp = -43;
+const int minRsrp = -140;
+const int maxRsrp = -43;
 
 bool isValidInt(int val) {
   // todo: find a better way to sanitise data

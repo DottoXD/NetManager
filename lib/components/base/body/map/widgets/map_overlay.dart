@@ -58,7 +58,7 @@ class MapOverlay extends StatelessWidget {
                         ),
                       ],
                     ),
-                    if (!isLast) SizedBox(width: 24),
+                    if (!isLast) const SizedBox(width: 24),
                   ],
                 );
               }),

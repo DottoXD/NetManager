@@ -15,27 +15,21 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * NetManager's FileManager class is a utility component which allows the user
- * to share debug logs + data images and eventually saving files to disk.
+ * to share debug logs, data images and more.
  *
  * @author DottoXD
  * @version 0.1.0
  */
 public class FileManager {
-    public static void shareLog(Context context, String path) {
+    public static void shareFile(Context context, String path, String mimeType, String chooserTitle) {
         File file = new File(path);
         Uri uri = FileProvider.getUriForFile(context, context.getPackageName() + ".fileprovider", file);
-        Intent intent = new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_STREAM, uri)
+
+        Intent intent = new Intent(Intent.ACTION_SEND)
+                .setType(mimeType)
+                .putExtra(Intent.EXTRA_STREAM, uri)
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
-        context.startActivity(Intent.createChooser(intent, "Share logs"));
-    }
-
-    public static void shareImage(Context context, String path) {
-        File file = new File(path);
-        Uri uri = FileProvider.getUriForFile(context, context.getPackageName() + ".fileprovider", file);
-        Intent intent = new Intent(Intent.ACTION_SEND).setType("img/png").putExtra(Intent.EXTRA_STREAM, uri)
-                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-        context.startActivity(Intent.createChooser(intent, "Share image"));
+        context.startActivity(Intent.createChooser(intent, chooserTitle));
     }
 }

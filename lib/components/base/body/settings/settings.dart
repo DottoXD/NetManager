@@ -10,8 +10,8 @@ import 'package:netmanager/components/dialogs/language.dart';
 import 'package:netmanager/components/dialogs/position_precision.dart';
 import 'package:netmanager/components/dialogs/speed_unit.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
-import 'package:netmanager/utils/color_selection.dart';
-import 'package:netmanager/utils/event_selection.dart';
+import 'package:netmanager/components/base/body/settings/widgets/color_selection.dart';
+import 'package:netmanager/components/base/body/settings/widgets/event_selection.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 import 'package:netmanager/types/device/permissions.dart';
 import 'package:netmanager/types/events/event_types.dart';
@@ -338,14 +338,17 @@ class _SettingsBodyState extends State<SettingsBody> {
       showDialog(
         context: context,
         builder: (BuildContext context) {
-          return debugLogDialog(context, debugLogsList, platform);
+          return DebugLogDialog(
+            debugLogsList: debugLogsList,
+            platform: platform,
+          );
         },
       );
     } catch (e) {
       showDialog(
         context: context,
         builder: (BuildContext context) {
-          return errorDialog(context, "${_appLocalizations.debugLogs}: $e");
+          return ErrorDialog(e: "${_appLocalizations.debugLogs}: $e");
         },
       );
     }
@@ -358,7 +361,7 @@ class _SettingsBodyState extends State<SettingsBody> {
       behavior: HitTestBehavior.opaque,
       child: ListView(
         shrinkWrap: true,
-        physics: ClampingScrollPhysics(),
+        physics: const ClampingScrollPhysics(),
         children: <Widget>[
           ListTile(
             title: Text(
@@ -366,7 +369,7 @@ class _SettingsBodyState extends State<SettingsBody> {
             ),
             subtitle: Text(_appLocalizations.settingsLanguageDescription),
             trailing: IconButton(
-              icon: Icon(Icons.edit),
+              icon: const Icon(Icons.edit),
               tooltip: _appLocalizations.openDialog,
               onPressed: () async {
                 await HapticService().triggerHaptic(
@@ -378,20 +381,21 @@ class _SettingsBodyState extends State<SettingsBody> {
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
-                      return languageDialog(context, localeNotifier.value, (
-                        Locale? selectedLocale,
-                      ) {
-                        if (selectedLocale == null) {
-                          sharedPreferences.remove("languageCode");
-                          localeNotifier.value = null;
-                        } else {
-                          sharedPreferences.setString(
-                            "languageCode",
-                            selectedLocale.languageCode,
-                          );
-                          localeNotifier.value = selectedLocale;
-                        }
-                      });
+                      return LanguageDialog(
+                        currentLocale: localeNotifier.value,
+                        onLocaleConfirmed: (Locale? selectedLocale) {
+                          if (selectedLocale == null) {
+                            sharedPreferences.remove("languageCode");
+                            localeNotifier.value = null;
+                          } else {
+                            sharedPreferences.setString(
+                              "languageCode",
+                              selectedLocale.languageCode,
+                            );
+                            localeNotifier.value = selectedLocale;
+                          }
+                        },
+                      );
                     },
                   );
                 }
@@ -440,7 +444,7 @@ class _SettingsBodyState extends State<SettingsBody> {
             ),
             subtitle: Text(_appLocalizations.settingsPositionDescription),
             trailing: IconButton(
-              icon: Icon(Icons.edit),
+              icon: const Icon(Icons.edit),
               tooltip: _appLocalizations.openDialog,
               onPressed: () async {
                 await HapticService().triggerHaptic(
@@ -452,11 +456,10 @@ class _SettingsBodyState extends State<SettingsBody> {
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
-                      return positionPrecisionDialog(
-                        context,
-                        positionPrecisions,
-                        _positionPrecisionSelection,
-                        (index, value) {
+                      return PositionPrecisionDialog(
+                        positionPrecisions: positionPrecisions,
+                        currentSelection: _positionPrecisionSelection,
+                        onChanged: (index, value) {
                           setState(() {
                             _positionPrecisionSelection = value;
                           });
@@ -512,6 +515,7 @@ class _SettingsBodyState extends State<SettingsBody> {
             subtitle: Text(_appLocalizations.settingsUpdateIntervalDescription),
           ),
           Slider(
+            inactiveColor: Theme.of(context).colorScheme.outlineVariant,
             value: _updateInterval.toDouble(),
             max: 30,
             min: 1,
@@ -538,6 +542,7 @@ class _SettingsBodyState extends State<SettingsBody> {
           ),
           if (_backgroundService || _startupMonitoring)
             Slider(
+              inactiveColor: Theme.of(context).colorScheme.outlineVariant,
               value: _backgroundUpdateInterval.toDouble(),
               max: 30,
               min: 1,
@@ -635,11 +640,14 @@ class _SettingsBodyState extends State<SettingsBody> {
             enabled: (!_dynamicTheme || !_dynamicSupported),
           ),
           if (!_dynamicTheme || !_dynamicSupported)
-            colorSelector(context, _themeColor, (newColor) {
-              setInt("themeColor", newColor);
-              updateData();
-              themeColorNotifier.value = newColor;
-            }),
+            ColorSelector(
+              themeColor: _themeColor,
+              onColorChanged: (newColor) {
+                setInt("themeColor", newColor);
+                updateData();
+                themeColorNotifier.value = newColor;
+              },
+            ),
           Divider(
             height: 0,
             color: Theme.of(context).colorScheme.outlineVariant,
@@ -662,20 +670,23 @@ class _SettingsBodyState extends State<SettingsBody> {
             ),
           ),
           if (_logEvents)
-            eventSelection(context, _loggedEventTypes, (eventType) {
-              if (_loggedEventTypes.contains(eventType)) {
-                _loggedEventTypes.remove(eventType);
-              } else {
-                _loggedEventTypes.add(eventType);
-              }
+            EventSelection(
+              selectedEvents: _loggedEventTypes,
+              onEventsChanged: (eventType) {
+                if (_loggedEventTypes.contains(eventType)) {
+                  _loggedEventTypes.remove(eventType);
+                } else {
+                  _loggedEventTypes.add(eventType);
+                }
 
-              setStringList(
-                "loggedEventTypes",
-                _loggedEventTypes.map((e) => e.name).toList(),
-              );
+                setStringList(
+                  "loggedEventTypes",
+                  _loggedEventTypes.map((e) => e.name).toList(),
+                );
 
-              updateData();
-            }),
+                updateData();
+              },
+            ),
           ListTile(
             title: Text(
               "${_appLocalizations.settingsMaximumLogsTitle} ($_maximumLogs)",
@@ -685,6 +696,7 @@ class _SettingsBodyState extends State<SettingsBody> {
           ),
           if (_logEvents)
             Slider(
+              inactiveColor: Theme.of(context).colorScheme.outlineVariant,
               value: _maximumLogs.toDouble(),
               max: 500,
               min: 10,
@@ -763,7 +775,7 @@ class _SettingsBodyState extends State<SettingsBody> {
             ),
             subtitle: Text(_appLocalizations.settingsSpeedUnitDescription),
             trailing: IconButton(
-              icon: Icon(Icons.edit),
+              icon: const Icon(Icons.edit),
               tooltip: _appLocalizations.openDialog,
               onPressed: () async {
                 await HapticService().triggerHaptic(
@@ -775,11 +787,10 @@ class _SettingsBodyState extends State<SettingsBody> {
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
-                      return speedMeasurementUnitDialog(
-                        context,
-                        speedMeasurementUnits,
-                        _speedMeasurementUnitSelection,
-                        (index, value) {
+                      return SpeedMeasurementUnitDialog(
+                        speedMeasurementUnits: speedMeasurementUnits,
+                        currentSelection: _speedMeasurementUnitSelection,
+                        onChanged: (index, value) {
                           setState(() {
                             _speedMeasurementUnitSelection = value;
                           });
@@ -878,7 +889,7 @@ class _SettingsBodyState extends State<SettingsBody> {
             ),
             enabled: _externalDatabases,
             trailing: IconButton(
-              icon: Icon(Icons.download_outlined),
+              icon: const Icon(Icons.download_outlined),
               tooltip: _appLocalizations.openDialog,
               onPressed: () async {
                 await HapticService().triggerHaptic(
@@ -904,7 +915,7 @@ class _SettingsBodyState extends State<SettingsBody> {
           ListTile(
             title: Text(_appLocalizations.settingsBearingLineTitle),
             subtitle: Text(_appLocalizations.settingsBearingLineDescription),
-            enabled: _bearingLine,
+            enabled: _externalDatabases && _databaseCellsInMap,
             trailing: _databaseCellsInMap
                 ? Switch(
                     value: _bearingLine,
@@ -938,7 +949,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                 Uri url = Uri.parse('https://github.com/DottoXD/NetManager');
                 launchUrl(url);
               },
-              icon: Icon(Icons.open_in_new),
+              icon: const Icon(Icons.open_in_new),
               tooltip: _appLocalizations.openInBrowser,
             ),
           ),
@@ -955,7 +966,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                 Uri url = Uri.parse('https://t.me/netmanagerapp');
                 launchUrl(url);
               },
-              icon: Icon(Icons.message_outlined),
+              icon: const Icon(Icons.message_outlined),
               tooltip: _appLocalizations.openInBrowser,
             ),
           ),
@@ -977,7 +988,7 @@ class _SettingsBodyState extends State<SettingsBody> {
                   );
                 }
               },
-              icon: Icon(Icons.question_mark_outlined),
+              icon: const Icon(Icons.question_mark_outlined),
               tooltip: _appLocalizations.openDialog,
             ),
           ),
@@ -1009,7 +1020,7 @@ class _SettingsBodyState extends State<SettingsBody> {
               enabled: _debug,
               trailing: IconButton(
                 onPressed: openDebugLogs,
-                icon: Icon(Icons.pageview_outlined),
+                icon: const Icon(Icons.pageview_outlined),
                 tooltip: _appLocalizations.view,
               ),
             ),

@@ -34,7 +34,7 @@ class RecordModal extends StatelessWidget {
             onRecordingStarted: onRecordingStarted,
           ),
           ReplayRecording(onDataLoaded: onDataLoaded),
-          const ConvertRecording(),
+          ConvertRecording(platform: platform),
         ],
       ),
     );

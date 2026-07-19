@@ -1,8 +1,5 @@
 package pw.dotto.netmanager;
 
-import static pw.dotto.netmanager.Utils.FileManager.shareImage;
-import static pw.dotto.netmanager.Utils.FileManager.shareLog;
-
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
@@ -29,6 +26,7 @@ import pw.dotto.netmanager.Fetchers.Sensors;
 import pw.dotto.netmanager.Speedtest.Client;
 import pw.dotto.netmanager.Utils.Activities;
 import pw.dotto.netmanager.Utils.DeviceData;
+import pw.dotto.netmanager.Utils.FileManager;
 import pw.dotto.netmanager.Utils.Permissions;
 import pw.dotto.netmanager.Utils.DebugLogger;
 import pw.dotto.netmanager.WearOS.WearHandler;
@@ -188,10 +186,15 @@ public class MainActivity extends FlutterActivity {
           String path = call.argument("path");
 
           if (path != null) {
-            if (path.endsWith(".txt"))
-              shareLog(this, path);
-            else
-              shareImage(this, path);
+            if (path.endsWith(".txt")) {
+              FileManager.shareFile(this, path, "text/plain", "Share logs");
+            } else if (path.endsWith(".csv")) {
+              FileManager.shareFile(this, path, "text/csv", "Share CSV Export");
+            } else if (path.endsWith(".kml")) {
+              FileManager.shareFile(this, path, "application/vnd.google-earth.kml+xml", "Share KML Export");
+            } else {
+              FileManager.shareFile(this, path, "image/png", "Share image");
+            }
 
             result.success(null);
           } else {
@@ -202,7 +205,7 @@ public class MainActivity extends FlutterActivity {
 
         case "startTest":
           Client client = new Client();
-          client.runSpeedTest(call.argument("pingUrl"), call.argument("downloadUrl"), call.argument("uploadUrl"),
+          client.runSpeedTest(this, call.argument("pingUrl"), call.argument("downloadUrl"), call.argument("uploadUrl"),
               new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL));
           result.success(null);
           break;
@@ -224,6 +227,7 @@ public class MainActivity extends FlutterActivity {
                 DebugLogger.add("Could not detect SIM operator...");
 
               result.success(operator);
+              break;
 
             case "getCarrier":
               String carrier = core.getSimCarrier(selectedSim);
@@ -231,7 +235,6 @@ public class MainActivity extends FlutterActivity {
                 DebugLogger.add("Could not detect SIM carrier...");
 
               result.success(carrier);
-
               break;
 
             case "getNetworkData":
@@ -244,6 +247,10 @@ public class MainActivity extends FlutterActivity {
               if (core.getNsaStatus(selectedSim))
                 gen = 5;
               result.success(gen);
+              break;
+
+            case "getEmergencyOnly":
+              result.success(core.getEmergencyStatus(selectedSim));
               break;
 
             case "getPlmn":
@@ -388,10 +395,6 @@ public class MainActivity extends FlutterActivity {
     });
   }
 
-  public Manager getCore() {
-    return core;
-  }
-
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -419,10 +422,6 @@ public class MainActivity extends FlutterActivity {
       SimReceiverManager simReceiverManager = core.getSimReceiverManager();
       if (simReceiverManager != null)
         simReceiverManager.unregisterStateReceiver();
-    }
-
-    if (core != null) {
-      core.dispose();
     }
 
     Sensors sensors = Sensors.getInstance(this);
@@ -456,10 +455,20 @@ public class MainActivity extends FlutterActivity {
   public void onResume() {
     super.onResume();
     wearHandler.onResume();
+
+    if (core != null) {
+      core.updateInterval(3); // fetch from sharedPreferences
+    } else if (Permissions.check(this, Permissions.READ_PHONE_STATE)) {
+      core = new Manager(this);
+    }
   }
 
   @Override
   public void onPause() {
+    if (core != null) {
+      core.dispose();
+    }
+
     super.onPause();
     wearHandler.onPause();
   }

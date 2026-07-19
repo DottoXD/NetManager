@@ -26,7 +26,7 @@ class EmptyState extends StatelessWidget {
               //color: Theme.of(context).colorScheme.primaryContainer,
             ),
             const SizedBox(height: 20),
-            Text(message, style: TextStyle(fontSize: 22)),
+            Text(message, style: const TextStyle(fontSize: 22)),
           ],
         ),
       ),

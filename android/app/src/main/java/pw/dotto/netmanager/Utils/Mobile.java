@@ -9,7 +9,7 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.GsmCellData;
  * (for Node/CellID calculations) across different CellData types.
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.1.0
  */
 public class Mobile {
     /**
@@ -28,5 +28,21 @@ public class Mobile {
             factor = 1;
 
         return factor;
+    }
+
+    /**
+     * Returns a label for a given mobile technology generation.
+     *
+     * @param gen The network's generation.
+     * @return A label for that network gen.
+     */
+    public static String getGenerationLabel(int gen) {
+        return switch (gen) {
+            case 5 -> "5G NR";
+            case 4 -> "4G LTE";
+            case 3 -> "3G";
+            case 2 -> "2G";
+            default -> "N/A";
+        };
     }
 }

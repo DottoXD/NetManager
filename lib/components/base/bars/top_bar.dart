@@ -45,6 +45,7 @@ class _TopBarState extends State<TopBar> {
   String _carrier = "Unknown";
   String _plmn = "00000";
   int _gen = 0;
+  bool _isEmergency = false;
   int simCount = 0;
   bool _isLoading = true;
 
@@ -89,6 +90,8 @@ class _TopBarState extends State<TopBar> {
           (await platform.invokeMethod<String>("getCarrier")) ?? "Unknown";
       _plmn = (await platform.invokeMethod<String>("getPlmn")) ?? "00000";
       _gen = await platform.invokeMethod<int>("getNetworkGen") ?? -1;
+      _isEmergency =
+          await platform.invokeMethod<bool>("getEmergencyOnly") ?? false;
 
       if (!mounted) return;
 
@@ -96,6 +99,7 @@ class _TopBarState extends State<TopBar> {
         _carrier;
         _plmn;
         _gen;
+        _isEmergency;
         _isLoading = false;
       });
     } on PlatformException catch (e) {
@@ -134,12 +138,14 @@ class _TopBarState extends State<TopBar> {
     try {
       deviceData = DeviceData.fromJson(map);
     } catch (e) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return errorDialog(context, "${appLocalizations.topBar}: $e");
-        },
-      );
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return ErrorDialog(e: "${appLocalizations.topBar}: $e");
+          },
+        );
+      }
 
       return;
     }
@@ -180,17 +186,28 @@ class _TopBarState extends State<TopBar> {
 
       if (!mounted) return;
 
+      if (events.isEmpty) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return ErrorDialog(e: appLocalizations.noEvents);
+          },
+        );
+
+        return;
+      }
+
       showDialog(
         context: context,
         builder: (BuildContext context) {
-          return eventLogDialog(context, events, platform);
+          return EventLogDialog(events: events, platform: platform);
         },
       );
     } catch (e) {
       showDialog(
         context: context,
         builder: (BuildContext context) {
-          return errorDialog(context, "${appLocalizations.topBar}: $e");
+          return ErrorDialog(e: "${appLocalizations.topBar}: $e");
         },
       );
     }
@@ -262,13 +279,23 @@ class _TopBarState extends State<TopBar> {
     String titleText;
     if (_isLoading) {
       titleText = appLocalizations.topBarLoading;
-    } else if (_gen > 0 && _plmn != "00000" && _carrier.trim().isNotEmpty) {
-      final displayCarrier = _carrier == "Unknown"
+    } else {
+      final displayCarrier = (_carrier == "Unknown" || _carrier.trim().isEmpty)
           ? appLocalizations.unknown
           : _carrier;
-      titleText = "$displayCarrier ${_gen}G ($_plmn)";
-    } else {
-      titleText = appLocalizations.noService;
+
+      if (_isEmergency) {
+        String genString = _gen > 0 ? "${_gen}G " : "";
+
+        titleText = "$displayCarrier $genString(Emergency only)";
+      } else if (_gen > 0 &&
+          _carrier != "Unknown" &&
+          _carrier.trim().isNotEmpty) {
+        String extraData = _plmn;
+        titleText = "$displayCarrier ${_gen}G ($extraData)";
+      } else {
+        titleText = appLocalizations.noService;
+      }
     }
 
     return AppBar(

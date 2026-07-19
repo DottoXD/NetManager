@@ -2,21 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 
-Widget errorDialog(BuildContext context, Object e) {
-  AppLocalizations appLocalizations = AppLocalizations.of(context)!;
-  HapticService().triggerHaptic(HapticType.medium, context);
+class ErrorDialog extends StatelessWidget {
+  const ErrorDialog({super.key, required this.e});
 
-  return AlertDialog(
-    title: Text(appLocalizations.error),
-    content: SizedBox(
-      width: double.maxFinite,
-      child: Scrollbar(child: Text(e.toString())),
-    ),
-    actions: [
-      FilledButton(
-        onPressed: () => Navigator.of(context).pop(),
-        child: Text(appLocalizations.close),
+  final Object e;
+
+  @override
+  Widget build(BuildContext context) {
+    AppLocalizations appLocalizations = AppLocalizations.of(context)!;
+    HapticService().triggerHaptic(HapticType.medium, context);
+
+    return AlertDialog(
+      title: Text(appLocalizations.error),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Scrollbar(
+          child: SingleChildScrollView(child: Text(e.toString())),
+        ),
       ),
-    ],
-  );
+      actions: [
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(appLocalizations.close),
+        ),
+      ],
+    );
+  }
 }

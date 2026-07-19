@@ -10,94 +10,104 @@ import 'package:netmanager/types/events/mobile_netmanager_event.dart';
 import 'package:netmanager/types/events/netmanager_event.dart';
 import 'package:path_provider/path_provider.dart';
 
-Widget eventLogDialog(
-  BuildContext context,
-  List<NetmanagerEvent> events,
-  MethodChannel platform,
-) {
-  AppLocalizations appLocalizations = AppLocalizations.of(context)!;
+class EventLogDialog extends StatelessWidget {
+  const EventLogDialog({
+    super.key,
+    required this.events,
+    required this.platform,
+  });
 
-  final formatter = DateFormat("dd/MM/yyyy HH:mm:ss");
-  final outlineVariant = Theme.of(context).colorScheme.outlineVariant;
+  final List<NetmanagerEvent> events;
+  final MethodChannel platform;
+  @override
+  Widget build(BuildContext context) {
+    AppLocalizations appLocalizations = AppLocalizations.of(context)!;
 
-  if (events.isEmpty) throw appLocalizations.noEvents;
+    final formatter = DateFormat("dd/MM/yyyy HH:mm:ss");
+    final outlineVariant = Theme.of(context).colorScheme.outlineVariant;
 
-  return AlertDialog(
-    title: Text(appLocalizations.eventLogs),
-    content: SizedBox(
-      width: double.maxFinite,
-      child: Scrollbar(
-        child: ListView.builder(
-          itemCount: events.length,
-          itemBuilder: (context, i) {
-            final event = events[events.length - 1 - i];
+    return AlertDialog(
+      title: Text(appLocalizations.eventLogs),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Scrollbar(
+          child: ListView.builder(
+            itemCount: events.length,
+            itemBuilder: (context, i) {
+              final event = events[events.length - 1 - i];
 
-            return ListTile(
-              title: Text(formatEventName(event.eventType.name)),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(event.oldValue),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 5),
-                        child: Icon(Icons.arrow_right_outlined),
+              return ListTile(
+                title: Text(formatEventName(event.eventType.name)),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(event.oldValue),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 5),
+                          child: Icon(Icons.arrow_right_outlined),
+                        ),
+                        Text(event.newValue),
+                      ],
+                    ),
+                    Text(formatter.format(event.dateTime.toLocal())),
+                    if (event is MobileNetmanagerEvent) ...[
+                      Text(
+                        "SIM ${event.simSlot + 1} ${event.network.trim().isNotEmpty ? "(${event.network})" : "(${appLocalizations.unknown})"}",
                       ),
-                      Text(event.newValue),
                     ],
-                  ),
-                  Text(formatter.format(event.dateTime.toLocal())),
-                  if (event is MobileNetmanagerEvent) ...[
-                    Text(
-                      "SIM ${event.simSlot + 1} ${event.network.trim().isNotEmpty ? "(${event.network})" : "(${appLocalizations.unknown})"}",
-                    ),
+                    if (i < events.length - 1)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 15.0),
+                        child: Divider(height: 0, color: outlineVariant),
+                      ),
                   ],
-                  if (i < events.length - 1)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 15.0),
-                      child: Divider(height: 0, color: outlineVariant),
-                    ),
-                ],
-              ),
-            );
-          },
+                ),
+              );
+            },
+          ),
         ),
       ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.of(context).pop(),
-        child: Text(appLocalizations.close),
-      ),
-      FilledButton.icon(
-        onPressed: () async {
-          await HapticService().triggerHaptic(HapticType.selection, context);
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(appLocalizations.close),
+        ),
+        FilledButton.icon(
+          onPressed: () => _handleExport(context, appLocalizations),
+          label: Text(appLocalizations.export),
+          icon: const Icon(Icons.offline_share_outlined),
+        ),
+      ],
+    );
+  }
 
-          final dir = await getTemporaryDirectory();
-          final exportFolder = Directory("${dir.path}/exports");
-          if (!exportFolder.existsSync()) {
-            await exportFolder.create();
-          }
+  Future<void> _handleExport(
+    BuildContext context,
+    AppLocalizations appLocalizations,
+  ) async {
+    await HapticService().triggerHaptic(HapticType.selection, context);
 
-          final file = File("${exportFolder.path}/event_list.txt");
-          final content = events.join("\n");
-          await file.writeAsString(content);
+    final dir = await getTemporaryDirectory();
+    final exportFolder = Directory("${dir.path}/exports");
+    if (!exportFolder.existsSync()) {
+      await exportFolder.create();
+    }
 
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(appLocalizations.eventLogsSaved(file.path)),
-                showCloseIcon: true,
-              ),
-            );
-          }
+    final file = File("${exportFolder.path}/event_list.txt");
+    final content = events.join("\n");
+    await file.writeAsString(content);
 
-          await platform.invokeMethod("share", {"path": file.path});
-        },
-        label: Text(appLocalizations.export),
-        icon: const Icon(Icons.offline_share_outlined),
-      ),
-    ],
-  );
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(appLocalizations.eventLogsSaved(file.path)),
+          showCloseIcon: true,
+        ),
+      );
+    }
+
+    await platform.invokeMethod("share", {"path": file.path});
+  }
 }

@@ -1,5 +1,10 @@
 package pw.dotto.netmanager.Speedtest;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -8,10 +13,12 @@ import androidx.annotation.NonNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -37,7 +44,7 @@ import okio.BufferedSink;
  * test software solution.
  *
  * @author DottoXD
- * @version 0.0.4
+ * @version 0.1.0
  */
 public class Client {
     private static final int BUFFER_SIZE = 256 * 1024;
@@ -57,12 +64,7 @@ public class Client {
     private static final int STABILITY_MIN_SAMPLES = 10;
     private static final int GLOBAL_PING_INTERVAL_MS = 500;
 
-    private final OkHttpClient httpClient = new OkHttpClient.Builder()
-            .connectTimeout(4, TimeUnit.SECONDS)
-            .readTimeout(8, TimeUnit.SECONDS)
-            .writeTimeout(8, TimeUnit.SECONDS)
-            .retryOnConnectionFailure(true)
-            .build();
+    private OkHttpClient httpClient;
 
     private final int streams = Math.max(2, Math.min(Runtime.getRuntime().availableProcessors(), 8));
 
@@ -72,13 +74,33 @@ public class Client {
     private final AtomicLong globalPingsSent = new AtomicLong(0);
     private final AtomicLong globalPingsFailed = new AtomicLong(0);
 
-    public void runSpeedTest(String pingUrl, String downloadUrl, String uploadUrl, MethodChannel channel) {
+    public void runSpeedTest(Context context, String pingUrl, String downloadUrl, String uploadUrl,
+            MethodChannel channel) {
         executor.execute(() -> {
+            ConnectivityManager connectivityManager = (ConnectivityManager) context
+                    .getSystemService(Context.CONNECTIVITY_SERVICE);
+            ConnectivityManager.NetworkCallback networkCallback = null;
+
             try {
                 globalPingsSent.set(0);
                 globalPingsFailed.set(0);
 
                 updateUI(channel, "LATENCY", 0, 0.0);
+
+                Network mobileNetwork = getMobileNetwork(connectivityManager);
+                OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder()
+                        .connectTimeout(4, TimeUnit.SECONDS)
+                        .readTimeout(8, TimeUnit.SECONDS)
+                        .writeTimeout(8, TimeUnit.SECONDS)
+                        .retryOnConnectionFailure(true);
+
+                if (mobileNetwork != null) {
+                    clientBuilder.socketFactory(mobileNetwork.getSocketFactory());
+                    clientBuilder.dns(hostname -> Arrays.asList(mobileNetwork.getAllByName(hostname)));
+                }
+
+                this.httpClient = clientBuilder.build();
+
                 LatencyResult latency = measureLatency(pingUrl, channel);
 
                 mainHandler.post(() -> {
@@ -117,6 +139,13 @@ public class Client {
             } catch (Exception e) {
                 // todo
             } finally {
+                if (connectivityManager != null && networkCallback != null) {
+                    try {
+                        connectivityManager.unregisterNetworkCallback(networkCallback);
+                    } catch (Exception ignored) {
+                    }
+                }
+
                 shutdown();
             }
         });
@@ -373,6 +402,41 @@ public class Client {
             data.put("packetLoss", getPacketLoss());
             channel.invokeMethod("update", data);
         });
+    }
+
+    private Network getMobileNetwork(ConnectivityManager connectivityManager) {
+        if (connectivityManager == null)
+            return null;
+
+        final Network[] selectedNetwork = new Network[1];
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        NetworkRequest request = new NetworkRequest.Builder()
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
+                .build();
+
+        ConnectivityManager.NetworkCallback callback = new ConnectivityManager.NetworkCallback() {
+            @Override
+            public void onAvailable(@NonNull Network network) {
+                selectedNetwork[0] = network;
+                latch.countDown();
+            }
+
+            @Override
+            public void onUnavailable() {
+                latch.countDown();
+            }
+        };
+
+        try {
+            connectivityManager.requestNetwork(request, callback);
+            latch.await(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        return selectedNetwork[0];
     }
 
     public void shutdown() {

@@ -144,9 +144,8 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                return errorDialog(
-                  context,
-                  "${_appLocalizations.speedtest}: ${call.arguments}",
+                return ErrorDialog(
+                  e: "${_appLocalizations.speedtest}: ${call.arguments}",
                 );
               },
             ).then((_) => _dialogOpen = false);
@@ -179,7 +178,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     try {
       final response = await http
           .get(Uri.parse(primaryUrl))
-          .timeout(Duration(milliseconds: 2000));
+          .timeout(const Duration(milliseconds: 2000));
 
       if (response.statusCode == 200) {
         _updateServers(response.body);
@@ -190,7 +189,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
       try {
         final response = await http
             .get(Uri.parse(fallbackUrl))
-            .timeout(Duration(milliseconds: 2000));
+            .timeout(const Duration(milliseconds: 2000));
 
         if (response.statusCode == 200) {
           _updateServers(response.body);
@@ -208,9 +207,8 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                 showDialog(
                   context: context,
                   builder: (BuildContext context) {
-                    return errorDialog(
-                      context,
-                      "${_appLocalizations.speedtest}: ${_appLocalizations.speedtestServerUnreachable}",
+                    return ErrorDialog(
+                      e: "${_appLocalizations.speedtest}: ${_appLocalizations.speedtestServerUnreachable}",
                     );
                   },
                 ).then((_) => _dialogOpen = false);
@@ -254,7 +252,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                   final stopwatch = Stopwatch()..start();
                   final response = await http
                       .head(Uri.parse(serverUrl))
-                      .timeout(Duration(milliseconds: 1000));
+                      .timeout(const Duration(milliseconds: 1000));
 
                   stopwatch.stop();
 
@@ -315,9 +313,8 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
-                  return errorDialog(
-                    context,
-                    _appLocalizations.speedtestServerUnreachable,
+                  return ErrorDialog(
+                    e: _appLocalizations.speedtestServerUnreachable,
                   );
                 },
               ).then((_) => _dialogOpen = false);

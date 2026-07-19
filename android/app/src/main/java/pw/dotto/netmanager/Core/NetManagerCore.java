@@ -94,6 +94,8 @@ public class NetManagerCore {
                 telephonyCellDataSource.clearSlotState(simId);
             }
         });
+
+        DebugLogger.add("Created a new NetManagerCore instance!");
     }
 
     public static NetManagerCore getInstance(Context context) {
@@ -124,7 +126,7 @@ public class NetManagerCore {
             recomputeInterval();
     }
 
-    private boolean isForegroundActive() {
+    public boolean isForegroundActive() {
         return intervalRequests.containsKey(UI_CONSUMER_ID);
     }
 
@@ -211,12 +213,12 @@ public class NetManagerCore {
     private void emitEventsIfChanged(SIMSlotState slot, SIMData data) {
         int simId = slot.simId;
 
-        int gen = TelephonyCellDataSource.getSimNetworkGen(appContext, slot.telephony);
+        int gen = data.getNetworkGen();
         boolean nsa = TelephonyCellDataSource.getNsaStatus(slot, slot.telephony);
         String technology = nsa ? "5G" : (gen > 0 ? gen + "G" : "Unknown");
         emitIfChanged(EventTypes.MOBILE_TECHNOLOGY_CHANGED, simId, technology, data);
 
-        String plmn = TelephonyCellDataSource.getPlmn(appContext, slot.telephony);
+        String plmn = TelephonyCellDataSource.getPlmn(appContext, slot.telephony, slot);
         emitIfChanged(EventTypes.MOBILE_PLMN_CHANGED, simId, plmn, data);
 
         CellData primaryCell = data.getPrimaryCell();
@@ -310,7 +312,7 @@ public class NetManagerCore {
 
     public String getNetwork(int simId) {
         SIMSlotState slot = subscriptionTracker.getSlot(simId);
-        return slot == null ? "NetManager" : TelephonyCellDataSource.getSimCarrier(appContext, slot.telephony);
+        return slot == null ? "NetManager" : TelephonyCellDataSource.getSimCarrier(appContext, slot.telephony, slot);
     }
 
     /*
@@ -350,8 +352,11 @@ public class NetManagerCore {
     }
 
     public CellSnapshot getLatestSnapshot(int simId) {
-        SIMSlotState slot = subscriptionTracker.getSlot(simId);
-        return slot == null ? null : slot.latestSnapshot;
+        SIMData cachedData = getCachedSIMData(simId);
+        if (cachedData == null)
+            return null;
+
+        return buildCellSnapshot(cachedData);
     }
 
     public EventManager getEventManager() {

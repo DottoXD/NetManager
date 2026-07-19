@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="event_log_disabled">Enable event logging in NetManager to see activity here</string>
+    <string name="base_events_widget_view_description">Base events widget view</string>
+    <string name="no_events_yet">No events yet</string>
+    <string name="refresh_button_background">Refresh button background</string>
+    <string name="refresh_button_icon">Refresh button icon</string>
+    <string name="base_sim_widget_view_description">Base SIM widget view description</string>
+    <string name="base_item_widget_view_description">Base item widget view description</string>
+    <string name="sim_view_background">SIM view background</string>
+    <string name="sim_number_chip">SIM number chip</string>
+    <string name="n_a">N/A</string>
+</resources>
