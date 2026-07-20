@@ -16,6 +16,15 @@ import pw.dotto.netmanager.MainActivity;
 import pw.dotto.netmanager.R;
 import pw.dotto.netmanager.Widgets.Theme.ThemeEngine;
 
+/**
+ * NetManager's SIMWidgetProvider class is the Android provider for the dual SIM
+ * cell data widget.
+ * This class handles the widget's behaviour along with how the widget itself
+ * gets built.
+ *
+ * @author DottoXD
+ * @version 0.1.0
+ */
 public class SIMWidgetProvider extends AppWidgetProvider {
     public static final String ACTION_REFRESH_DUALSIM = "pw.dotto.netmanager.ACTION_REFRESH_DUALSIM";
 
@@ -31,7 +40,7 @@ public class SIMWidgetProvider extends AppWidgetProvider {
 
             if (data1 != null && data1.getPrimaryCell() != null) {
                 views.setTextViewText(R.id.txt_sim1_signal, data1.getPrimaryCell().getProcessedSignal() + "dBm");
-                views.setTextViewText(R.id.txt_sim1_band, "- B" + data1.getPrimaryCell().getBand());
+                views.setTextViewText(R.id.txt_sim1_band, "B" + data1.getPrimaryCell().getBand());
             }
 
             populateChip(views, R.id.chip_sim1_tech, R.id.txt_sim1_tech, core, 0);
@@ -45,7 +54,7 @@ public class SIMWidgetProvider extends AppWidgetProvider {
 
                 if (data2 != null && data2.getPrimaryCell() != null) {
                     views.setTextViewText(R.id.txt_sim2_signal, data2.getPrimaryCell().getProcessedSignal() + "dBm");
-                    views.setTextViewText(R.id.txt_sim2_band, "- B" + data2.getPrimaryCell().getBand());
+                    views.setTextViewText(R.id.txt_sim2_band, "B" + data2.getPrimaryCell().getBand());
                 }
 
                 populateChip(views, R.id.chip_sim2_tech, R.id.txt_sim2_tech, core, 1);

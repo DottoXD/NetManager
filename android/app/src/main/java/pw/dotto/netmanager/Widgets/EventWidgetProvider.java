@@ -13,6 +13,14 @@ import pw.dotto.netmanager.MainActivity;
 import pw.dotto.netmanager.R;
 import pw.dotto.netmanager.Widgets.Theme.ThemeEngine;
 
+/**
+ * NetManager's EventWidgetProvider class is the Android provider for the events
+ * widget.
+ * This class handles the widget's behaviour.
+ *
+ * @author DottoXD
+ * @version 0.1.0
+ */
 public class EventWidgetProvider extends AppWidgetProvider {
     public static final String ACTION_REFRESH_TICKER = "pw.dotto.netmanager.ACTION_REFRESH_TICKER";
 

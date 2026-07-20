@@ -280,12 +280,16 @@ class _TopBarState extends State<TopBar> {
     if (_isLoading) {
       titleText = appLocalizations.topBarLoading;
     } else {
-      final displayCarrier = (_carrier == "Unknown" || _carrier.trim().isEmpty)
+      String displayCarrier = (_carrier == "Unknown" || _carrier.trim().isEmpty)
           ? appLocalizations.unknown
           : _carrier;
 
       if (_isEmergency) {
         String genString = _gen > 0 ? "${_gen}G " : "";
+
+        if (displayCarrier == "NetManager" && _plmn != "00000") {
+          displayCarrier = _plmn;
+        }
 
         titleText = "$displayCarrier $genString(Emergency only)";
       } else if (_gen > 0 &&

@@ -218,6 +218,12 @@ public class MainActivity extends FlutterActivity {
 
           if (core == null) {
             core = new Manager(this);
+
+            try {
+              int updateInterval = ((Long) sharedPreferences.getLong("flutter.updateInterval", 3)).intValue();
+              core.updateInterval(updateInterval);
+            } catch (Exception ignored) {
+            }
           }
 
           switch (call.method) {
@@ -409,6 +415,12 @@ public class MainActivity extends FlutterActivity {
     if (Permissions.check(this, Permissions.READ_PHONE_STATE)) {
       if (core == null) {
         core = new Manager(this);
+
+        try {
+          int updateInterval = ((Long) sharedPreferences.getLong("flutter.updateInterval", 3)).intValue();
+          core.updateInterval(updateInterval);
+        } catch (Exception ignored) {
+        }
       }
     }
 
@@ -456,10 +468,16 @@ public class MainActivity extends FlutterActivity {
     super.onResume();
     wearHandler.onResume();
 
-    if (core != null) {
-      core.updateInterval(3); // fetch from sharedPreferences
-    } else if (Permissions.check(this, Permissions.READ_PHONE_STATE)) {
+    if (core == null && Permissions.check(this, Permissions.READ_PHONE_STATE)) {
       core = new Manager(this);
+    }
+
+    try {
+      if (core != null) {
+        int updateInterval = ((Long) sharedPreferences.getLong("flutter.updateInterval", 3)).intValue();
+        core.updateInterval(updateInterval);
+      }
+    } catch (Exception ignored) {
     }
   }
 

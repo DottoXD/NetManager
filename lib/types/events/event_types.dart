@@ -3,6 +3,7 @@ enum EventTypes {
   MOBILE_PLMN_CHANGED,
   MOBILE_TECHNOLOGY_CHANGED,
   MOBILE_NODE_CHANGED,
+  MOBILE_DATA_SIM_CHANGED,
 }
 
 EventTypes eventTypeFromString(String type) {

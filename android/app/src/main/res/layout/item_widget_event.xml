@@ -44,7 +44,8 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:fontFamily="sans-serif-medium"
-                    android:textSize="12sp" />
+                    android:textSize="12sp"
+                    tools:text="T" />
             </FrameLayout>
             <TextView
                 android:id="@+id/txt_item_title"
@@ -58,7 +59,8 @@
                 android:lineSpacingExtra="4sp"
                 android:maxLines="1"
                 android:textSize="16sp"
-                tools:targetApi="28" />
+                tools:targetApi="28"
+                tools:text="Technology Changed" />
         </LinearLayout>
         <TextView
             android:id="@+id/txt_item_desc"
@@ -70,7 +72,8 @@
             android:lineHeight="18sp"
             android:lineSpacingExtra="4sp"
             android:textSize="14sp"
-            tools:targetApi="28" />
+            tools:targetApi="28"
+            tools:text="4G → 5G" />
         <TextView
             android:id="@+id/txt_item_time"
             android:layout_width="match_parent"

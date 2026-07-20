@@ -5,8 +5,11 @@
     android:minHeight="110dp"
     android:targetCellWidth="4"
     android:targetCellHeight="2"
-    android:updatePeriodMillis="0"
+    android:description="@string/widget_events_desc"
+    android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/widget_events"
+    android:previewLayout="@layout/widget_events"
+    android:previewImage="@drawable/widget_events_preview"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
     tools:targetApi="31" />

@@ -7,6 +7,14 @@ import android.os.Build;
 import android.widget.RemoteViews;
 import pw.dotto.netmanager.R;
 
+/**
+ * NetManager's ThemeEngine class is the essential component for NetManager's
+ * home screen widgets.
+ * This class handles all choices about the widgets aesthetics.
+ *
+ * @author DottoXD
+ * @version 0.1.0
+ */
 public class ThemeEngine {
     private static Palette load(Context context) {
         SharedPreferences prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE);
@@ -125,8 +133,8 @@ public class ThemeEngine {
 
         row.setInt(R.id.bg_item, "setColorFilter", p.surfaceHigh);
 
-        row.setInt(R.id.bg_icon_item, "setColorFilter", p.tertiary);
-        row.setTextColor(R.id.txt_icon_item, p.onTertiary);
+        row.setInt(R.id.bg_icon_item, "setColorFilter", p.primary);
+        row.setTextColor(R.id.txt_icon_item, p.onPrimary);
 
         row.setTextColor(R.id.txt_item_title, p.onSurface);
         row.setTextColor(R.id.txt_item_time, p.onSurfaceVariant);

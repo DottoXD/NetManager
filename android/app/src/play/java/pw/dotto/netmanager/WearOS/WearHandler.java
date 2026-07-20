@@ -1,8 +1,10 @@
 package pw.dotto.netmanager.WearOS;
 
+import static android.content.Context.MODE_PRIVATE;
 import static pw.dotto.netmanager.Utils.Mobile.getGenerationLabel;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -89,6 +91,16 @@ public class WearHandler implements WearIntegration, MessageClient.OnMessageRece
         if (messageEvent.getPath().equals("/request_wearos_data")) {
             if (!isWearActive || wearManager == null) {
                 wearManager = new Manager(context, WEAROS_CONSUMER_ID, DEFAULT_POLL_INTERVAL);
+
+                try {
+                    SharedPreferences sharedPreferences = context.getSharedPreferences("FlutterSharedPreferences",
+                            MODE_PRIVATE);
+                    int updateInterval = ((Long) sharedPreferences.getLong("flutter.backgroundUpdateInterval", 3))
+                            .intValue();
+                    wearManager.updateInterval(updateInterval);
+                } catch (Exception ignored) {
+                }
+
                 isWearActive = true;
                 DebugLogger.add("WearOS background polling loop started.");
             }

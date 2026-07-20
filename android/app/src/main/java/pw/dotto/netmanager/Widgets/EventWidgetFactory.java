@@ -21,9 +21,16 @@ import pw.dotto.netmanager.Core.Events.NetManagerEvent;
 import pw.dotto.netmanager.R;
 import pw.dotto.netmanager.Widgets.Theme.ThemeEngine;
 
+/**
+ * NetManager's EventWidgetFactory class is the class that handles how the
+ * events widget is built.
+ *
+ * @author DottoXD
+ * @version 0.1.0
+ */
 public class EventWidgetFactory implements RemoteViewsService.RemoteViewsFactory {
     private static final int MAX_ITEMS = 25;
-    private static final DateTimeFormatter DISPLAY_FORMAT = DateTimeFormatter.ofPattern("MMM d, HH:mm");
+    private static final DateTimeFormatter DISPLAY_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
     private final Context context;
     private NetManagerEvent[] events = new NetManagerEvent[0];
@@ -75,11 +82,12 @@ public class EventWidgetFactory implements RemoteViewsService.RemoteViewsFactory
     }
 
     private String formatEventType(NetManagerEvent event) {
-        String raw = event.getEventType().toString();
-        if (raw.startsWith("MOBILE_"))
-            raw = raw.substring("MOBILE_".length());
+        String rawEventName = event.getEventType().toString();
 
-        String[] parts = raw.split("_");
+        if (rawEventName.startsWith("MOBILE_"))
+            rawEventName = rawEventName.substring("MOBILE_".length());
+
+        String[] parts = rawEventName.split("_");
         StringBuilder sb = new StringBuilder();
         for (String part : parts) {
             if (part.isEmpty())
@@ -105,6 +113,7 @@ public class EventWidgetFactory implements RemoteViewsService.RemoteViewsFactory
 
         if (oldValue == null || oldValue.isEmpty() || "N/A".equals(oldValue)) {
             SpannableString spannable = new SpannableString(newValue);
+
             spannable.setSpan(new ForegroundColorSpan(accent), 0, newValue.length(),
                     Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             spannable.setSpan(new StyleSpan(Typeface.BOLD), 0, newValue.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -119,6 +128,7 @@ public class EventWidgetFactory implements RemoteViewsService.RemoteViewsFactory
                 Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         spannable.setSpan(new StyleSpan(Typeface.BOLD), oldValue.length(), full.length(),
                 Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
         return spannable;
     }
 
@@ -131,7 +141,7 @@ public class EventWidgetFactory implements RemoteViewsService.RemoteViewsFactory
         String simLabel = "SIM " + (mobileEvent.getSimSlot() + 1);
         if (network == null || network.trim().isEmpty())
             return simLabel;
-        return simLabel + " - " + network;
+        return simLabel + " (" + network + ")";
     }
 
     private String formatDateTime(String rawDateTime) {

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="widget_dualsim_desc">Dual SIM signal info</string>
+    <string name="widget_events_desc">Event logs</string>
     <string name="event_log_disabled">Enable event logging in NetManager to see activity here</string>
     <string name="base_events_widget_view_description">Base events widget view</string>
     <string name="no_events_yet">No events yet</string>

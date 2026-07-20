@@ -2,10 +2,17 @@ package pw.dotto.netmanager.Core;
 
 import static android.content.Context.MODE_PRIVATE;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.telephony.SubscriptionInfo;
+import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyManager;
+
+import androidx.annotation.RequiresPermission;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -114,12 +121,17 @@ public class NetManagerCore {
         intervalRequests.put(consumerId, Math.max(1, desiredIntervalSeconds));
         recomputeInterval();
 
+        DebugLogger.add("Consumer " + consumerId + " just attached to NetManagerCore!");
+
         if (wasEmpty)
             scheduler.execute(this::pollOnce);
     }
 
     public synchronized void detach(String consumerId) {
         intervalRequests.remove(consumerId);
+
+        DebugLogger.add("Consumer " + consumerId + " just detached from NetManagerCore!");
+
         if (intervalRequests.isEmpty())
             stopPolling();
         else
@@ -148,6 +160,7 @@ public class NetManagerCore {
         }
     }
 
+    @RequiresPermission(Manifest.permission.READ_PHONE_STATE)
     private void pollOnce() {
         for (SIMSlotState simSlotState : subscriptionTracker.getSimSlots().values()) {
             try {
@@ -159,6 +172,7 @@ public class NetManagerCore {
         }
     }
 
+    @RequiresPermission(Manifest.permission.READ_PHONE_STATE)
     private void pollSlot(SIMSlotState simSlotState) {
         if (simSlotState.telephony == null)
             return;
@@ -210,6 +224,7 @@ public class NetManagerCore {
         }
     }
 
+    @RequiresPermission(Manifest.permission.READ_PHONE_STATE)
     private void emitEventsIfChanged(SIMSlotState slot, SIMData data) {
         int simId = slot.simId;
 
@@ -235,6 +250,37 @@ public class NetManagerCore {
                 node = "N/A";
             }
             emitIfChanged(EventTypes.MOBILE_NODE_CHANGED, simId, node, data);
+        }
+
+        boolean isActiveData;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && slot.telephony != null) {
+            isActiveData = (slot.telephony.getSubscriptionId() == SubscriptionManager.getActiveDataSubscriptionId());
+        } else {
+            isActiveData = false;
+            SubscriptionManager sm = (SubscriptionManager) appContext
+                    .getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+
+            if (sm != null) {
+                try {
+                    SubscriptionInfo info = sm.getActiveSubscriptionInfoForSimSlotIndex(simId);
+                    if (info != null) {
+                        int subId = info.getSubscriptionId();
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            isActiveData = (subId == SubscriptionManager.getActiveDataSubscriptionId());
+                        } else {
+                            isActiveData = (subId == SubscriptionManager.getDefaultDataSubscriptionId());
+                        }
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        }
+
+        if (isActiveData) {
+            String simName = getNetwork(simId);
+            if (!simName.equals("NetManager"))
+                emitIfChanged(EventTypes.MOBILE_DATA_SIM_CHANGED, simId, simName, data);
         }
     }
 

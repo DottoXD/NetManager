@@ -5,11 +5,12 @@ package pw.dotto.netmanager.Core.Events;
  * EventManager.
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.1.0
  */
 public enum EventTypes {
     MOBILE_BAND_CHANGED,
     MOBILE_PLMN_CHANGED,
     MOBILE_TECHNOLOGY_CHANGED,
-    MOBILE_NODE_CHANGED
+    MOBILE_NODE_CHANGED,
+    MOBILE_DATA_SIM_CHANGED
 }

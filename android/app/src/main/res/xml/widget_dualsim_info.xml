@@ -5,8 +5,11 @@
     android:minHeight="40dp"
     android:targetCellWidth="4"
     android:targetCellHeight="1"
-    android:updatePeriodMillis="0"
+    android:description="@string/widget_dualsim_desc"
+    android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/widget_dualsim"
+    android:previewLayout="@layout/widget_dualsim"
+    android:previewImage="@drawable/widget_dualsim_preview"
     android:resizeMode="horizontal"
     android:widgetCategory="home_screen"
     tools:targetApi="31" />
