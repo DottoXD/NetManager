@@ -65,7 +65,8 @@ class SettingsBody extends StatefulWidget {
   State<SettingsBody> createState() => _SettingsBodyState();
 }
 
-class _SettingsBodyState extends State<SettingsBody> {
+class _SettingsBodyState extends State<SettingsBody>
+    with WidgetsBindingObserver {
   late MethodChannel platform;
   late SharedPreferences sharedPreferences;
 
@@ -95,6 +96,8 @@ class _SettingsBodyState extends State<SettingsBody> {
 
   late AppLocalizations _appLocalizations;
 
+  bool _isIgnoringBatteryOptimisations = true;
+
   bool _startupMonitoring = false;
   bool _backgroundService = false;
   bool _analytics = false;
@@ -105,6 +108,8 @@ class _SettingsBodyState extends State<SettingsBody> {
   int _maximumLogs = 10;
   int _updateInterval = 3;
   int _backgroundUpdateInterval = 3;
+  bool _homeDataGraphs = false;
+  int _homeGraphsRetentionTime = 30;
   int _positionPrecision = 3;
   int _speedMeasurementUnit = 1;
   String _speedtestInstance = "https://librespeed.org";
@@ -120,9 +125,6 @@ class _SettingsBodyState extends State<SettingsBody> {
   bool _dynamicTheme = true;
   bool _debug = false;
 
-  //Temporary
-  bool _useNewCore = false;
-
   List<EventTypes> _loggedEventTypes = EventTypes.values.toList();
 
   late String _positionPrecisionSelection;
@@ -131,6 +133,8 @@ class _SettingsBodyState extends State<SettingsBody> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
     _appLocalizations = AppLocalizations.of(context)!;
     positionPrecisions = [
       _appLocalizations.settingsPositionOff,
@@ -172,14 +176,39 @@ class _SettingsBodyState extends State<SettingsBody> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+
     _mapTilesTemplateController.dispose();
     _speedtestInstanceController.dispose();
 
     super.dispose();
   }
 
+  Future<void> checkBatteryOptimization() async {
+    try {
+      final bool isIgnoring =
+          await platform.invokeMethod("isIgnoringBatteryOptimisations") ?? true;
+      if (mounted) {
+        setState(() {
+          _isIgnoringBatteryOptimisations = isIgnoring;
+        });
+      }
+    } catch (_) {}
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      checkBatteryOptimization();
+    }
+  }
+
   Future<void> updateData() async {
+    await checkBatteryOptimization();
+
     setState(() {
+      _isIgnoringBatteryOptimisations;
+
       _startupMonitoring =
           sharedPreferences.getBool("startupMonitoring") ?? _startupMonitoring;
       _backgroundService =
@@ -198,6 +227,11 @@ class _SettingsBodyState extends State<SettingsBody> {
       _backgroundUpdateInterval =
           sharedPreferences.getInt("backgroundUpdateInterval") ??
           _backgroundUpdateInterval;
+      _homeDataGraphs =
+          sharedPreferences.getBool("homeDataGraphs") ?? _homeDataGraphs;
+      _homeGraphsRetentionTime =
+          sharedPreferences.getInt("homeGraphsRetentionTime") ??
+          _homeGraphsRetentionTime;
       _positionPrecision =
           sharedPreferences.getInt("positionPrecision") ?? _positionPrecision;
       _speedMeasurementUnit =
@@ -224,7 +258,6 @@ class _SettingsBodyState extends State<SettingsBody> {
       _themeColor = sharedPreferences.getInt("themeColor") ?? _themeColor;
       _dynamicSupported =
           sharedPreferences.getBool("dynamicSupported") ?? _dynamicSupported;
-      _useNewCore = sharedPreferences.getBool("useNewCore") ?? _useNewCore;
 
       List<String>? tempLoggedEventTypes = sharedPreferences.getStringList(
         "loggedEventTypes",
@@ -363,6 +396,52 @@ class _SettingsBodyState extends State<SettingsBody> {
         shrinkWrap: true,
         physics: const ClampingScrollPhysics(),
         children: <Widget>[
+          if (!_isIgnoringBatteryOptimisations) ...[
+            Card(
+              margin: const EdgeInsets.all(12.0),
+              color: Theme.of(
+                context,
+              ).colorScheme.errorContainer.withValues(alpha: 0.7),
+              child: ListTile(
+                leading: Icon(
+                  Icons.battery_3_bar_outlined,
+                  color: Theme.of(context).colorScheme.onErrorContainer,
+                ),
+                title: Text(
+                  _appLocalizations.settingsBatteryOptimisationTitle,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onErrorContainer,
+                  ),
+                ),
+                subtitle: Text(
+                  _appLocalizations.settingsBatteryOptimisationDescription,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onErrorContainer,
+                  ),
+                ),
+                trailing: FilledButton.icon(
+                  onPressed: () async {
+                    await HapticService().triggerHaptic(
+                      HapticType.selection,
+                      context,
+                    );
+
+                    await platform.invokeMethod(
+                      "requestIgnoreBatteryOptimisations",
+                    );
+                    await checkBatteryOptimization();
+                  },
+                  icon: const Icon(Icons.check_outlined),
+                  label: Text(_appLocalizations.fix),
+                ),
+              ),
+            ),
+            Divider(
+              height: 0,
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ],
           ListTile(
             title: Text(
               "${_appLocalizations.settingsLanguageTitle} ${localeNotifier.value != null ? "(${localeNotifier.value!.languageCode.toUpperCase()})" : ""}",
@@ -554,6 +633,52 @@ class _SettingsBodyState extends State<SettingsBody> {
                 );
 
                 setInt("backgroundUpdateInterval", value.toInt());
+                updateData();
+              },
+            ),
+          Divider(
+            height: 0,
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
+          ListTile(
+            title: Text(_appLocalizations.settingsHomeDataGraphsTitle),
+            subtitle: Text(_appLocalizations.settingsHomeDataGraphsDescription),
+            trailing: Switch(
+              value: _homeDataGraphs,
+              onChanged: (bool value) async {
+                await HapticService().triggerHaptic(
+                  HapticType.selection,
+                  context,
+                );
+
+                setBool("homeDataGraphs", value);
+                updateData();
+              },
+            ),
+          ),
+          ListTile(
+            title: Text(
+              "${_appLocalizations.settingsHomeGraphsDataTimeTitle} (${_homeGraphsRetentionTime}s)",
+            ),
+            subtitle: Text(
+              _appLocalizations.settingsHomeGraphsDataTimeDescription,
+            ),
+            enabled: _homeDataGraphs,
+          ),
+          if (_homeDataGraphs)
+            Slider(
+              inactiveColor: Theme.of(context).colorScheme.outlineVariant,
+              value: _maximumLogs.toDouble(),
+              max: 600,
+              min: 6,
+              label: _homeGraphsRetentionTime.toString(),
+              onChanged: (double value) async {
+                await HapticService().triggerHaptic(
+                  HapticType.selection,
+                  context,
+                );
+
+                setInt("homeGraphsRetentionTime", value.toInt());
                 updateData();
               },
             ),

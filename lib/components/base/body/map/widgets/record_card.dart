@@ -44,6 +44,7 @@ class RecordCard extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
+          color: Theme.of(context).colorScheme.primaryContainer.withAlpha(230),
           child: Padding(
             padding: const EdgeInsets.all(14.0),
             child: Column(

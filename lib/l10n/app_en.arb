@@ -59,6 +59,7 @@
   "screenshotPage": "Screenshot page",
   "coverageRecording": "Cell coverage recording",
   "repositionMap": "Reposition map",
+  "mapFilters": "Map filters",
   "editSpeedMeasurementUnit": "Edit speed measurement unit",
   "edit": "Edit",
   "editPositionPrecision": "Edit position precision",
@@ -171,6 +172,9 @@
   "homeAirplane": "Airplane mode ON",
   "homeActiveCells": "Active Cells",
   "homeNeighborCells": "Neighbor Cells",
+  "fix": "Fix",
+  "settingsBatteryOptimisationTitle": "Battery optimisation is active",
+  "settingsBatteryOptimisationDescription": "Background monitoring requires disabling battery optimisations (Doze) to behave correctly.",
   "settingsPositionOff": "Off",
   "@settingsPositionOff": {
     "description": "Should not be translated."
@@ -194,6 +198,10 @@
   "settingsUpdateIntervalDescription": "The interval in seconds between each monitoring service data update.",
   "settingsBackgroundUpdateIntervalTitle": "Background update interval",
   "settingsBackgroundUpdateIntervalDescription": "The interval between each monitoring service data update when it is running in the background or on startup.",
+  "settingsHomeDataGraphsTitle": "Home data graphs",
+  "settingsHomeDataGraphsDescription": "Display detailed, fancy graphs in a submenu on the home screen.",
+  "settingsHomeGraphsDataTimeTitle": "Home graphs data retention",
+  "settingsHomeGraphsDataTimeDescription": "The amount of time in seconds cell data should be stored for home screen submenu graphs.",
   "settingsHapticsTitle": "Haptics",
   "settingsHapticsDescription": "Haptic feedback allows the app to feel more immersive.",
   "settingsMaterialYouTitle": "Material You (3)",
@@ -248,5 +256,18 @@
   "settingsDebugTitle": "Debug",
   "settingsDebugDescription": "Manage NetManager's debug mode. Enabling this setting will show raw debug data in some parts of the app.",
   "settingsDebugLogsTitle": "Debug logs",
-  "settingsDebugLogsDescription": "View NetManager's debug logs. Useful for debugging issues or viewing additional info."
+  "settingsDebugLogsDescription": "View NetManager's debug logs. Useful for debugging issues or viewing additional info.",
+  "displayedCellTowers": "Displayed cell towers",
+  "minimumCellsPerTower": "Minimum cells per tower",
+  "minimumCellsFiltering": "Showing towers with at least {minCellCount} cells.",
+  "@minimumCellsFiltering": {
+    "description": "A text with the minimum amount of cells that a cell tower in the map shall have.",
+    "placeholders": {
+      "minCellCount": {
+        "type": "int",
+        "example": "0"
+      }
+    }
+  },
+  "noMinimumCellsFiltering": "Filter towers by minimum cell count."
 }

@@ -59,6 +59,7 @@
   "screenshotPage": "Esegui screenshot",
   "coverageRecording": "Registrazione della copertura e delle celle",
   "repositionMap": "Riposiziona mappa",
+  "mapFilters": "Map filters",
   "editSpeedMeasurementUnit": "Modifica l'unità di misura della velocità",
   "edit": "Modifica",
   "editPositionPrecision": "Modifica la precisione della posizione",
@@ -171,6 +172,9 @@
   "homeAirplane": "Modalità aereo ON",
   "homeActiveCells": "Celle Attive",
   "homeNeighborCells": "Celle Vicine",
+  "fix": "Risolvi",
+  "settingsBatteryOptimisationTitle": "Le ottimizzazioni della batteria sono attive",
+  "settingsBatteryOptimisationDescription": "I servizi in background di NetManager richiedono la disattivazione delle ottimizzazioni della batteria (Doze) per comportarsi correttamente.",
   "settingsPositionOff": "Off",
   "@settingsPositionOff": {
     "description": "Should not be translated."
@@ -194,6 +198,10 @@
   "settingsUpdateIntervalDescription": "L'intervallo in secondi tra ogni aggiornamento dei dati delle celle.",
   "settingsBackgroundUpdateIntervalTitle": "Intervallo di aggiornamento in background",
   "settingsBackgroundUpdateIntervalDescription": "L'intervallo in secondi tra ogni aggiornamento dei dati quando l'app non è aperta.",
+  "settingsHomeDataGraphsTitle": "Grafici dei dati",
+  "settingsHomeDataGraphsDescription": "Mostra dei grafici dettagliati contenenti uno storico dei dati radio in un sottomenu della home.",
+  "settingsHomeGraphsDataTimeTitle": "Conservazione dati grafici",
+  "settingsHomeGraphsDataTimeDescription": "Il tempo in secondi per la quale vengono conservati dei dati delle celle per i grafici della home.",
   "settingsHapticsTitle": "Feedback aptico",
   "settingsHapticsDescription": "Rendi l'app più immersiva con il feedback aptico.",
   "settingsMaterialYouTitle": "Material You (3)",
@@ -248,5 +256,18 @@
   "settingsDebugTitle": "Debug",
   "settingsDebugDescription": "Gestisci la modalità debug di NetManager. L'abilitazione di questa impostazione farà mostrare alcuni dati grezzi in alcune parti dell'app.",
   "settingsDebugLogsTitle": "Log di debug",
-  "settingsDebugLogsDescription": "Visualizza i log di debug di NetManager. Utile per visualizzare informazioni in più o fare debugging."
+  "settingsDebugLogsDescription": "Visualizza i log di debug di NetManager. Utile per visualizzare informazioni in più o fare debugging.",
+  "displayedCellTowers": "Antenne mostrate",
+  "minimumCellsPerTower": "Celle minime per antenna",
+  "minimumCellsFiltering": "Mostrando le antenne con almeno {minCellCount} celle.",
+  "@minimumCellsFiltering": {
+    "description": "A text with the minimum amount of cells that a cell tower in the map shall have.",
+    "placeholders": {
+      "minCellCount": {
+        "type": "int",
+        "example": "0"
+      }
+    }
+  },
+  "noMinimumCellsFiltering": "Filtra le antenne in base alla quantità di celle."
 }

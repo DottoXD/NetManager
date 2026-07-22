@@ -19,8 +19,8 @@ class MapTileBuilder extends StatelessWidget {
     if (theme.brightness == Brightness.light) {
       return ColorFiltered(
         colorFilter: ColorFilter.mode(
-          theme.colorScheme.surface.withValues(alpha: 0.85),
-          BlendMode.modulate,
+          theme.colorScheme.surface.withValues(alpha: 0.5),
+          BlendMode.srcATop,
         ),
         child: tileWidget,
       );

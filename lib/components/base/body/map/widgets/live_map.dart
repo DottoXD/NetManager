@@ -7,6 +7,7 @@ import 'package:netmanager/components/base/body/map/widgets/location_dot.dart';
 import 'package:netmanager/components/base/body/map/widgets/visual_records.dart';
 import 'package:netmanager/types/database/cell_tower.dart';
 import 'package:netmanager/components/base/body/map/widgets/map_tile_builder.dart';
+import 'package:netmanager/types/map/tower_filter.dart';
 import 'package:netmanager/types/recording/record.dart';
 import 'package:netmanager/types/recording/recorded_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,6 +30,7 @@ class LiveMap extends StatelessWidget {
   final VoidCallback onClearSelection;
   final Function(LatLng latLng) onTowerTap;
   final ValueNotifier<CellTower?> connectedTowerNotifier;
+  final ValueNotifier<TowerFilter> towerFilterNotifier;
   final bool showBearingLine;
 
   final String defaultMapTilesTemplate =
@@ -53,6 +55,7 @@ class LiveMap extends StatelessWidget {
     required this.onClearSelection,
     required this.onTowerTap,
     required this.connectedTowerNotifier,
+    required this.towerFilterNotifier,
     required this.showBearingLine,
   });
 
@@ -141,12 +144,23 @@ class LiveMap extends StatelessWidget {
             if (cellTowers.isEmpty) return const SizedBox.shrink();
 
             return ValueListenableBuilder(
-              valueListenable: connectedTowerNotifier,
-              builder: (context, connectedTower, _) {
-                return CellTowers(
-                  cellTowers: cellTowers,
-                  connectedTower: connectedTower,
-                  onTowerTap: onTowerTap,
+              valueListenable: towerFilterNotifier,
+              builder: (context, towerFilter, _) {
+                final filteredTowers = towerFilter.isActive()
+                    ? cellTowers.where(towerFilter.towerMatches).toList()
+                    : cellTowers;
+
+                if (filteredTowers.isEmpty) return const SizedBox.shrink();
+
+                return ValueListenableBuilder(
+                  valueListenable: connectedTowerNotifier,
+                  builder: (context, connectedTower, _) {
+                    return CellTowers(
+                      cellTowers: filteredTowers,
+                      connectedTower: connectedTower,
+                      onTowerTap: onTowerTap,
+                    );
+                  },
                 );
               },
             );
@@ -166,8 +180,13 @@ class LiveMap extends StatelessWidget {
         SafeArea(
           child: Align(
             alignment: Alignment.bottomLeft,
-            child: ColoredBox(
-              color: Theme.of(context).colorScheme.surfaceContainer,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainer,
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(8.0),
+                ),
+              ),
               child: GestureDetector(
                 child: const Padding(
                   padding: EdgeInsets.all(4.0),

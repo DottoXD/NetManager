@@ -8,10 +8,13 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:netmanager/components/base/body/map/widgets/live_map.dart';
 import 'package:netmanager/components/base/body/map/widgets/record_card.dart';
 import 'package:netmanager/components/dialogs/error.dart';
+import 'package:netmanager/components/floating/filter_button.dart';
+import 'package:netmanager/components/modals/map_filters.dart';
 import 'package:netmanager/components/modals/record/record_modal.dart';
 import 'package:netmanager/database/cell_database.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/types/database/cell_tower.dart';
+import 'package:netmanager/types/map/tower_filter.dart';
 import 'package:netmanager/utils/cell_utils.dart';
 import 'package:netmanager/components/base/body/map/widgets/map_overlay.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
@@ -100,6 +103,10 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
   final ValueNotifier<CellTower?> _connectedTowerNotifier = ValueNotifier(null);
 
   final ValueNotifier<List<CellTower>> _cellTowersNotifier = ValueNotifier([]);
+
+  final ValueNotifier<TowerFilter> _towerFilterNotifier = ValueNotifier(
+    const TowerFilter(),
+  );
 
   final ValueNotifier<List<String>> _displayTitlesNotifier = ValueNotifier([
     "N/A",
@@ -328,6 +335,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     _displayValuesNotifier.dispose();
     _mapLoadingNotifier.dispose();
     _connectedTowerNotifier.dispose();
+    _towerFilterNotifier.dispose();
 
     super.dispose();
   }
@@ -681,6 +689,20 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     _connectedTowerNotifier.value = _findConnectedTower(cellId);
   }
 
+  void _openTowerFilters() {
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
+      ),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (BuildContext context) {
+        return MapFilters(filterNotifier: _towerFilterNotifier);
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -759,6 +781,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                   );
                 },
                 connectedTowerNotifier: _connectedTowerNotifier,
+                towerFilterNotifier: _towerFilterNotifier,
                 showBearingLine: widget.bearingLineNotifier.value,
               ),
               Positioned(
@@ -777,6 +800,20 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                       liveRecords: _liveRecords,
                       activeReplayData: _activeReplayData,
                       onClose: () => setState(() => _selectedRecord = null),
+                    ),
+                    ValueListenableBuilder(
+                      valueListenable: widget.databaseCellsInMapNotifier,
+                      builder: (context, databaseCellsInMap, _) {
+                        if (!databaseCellsInMap) return const SizedBox.shrink();
+
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0, right: 16.0),
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: FilterButton(onPressed: _openTowerFilters),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),

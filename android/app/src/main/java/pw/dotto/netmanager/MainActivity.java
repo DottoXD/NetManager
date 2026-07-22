@@ -29,6 +29,7 @@ import pw.dotto.netmanager.Utils.DeviceData;
 import pw.dotto.netmanager.Utils.FileManager;
 import pw.dotto.netmanager.Utils.Permissions;
 import pw.dotto.netmanager.Utils.DebugLogger;
+import pw.dotto.netmanager.Utils.PowerUtils;
 import pw.dotto.netmanager.WearOS.WearHandler;
 
 /**
@@ -208,6 +209,15 @@ public class MainActivity extends FlutterActivity {
           client.runSpeedTest(this, call.argument("pingUrl"), call.argument("downloadUrl"), call.argument("uploadUrl"),
               new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL));
           result.success(null);
+          break;
+
+        case "isIgnoringBatteryOptimisations":
+          result.success(PowerUtils.isIgnoringBatteryOptimisations(this));
+          break;
+
+        case "requestIgnoreBatteryOptimisations":
+          boolean opened = PowerUtils.requestIgnoreBatteryOptimisations(this);
+          result.success(opened);
           break;
 
         default:
