@@ -19,7 +19,8 @@ class TopBar extends StatefulWidget implements PreferredSizeWidget {
     this.platform,
     this.sharedPreferences,
     this.platformSignalNotifier,
-    this.logsNotifier, {
+    this.logsNotifier,
+    this.currentSimSlotNotifier, {
     super.key,
   });
 
@@ -27,6 +28,7 @@ class TopBar extends StatefulWidget implements PreferredSizeWidget {
   final SharedPreferences sharedPreferences;
   final ValueNotifier<int> platformSignalNotifier;
   final ValueNotifier<bool> logsNotifier;
+  final ValueNotifier<int> currentSimSlotNotifier;
 
   @override
   State<TopBar> createState() => _TopBarState();
@@ -40,6 +42,7 @@ class _TopBarState extends State<TopBar> {
   late SharedPreferences sharedPreferences;
   late ValueNotifier<int> platformSignalNotifier;
   late ValueNotifier<bool> logsNotifier;
+  late ValueNotifier<int> currentSimSlotNotifier;
 
   late Timer _timer;
   String _carrier = "Unknown";
@@ -56,6 +59,7 @@ class _TopBarState extends State<TopBar> {
     sharedPreferences = widget.sharedPreferences;
     platformSignalNotifier = widget.platformSignalNotifier;
     logsNotifier = widget.logsNotifier;
+    currentSimSlotNotifier = widget.currentSimSlotNotifier;
 
     platformSignalNotifier.addListener(_restartTimer);
 
@@ -76,7 +80,7 @@ class _TopBarState extends State<TopBar> {
     final count = await platform.invokeMethod("getSimCount") ?? 0;
     if (mounted && count != simCount) setState(() => simCount = count);
 
-    if (count > 1) {
+    if (count > 0) {
       final activeSelected =
           await platform.invokeMethod("isActiveSubscriptionSelected") ?? true;
 
@@ -116,6 +120,7 @@ class _TopBarState extends State<TopBar> {
     await update();
 
     platformSignalNotifier.value++;
+    currentSimSlotNotifier.value = currentSimSlotNotifier.value == 0 ? 1 : 0;
   }
 
   void _openInfo(AppLocalizations appLocalizations) async {

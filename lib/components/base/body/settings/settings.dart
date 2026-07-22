@@ -36,7 +36,9 @@ class SettingsBody extends StatefulWidget {
     this.speedtestInstanceNotifier,
     this.externalDatabasesNotifier,
     this.databaseCellsInMapNotifier,
-    this.bearingLineNotifier, {
+    this.bearingLineNotifier,
+    this.homeDataGraphsNotifier,
+    this.homeGraphsRetentionTimeNotifier, {
     super.key,
   });
 
@@ -60,6 +62,8 @@ class SettingsBody extends StatefulWidget {
   final ValueNotifier<bool> externalDatabasesNotifier;
   final ValueNotifier<bool> databaseCellsInMapNotifier;
   final ValueNotifier<bool> bearingLineNotifier;
+  final ValueNotifier<bool> homeDataGraphsNotifier;
+  final ValueNotifier<int> homeGraphsRetentionTimeNotifier;
 
   @override
   State<SettingsBody> createState() => _SettingsBodyState();
@@ -87,6 +91,8 @@ class _SettingsBodyState extends State<SettingsBody>
   late ValueNotifier<bool> externalDatabasesNotifier;
   late ValueNotifier<bool> databaseCellsInMapNotifier;
   late ValueNotifier<bool> bearingLineNotifier;
+  late ValueNotifier<bool> homeDataGraphsNotifier;
+  late ValueNotifier<int> homeGraphsRetentionTimeNotifier;
 
   late TextEditingController _mapTilesTemplateController;
   late TextEditingController _speedtestInstanceController;
@@ -160,6 +166,8 @@ class _SettingsBodyState extends State<SettingsBody>
     externalDatabasesNotifier = widget.externalDatabasesNotifier;
     databaseCellsInMapNotifier = widget.databaseCellsInMapNotifier;
     bearingLineNotifier = widget.bearingLineNotifier;
+    homeDataGraphsNotifier = widget.homeDataGraphsNotifier;
+    homeGraphsRetentionTimeNotifier = widget.homeGraphsRetentionTimeNotifier;
 
     updateData();
     _positionPrecisionSelection = positionPrecisions[_positionPrecision];
@@ -401,7 +409,7 @@ class _SettingsBodyState extends State<SettingsBody>
               margin: const EdgeInsets.all(12.0),
               color: Theme.of(
                 context,
-              ).colorScheme.errorContainer.withValues(alpha: 0.7),
+              ).colorScheme.errorContainer.withValues(alpha: 0.5),
               child: ListTile(
                 leading: Icon(
                   Icons.battery_3_bar_outlined,
@@ -640,7 +648,7 @@ class _SettingsBodyState extends State<SettingsBody>
             height: 0,
             color: Theme.of(context).colorScheme.outlineVariant,
           ),
-          ListTile(
+          /*ListTile(
             title: Text(_appLocalizations.settingsHomeDataGraphsTitle),
             subtitle: Text(_appLocalizations.settingsHomeDataGraphsDescription),
             trailing: Switch(
@@ -652,6 +660,7 @@ class _SettingsBodyState extends State<SettingsBody>
                 );
 
                 setBool("homeDataGraphs", value);
+                homeDataGraphsNotifier.value = value;
                 updateData();
               },
             ),
@@ -679,13 +688,14 @@ class _SettingsBodyState extends State<SettingsBody>
                 );
 
                 setInt("homeGraphsRetentionTime", value.toInt());
+                homeGraphsRetentionTimeNotifier.value = value.toInt();
                 updateData();
               },
             ),
           Divider(
             height: 0,
             color: Theme.of(context).colorScheme.outlineVariant,
-          ),
+          ),*/
           ListTile(
             title: Text(_appLocalizations.settingsHapticsTitle),
             subtitle: Text(_appLocalizations.settingsHapticsDescription),

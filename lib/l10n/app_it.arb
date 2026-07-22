@@ -258,6 +258,7 @@
   "settingsDebugLogsTitle": "Log di debug",
   "settingsDebugLogsDescription": "Visualizza i log di debug di NetManager. Utile per visualizzare informazioni in più o fare debugging.",
   "displayedCellTowers": "Antenne mostrate",
+  "cellTowersTechFiltering": "Mostrando solo le antenne che hanno le generazioni di rete mobile che hai selezionato come migliore tecnologia disponibile.",
   "minimumCellsPerTower": "Celle minime per antenna",
   "minimumCellsFiltering": "Mostrando le antenne con almeno {minCellCount} celle.",
   "@minimumCellsFiltering": {

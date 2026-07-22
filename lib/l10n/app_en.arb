@@ -258,6 +258,7 @@
   "settingsDebugLogsTitle": "Debug logs",
   "settingsDebugLogsDescription": "View NetManager's debug logs. Useful for debugging issues or viewing additional info.",
   "displayedCellTowers": "Displayed cell towers",
+  "cellTowersTechFiltering": "Showing towers with only the network generations you've selected as their best technology.",
   "minimumCellsPerTower": "Minimum cells per tower",
   "minimumCellsFiltering": "Showing towers with at least {minCellCount} cells.",
   "@minimumCellsFiltering": {

@@ -3,6 +3,8 @@ package pw.dotto.netmanager.Core;
 import android.content.Context;
 import android.telephony.TelephonyManager;
 
+import java.util.List;
+
 import pw.dotto.netmanager.Core.Base.SIMSlotState;
 import pw.dotto.netmanager.Core.Events.EventManager;
 import pw.dotto.netmanager.Core.Mobile.CellSnapshot;
@@ -17,7 +19,7 @@ import pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource;
  * rewriting substantial (and working) parts of the codebase.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.1.1
  */
 public class Manager {
     private final Context context;
@@ -97,6 +99,10 @@ public class Manager {
 
     public int getSimCount() {
         return core.getSimCount();
+    }
+
+    public List<Integer> getSimSlotIds() {
+        return core.getSubscriptionTracker().getSimSlotIds();
     }
 
     public EventManager getEventManager() {

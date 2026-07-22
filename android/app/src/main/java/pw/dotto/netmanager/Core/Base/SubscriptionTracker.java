@@ -12,6 +12,8 @@ import android.telephony.TelephonyManager;
 
 import androidx.core.content.ContextCompat;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +39,7 @@ import pw.dotto.netmanager.Utils.Permissions;
  * mapping their respective listeners or disposing them.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.1.1
  */
 public class SubscriptionTracker {
     private final Context context;
@@ -240,10 +242,14 @@ public class SubscriptionTracker {
     }
 
     private void destroyAll() {
-        for (SIMSlotState slot : simSlots.values()) {
+        for (Map.Entry<Integer, SIMSlotState> entry : simSlots.entrySet()) {
+            SIMSlotState slot = entry.getValue();
+
             unregisterCallbacks(slot);
             if (slot.physicalChannelDumper != null)
                 slot.physicalChannelDumper.dispose();
+            if (onSlotRemoved != null)
+                onSlotRemoved.accept(entry.getKey());
         }
 
         simSlots.clear();
@@ -259,6 +265,12 @@ public class SubscriptionTracker {
 
     public int getSimCount() {
         return simSlots.size();
+    }
+
+    public List<Integer> getSimSlotIds() {
+        List<Integer> ids = new ArrayList<>(simSlots.keySet());
+        Collections.sort(ids);
+        return ids;
     }
 
     public SimReceiverManager getSimReceiverManager() {

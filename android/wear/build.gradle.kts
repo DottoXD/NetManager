@@ -22,8 +22,8 @@ android {
         applicationId = "pw.dotto.netmanager"
         minSdk = 30
         targetSdk = 37
-        versionCode = 5
-        versionName = "0.1.0"
+        versionCode = 7
+        versionName = "0.1.1"
     }
 
     signingConfigs {

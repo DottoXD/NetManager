@@ -26,10 +26,14 @@ class HomeBody extends StatefulWidget {
     this.platformSignalNotifier,
     this.debugNotifier,
     this.updateIntervalNotifier,
-    this.externalDatabasesNotifier, {
+    this.externalDatabasesNotifier,
+    this.homeDataGraphsNotifier,
+    this.homeGraphsRetentionTimeNotifier,
+    this.currentSimSlotNotifier, {
     super.key,
     this.onUpdateButtonPressed,
     this.onScreenshotButtonPressed,
+    this.onGraphsButtonPressed,
   });
 
   final MethodChannel platform;
@@ -39,9 +43,13 @@ class HomeBody extends StatefulWidget {
   final ValueNotifier<bool> debugNotifier;
   final ValueNotifier<int> updateIntervalNotifier;
   final ValueNotifier<bool> externalDatabasesNotifier;
+  final ValueNotifier<bool> homeDataGraphsNotifier;
+  final ValueNotifier<int> homeGraphsRetentionTimeNotifier;
+  final ValueNotifier<int> currentSimSlotNotifier;
 
   final ValueSetter<VoidCallback>? onUpdateButtonPressed;
   final ValueSetter<VoidCallback>? onScreenshotButtonPressed;
+  final ValueSetter<VoidCallback>? onGraphsButtonPressed;
 
   @override
   State<HomeBody> createState() => _HomeBodyState();
@@ -103,6 +111,7 @@ class _HomeBodyState extends State<HomeBody> {
   void dispose() {
     widget.onUpdateButtonPressed?.call(() {});
     widget.onScreenshotButtonPressed?.call(() {});
+    widget.onGraphsButtonPressed?.call(() {});
     timer.cancel();
 
     widget.platformSignalNotifier.removeListener(restartTimer);

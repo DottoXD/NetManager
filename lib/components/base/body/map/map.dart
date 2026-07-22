@@ -9,7 +9,7 @@ import 'package:netmanager/components/base/body/map/widgets/live_map.dart';
 import 'package:netmanager/components/base/body/map/widgets/record_card.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/floating/filter_button.dart';
-import 'package:netmanager/components/modals/map_filters.dart';
+import 'package:netmanager/components/modals/map_filters_modal.dart';
 import 'package:netmanager/components/modals/record/record_modal.dart';
 import 'package:netmanager/database/cell_database.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
@@ -802,16 +802,30 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                       onClose: () => setState(() => _selectedRecord = null),
                     ),
                     ValueListenableBuilder(
-                      valueListenable: widget.databaseCellsInMapNotifier,
-                      builder: (context, databaseCellsInMap, _) {
-                        if (!databaseCellsInMap) return const SizedBox.shrink();
+                      valueListenable: widget.externalDatabaseNotifier,
+                      builder: (context, externalDatabases, _) {
+                        if (!externalDatabases) return const SizedBox.shrink();
 
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8.0, right: 16.0),
-                          child: Align(
-                            alignment: Alignment.centerRight,
-                            child: FilterButton(onPressed: _openTowerFilters),
-                          ),
+                        return ValueListenableBuilder(
+                          valueListenable: widget.databaseCellsInMapNotifier,
+                          builder: (context, databaseCellsInMap, _) {
+                            if (!databaseCellsInMap) {
+                              return const SizedBox.shrink();
+                            }
+
+                            return Padding(
+                              padding: const EdgeInsets.only(
+                                top: 8.0,
+                                right: 16.0,
+                              ),
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: FilterButton(
+                                  onPressed: _openTowerFilters,
+                                ),
+                              ),
+                            );
+                          },
                         );
                       },
                     ),

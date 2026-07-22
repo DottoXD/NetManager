@@ -14,7 +14,7 @@ import android.provider.Settings;
  * non AOSP battery optimisations.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.1.1
  */
 public class PowerUtils {
     public static boolean isIgnoringBatteryOptimisations(Context context) {

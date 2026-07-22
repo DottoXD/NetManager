@@ -44,7 +44,9 @@ class RecordCard extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          color: Theme.of(context).colorScheme.primaryContainer.withAlpha(230),
+          color: Theme.of(
+            context,
+          ).colorScheme.secondaryContainer.withAlpha(200),
           child: Padding(
             padding: const EdgeInsets.all(14.0),
             child: Column(
@@ -56,9 +58,11 @@ class RecordCard extends StatelessWidget {
                   children: [
                     Text(
                       "${index >= 0 ? "${appLocalizations.mapRecord} #$index - " : ""}${record.networkGen < 2 ? "N/A" : "${record.networkGen}G"}",
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSecondaryContainer,
                       ),
                     ),
                     IconButton(
@@ -76,8 +80,7 @@ class RecordCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const Divider(height: 4),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,

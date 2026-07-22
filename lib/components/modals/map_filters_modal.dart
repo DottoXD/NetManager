@@ -67,7 +67,10 @@ class MapFilters extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ListTile(title: Text(appLocalizations.displayedCellTowers)),
+                  ListTile(
+                    title: Text(appLocalizations.displayedCellTowers),
+                    subtitle: Text(appLocalizations.cellTowersTechFiltering),
+                  ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Wrap(
@@ -127,31 +130,25 @@ class MapFilters extends StatelessWidget {
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
                     child: minCellCountEnabled
-                        ? Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                            ),
-                            child: Slider(
-                              inactiveColor: theme.colorScheme.outlineVariant,
-                              value:
-                                  (filter.minCellCount ?? _defaultMinCellCount)
-                                      .clamp(
-                                        _minCellCountMinimum,
-                                        _minCellCountMaximum,
-                                      )
-                                      .toDouble(),
-                              min: _minCellCountMinimum.toDouble(),
-                              max: _minCellCountMaximum.toDouble(),
-                              label: "${filter.minCellCount}",
-                              onChanged: (value) async {
-                                await HapticService().triggerHaptic(
-                                  HapticType.selection,
-                                  context,
-                                );
+                        ? Slider(
+                            inactiveColor: theme.colorScheme.outlineVariant,
+                            value: (filter.minCellCount ?? _defaultMinCellCount)
+                                .clamp(
+                                  _minCellCountMinimum,
+                                  _minCellCountMaximum,
+                                )
+                                .toDouble(),
+                            min: _minCellCountMinimum.toDouble(),
+                            max: _minCellCountMaximum.toDouble(),
+                            label: "${filter.minCellCount}",
+                            onChanged: (value) async {
+                              await HapticService().triggerHaptic(
+                                HapticType.selection,
+                                context,
+                              );
 
-                                _setMinCellCount(filter, value);
-                              },
-                            ),
+                              _setMinCellCount(filter, value);
+                            },
                           )
                         : const SizedBox.shrink(),
                   ),

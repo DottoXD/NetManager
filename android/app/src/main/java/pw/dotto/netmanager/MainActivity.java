@@ -38,7 +38,7 @@ import pw.dotto.netmanager.WearOS.WearHandler;
  * This class also manages communications with WearOS devices.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.1.1
  */
 public class MainActivity extends FlutterActivity {
   private static final String CHANNEL = "pw.dotto.netmanager/bridge";
@@ -49,6 +49,22 @@ public class MainActivity extends FlutterActivity {
 
   private MethodChannel chn;
   private SharedPreferences sharedPreferences;
+
+  /**
+   * This method is used to force NetManagerCore to only get data for existing
+   * subscriptions.
+   */
+  private void ensureValidSelectedSim() {
+    if (core == null)
+      return;
+
+    List<Integer> slotIds = core.getSimSlotIds();
+    if (slotIds.isEmpty())
+      return;
+
+    if (!slotIds.contains(selectedSim))
+      selectedSim = slotIds.get(0);
+  }
 
   /**
    * This method is essentially NetManager's core on Android.
@@ -235,6 +251,8 @@ public class MainActivity extends FlutterActivity {
             } catch (Exception ignored) {
             }
           }
+
+          ensureValidSelectedSim();
 
           switch (call.method) {
             case "getOperator":

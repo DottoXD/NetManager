@@ -6,6 +6,7 @@ import 'package:netmanager/base/stack.dart';
 import 'package:netmanager/components/base/body/map/map.dart';
 import 'package:netmanager/components/base/body/settings/settings.dart';
 import 'package:netmanager/components/base/body/speedtest/speedtest.dart';
+import 'package:netmanager/components/floating/graphs_button.dart';
 import 'package:netmanager/components/floating/position_button.dart';
 import 'package:netmanager/components/base/bars/top_bar.dart';
 import 'package:netmanager/components/floating/record_button.dart';
@@ -56,6 +57,7 @@ class _HomeState extends State<Home> {
   final ValueNotifier<VoidCallback?> _screenshotNotifier = ValueNotifier(null);
   final ValueNotifier<VoidCallback?> _mapPositionNotifier = ValueNotifier(null);
   final ValueNotifier<VoidCallback?> _recordNotifier = ValueNotifier(null);
+  final ValueNotifier<VoidCallback?> _graphsNotifier = ValueNotifier(null);
 
   final ValueNotifier<int> _updateIntervalNotifier = ValueNotifier(3);
   final ValueNotifier<bool> _metricSystemNotifier = ValueNotifier(true);
@@ -69,6 +71,11 @@ class _HomeState extends State<Home> {
   final ValueNotifier<bool> _externalDatabasesNotifier = ValueNotifier(true);
   final ValueNotifier<bool> _databaseCellsInMapNotifier = ValueNotifier(true);
   final ValueNotifier<bool> _bearingLineNotifier = ValueNotifier(true);
+
+  final ValueNotifier<bool> _homeDataGraphsNotifier = ValueNotifier(false);
+  final ValueNotifier<int> _homeGraphsRetentionTimeNotifier = ValueNotifier(30);
+
+  final ValueNotifier<int> _currentSimSlotNotifier = ValueNotifier(0);
 
   @override
   void initState() {
@@ -106,6 +113,10 @@ class _HomeState extends State<Home> {
         widget.sharedPreferences.getBool("databaseCellsInMap") ?? true;
     _bearingLineNotifier.value =
         widget.sharedPreferences.getBool("bearingLine") ?? true;
+    _homeDataGraphsNotifier.value =
+        widget.sharedPreferences.getBool("homeDataGraphs") ?? false;
+    _homeGraphsRetentionTimeNotifier.value =
+        widget.sharedPreferences.getInt("homeGraphsRetentionTime") ?? 30;
 
     try {
       widget.platform.invokeMethod<bool>("requestPermissions", {
@@ -143,6 +154,7 @@ class _HomeState extends State<Home> {
     _screenshotNotifier.dispose();
     _mapPositionNotifier.dispose();
     _recordNotifier.dispose();
+    _graphsNotifier.dispose();
 
     _updateIntervalNotifier.dispose();
     _metricSystemNotifier.dispose();
@@ -152,6 +164,9 @@ class _HomeState extends State<Home> {
     _externalDatabasesNotifier.dispose();
     _databaseCellsInMapNotifier.dispose();
     _bearingLineNotifier.dispose();
+    _homeDataGraphsNotifier.dispose();
+    _homeGraphsRetentionTimeNotifier.dispose();
+    _currentSimSlotNotifier.dispose();
 
     super.dispose();
   }
@@ -181,6 +196,7 @@ class _HomeState extends State<Home> {
           widget.sharedPreferences,
           _platformSignalNotifier,
           _logsNotifier,
+          _currentSimSlotNotifier,
         ),
         bottomNavigationBar: NavBar(updatePage, _currentPage),
         body: LazyIndexedStack(
@@ -194,11 +210,17 @@ class _HomeState extends State<Home> {
               _debugNotifier,
               _updateIntervalNotifier,
               _externalDatabasesNotifier,
+              _homeDataGraphsNotifier,
+              _homeGraphsRetentionTimeNotifier,
+              _currentSimSlotNotifier,
               onUpdateButtonPressed: (callback) {
                 _homeUpdateNotifier.value = callback;
               },
               onScreenshotButtonPressed: (callback) {
                 _screenshotNotifier.value = callback;
+              },
+              onGraphsButtonPressed: (callback) {
+                _graphsNotifier.value = callback;
               },
             ),
             MapBody(
@@ -243,6 +265,8 @@ class _HomeState extends State<Home> {
               _externalDatabasesNotifier,
               _databaseCellsInMapNotifier,
               _bearingLineNotifier,
+              _homeDataGraphsNotifier,
+              _homeGraphsRetentionTimeNotifier,
             ),
           ],
         ),
@@ -253,6 +277,24 @@ class _HomeState extends State<Home> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               if (_currentPage == 0) ...[
+                /*ValueListenableBuilder(
+                  valueListenable: _homeDataGraphsNotifier,
+                  builder: (context, graphsEnabled, _) {
+                    if (!graphsEnabled) return const SizedBox.shrink();
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        ValueListenableBuilder(
+                          valueListenable: _graphsNotifier,
+                          builder: (context, callback, _) =>
+                              GraphsButton(onPressed: callback),
+                        ),
+                        const SizedBox(height: 4),
+                      ],
+                    );
+                  },
+                ),*/
                 ValueListenableBuilder(
                   valueListenable: _screenshotNotifier,
                   builder: (context, callback, _) =>

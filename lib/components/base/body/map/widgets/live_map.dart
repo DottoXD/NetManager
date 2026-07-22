@@ -120,16 +120,26 @@ class LiveMap extends StatelessWidget {
         ValueListenableBuilder(
           valueListenable: connectedTowerNotifier,
           builder: (context, connectedTower, _) {
-            if (showBearingLine &&
-                currentLocation != null &&
-                connectedTowerNotifier.value != null) {
-              return BearingLine(
-                userLocation: currentLocation!,
-                towerLocation: connectedTowerNotifier.value!.getLatLng(),
-              );
-            }
+            return ValueListenableBuilder(
+              valueListenable: towerFilterNotifier,
+              builder: (context, towerFilter, _) {
+                final bool isTowerVisible =
+                    connectedTower != null &&
+                    (!towerFilter.isActive() ||
+                        towerFilter.towerMatches(connectedTower));
 
-            return const SizedBox.shrink();
+                if (showBearingLine &&
+                    currentLocation != null &&
+                    isTowerVisible) {
+                  return BearingLine(
+                    userLocation: currentLocation!,
+                    towerLocation: connectedTower!.getLatLng(),
+                  );
+                }
+
+                return const SizedBox.shrink();
+              },
+            );
           },
         ),
         if (visualPoints.isNotEmpty)
