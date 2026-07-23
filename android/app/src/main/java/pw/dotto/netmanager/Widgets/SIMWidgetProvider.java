@@ -23,7 +23,7 @@ import pw.dotto.netmanager.Widgets.Theme.ThemeEngine;
  * gets built.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.1.1
  */
 public class SIMWidgetProvider extends AppWidgetProvider {
     public static final String ACTION_REFRESH_DUALSIM = "pw.dotto.netmanager.ACTION_REFRESH_DUALSIM";
@@ -34,30 +34,44 @@ public class SIMWidgetProvider extends AppWidgetProvider {
             RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_dualsim);
             Manager core = new Manager(context, "widget_dualsim", 180);
 
-            String carrier1 = core.getSimCarrier(0);
-            views.setTextViewText(R.id.txt_sim1_title, "NetManager".equals(carrier1) ? "Airplane/Emergency" : carrier1);
-            SIMData data1 = core.getSimNetworkData(0);
+            java.util.List<Integer> slotIds = core.getSimSlotIds();
 
-            if (data1 != null && data1.getPrimaryCell() != null) {
-                views.setTextViewText(R.id.txt_sim1_signal, data1.getPrimaryCell().getProcessedSignal() + "dBm");
-                views.setTextViewText(R.id.txt_sim1_band, "B" + data1.getPrimaryCell().getBand());
+            if (!slotIds.isEmpty()) {
+                int slot1 = slotIds.get(0);
+
+                String carrier1 = core.getSimCarrier(slot1);
+                views.setTextViewText(R.id.txt_sim1_title,
+                        "NetManager".equals(carrier1) ? "Airplane/Emergency" : carrier1);
+                SIMData data1 = core.getSimNetworkData(slot1);
+
+                if (data1 != null && data1.getPrimaryCell() != null) {
+                    views.setTextViewText(R.id.txt_sim1_signal, data1.getPrimaryCell().getProcessedSignal() + "dBm");
+                    views.setTextViewText(R.id.txt_sim1_band, "B" + data1.getPrimaryCell().getBand());
+                }
+
+                populateChip(views, R.id.chip_sim1_tech, R.id.txt_sim1_tech, core, slot1);
+            } else {
+                views.setTextViewText(R.id.txt_sim1_title, "Airplane/Emergency");
+                views.setTextViewText(R.id.txt_sim1_signal, "");
+                views.setTextViewText(R.id.txt_sim1_band, "");
+                views.setViewVisibility(R.id.chip_sim1_tech, View.GONE);
             }
 
-            populateChip(views, R.id.chip_sim1_tech, R.id.txt_sim1_tech, core, 0);
+            if (slotIds.size() > 1) {
+                int slot2 = slotIds.get(1);
 
-            if (core.getSimCount() > 1) {
                 views.setViewVisibility(R.id.layout_sim2, View.VISIBLE);
-                String carrier2 = core.getSimCarrier(1);
+                String carrier2 = core.getSimCarrier(slot2);
                 views.setTextViewText(R.id.txt_sim2_title,
                         "NetManager".equals(carrier2) ? "Airplane/Emergency" : carrier2);
-                SIMData data2 = core.getSimNetworkData(1);
+                SIMData data2 = core.getSimNetworkData(slot2);
 
                 if (data2 != null && data2.getPrimaryCell() != null) {
                     views.setTextViewText(R.id.txt_sim2_signal, data2.getPrimaryCell().getProcessedSignal() + "dBm");
                     views.setTextViewText(R.id.txt_sim2_band, "B" + data2.getPrimaryCell().getBand());
                 }
 
-                populateChip(views, R.id.chip_sim2_tech, R.id.txt_sim2_tech, core, 1);
+                populateChip(views, R.id.chip_sim2_tech, R.id.txt_sim2_tech, core, slot2);
             } else {
                 views.setViewVisibility(R.id.layout_sim2, View.GONE);
             }

@@ -30,12 +30,13 @@ import pw.dotto.netmanager.ui.screens.network.NetworkScreen
  * main app.
  *
  * @author DottoXD
- * @version 0.0.5
+ * @version 0.1.1
  */
 class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
     private val cellDataState = mutableStateOf(CellData())
     private val simCountState = mutableIntStateOf(1)
     private var currentSim = 0
+    private var knownSimSlotIds: List<Int> = listOf(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -94,6 +95,18 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
 
     private fun updateState(map: DataMap) {
         val simId = map.getInt("id", -1)
+
+        val slotIds = map.getIntegerArrayList("simSlotIds")?.toList() ?: emptyList()
+        if (slotIds.isNotEmpty()) {
+            knownSimSlotIds = slotIds
+
+            if (currentSim !in slotIds) {
+                currentSim = slotIds.first()
+                requestWearOSData()
+                return
+            }
+        }
+
         if (simId != currentSim) return
 
         val totalSims = map.getInt("simCount", 1)
@@ -121,7 +134,16 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
     }
 
     private fun switchSim() {
-        currentSim = if (currentSim == 0) 1 else 0
+        val ids = knownSimSlotIds
+        
+        currentSim = when {
+            ids.size > 1 -> {
+                val idx = ids.indexOf(currentSim)
+                ids[(idx + 1) % ids.size]
+            }
+            ids.isNotEmpty() -> ids.first()
+            else -> 0
+        }
         requestWearOSData()
     }
 

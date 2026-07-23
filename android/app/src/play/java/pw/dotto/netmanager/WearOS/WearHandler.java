@@ -29,7 +29,7 @@ import pw.dotto.netmanager.Utils.DebugLogger;
  * WearOS bridge for NetManager.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.1.1
  */
 public class WearHandler implements WearIntegration, MessageClient.OnMessageReceivedListener {
     private Context context;
@@ -115,6 +115,8 @@ public class WearHandler implements WearIntegration, MessageClient.OnMessageRece
             int id = data.length > 0 ? data[0] : 0;
 
             dataMap.putInt("id", id);
+            dataMap.putIntegerArrayList("simSlotIds",
+                    wearManager != null ? new ArrayList<>(wearManager.getSimSlotIds()) : new ArrayList<>());
 
             if (wearManager != null) {
                 CellSnapshot snapshot = wearManager.getCellSnapshot(id);
