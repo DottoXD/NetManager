@@ -648,7 +648,7 @@ class _SettingsBodyState extends State<SettingsBody>
             height: 0,
             color: Theme.of(context).colorScheme.outlineVariant,
           ),
-          /*ListTile(
+          ListTile(
             title: Text(_appLocalizations.settingsHomeDataGraphsTitle),
             subtitle: Text(_appLocalizations.settingsHomeDataGraphsDescription),
             trailing: Switch(
@@ -695,7 +695,7 @@ class _SettingsBodyState extends State<SettingsBody>
           Divider(
             height: 0,
             color: Theme.of(context).colorScheme.outlineVariant,
-          ),*/
+          ),
           ListTile(
             title: Text(_appLocalizations.settingsHapticsTitle),
             subtitle: Text(_appLocalizations.settingsHapticsDescription),
@@ -1084,7 +1084,26 @@ class _SettingsBodyState extends State<SettingsBody>
                 Uri url = Uri.parse('https://github.com/DottoXD/NetManager');
                 launchUrl(url);
               },
-              icon: const Icon(Icons.open_in_new),
+              icon: const Icon(Icons.open_in_new_outlined),
+              tooltip: _appLocalizations.openInBrowser,
+            ),
+          ),
+          ListTile(
+            title: Text(_appLocalizations.settingsPrivacyTitle),
+            subtitle: Text(_appLocalizations.settingsPrivacyDescription),
+            trailing: IconButton(
+              onPressed: () async {
+                await HapticService().triggerHaptic(
+                  HapticType.selection,
+                  context,
+                );
+
+                Uri url = Uri.parse(
+                  'https://raw.githubusercontent.com/DottoXD/NetManager/refs/heads/main/PRIVACY.md',
+                );
+                launchUrl(url);
+              },
+              icon: const Icon(Icons.file_open_outlined),
               tooltip: _appLocalizations.openInBrowser,
             ),
           ),

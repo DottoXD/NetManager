@@ -9,8 +9,9 @@ class FilterButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FloatingActionButton.small(
+    return FloatingActionButton(
       elevation: 1,
+      mini: true,
       onPressed: () async {
         await HapticService().triggerHaptic(HapticType.light, context);
         onPressed!();

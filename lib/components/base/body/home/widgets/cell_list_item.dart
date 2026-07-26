@@ -12,6 +12,7 @@ class CellListItem extends StatelessWidget {
   final bool showSignalIcon;
   final bool showDivider;
   final String? description;
+  final bool strongGuess;
 
   const CellListItem({
     super.key,
@@ -20,6 +21,7 @@ class CellListItem extends StatelessWidget {
     required this.factor,
     required this.showSignalIcon,
     required this.showDivider,
+    required this.strongGuess,
     this.description,
   });
 
@@ -50,7 +52,7 @@ class CellListItem extends StatelessWidget {
     String cellContent = createCellContent(context, cell).replaceAll(
       "%node%",
       (nodeVal != 0
-          ? "${appLocalizations.likely} ${(nodeVal / factor).floor()}"
+          ? "${strongGuess ? appLocalizations.likely : appLocalizations.possibly} ${(nodeVal / factor).floor()}"
           : appLocalizations.unknownCell),
     );
 

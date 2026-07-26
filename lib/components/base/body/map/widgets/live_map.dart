@@ -133,7 +133,7 @@ class LiveMap extends StatelessWidget {
                     isTowerVisible) {
                   return BearingLine(
                     userLocation: currentLocation!,
-                    towerLocation: connectedTower!.getLatLng(),
+                    towerLocation: connectedTower.getLatLng(),
                   );
                 }
 

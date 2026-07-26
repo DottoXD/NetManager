@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/base/onboarding.dart';
+import 'package:netmanager/base/privacy_consent.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/check_update.dart';
 import 'package:netmanager/utils/haptic_service.dart';
@@ -36,6 +37,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
   bool? hasPermissions;
   bool isRefreshing = false;
   bool _showOnboarding = true;
+  bool _hasAcceptedPrivacyPolicy = false;
 
   static final int _requiredPerms =
       Permissions.READ_PHONE_STATE |
@@ -47,6 +49,18 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
+    try {
+      _hasAcceptedPrivacyPolicy =
+          widget.sharedPreferences.getInt("privacyPolicyAcceptedVersion") ==
+          privacyPolicyVersion;
+    } catch (e) {}
+
+    if (_hasAcceptedPrivacyPolicy) {
+      _startPostPrivacyFlow();
+    }
+  }
+
+  void _startPostPrivacyFlow() {
     _checkPermissions();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -63,6 +77,18 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
         });
       }
     });
+  }
+
+  Future<void> _acceptPrivacyPolicy() async {
+    await widget.sharedPreferences.setInt(
+      "privacyPolicyAcceptedVersion",
+      privacyPolicyVersion,
+    );
+
+    if (!mounted) return;
+
+    setState(() => _hasAcceptedPrivacyPolicy = true);
+    _startPostPrivacyFlow();
   }
 
   @override
@@ -102,59 +128,116 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     AppLocalizations appLocalizations = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
+    if (!_hasAcceptedPrivacyPolicy) {
+      return PrivacyConsentScreen(onAccept: _acceptPrivacyPolicy);
+    }
+
     if (hasPermissions == null || isRefreshing == true) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (hasPermissions == false) {
-      return Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.lock_clock_outlined,
-                  size: 72,
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  appLocalizations.missingPermissions,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  appLocalizations.requiredPermissions,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 32),
-                OutlinedButton(
-                  onPressed: () async {
-                    await HapticService().triggerHaptic(
-                      HapticType.light,
-                      context,
-                    );
+      final requiredPermissions = [
+        (
+          icon: Icons.perm_phone_msg_outlined,
+          label: appLocalizations.permissionPhoneState,
+        ),
+        (
+          icon: Icons.location_on_outlined,
+          label: appLocalizations.permissionLocation,
+        ),
+        (
+          icon: Icons.location_history_outlined,
+          label: appLocalizations.permissionBackgroundLocation,
+        ),
+      ];
 
-                    await _requestPermissions();
-                    await _checkPermissions();
-                  },
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
+      return Scaffold(
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(24.0),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.lock_clock_outlined,
+                      size: 64,
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    appLocalizations.missingPermissions,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    appLocalizations.requiredPermissions,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  Card(
+                    margin: EdgeInsets.zero,
+                    elevation: 0,
+                    color: theme.colorScheme.surfaceContainerHigh,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: requiredPermissions.map((perm) {
+                        return ListTile(
+                          leading: Icon(
+                            perm.icon,
+                            color: theme.colorScheme.primary,
+                          ),
+                          title: Text(
+                            perm.label,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: theme.colorScheme.onSurface,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
                   ),
-                  child: Text(appLocalizations.allow),
-                ),
-              ],
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () async {
+                        await HapticService().triggerHaptic(
+                          HapticType.light,
+                          context,
+                        );
+
+                        await _requestPermissions();
+                        await _checkPermissions();
+                      },
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(56),
+                      ),
+                      child: Text(appLocalizations.allow),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -184,7 +267,8 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if ((hasPermissions == null || hasPermissions == false) &&
+    if (_hasAcceptedPrivacyPolicy &&
+        (hasPermissions == null || hasPermissions == false) &&
         state == AppLifecycleState.resumed) {
       setState(() => isRefreshing = true);
 

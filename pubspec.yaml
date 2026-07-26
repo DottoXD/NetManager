@@ -2,7 +2,7 @@ name: netmanager
 description: "A Material mobile network monitoring app built with ease-of-use and speed in mind."
 publish_to: 'none'
 
-version: 0.1.1+7
+version: 0.1.2+8
 
 environment:
   sdk: ^3.12.2

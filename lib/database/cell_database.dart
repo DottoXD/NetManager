@@ -17,7 +17,7 @@ class CellDatabase {
 
     return await openDatabase(
       dbPath,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE cells (
@@ -39,6 +39,17 @@ class CellDatabase {
         await db.execute(
           "CREATE INDEX idx_cells_plmn_lat_lng ON cells (plmn, latitude, longitude)",
         );
+
+        await db.execute(
+          "CREATE INDEX idx_cells_plmn_channelnumber ON cells (plmn, channelnumber)",
+        );
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute(
+            "CREATE INDEX IF NOT EXISTS idx_cells_plmn_channelnumber ON cells (plmn, channelnumber)",
+          );
+        }
       },
     );
   }
@@ -70,6 +81,69 @@ class CellDatabase {
     }
 
     return results;
+  }
+
+  static Future<bool> cellExists(String plmn, int cid) async {
+    if (plmn.isEmpty) return false;
+    Database db = await getDatabase();
+
+    final List<Map<String, dynamic>> rows = await db.rawQuery(
+      "SELECT 1 FROM cells WHERE plmn = ? AND cid = ? LIMIT 1",
+      [plmn, cid],
+    );
+
+    return rows.isNotEmpty;
+  }
+
+  static Future<({int cid, String description, bool strongMatch})?>
+  guessActiveCellCid({
+    required String plmn,
+    required int channelNumber,
+    required int targetFactor,
+    required int primaryNode,
+    required int primaryLastDigit,
+  }) async {
+    if (plmn.isEmpty || targetFactor <= 0) return null;
+    Database db = await getDatabase();
+
+    final List<Map<String, dynamic>> strongRows = await db.rawQuery(
+      '''
+        SELECT cid, description FROM cells
+        WHERE plmn = ? AND channelnumber = ?
+          AND (cid / ?) = ?
+          AND (cid % 10) = ?
+        LIMIT 1
+      ''',
+      [plmn, channelNumber, targetFactor, primaryNode, primaryLastDigit],
+    );
+
+    if (strongRows.isNotEmpty) {
+      return (
+        cid: strongRows.first["cid"] as int,
+        description: strongRows.first["description"] as String? ?? "",
+        strongMatch: true,
+      );
+    }
+
+    final List<Map<String, dynamic>> weakRows = await db.rawQuery(
+      '''
+        SELECT cid, description FROM cells
+        WHERE plmn = ? AND channelnumber = ?
+          AND (cid / ?) = ?
+        LIMIT 1
+      ''',
+      [plmn, channelNumber, targetFactor, primaryNode],
+    );
+
+    if (weakRows.isNotEmpty) {
+      return (
+        cid: weakRows.first["cid"] as int,
+        description: weakRows.first["description"] as String? ?? "",
+        strongMatch: false,
+      );
+    }
+
+    return null;
   }
 
   static Future<List<CellTower>> fetchMapCellTowers(

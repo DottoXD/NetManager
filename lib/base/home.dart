@@ -277,34 +277,40 @@ class _HomeState extends State<Home> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               if (_currentPage == 0) ...[
-                /*ValueListenableBuilder(
-                  valueListenable: _homeDataGraphsNotifier,
-                  builder: (context, graphsEnabled, _) {
-                    if (!graphsEnabled) return const SizedBox.shrink();
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        ValueListenableBuilder(
-                          valueListenable: _graphsNotifier,
-                          builder: (context, callback, _) =>
-                              GraphsButton(onPressed: callback),
-                        ),
-                        const SizedBox(height: 4),
-                      ],
-                    );
-                  },
-                ),*/
                 ValueListenableBuilder(
                   valueListenable: _screenshotNotifier,
                   builder: (context, callback, _) =>
                       ScreenshotButton(onPressed: callback),
                 ),
                 const SizedBox(height: 4),
-                ValueListenableBuilder(
-                  valueListenable: _homeUpdateNotifier,
-                  builder: (context, callback, _) =>
-                      UpdateButton(onPressed: callback),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    ValueListenableBuilder(
+                      valueListenable: _homeDataGraphsNotifier,
+                      builder: (context, graphsEnabled, _) {
+                        if (!graphsEnabled) return const SizedBox.shrink();
+
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 4),
+                          child: Transform.translate(
+                            offset: const Offset(0, 2),
+                            child: ValueListenableBuilder(
+                              valueListenable: _graphsNotifier,
+                              builder: (context, callback, _) =>
+                                  GraphsButton(onPressed: callback),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    ValueListenableBuilder(
+                      valueListenable: _homeUpdateNotifier,
+                      builder: (context, callback, _) =>
+                          UpdateButton(onPressed: callback),
+                    ),
+                  ],
                 ),
               ] else if (_currentPage == 1) ...[
                 ValueListenableBuilder(

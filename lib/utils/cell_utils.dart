@@ -106,7 +106,7 @@ IconData getTrailingIcon(SIMData simData, String val) {
     return Icons.numbers_outlined;
   }
 
-  return Icons.question_mark; //Unknown icon
+  return Icons.question_mark_outlined; //Unknown icon
 }
 
 String createCellContent(BuildContext context, CellData cell) {

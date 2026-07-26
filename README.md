@@ -7,7 +7,7 @@ Built from scratch with Flutter, NetManager respects Material guidelines for use
 ## Supported platforms
 NetManager currently has stable support for Android 7+ (SDK ver. 24). 
 A dedicated companion Wear OS app is also available with the "Play Services" flavor of NetManager.
-iOS support is currently unplanned due to missing public APIs to reliably retrieve cell data.
+iOS support is currently being evaluated, although it misses the necessary APIs to reliably retrieve cell data.
 Upcoming releases prior to version 1.0.0 plan to introduce support for Android auto (companion), Linux (mobile) and rooted Android devices (for raw diagnostic data; NetManager already works normally on rooted devices).
 
 ## Data accuracy

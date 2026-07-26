@@ -2,10 +2,8 @@ Categories:
   - System
   - Internet
 AuthorName: DottoXD
-AuthorEmail: hi@dotto.pw
 AuthorWebsite: https://dotto.pw
-License: GPL-3.0-or-later
-WebSite: https://netmanager.dotto.pw
+License: GPL-3.0-only
 SourceCode: https://github.com/DottoXD/NetManager
 IssueTracker: https://github.com/DottoXD/NetManager/issues
 
@@ -15,11 +13,12 @@ RepoType: git
 Repo: https://github.com/DottoXD/NetManager.git
 
 Builds:
-  - versionName: 0.1.1
-    versionCode: 7
+  - versionName: 0.1.2
+    versionCode: 8
+    commit: 0.1.2
     output: build/app/outputs/flutter-apk/app-foss-release.apk
     srclibs:
-      - flutter@stable
+      - flutter@3.44.7
     rm:
       - ios
       - linux
@@ -30,7 +29,7 @@ Builds:
     prebuild:
       - export PUB_CACHE=$(pwd)/.pub-cache
       - $$flutter$$/bin/flutter config --no-analytics
-      - $$flutter$$/bin/flutter packages pub get
+      - $$flutter$$/bin/flutter pub get
     scandelete:
       - .pub-cache
     build:
@@ -42,5 +41,5 @@ Builds:
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
 UpdateCheckData: pubspec.yaml|version:\s.+\+(\d+)|.|version:\s(.+)\+
-CurrentVersion: 0.1.1
-CurrentVersionCode: 7
+CurrentVersion: 0.1.2
+CurrentVersionCode: 8

@@ -2,6 +2,7 @@
   "unexpectedError": "An unexpected error occured!",
   "unknownCell": "Unknown cell",
   "likely": "Likely",
+  "possibly": "Possibly",
   "systemLanguage": "System language",
   "openDialog": "Open dialog",
   "view": "View",
@@ -246,6 +247,8 @@
   "settingsBearingLineDescription": "Show a bearing line directed to the cell tower you're connected to starting from your position inside of the map.",
   "settingsContributeTitle": "Contribute",
   "settingsContributeDescription": "Contribute to NetManager on GitHub.",
+  "settingsPrivacyTitle": "Privcy policy",
+  "settingsPrivacyDescription": "Review NetManager's privacy policy.",
   "settingsTelegramTitle": "Telegram",
   "@settingsTelegramTitle": {
     "description": "Should not be translated."
@@ -270,5 +273,15 @@
       }
     }
   },
-  "noMinimumCellsFiltering": "Filter towers by minimum cell count."
+  "noMinimumCellsFiltering": "Filter towers by minimum cell count.",
+  "homeGraphs": "Graphs",
+  "homeGraphsEmpty": "No graph data yet.",
+  "privacyPolicyTitle": "Your privacy matters",
+  "privacyPolicyDescription": "Before you continue, please read how NetManager collects, uses, and stores your data. You need to accept the privacy policy to use the app.",
+  "privacyPolicyReadFull": "Read the full privacy policy",
+  "privacyPolicyAcceptCheckbox": "I have read and accept the Privacy Policy",
+  "privacyPolicyAccept": "Accept & continue",
+  "permissionPhoneState": "Phone state",
+  "permissionLocation": "Location",
+  "permissionBackgroundLocation": "Background location"
 }

@@ -2,6 +2,7 @@
   "unexpectedError": "Si è verificato un errore imprevisto!",
   "unknownCell": "Cella sconosciuta",
   "likely": "Probabilmente",
+  "possibly": "Potenzialmente",
   "systemLanguage": "Lingua di sistema",
   "openDialog": "Apri finestra",
   "view": "Visualizza",
@@ -246,6 +247,8 @@
   "settingsBearingLineDescription": "Mostra nella mappa una linea che parte dalla tua posizione e arriva alla posizione dell'antenna a cui sei collegato.",
   "settingsContributeTitle": "Contribuisci",
   "settingsContributeDescription": "Contribuisci allo sviluppo di NetManager su GitHub.",
+  "settingsPrivacyTitle": "Privcy policy",
+  "settingsPrivacyDescription": "Visiona la privacy policy di NetManager.",
   "settingsTelegramTitle": "Telegram",
   "@settingsTelegramTitle": {
     "description": "Should not be translated."
@@ -270,5 +273,15 @@
       }
     }
   },
-  "noMinimumCellsFiltering": "Filtra le antenne in base alla quantità di celle."
+  "noMinimumCellsFiltering": "Filtra le antenne in base alla quantità di celle.",
+  "homeGraphs": "Grafici",
+  "homeGraphsEmpty": "Non ci sono ancora dati per i grafici.",
+  "privacyPolicyTitle": "La tua privacy è importante.",
+  "privacyPolicyDescription": "Prima di continuare, leggi come NetManager colleziona, usa e salva i tuoi dati. Devi accettare la Privacy Policy prima di poter usare l'app.",
+  "privacyPolicyReadFull": "Leggi la Privacy Policy",
+  "privacyPolicyAcceptCheckbox": "Ho letto e accetto la Privacy Policy",
+  "privacyPolicyAccept": "Accetta e continua",
+  "permissionPhoneState": "Stato del telefono",
+  "permissionLocation": "Posizione",
+  "permissionBackgroundLocation": "Posizione in background"
 }

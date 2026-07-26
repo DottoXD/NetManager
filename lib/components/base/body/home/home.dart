@@ -6,8 +6,12 @@ import 'package:netmanager/components/base/body/home/widgets/empty_state.dart';
 import 'package:netmanager/components/base/body/home/widgets/loading_state.dart';
 import 'package:netmanager/components/base/body/home/widgets/network_data.dart';
 import 'package:netmanager/components/base/body/home/widgets/primary_cell_card.dart';
+import 'package:netmanager/components/modals/record/graphs_modal.dart';
 import 'package:netmanager/database/cell_database.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
+import 'package:netmanager/types/cell/cell_data.dart';
+import 'package:netmanager/types/graph/graph_metric.dart';
+import 'package:netmanager/types/graph/graph_point.dart';
 import 'package:netmanager/utils/cell_utils.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 import 'package:netmanager/utils/screenshot_helper.dart';
@@ -71,6 +75,10 @@ class _HomeBodyState extends State<HomeBody> {
   final ValueNotifier<bool> _isUpdatingNotifier = ValueNotifier(false);
   final ValueNotifier<bool> _altCellViewNotifier = ValueNotifier(false);
 
+  final ValueNotifier<int> _graphsUpdateNotifier = ValueNotifier(0);
+  final Map<int, Map<String, List<GraphPoint>>> _graphHistory = {};
+  final Map<int, Map<String, ({String label, String unit})>> _graphInfo = {};
+
   late AppLocalizations _appLocalizations;
 
   int _simCount = 0;
@@ -82,6 +90,15 @@ class _HomeBodyState extends State<HomeBody> {
   int _factor = 1;
 
   final Map<int, String> _cellDescriptions = {};
+  final Map<int, ({int cid, bool strongMatch})> _guessedCids = {};
+
+  String? _lastCellExistsPlmn;
+  int? _lastCellExistsCid;
+  bool _lastCellExistsResult = false;
+
+  String? _guessCachePlmn;
+  final Map<String, ({int cid, String description, bool strongMatch})?>
+  _guessCache = {};
 
   @override
   void initState() {
@@ -100,6 +117,7 @@ class _HomeBodyState extends State<HomeBody> {
         platform: platform,
       ),
     );
+    widget.onGraphsButtonPressed?.call(_openGraphsSheet);
 
     startTimer();
 
@@ -119,6 +137,7 @@ class _HomeBodyState extends State<HomeBody> {
 
     _isUpdatingNotifier.dispose();
     _altCellViewNotifier.dispose();
+    _graphsUpdateNotifier.dispose();
 
     super.dispose();
   }
@@ -200,6 +219,84 @@ class _HomeBodyState extends State<HomeBody> {
 
         _cellDescriptions.addAll(foundData);
       }
+
+      _guessedCids.clear();
+
+      if (_guessCachePlmn != _plmn) {
+        _guessCache.clear();
+        _guessCachePlmn = _plmn;
+      }
+
+      final int? primaryCid = node;
+      final bool primaryHasOwnCid =
+          primaryCid != null &&
+          isValidString(simData.primaryCell.cellIdentifier) &&
+          primaryCid != 0;
+
+      bool primaryConfirmed = false;
+
+      if (widget.externalDatabasesNotifier.value &&
+          _plmn.isNotEmpty &&
+          primaryHasOwnCid) {
+        if (_lastCellExistsPlmn == _plmn && _lastCellExistsCid == primaryCid) {
+          primaryConfirmed = _lastCellExistsResult;
+        } else {
+          primaryConfirmed = await CellDatabase.cellExists(_plmn, primaryCid);
+          _lastCellExistsPlmn = _plmn;
+          _lastCellExistsCid = primaryCid;
+          _lastCellExistsResult = primaryConfirmed;
+        }
+      }
+
+      if (primaryConfirmed) {
+        final int confirmedPrimaryCid = primaryCid!;
+        final int primaryNode = confirmedPrimaryCid ~/ _factor;
+        final int primaryLastDigit = confirmedPrimaryCid % 10;
+
+        for (int i = 0; i < simData.activeCells.length; i++) {
+          final CellData cell = simData.activeCells[i];
+
+          final int? ownCid = int.tryParse(cell.cellIdentifier);
+          final bool hasOwnCid =
+              ownCid != null &&
+              isValidString(cell.cellIdentifier) &&
+              ownCid != 0;
+
+          if (hasOwnCid ||
+              !cell.isRegistered ||
+              !isValidInt(cell.channelNumber)) {
+            continue;
+          }
+
+          final String cacheKey =
+              "${cell.channelNumber}-$primaryNode-$primaryLastDigit";
+
+          final guess = _guessCache.containsKey(cacheKey)
+              ? _guessCache[cacheKey]
+              : await CellDatabase.guessActiveCellCid(
+                  plmn: _plmn,
+                  channelNumber: cell.channelNumber,
+                  targetFactor: conversionFactor(cell),
+                  primaryNode: primaryNode,
+                  primaryLastDigit: primaryLastDigit,
+                );
+
+          _guessCache[cacheKey] = guess;
+
+          if (guess != null) {
+            _guessedCids[i] = (cid: guess.cid, strongMatch: guess.strongMatch);
+            if (guess.description.isNotEmpty) {
+              _cellDescriptions[guess.cid] = guess.description;
+            }
+          }
+        }
+      }
+
+      if (widget.homeDataGraphsNotifier.value) {
+        _recordGraphData(simData.primaryCell);
+      }
+
+      _graphsUpdateNotifier.value++;
 
       setState(() {
         _simData = simData;
@@ -315,10 +412,12 @@ class _HomeBodyState extends State<HomeBody> {
                         CellSection(
                           title: _appLocalizations.homeActiveCells,
                           cells: _simData!.activeCells,
-                          factor: _factor,
                           isActive: true,
                           descriptions: widget.externalDatabasesNotifier.value
                               ? _cellDescriptions
+                              : {},
+                          guessedCids: widget.externalDatabasesNotifier.value
+                              ? _guessedCids
                               : {},
                         ),
                     ],
@@ -329,11 +428,11 @@ class _HomeBodyState extends State<HomeBody> {
                 CellSection(
                   title: _appLocalizations.homeNeighborCells,
                   cells: _simData!.neighborCells,
-                  factor: _factor,
                   isActive: false,
                   descriptions: widget.externalDatabasesNotifier.value
                       ? _cellDescriptions
                       : {},
+                  guessedCids: const {},
                 ),
               ],
               ValueListenableBuilder(
@@ -356,6 +455,129 @@ class _HomeBodyState extends State<HomeBody> {
           ),
         ],
       ),
+    );
+  }
+
+  void _recordGraphData(CellData primaryCell) {
+    final int simSlot = widget.currentSimSlotNotifier.value;
+    final int dataRetentionTime = widget.homeGraphsRetentionTimeNotifier.value;
+    final DateTime now = DateTime.now();
+    final DateTime timeDiff = now.subtract(
+      Duration(seconds: dataRetentionTime),
+    );
+
+    final Map<String, List<GraphPoint>> history = _graphHistory.putIfAbsent(
+      simSlot,
+      () => {},
+    );
+    final Map<String, ({String label, String unit})> meta = _graphInfo
+        .putIfAbsent(simSlot, () => {});
+
+    final List<(String key, String label, String unit, int value)> values = [
+      ("rawSignal", primaryCell.rawSignalString, "dBm", primaryCell.rawSignal),
+      (
+        "processedSignal",
+        primaryCell.processedSignalString,
+        "dBm",
+        primaryCell.processedSignal,
+      ),
+      (
+        "signalQuality",
+        primaryCell.signalQualityString,
+        "dB",
+        primaryCell.signalQuality,
+      ),
+      (
+        "signalNoise",
+        primaryCell.signalNoiseString,
+        "dB",
+        primaryCell.signalNoise,
+      ),
+      (
+        "timingAdvance",
+        primaryCell.timingAdvanceString,
+        "",
+        primaryCell.timingAdvance,
+      ),
+    ];
+
+    for (final (key, label, unit, value) in values) {
+      if (!isValidString(label) || !isValidInt(value)) continue;
+
+      meta[key] = (label: label, unit: unit);
+
+      final List<GraphPoint> series = history.putIfAbsent(key, () => []);
+      series.add(GraphPoint(time: now, value: value.toDouble()));
+      series.removeWhere((p) => p.time.isBefore(timeDiff));
+    }
+
+    history.removeWhere((key, series) {
+      series.removeWhere((p) => p.time.isBefore(timeDiff));
+
+      if (series.isEmpty) {
+        meta.remove(key);
+        return true;
+      }
+
+      return false;
+    });
+  }
+
+  List<GraphMetric> _buildGraphMetrics() {
+    final int simSlot = widget.currentSimSlotNotifier.value;
+    final Map<String, List<GraphPoint>> history =
+        _graphHistory[simSlot] ?? const {};
+    final Map<String, ({String label, String unit})> meta =
+        _graphInfo[simSlot] ?? const {};
+
+    const List<String> order = [
+      "rawSignal",
+      "processedSignal",
+      "signalQuality",
+      "signalNoise",
+      "timingAdvance",
+    ];
+
+    final List<GraphMetric> graphMetrics = [];
+
+    for (String metric in order) {
+      final List<GraphPoint>? series = history[metric];
+      final ({String label, String unit})? info = meta[metric];
+
+      if (series == null || series.isEmpty || info == null) continue;
+
+      final int latest = series.last.value.toInt();
+      final String displayValue = info.unit.isEmpty
+          ? "$latest"
+          : "$latest${info.unit}";
+
+      graphMetrics.add(
+        GraphMetric(
+          label: info.label,
+          displayValue: displayValue,
+          history: List.unmodifiable(series),
+        ),
+      );
+    }
+
+    return graphMetrics;
+  }
+
+  void _openGraphsSheet() {
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
+      ),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (BuildContext context) {
+        return GraphsModal(
+          graphsUpdateNotifier: _graphsUpdateNotifier,
+          dataRetentionSeconds: widget.homeGraphsRetentionTimeNotifier.value,
+          metricsBuilder: _buildGraphMetrics,
+        );
+      },
     );
   }
 
