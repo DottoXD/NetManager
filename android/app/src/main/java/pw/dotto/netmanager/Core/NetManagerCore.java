@@ -53,7 +53,7 @@ import pw.dotto.netmanager.Utils.Permissions;
  * data sources and pretty much everything else related to mobile cell data.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.1.2
  */
 public class NetManagerCore {
     private static volatile NetManagerCore instance;
@@ -187,7 +187,7 @@ public class NetManagerCore {
 
         SIMData processed = raw;
         for (Postprocessor postprocessor : postprocessors)
-            processed = postprocessor.process(processed, simSlotState.simId);
+            processed = postprocessor.process(processed, simSlotState.simId, this);
 
         emitEventsIfChanged(simSlotState, processed);
         simStateCache.updateSimData(simSlotState.simId, processed);

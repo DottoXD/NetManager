@@ -1,6 +1,7 @@
 package pw.dotto.netmanager.Core.Processors.Postprocessors;
 
 import pw.dotto.netmanager.Core.Mobile.SIMData;
+import pw.dotto.netmanager.Core.NetManagerCore;
 
 /**
  * NetManager's Postprocessor interface is the template for a cell data
@@ -9,8 +10,8 @@ import pw.dotto.netmanager.Core.Mobile.SIMData;
  * mobile cells are fully processed.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.1.2
  */
 public interface Postprocessor {
-    SIMData process(SIMData data, int simId);
+    SIMData process(SIMData data, int simId, NetManagerCore netManagerCore);
 }

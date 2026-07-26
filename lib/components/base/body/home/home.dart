@@ -262,9 +262,7 @@ class _HomeBodyState extends State<HomeBody> {
               isValidString(cell.cellIdentifier) &&
               ownCid != 0;
 
-          if (hasOwnCid ||
-              !cell.isRegistered ||
-              !isValidInt(cell.channelNumber)) {
+          if (hasOwnCid || !isValidInt(cell.channelNumber)) {
             continue;
           }
 

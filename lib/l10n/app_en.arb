@@ -7,7 +7,16 @@
   "openDialog": "Open dialog",
   "view": "View",
   "openInBrowser": "Open in a browser",
-  "unknownBand": "Unknown band",
+  "unknownBand": "Unknown {technology}band",
+  "@unknownBand": {
+    "description": "A text saying that a cell band is unknown.",
+    "placeholders": {
+      "technology": {
+        "type": "String",
+        "example": "5G "
+      }
+    }
+  },
   "cellBandwidth": "Bandwidth: {bandwidth}MHz",
   "@cellBandwidth": {
     "description": "A text with a cell's bandwidth in MHz.",

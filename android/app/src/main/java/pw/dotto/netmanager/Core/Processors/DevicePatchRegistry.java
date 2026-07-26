@@ -15,7 +15,7 @@ import pw.dotto.netmanager.Utils.DeviceData;
  * objects or cell lists (preprocessing) only on certain devices.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.1.2
  */
 public final class DevicePatchRegistry {
     private static final List<Entry> PREPROCESSOR_ENTRIES = new ArrayList<>();
@@ -38,6 +38,7 @@ public final class DevicePatchRegistry {
             if (entry.matches(deviceData))
                 result.add((Preprocessor) entry.factory.get());
         }
+
         return result;
     }
 
@@ -47,6 +48,7 @@ public final class DevicePatchRegistry {
             if (entry.matches(deviceData))
                 result.add((Postprocessor) entry.factory.get());
         }
+
         return result;
     }
 }

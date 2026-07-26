@@ -1,6 +1,7 @@
 package pw.dotto.netmanager.Core.Processors;
 
 import pw.dotto.netmanager.Core.Processors.Postprocessors.PixelTAPostprocessor;
+import pw.dotto.netmanager.Core.Processors.Postprocessors.SamsungNrNsaPostprocessor;
 
 /**
  * NetManager's DevicePatches class is a core component which registers
@@ -20,6 +21,7 @@ public class DevicePatches {
             return;
 
         DevicePatchRegistry.registerPostprocessor("google", "*", PixelTAPostprocessor::new);
+        DevicePatchRegistry.registerPostprocessor("samsung", "qcom", SamsungNrNsaPostprocessor::new);
 
         registered = true;
     }

@@ -677,7 +677,7 @@ class _SettingsBodyState extends State<SettingsBody>
           if (_homeDataGraphs)
             Slider(
               inactiveColor: Theme.of(context).colorScheme.outlineVariant,
-              value: _maximumLogs.toDouble(),
+              value: _homeGraphsRetentionTime.toDouble(),
               max: 600,
               min: 6,
               label: _homeGraphsRetentionTime.toString(),

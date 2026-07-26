@@ -111,16 +111,15 @@ IconData getTrailingIcon(SIMData simData, String val) {
 
 String createCellContent(BuildContext context, CellData cell) {
   AppLocalizations appLocalizations = AppLocalizations.of(context)!;
+
   String cellContent = "";
   int factor = conversionFactor(cell);
 
   int? cellId = int.tryParse(cell.cellIdentifier);
   if (cellId != null && isValidString(cell.cellIdentifier) && cellId != 0) {
     cellContent += "${(cellId / factor).floor()}/${cellId % factor}, ";
-  } else if (cell.isRegistered) {
-    cellContent += "%node%, ";
   } else {
-    cellContent += "${appLocalizations.unknownCell}, ";
+    cellContent += "%node%, ";
   }
 
   if (isValidInt(cell.bandwidth) && isValidString(cell.bandwidthString)) {

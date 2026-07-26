@@ -45,6 +45,21 @@ class CellListItem extends StatelessWidget {
     return index;
   }
 
+  String _genLabel(String channelNumberString) {
+    switch (channelNumberString) {
+      case "ARFCN":
+        return "2G ";
+      case "UARFCN":
+        return "3G ";
+      case "EARFCN":
+        return "4G ";
+      case "NR-ARFCN":
+        return "5G ";
+      default:
+        return "";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     AppLocalizations appLocalizations = AppLocalizations.of(context)!;
@@ -74,7 +89,9 @@ class CellListItem extends StatelessWidget {
           title: Text(
             (cell.basicCellData.band > 0
                 ? "${cell.channelNumberString == "NR-ARFCN" ? "N" : "B"}${cell.basicCellData.band} ${isValidInt(cell.basicCellData.frequency) ? "(${cell.basicCellData.frequency}MHz)" : ""}"
-                : appLocalizations.unknownBand),
+                : appLocalizations
+                      .unknownBand(_genLabel(cell.channelNumberString))
+                      .trim()),
           ),
           subtitle: Text(cellContent),
           trailing: showSignalIcon

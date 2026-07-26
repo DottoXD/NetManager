@@ -12,22 +12,22 @@ import pw.dotto.netmanager.Utils.DeviceData;
  * the various entries that shall be ran on certain devices.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.1.2
  */
 public class Entry {
-    private final DeviceData deviceData;
+    private final DeviceData targetData;
     public final Supplier<?> factory;
 
     public Entry(String manufacturer, String modem, Supplier<?> factory) {
-        this.deviceData = new DeviceData(manufacturer, modem);
+        this.targetData = new DeviceData(manufacturer, modem);
         this.factory = factory;
     }
 
     public boolean matches(DeviceData deviceData) {
-        boolean manufacturerMatches = deviceData.getManufacturer().equals("*")
-                || this.deviceData.getManufacturer().equalsIgnoreCase(deviceData.getManufacturer());
-        boolean modemMatches = deviceData.getModem().equals("*")
-                || this.deviceData.getModem().equalsIgnoreCase(deviceData.getModem());
+        boolean manufacturerMatches = this.targetData.getManufacturer().trim().equals("*")
+                || this.targetData.getManufacturer().trim().equalsIgnoreCase(deviceData.getManufacturer().trim());
+        boolean modemMatches = this.targetData.getModem().trim().equals("*")
+                || this.targetData.getModem().trim().equalsIgnoreCase(deviceData.getModem().trim());
 
         return manufacturerMatches && modemMatches;
     }
