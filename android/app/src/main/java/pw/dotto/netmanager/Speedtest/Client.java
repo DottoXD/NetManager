@@ -12,6 +12,8 @@ import androidx.annotation.NonNull;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -22,9 +24,12 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.flutter.plugin.common.MethodChannel;
 import okhttp3.MediaType;
@@ -44,7 +49,7 @@ import okio.BufferedSink;
  * test software solution.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.1.2
  */
 public class Client {
     private static final int BUFFER_SIZE = 256 * 1024;
@@ -63,23 +68,41 @@ public class Client {
     private static final double STABILITY_THRESHOLD = 0.065;
     private static final int STABILITY_MIN_SAMPLES = 10;
     private static final int GLOBAL_PING_INTERVAL_MS = 500;
+    private static final int OVERALL_TEST_TIMEOUT_MS = 90000;
 
     private OkHttpClient httpClient;
 
     private final int streams = Math.max(2, Math.min(Runtime.getRuntime().availableProcessors(), 8));
 
     private final ExecutorService executor = Executors.newFixedThreadPool(streams + 2);
+    private final ScheduledExecutorService watchdogExecutor = Executors.newSingleThreadScheduledExecutor();
+    private final ExecutorService dnsExecutor = Executors.newFixedThreadPool(2);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private final AtomicLong globalPingsSent = new AtomicLong(0);
     private final AtomicLong globalPingsFailed = new AtomicLong(0);
 
+    private final AtomicBoolean errorReported = new AtomicBoolean(false);
+
     public void runSpeedTest(Context context, String pingUrl, String downloadUrl, String uploadUrl,
             MethodChannel channel) {
-        executor.execute(() -> {
+        errorReported.set(false);
+
+        ScheduledFuture<?>[] watchdogHolder = new ScheduledFuture<?>[1];
+        AtomicReference<Future<?>> testFutureRef = new AtomicReference<>();
+
+        watchdogHolder[0] = watchdogExecutor.schedule(() -> {
+            Future<?> testFuture = testFutureRef.get();
+            if (testFuture != null && !testFuture.isDone()) {
+                testFuture.cancel(true);
+                reportError(channel, "Connection timed out.");
+            }
+        }, OVERALL_TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+
+        testFutureRef.set(executor.submit(() -> {
             ConnectivityManager connectivityManager = (ConnectivityManager) context
                     .getSystemService(Context.CONNECTIVITY_SERVICE);
-            ConnectivityManager.NetworkCallback networkCallback = null;
+            AtomicReference<ConnectivityManager.NetworkCallback> callbackRef = new AtomicReference<>();
 
             try {
                 globalPingsSent.set(0);
@@ -87,7 +110,7 @@ public class Client {
 
                 updateUI(channel, "LATENCY", 0, 0.0);
 
-                Network mobileNetwork = getMobileNetwork(connectivityManager);
+                Network mobileNetwork = getMobileNetwork(connectivityManager, callbackRef);
                 OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder()
                         .connectTimeout(4, TimeUnit.SECONDS)
                         .readTimeout(8, TimeUnit.SECONDS)
@@ -96,7 +119,16 @@ public class Client {
 
                 if (mobileNetwork != null) {
                     clientBuilder.socketFactory(mobileNetwork.getSocketFactory());
-                    clientBuilder.dns(hostname -> Arrays.asList(mobileNetwork.getAllByName(hostname)));
+                    clientBuilder.dns(hostname -> {
+                        Future<List<InetAddress>> lookup = dnsExecutor.submit(
+                                () -> Arrays.asList(mobileNetwork.getAllByName(hostname)));
+                        try {
+                            return lookup.get(4, TimeUnit.SECONDS);
+                        } catch (Exception e) {
+                            lookup.cancel(true);
+                            throw new UnknownHostException("DNS lookup timed out for " + hostname);
+                        }
+                    });
                 }
 
                 this.httpClient = clientBuilder.build();
@@ -137,18 +169,24 @@ public class Client {
                 });
 
             } catch (Exception e) {
-                // todo
+                String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+                reportError(channel, message);
             } finally {
-                if (connectivityManager != null && networkCallback != null) {
+                if (watchdogHolder[0] != null) {
+                    watchdogHolder[0].cancel(false);
+                }
+
+                ConnectivityManager.NetworkCallback registeredCallback = callbackRef.get();
+                if (connectivityManager != null && registeredCallback != null) {
                     try {
-                        connectivityManager.unregisterNetworkCallback(networkCallback);
+                        connectivityManager.unregisterNetworkCallback(registeredCallback);
                     } catch (Exception ignored) {
                     }
                 }
 
                 shutdown();
             }
-        });
+        }));
     }
 
     private LatencyResult measureLatency(String pingUrl, MethodChannel channel) {
@@ -207,8 +245,9 @@ public class Client {
 
             try {
                 Thread.sleep(PING_INTERVAL_MS);
-            } catch (InterruptedException ignored) {
-                // todo
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Speed test cancelled: " + e.getMessage());
             }
         }
 
@@ -235,40 +274,49 @@ public class Client {
         long startTime = System.currentTimeMillis();
 
         List<Future<?>> futures = new ArrayList<>();
-        for (int i = 0; i < streams; i++) {
-            futures.add(executor.submit(() -> {
-                Request request = new Request.Builder()
-                        .url(downloadUrl + "?ckSize=100")
-                        .addHeader("Accept-Encoding", "identity")
-                        .build();
 
-                while (running.get()) {
-                    try (Response response = httpClient.newCall(request).execute()) {
-                        InputStream is = response.body().byteStream();
-                        byte[] buf = new byte[BUFFER_SIZE];
-                        int read;
-                        long tempBytes = 0;
+        try {
+            for (int i = 0; i < streams; i++) {
+                futures.add(executor.submit(() -> {
+                    Request request = new Request.Builder()
+                            .url(downloadUrl + "?ckSize=100")
+                            .addHeader("Accept-Encoding", "identity")
+                            .build();
 
-                        while (running.get() && (read = is.read(buf)) != -1) {
-                            tempBytes += read;
-                            if (tempBytes >= BATCH_UPDATE_THRESHOLD) {
-                                totalBytes.addAndGet(tempBytes);
-                                tempBytes = 0;
+                    while (running.get()) {
+                        try (Response response = httpClient.newCall(request).execute()) {
+                            InputStream is = response.body().byteStream();
+                            byte[] buf = new byte[BUFFER_SIZE];
+                            int read;
+                            long tempBytes = 0;
+
+                            while (running.get() && (read = is.read(buf)) != -1) {
+                                tempBytes += read;
+                                if (tempBytes >= BATCH_UPDATE_THRESHOLD) {
+                                    totalBytes.addAndGet(tempBytes);
+                                    tempBytes = 0;
+                                }
+                            }
+                            totalBytes.addAndGet(tempBytes);
+                        } catch (Exception ignored) {
+                            try {
+                                Thread.sleep(100);
+                            } catch (InterruptedException e) {
+                                return;
                             }
                         }
-                        totalBytes.addAndGet(tempBytes);
-                    } catch (Exception ignored) {
-                        try {
-                            Thread.sleep(100);
-                        } catch (InterruptedException e) {
-                            return;
-                        }
                     }
-                }
-            }));
-        }
+                }));
+            }
 
-        return monitorProgress(channel, "DOWNLOAD", startTime, totalBytes, running);
+            return monitorProgress(channel, "DOWNLOAD", startTime, totalBytes, running);
+        } finally {
+            running.set(false);
+
+            for (Future<?> f : futures) {
+                f.cancel(true);
+            }
+        }
     }
 
     private double measureUpload(String uploadUrl, MethodChannel channel) throws Exception {
@@ -280,39 +328,48 @@ public class Client {
         new Random().nextBytes(payload);
 
         List<Future<?>> futures = new ArrayList<>();
-        for (int i = 0; i < streams; i++) {
-            futures.add(executor.submit(() -> {
-                RequestBody requestBody = new RequestBody() {
-                    @Override
-                    public MediaType contentType() {
-                        return MediaType.parse("application/octet-stream");
-                    }
 
-                    @Override
-                    public void writeTo(@NonNull BufferedSink sink) throws IOException {
-                        long tempBytes = 0;
-
-                        while (running.get()) {
-                            sink.write(payload);
-                            tempBytes += payload.length;
-                            if (tempBytes >= BATCH_UPDATE_THRESHOLD) {
-                                totalBytes.addAndGet(tempBytes);
-                                tempBytes = 0;
-                            }
+        try {
+            for (int i = 0; i < streams; i++) {
+                futures.add(executor.submit(() -> {
+                    RequestBody requestBody = new RequestBody() {
+                        @Override
+                        public MediaType contentType() {
+                            return MediaType.parse("application/octet-stream");
                         }
 
-                        totalBytes.addAndGet(tempBytes);
+                        @Override
+                        public void writeTo(@NonNull BufferedSink sink) throws IOException {
+                            long tempBytes = 0;
+
+                            while (running.get()) {
+                                sink.write(payload);
+                                tempBytes += payload.length;
+                                if (tempBytes >= BATCH_UPDATE_THRESHOLD) {
+                                    totalBytes.addAndGet(tempBytes);
+                                    tempBytes = 0;
+                                }
+                            }
+
+                            totalBytes.addAndGet(tempBytes);
+                        }
+                    };
+
+                    Request request = new Request.Builder().url(uploadUrl).post(requestBody).build();
+                    try (Response response = httpClient.newCall(request).execute()) {
+                    } catch (Exception ignored) {
                     }
-                };
+                }));
+            }
 
-                Request request = new Request.Builder().url(uploadUrl).post(requestBody).build();
-                try (Response response = httpClient.newCall(request).execute()) {
-                } catch (Exception ignored) {
-                }
-            }));
+            return monitorProgress(channel, "UPLOAD", startTime, totalBytes, running);
+        } finally {
+            running.set(false);
+
+            for (Future<?> f : futures) {
+                f.cancel(true);
+            }
         }
-
-        return monitorProgress(channel, "UPLOAD", startTime, totalBytes, running);
     }
 
     private double monitorProgress(MethodChannel channel, String stage, long startTime, AtomicLong totalBytes,
@@ -404,7 +461,8 @@ public class Client {
         });
     }
 
-    private Network getMobileNetwork(ConnectivityManager connectivityManager) {
+    private Network getMobileNetwork(ConnectivityManager connectivityManager,
+            AtomicReference<ConnectivityManager.NetworkCallback> callbackOut) {
         if (connectivityManager == null)
             return null;
 
@@ -429,6 +487,7 @@ public class Client {
             }
         };
 
+        callbackOut.set(callback);
         try {
             connectivityManager.requestNetwork(request, callback);
             latch.await(5, TimeUnit.SECONDS);
@@ -439,15 +498,36 @@ public class Client {
         return selectedNetwork[0];
     }
 
+    private void reportError(MethodChannel channel, String message) {
+        if (errorReported.compareAndSet(false, true)) {
+            mainHandler.post(() -> channel.invokeMethod("error", message));
+        }
+    }
+
     public void shutdown() {
         executor.shutdown();
-        try {
-            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+        watchdogExecutor.shutdown();
+        dnsExecutor.shutdown();
+
+        new Thread(() -> {
+            try {
+                if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                    executor.shutdownNow();
+                }
+
+                if (!watchdogExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                    watchdogExecutor.shutdownNow();
+                }
+
+                if (!dnsExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                    dnsExecutor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
                 executor.shutdownNow();
+                dnsExecutor.shutdownNow();
+                watchdogExecutor.shutdownNow();
+                Thread.currentThread().interrupt();
             }
-        } catch (InterruptedException e) {
-            executor.shutdownNow();
-            Thread.currentThread().interrupt();
-        }
+        }).start();
     }
 }

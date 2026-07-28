@@ -67,7 +67,7 @@ class CellListItem extends StatelessWidget {
     String cellContent = createCellContent(context, cell).replaceAll(
       "%node%",
       (nodeVal != 0
-          ? "${strongGuess ? appLocalizations.likely : appLocalizations.possibly} ${(nodeVal / factor).floor()}"
+          ? "${strongGuess ? appLocalizations.likely : appLocalizations.possibly} ${(nodeVal / factor).floor()}/${nodeVal % factor}"
           : appLocalizations.unknownCell),
     );
 

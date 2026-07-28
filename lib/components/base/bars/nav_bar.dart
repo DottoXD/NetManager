@@ -13,9 +13,12 @@ class NavBar extends StatelessWidget {
     int page = currentPage;
 
     return NavigationBar(
+      labelTextStyle: WidgetStateProperty.resolveWith((states) {
+        return const TextStyle(overflow: TextOverflow.ellipsis);
+      }),
       destinations: [
         NavigationDestination(
-          icon: const Icon(Icons.person_outlined),
+          icon: const Icon(Icons.cell_tower_outlined),
           label: appLocalizations.navData,
         ),
         NavigationDestination(
