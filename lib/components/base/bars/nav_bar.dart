@@ -9,12 +9,22 @@ class NavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    AppLocalizations appLocalizations = AppLocalizations.of(context)!;
+    final AppLocalizations appLocalizations = AppLocalizations.of(context)!;
+    final ThemeData theme = Theme.of(context);
+
     int page = currentPage;
 
     return NavigationBar(
       labelTextStyle: WidgetStateProperty.resolveWith((states) {
-        return const TextStyle(overflow: TextOverflow.ellipsis);
+        final isSelected = states.contains(WidgetState.selected);
+        final baseStyle = theme.textTheme.labelMedium ?? const TextStyle();
+
+        return baseStyle.copyWith(
+          overflow: TextOverflow.ellipsis,
+          color: isSelected
+              ? theme.colorScheme.onSurface
+              : theme.colorScheme.onSurfaceVariant,
+        );
       }),
       destinations: [
         NavigationDestination(
