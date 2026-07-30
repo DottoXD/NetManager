@@ -4,6 +4,12 @@ A Material UI mobile network monitoring app built with ease-of-use and speed in 
 NetManager aims to be a powerful FOSS tool for everyday users, enthusiasts and professionals to gather mobile cell data in a simple, yet precise way.
 Built from scratch with Flutter, NetManager respects Material guidelines for user interfaces to seamlessly blend in with system applications.
 
+## Downloads and builds
+Official stable and pre-release builds are available in the [Releases](https://github.com/DottoXD/NetManager/actions) tab on GitHub.
+
+Development builds are available at [GitHub Actions](https://github.com/DottoXD/NetManager/actions).
+NetManager will be released on other platforms soon.
+
 ## Supported platforms
 NetManager currently has stable support for Android 7+ (SDK ver. 24). 
 A dedicated companion Wear OS app is also available with the "Play Services" flavor of NetManager.
@@ -32,11 +38,6 @@ All major data sources, such as the event log or the map trip logs, are fully ex
 ## Issues and pull requests
 Feel free to open an issue for any question, suggestion or any actual issue (such as the app returning wrong cell data) that you might be facing with NetManager.
 Pull requests are highly appreciated as long as they're tested.
-
-## Builds
-Development builds are available at [GitHub Actions](https://github.com/DottoXD/NetManager/actions).
-Official stable and pre-release builds are available in the [Releases](https://github.com/DottoXD/NetManager/actions) tab on GitHub.
-NetManager will be released on other platforms soon.
 
 ## License
 ```

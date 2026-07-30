@@ -6,6 +6,7 @@ AuthorWebsite: https://dotto.pw
 License: GPL-3.0-only
 SourceCode: https://github.com/DottoXD/NetManager
 IssueTracker: https://github.com/DottoXD/NetManager/issues
+Changelog: https://github.com/DottoXD/NetManager/releases
 
 AutoName: NetManager
 
@@ -18,7 +19,7 @@ Builds:
     commit: 0.1.2
     output: build/app/outputs/flutter-apk/app-foss-release.apk
     srclibs:
-      - flutter@3.44.7
+      - flutter@3.44.8
     rm:
       - ios
       - linux
@@ -27,16 +28,22 @@ Builds:
       - web
       - windows
     prebuild:
+      - git -C $$flutter$$ checkout -f 3.44.8
       - export PUB_CACHE=$(pwd)/.pub-cache
+      - export PATH=$$flutter$$/bin:$PATH
       - $$flutter$$/bin/flutter config --no-analytics
-      - $$flutter$$/bin/flutter pub get
+      - $$flutter$$/bin/flutter pub get --enforce-lockfile
+    scanignore:
+      - $$flutter$$/packages/flutter_tools/gradle/flutter.gradle
+      - $$flutter$$/bin/cache
     scandelete:
+      - $$flutter$$
       - .pub-cache
     build:
       - export PUB_CACHE=$(pwd)/.pub-cache
       - export PATH=$$flutter$$/bin/:$PATH
       - export GIT_COMMIT=$(git rev-parse --short HEAD)
-      - $$flutter$$/bin/flutter build apk --release --flavor foss --dart-define=SENTRY_DSN=temp --dart-define=flutter.flutter_map.unblockOSM=temp --dart-define=GIT_COMMIT=$GIT_COMMIT --dart-define=FOSS=true --target-platform android-arm,android-arm64
+      - flutter build apk --release --flavor foss --dart-define=SENTRY_DSN=N --dart-define=flutter.flutter_map.unblockOSM=N --dart-define=GIT_COMMIT=$GIT_COMMIT --dart-define=FOSS=true --target-platform android-arm,android-arm64
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags

@@ -52,6 +52,8 @@ import okio.BufferedSink;
  * @version 0.1.2
  */
 public class Client {
+    private static final String USER_AGENT = "NetManager-SpeedTest/0.1.2";
+
     private static final int BUFFER_SIZE = 256 * 1024;
     private static final int UPLOAD_CHUNK_SIZE = 1024 * 1024;
     private static final int UI_UPDATE_INTERVAL = 200;
@@ -115,7 +117,14 @@ public class Client {
                         .connectTimeout(4, TimeUnit.SECONDS)
                         .readTimeout(8, TimeUnit.SECONDS)
                         .writeTimeout(8, TimeUnit.SECONDS)
-                        .retryOnConnectionFailure(true);
+                        .retryOnConnectionFailure(true)
+                        .addInterceptor(chain -> {
+                            Request original = chain.request();
+                            Request withUA = original.newBuilder()
+                                    .header("User-Agent", USER_AGENT)
+                                    .build();
+                            return chain.proceed(withUA);
+                        });
 
                 if (mobileNetwork != null) {
                     clientBuilder.socketFactory(mobileNetwork.getSocketFactory());

@@ -150,6 +150,7 @@
   "noSpeedtestServers": "Nessun server raggiungibile trovato.",
   "noSpeedtestServer": "Nessun server",
   "speedtestLibrespeed": "Speed test by LibreSpeed",
+  "speedtestNoServerConfigured": "Nessun server di speed test configurato. Configurane uno nelle impostazioni (e.g. il server LibreSpeed ufficiale, https://librespeed.org).",
   "mapRecord": "Registrazione",
   "closeMapRecord": "Chiudi scheda",
   "mapSignalStrength": "Segnale",

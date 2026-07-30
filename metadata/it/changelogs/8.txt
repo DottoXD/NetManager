@@ -1,0 +1,8 @@
+Aggiunto un postprocessore della TA per i Google Pixel.
+Aggiunta una privacy policy.
+Fixate alcune definizioni degli NR-ARFCNS.
+Migliorato la schermata dei permessi.
+Aggiunto un postprocessore delle bande NR NSA per i telefoni Samsung con modem Qualcomm.
+Migliorata la funzionalità di speed test.
+Fixata la navbar sui telefoni con schermi più piccoli.
+Aggiunta una funzionalità di calcolo dei CID, utile quando un database è stato importato.

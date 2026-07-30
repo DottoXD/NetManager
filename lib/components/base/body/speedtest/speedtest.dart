@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -51,11 +52,10 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
   List<dynamic> _servers = [];
   int _fetchServersRetries = 0;
   bool _dialogOpen = false;
+  Timer? _serverUrlDebounce;
 
   String _getSpeedtestServer() {
-    String url = widget.speedtestInstanceUrlNotifier.value.trim().isEmpty
-        ? defaultSpeedtestServer
-        : widget.speedtestInstanceUrlNotifier.value.trim();
+    String url = widget.speedtestInstanceUrlNotifier.value.trim();
 
     if (url.endsWith("/")) {
       url = url.substring(0, url.length - 1);
@@ -160,17 +160,45 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     _selectedServerNotifier.dispose();
     _metricsNotifier.dispose();
     _serversLoadingNotifier.dispose();
+    _serverUrlDebounce?.cancel();
     platform.setMethodCallHandler(null);
     widget.speedtestInstanceUrlNotifier.removeListener(_onServerUrlChanged);
     super.dispose();
   }
 
   void _onServerUrlChanged() {
-    _fetchServersRetries = 0;
-    _fetchServers();
+    _serverUrlDebounce?.cancel();
+    _serverUrlDebounce = Timer(const Duration(milliseconds: 1000), () {
+      _fetchServersRetries = 0;
+      _fetchServers();
+    });
   }
 
   Future<void> _fetchServers() async {
+    if (_getSpeedtestServer().isEmpty) {
+      _serversLoadingNotifier.value = false;
+
+      setState(() {
+        _servers = [];
+        _selectedServerNotifier.value = null;
+      });
+
+      if (!_dialogOpen && mounted) {
+        _dialogOpen = true;
+
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return ErrorDialog(
+              e: _appLocalizations.speedtestNoServerConfigured,
+            );
+          },
+        ).then((_) => _dialogOpen = false);
+      }
+
+      return;
+    }
+
     _serversLoadingNotifier.value = true;
     String primaryUrl = "${_getSpeedtestServer()}/server-list.json";
     String fallbackUrl = "${_getSpeedtestServer()}/backend-servers/servers.php";
@@ -499,11 +527,13 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
             ValueListenableBuilder(
               valueListenable: widget.speedtestInstanceUrlNotifier,
               builder: (context, urlValue, child) {
+                final bool isUnconfigured = urlValue.trim().isEmpty;
                 final bool isDefaultServer =
                     urlValue.trim().isEmpty ||
                     urlValue.trim() == defaultSpeedtestServer;
 
-                if (!isDefaultServer) return const SizedBox.shrink();
+                if (!isUnconfigured && !isDefaultServer)
+                  return const SizedBox.shrink();
 
                 return Container(
                   width: double.maxFinite,
@@ -518,7 +548,9 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                     color: Theme.of(context).colorScheme.surfaceContainerLow,
                   ),
                   child: Text(
-                    _appLocalizations.speedtestLibrespeed,
+                    isUnconfigured
+                        ? _appLocalizations.speedtestNoServerConfigured
+                        : _appLocalizations.speedtestLibrespeed,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 12,

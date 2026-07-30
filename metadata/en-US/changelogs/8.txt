@@ -1,0 +1,8 @@
+Added a timing advance postprocessor for Google Pixels.
+Added a privacy policy.
+Fixed some NR-ARFCNS definitions.
+Improved the permissions screen.
+Added a NR NSA bands postprocessor for Qualcomm Samsung phones.
+Improved the speed test feature.
+Fixed the navbar on smaller screens.
+Added a CID guessing feature, useful when a database is imported.

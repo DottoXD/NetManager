@@ -65,9 +65,7 @@ class _HomeState extends State<Home> {
     "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
   );
   final ValueNotifier<int> _speedMeasurementUnitNotifier = ValueNotifier(1);
-  final ValueNotifier<String> _speedtestInstanceNotifier = ValueNotifier(
-    "https://librespeed.org",
-  );
+  final ValueNotifier<String> _speedtestInstanceNotifier = ValueNotifier("");
   final ValueNotifier<bool> _externalDatabasesNotifier = ValueNotifier(true);
   final ValueNotifier<bool> _databaseCellsInMapNotifier = ValueNotifier(true);
   final ValueNotifier<bool> _bearingLineNotifier = ValueNotifier(true);
@@ -105,8 +103,7 @@ class _HomeState extends State<Home> {
     _speedMeasurementUnitNotifier.value =
         widget.sharedPreferences.getInt("speedMeasurementUnit") ?? 1;
     _speedtestInstanceNotifier.value =
-        widget.sharedPreferences.getString("speedtestInstance") ??
-        "https://librespeed.org";
+        widget.sharedPreferences.getString("speedtestInstance") ?? "";
     _externalDatabasesNotifier.value =
         widget.sharedPreferences.getBool("externalDatabases") ?? true;
     _databaseCellsInMapNotifier.value =

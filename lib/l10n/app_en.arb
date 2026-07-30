@@ -150,6 +150,7 @@
   "noSpeedtestServers": "No reachable servers found.",
   "noSpeedtestServer": "No server",
   "speedtestLibrespeed": "Powered by LibreSpeed",
+  "speedtestNoServerConfigured": "No speedtest server configured. Please set one in the settings (e.g. the official LibreSpeed server, https://librespeed.org).",
   "mapRecord": "Record",
   "closeMapRecord": "Close record card",
   "mapSignalStrength": "Signal Strength",

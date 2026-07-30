@@ -118,7 +118,7 @@ class _SettingsBodyState extends State<SettingsBody>
   int _homeGraphsRetentionTime = 30;
   int _positionPrecision = 3;
   int _speedMeasurementUnit = 1;
-  String _speedtestInstance = "https://librespeed.org";
+  String _speedtestInstance = "";
   bool _externalDatabases = true;
   bool _databaseCellsInMap = true;
   bool _bearingLine = true;
@@ -277,6 +277,26 @@ class _SettingsBodyState extends State<SettingsBody>
       }
 
       _debug = sharedPreferences.getBool("debug") ?? _debug;
+
+      if (_mapTilesTemplateController.text != _mapTilesTemplate) {
+        _mapTilesTemplateController.value = _mapTilesTemplateController.value
+            .copyWith(
+              text: _mapTilesTemplate,
+              selection: TextSelection.collapsed(
+                offset: _mapTilesTemplate.length,
+              ),
+            );
+      }
+
+      if (_speedtestInstanceController.text != _speedtestInstance) {
+        _speedtestInstanceController.value = _speedtestInstanceController.value
+            .copyWith(
+              text: _speedtestInstance,
+              selection: TextSelection.collapsed(
+                offset: _speedtestInstance.length,
+              ),
+            );
+      }
     });
   }
 
@@ -884,7 +904,7 @@ class _SettingsBodyState extends State<SettingsBody>
               controller: _mapTilesTemplateController,
               inputFormatters: [
                 FilteringTextInputFormatter.allow(
-                  RegExp(r"https?:\/\/[\w\.\/\-?#%&={}\[\]+]+"),
+                  RegExp(r"[a-zA-Z0-9:\/\.\-?#%&={}\[\]+]"),
                 ),
               ],
               decoration: const InputDecoration(border: UnderlineInputBorder()),
@@ -956,10 +976,18 @@ class _SettingsBodyState extends State<SettingsBody>
               controller: _speedtestInstanceController,
               inputFormatters: [
                 FilteringTextInputFormatter.allow(
-                  RegExp(r"https?:\/\/[\w\.\/\-?#%&={}\[\]+]+"),
+                  RegExp(r"[a-zA-Z0-9:\/\.\-?#%&={}\[\]+]"),
                 ),
               ],
-              decoration: const InputDecoration(border: UnderlineInputBorder()),
+              decoration: InputDecoration(
+                border: const UnderlineInputBorder(),
+                hintText: "https://librespeed.org",
+                hintStyle: TextStyle(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.5),
+                ),
+              ),
               onChanged: (String value) async {
                 await HapticService().triggerHaptic(
                   HapticType.selection,
