@@ -12,11 +12,12 @@ AutoName: NetManager
 
 RepoType: git
 Repo: https://github.com/DottoXD/NetManager.git
+Binaries: https://github.com/DottoXD/NetManager/releases/download/%v/NetManager-FOSS.apk
 
 Builds:
   - versionName: 0.1.2
     versionCode: 8
-    commit: 0.1.2
+    commit: 1851ebd8b58ce6ee6c8c8f65e2c2b1b815a103ab
     output: build/app/outputs/flutter-apk/app-foss-release.apk
     srclibs:
       - flutter@3.44.8
@@ -43,7 +44,9 @@ Builds:
       - export PUB_CACHE=$(pwd)/.pub-cache
       - export PATH=$$flutter$$/bin/:$PATH
       - export GIT_COMMIT=$(git rev-parse --short HEAD)
-      - flutter build apk --release --flavor foss --dart-define=SENTRY_DSN=N --dart-define=flutter.flutter_map.unblockOSM=N --dart-define=GIT_COMMIT=$GIT_COMMIT --dart-define=FOSS=true --target-platform android-arm,android-arm64
+      - $$flutter$$/bin/flutter build apk --release --flavor foss --dart-define=SENTRY_DSN= --dart-define=flutter.flutter_map.unblockOSM= --dart-define=GIT_COMMIT=$GIT_COMMIT --dart-define=FOSS=true --target-platform android-arm,android-arm64
+
+AllowedAPKSigningKeys: 7aef716f2bd8f1e1b9935ce64d5966b5d3060f4562a889ce7adfd8aab12350f6
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
