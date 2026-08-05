@@ -22,7 +22,7 @@ class NewRecording extends StatefulWidget {
 
 class _NewRecordingState extends State<NewRecording> {
   late final TextEditingController _nameController = TextEditingController(
-    text: "NetManager_${DateTime.now().millisecondsSinceEpoch}",
+    text: "NetManager_Recording_${DateTime.now().millisecondsSinceEpoch}",
   );
   late final TextEditingController _intervalController = TextEditingController(
     text: "10",

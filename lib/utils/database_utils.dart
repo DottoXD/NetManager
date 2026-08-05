@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:netmanager/utils/format_utils.dart';
+
 Future<String?> extractPlmnFromFirstLine(String path, bool isClf) async {
   final file = File(path);
   if (!file.existsSync()) return null;
@@ -18,7 +20,7 @@ Future<String?> extractPlmnFromFirstLine(String path, bool isClf) async {
 
   await for (final line in lines) {
     if (line.trim().isEmpty || line.startsWith("#")) continue;
-    final parts = line.split(";");
+    final parts = decodeRow(line, ";");
 
     try {
       if (isClf) {

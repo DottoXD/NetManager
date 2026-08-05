@@ -7,6 +7,7 @@ import 'package:netmanager/components/base/body/map/map.dart';
 import 'package:netmanager/components/base/body/settings/settings.dart';
 import 'package:netmanager/components/base/body/speedtest/speedtest.dart';
 import 'package:netmanager/components/floating/graphs_button.dart';
+import 'package:netmanager/components/floating/history_button.dart';
 import 'package:netmanager/components/floating/position_button.dart';
 import 'package:netmanager/components/base/bars/top_bar.dart';
 import 'package:netmanager/components/floating/record_button.dart';
@@ -58,6 +59,7 @@ class _HomeState extends State<Home> {
   final ValueNotifier<VoidCallback?> _mapPositionNotifier = ValueNotifier(null);
   final ValueNotifier<VoidCallback?> _recordNotifier = ValueNotifier(null);
   final ValueNotifier<VoidCallback?> _graphsNotifier = ValueNotifier(null);
+  final ValueNotifier<VoidCallback?> _historyNotifier = ValueNotifier(null);
 
   final ValueNotifier<int> _updateIntervalNotifier = ValueNotifier(3);
   final ValueNotifier<bool> _metricSystemNotifier = ValueNotifier(true);
@@ -74,6 +76,7 @@ class _HomeState extends State<Home> {
   final ValueNotifier<int> _homeGraphsRetentionTimeNotifier = ValueNotifier(30);
 
   final ValueNotifier<int> _currentSimSlotNotifier = ValueNotifier(0);
+  final ValueNotifier<bool> _speedtestRunningNotifier = ValueNotifier(false);
 
   @override
   void initState() {
@@ -152,6 +155,7 @@ class _HomeState extends State<Home> {
     _mapPositionNotifier.dispose();
     _recordNotifier.dispose();
     _graphsNotifier.dispose();
+    _historyNotifier.dispose();
 
     _updateIntervalNotifier.dispose();
     _metricSystemNotifier.dispose();
@@ -164,6 +168,7 @@ class _HomeState extends State<Home> {
     _homeDataGraphsNotifier.dispose();
     _homeGraphsRetentionTimeNotifier.dispose();
     _currentSimSlotNotifier.dispose();
+    _speedtestRunningNotifier.dispose();
 
     super.dispose();
   }
@@ -194,6 +199,7 @@ class _HomeState extends State<Home> {
           _platformSignalNotifier,
           _logsNotifier,
           _currentSimSlotNotifier,
+          _speedtestRunningNotifier,
         ),
         bottomNavigationBar: NavBar(updatePage, _currentPage),
         body: LazyIndexedStack(
@@ -243,6 +249,10 @@ class _HomeState extends State<Home> {
               widget.sharedPreferences,
               _speedMeasurementUnitNotifier,
               _speedtestInstanceNotifier,
+              _speedtestRunningNotifier,
+              onHistoryButtonPressed: (callback) {
+                _historyNotifier.value = callback;
+              },
             ),
             SettingsBody(
               widget.platform,
@@ -322,6 +332,12 @@ class _HomeState extends State<Home> {
                   valueListenable: _mapPositionNotifier,
                   builder: (context, callback, _) =>
                       PositionButton(onPressed: callback),
+                ),
+              ] else if (_currentPage == 2) ...[
+                ValueListenableBuilder(
+                  valueListenable: _historyNotifier,
+                  builder: (context, callback, _) =>
+                      HistoryButton(onPressed: callback),
                 ),
               ],
             ],

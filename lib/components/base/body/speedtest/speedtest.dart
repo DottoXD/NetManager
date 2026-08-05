@@ -9,9 +9,13 @@ import 'package:netmanager/components/base/body/speedtest/widgets/quality_metric
 import 'package:netmanager/components/base/body/speedtest/widgets/speed_results.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/modals/server_modal.dart';
+import 'package:netmanager/components/modals/speedtest_history_modal.dart';
+import 'package:netmanager/database/speedtest_database.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
+import 'package:netmanager/types/speedtest/history_result.dart';
 import 'package:netmanager/types/speedtest/metrics.dart';
 import 'package:netmanager/utils/haptic_service.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum TestStage { IDLE, LATENCY, DOWNLOAD, UPLOAD, FINISHED }
@@ -22,12 +26,17 @@ class SpeedtestBody extends StatefulWidget {
 
   final ValueNotifier<int> speedMeasurementUnitNotifier;
   final ValueNotifier<String> speedtestInstanceUrlNotifier;
+  final ValueNotifier<bool> testRunningNotifier;
+
+  final void Function(VoidCallback) onHistoryButtonPressed;
 
   const SpeedtestBody(
     this.platform,
     this.sharedPreferences,
     this.speedMeasurementUnitNotifier,
-    this.speedtestInstanceUrlNotifier, {
+    this.speedtestInstanceUrlNotifier,
+    this.testRunningNotifier, {
+    required this.onHistoryButtonPressed,
     super.key,
   });
 
@@ -71,6 +80,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     sharedPreferences = widget.sharedPreferences;
 
     widget.speedtestInstanceUrlNotifier.addListener(_onServerUrlChanged);
+    widget.onHistoryButtonPressed(_openHistoryModal);
 
     _fetchServers();
 
@@ -123,13 +133,22 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
           break;
 
         case "complete":
+          final double downloadResult = (call.arguments["download"] as num)
+              .toDouble();
+          final double uploadResult = (call.arguments["upload"] as num)
+              .toDouble();
+
           _metricsNotifier.value = currentMetrics.copyWith(
-            downloadResult: (call.arguments["download"] as num).toDouble(),
-            uploadResult: (call.arguments["upload"] as num).toDouble(),
+            downloadResult: downloadResult,
+            uploadResult: uploadResult,
             stage: TestStage.FINISHED,
             currentSpeed: 0.0,
             progress: 0.0,
           );
+
+          widget.testRunningNotifier.value = false;
+
+          _saveHistoryResult(downloadResult, uploadResult, currentMetrics);
           break;
 
         case "error":
@@ -139,6 +158,9 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
             progress: 0.0,
             latencyProgress: 0.0,
           );
+
+          widget.testRunningNotifier.value = false;
+
           if (!_dialogOpen && mounted) {
             _dialogOpen = true;
             showDialog(
@@ -172,6 +194,90 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
       _fetchServersRetries = 0;
       _fetchServers();
     });
+  }
+
+  Future<void> _saveHistoryResult(
+    double download,
+    double upload,
+    SpeedtestMetrics latencyMetrics,
+  ) async {
+    try {
+      final String carrier =
+          (await platform.invokeMethod<String>("getCarrier")) ?? "Unknown";
+      final String plmn =
+          (await platform.invokeMethod<String>("getPlmn")) ?? "00000";
+      final int networkGen =
+          await platform.invokeMethod<int>("getNetworkGen") ?? 0;
+
+      String? serverName;
+      final server = _selectedServerNotifier.value;
+      if (server != null) {
+        final sponsorName = server["sponsorName"];
+        serverName = sponsorName != null
+            ? "$sponsorName (${(server["name"]).toString().replaceAll(" ($sponsorName)", "")})"
+            : server["name"]?.toString();
+      }
+
+      double? latitude;
+      double? longitude;
+      try {
+        final String? rawLocation = await platform.invokeMethod<String>(
+          "getLocation",
+        );
+
+        if (rawLocation != null) {
+          final List<dynamic> coords = json.decode(rawLocation);
+          if (coords.length == 2) {
+            final double lat = (coords[0] as num).toDouble();
+            final double lng = (coords[1] as num).toDouble();
+
+            if (!(lat == 0.0 && lng == 0.0)) {
+              latitude = lat;
+              longitude = lng;
+            }
+          }
+        }
+      } on PlatformException catch (e) {
+        await Sentry.captureException(e, stackTrace: e.stacktrace);
+      }
+
+      await SpeedtestDatabase.insertResult(
+        SpeedtestHistoryResult(
+          timestamp: DateTime.now(),
+          download: download,
+          upload: upload,
+          ping: latencyMetrics.ping,
+          jitter: latencyMetrics.jitter,
+          packetLoss: latencyMetrics.packetLoss,
+          carrier: carrier,
+          plmn: plmn,
+          networkGen: networkGen > 0 ? networkGen : 0,
+          serverName: serverName,
+          latitude: latitude,
+          longitude: longitude,
+        ),
+      );
+    } on PlatformException catch (e) {
+      await Sentry.captureException(e, stackTrace: e.stacktrace);
+    }
+  }
+
+  void _openHistoryModal() async {
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      useSafeArea: true,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
+      ),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (BuildContext context) {
+        return SpeedtestHistoryModal(
+          speedMeasurementUnitNotifier: widget.speedMeasurementUnitNotifier,
+        );
+      },
+    );
   }
 
   Future<void> _fetchServers() async {
@@ -360,6 +466,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     if (server == null) return;
 
     _metricsNotifier.value = SpeedtestMetrics(stage: TestStage.LATENCY);
+    widget.testRunningNotifier.value = true;
 
     String baseUrl = server["server"];
     if (!baseUrl.endsWith('/')) baseUrl += '/';
@@ -432,6 +539,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                                           showModalBottomSheet(
                                             context: context,
                                             showDragHandle: true,
+                                            useSafeArea: true,
                                             shape: const RoundedRectangleBorder(
                                               borderRadius:
                                                   BorderRadius.vertical(
@@ -532,8 +640,9 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                     urlValue.trim().isEmpty ||
                     urlValue.trim() == defaultSpeedtestServer;
 
-                if (!isUnconfigured && !isDefaultServer)
+                if (!isUnconfigured && !isDefaultServer) {
                   return const SizedBox.shrink();
+                }
 
                 return Container(
                   width: double.maxFinite,

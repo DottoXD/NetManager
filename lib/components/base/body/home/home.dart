@@ -6,7 +6,7 @@ import 'package:netmanager/components/base/body/home/widgets/empty_state.dart';
 import 'package:netmanager/components/base/body/home/widgets/loading_state.dart';
 import 'package:netmanager/components/base/body/home/widgets/network_data.dart';
 import 'package:netmanager/components/base/body/home/widgets/primary_cell_card.dart';
-import 'package:netmanager/components/modals/record/graphs_modal.dart';
+import 'package:netmanager/components/modals/graphs_modal.dart';
 import 'package:netmanager/database/cell_database.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/types/cell/cell_data.dart';
@@ -565,6 +565,7 @@ class _HomeBodyState extends State<HomeBody> {
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
       ),

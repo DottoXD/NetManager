@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/database/cell_database.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
+import 'package:netmanager/utils/format_utils.dart';
 import 'package:netmanager/utils/database_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
@@ -99,7 +100,7 @@ class DatabaseManagerDialog extends StatelessWidget {
 
       await for (final line in lines) {
         if (line.trim().isEmpty || line.startsWith("#")) continue;
-        final parts = line.split(";");
+        final parts = decodeRow(line, ";");
 
         try {
           String currentPlmn = "";

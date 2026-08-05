@@ -151,6 +151,37 @@
   "noSpeedtestServer": "Nessun server",
   "speedtestLibrespeed": "Speed test by LibreSpeed",
   "speedtestNoServerConfigured": "Nessun server di speed test configurato. Configurane uno nelle impostazioni (e.g. il server LibreSpeed ufficiale, https://librespeed.org).",
+  "speedtestHistory": "Storico degli speed test",
+  "speedtestServer": "Server",
+  "speedtestCarrier": "Operatore",
+  "speedtestNoHistory": "Ancora nessuno speed test.",
+  "speedtestClearHistory": "Pulisci storico",
+  "speedtestClearHistoryConfirmation": "Questo cancellerà permanentemente tutti i tuoi speed test.",
+  "speedtestImportHistory": "Importa storico",
+  "speedtestExportHistory": "Esporta storico",
+  "speedtestImportingHistory": "Importando gli speed test...",
+  "speedtestImportNoValidRows": "Nessuno speed test valido trovato in questo file.",
+  "speedtestImportSuccess": "{count} test sono stati importati.",
+  "@speedtestImportSuccess": {
+    "description": "A text with how many speed tests have been imported.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "0"
+      }
+    }
+  },
+  "speedtestExportSuccess": "{count} test sono stati esportati.",
+  "@speedtestExportSuccess": {
+    "description": "A text with how many speed tests have been exported.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "0"
+      }
+    }
+  },
+  "speedtestLocation": "Posizione",
   "mapRecord": "Registrazione",
   "closeMapRecord": "Chiudi scheda",
   "mapSignalStrength": "Segnale",

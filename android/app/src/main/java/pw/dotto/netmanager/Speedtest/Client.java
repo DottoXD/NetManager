@@ -49,10 +49,10 @@ import okio.BufferedSink;
  * test software solution.
  *
  * @author DottoXD
- * @version 0.1.2
+ * @version 0.1.3
  */
 public class Client {
-    private static final String USER_AGENT = "NetManager-SpeedTest/0.1.2";
+    private static final String USER_AGENT = "NetManager-SpeedTest/0.1.3";
 
     private static final int BUFFER_SIZE = 256 * 1024;
     private static final int UPLOAD_CHUNK_SIZE = 1024 * 1024;

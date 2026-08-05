@@ -150,7 +150,38 @@
   "noSpeedtestServers": "No reachable servers found.",
   "noSpeedtestServer": "No server",
   "speedtestLibrespeed": "Powered by LibreSpeed",
-  "speedtestNoServerConfigured": "No speedtest server configured. Please set one in the settings (e.g. the official LibreSpeed server, https://librespeed.org).",
+  "speedtestNoServerConfigured": "No speed test server configured. Please set one in the settings (e.g. the official LibreSpeed server, https://librespeed.org).",
+  "speedtestHistory": "Speed test history",
+  "speedtestServer": "Server",
+  "speedtestCarrier": "Carrier",
+  "speedtestNoHistory": "No speed tests yet. Run one to see it here.",
+  "speedtestClearHistory": "Clear history",
+  "speedtestClearHistoryConfirmation": "This will permanently delete all saved speed test results.",
+  "speedtestImportHistory": "Import history",
+  "speedtestExportHistory": "Export history",
+  "speedtestImportingHistory": "Importing speed tests...",
+  "speedtestImportNoValidRows": "No valid speed tests found in this file.",
+  "speedtestImportSuccess": "Imported {count} speed test results.",
+  "@speedtestImportSuccess": {
+    "description": "A text with how many speed tests have been imported.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "0"
+      }
+    }
+  },
+  "speedtestExportSuccess": "Exported {count} speed test results.",
+  "@speedtestExportSuccess": {
+    "description": "A text with how many speed tests have been exported.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "0"
+      }
+    }
+  },
+  "speedtestLocation": "Location",
   "mapRecord": "Record",
   "closeMapRecord": "Close record card",
   "mapSignalStrength": "Signal Strength",

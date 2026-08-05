@@ -8,6 +8,7 @@ class CellDatabase {
 
   static Future<Database> getDatabase() async {
     if (_database != null) return _database!;
+
     _database = await _initDatabase();
     return _database!;
   }

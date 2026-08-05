@@ -20,7 +20,8 @@ class TopBar extends StatefulWidget implements PreferredSizeWidget {
     this.sharedPreferences,
     this.platformSignalNotifier,
     this.logsNotifier,
-    this.currentSimSlotNotifier, {
+    this.currentSimSlotNotifier,
+    this.speedtestRunningNotifier, {
     super.key,
   });
 
@@ -29,6 +30,7 @@ class TopBar extends StatefulWidget implements PreferredSizeWidget {
   final ValueNotifier<int> platformSignalNotifier;
   final ValueNotifier<bool> logsNotifier;
   final ValueNotifier<int> currentSimSlotNotifier;
+  final ValueNotifier<bool> speedtestRunningNotifier;
 
   @override
   State<TopBar> createState() => _TopBarState();
@@ -43,6 +45,7 @@ class _TopBarState extends State<TopBar> {
   late ValueNotifier<int> platformSignalNotifier;
   late ValueNotifier<bool> logsNotifier;
   late ValueNotifier<int> currentSimSlotNotifier;
+  late ValueNotifier<bool> speedtestRunningNotifier;
 
   late Timer _timer;
   String _carrier = "Unknown";
@@ -60,6 +63,7 @@ class _TopBarState extends State<TopBar> {
     platformSignalNotifier = widget.platformSignalNotifier;
     logsNotifier = widget.logsNotifier;
     currentSimSlotNotifier = widget.currentSimSlotNotifier;
+    speedtestRunningNotifier = widget.speedtestRunningNotifier;
 
     platformSignalNotifier.addListener(_restartTimer);
 
@@ -116,6 +120,8 @@ class _TopBarState extends State<TopBar> {
   }
 
   void _switchSim() async {
+    if (speedtestRunningNotifier.value) return;
+
     await platform.invokeMethod("switchSim");
     await update();
 
@@ -164,6 +170,7 @@ class _TopBarState extends State<TopBar> {
       showModalBottomSheet(
         context: context,
         showDragHandle: true,
+        useSafeArea: true,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
         ),
@@ -316,10 +323,15 @@ class _TopBarState extends State<TopBar> {
           tooltip: appLocalizations.radioInfoSettings,
         ),
         if (simCount > 1)
-          IconButton(
-            onPressed: _switchSim,
-            icon: const Icon(Icons.sim_card_outlined),
-            tooltip: appLocalizations.switchSim,
+          ValueListenableBuilder(
+            valueListenable: speedtestRunningNotifier,
+            builder: (context, isTestRunning, _) {
+              return IconButton(
+                onPressed: isTestRunning ? null : _switchSim,
+                icon: const Icon(Icons.sim_card_outlined),
+                tooltip: appLocalizations.switchSim,
+              );
+            },
           ),
         ValueListenableBuilder(
           valueListenable: logsNotifier,

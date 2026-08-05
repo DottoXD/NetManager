@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-Color getTowerColor(BuildContext context, int maxGen) {
+Color getGenColor(BuildContext context, int maxGen) {
   final colorScheme = Theme.of(context).colorScheme;
 
   switch (maxGen) {

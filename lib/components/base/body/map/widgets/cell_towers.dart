@@ -4,7 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:netmanager/components/modals/tower_modal.dart';
 import 'package:netmanager/types/database/cell_tower.dart';
 import 'package:netmanager/utils/haptic_service.dart';
-import 'package:netmanager/utils/tower_color.dart';
+import 'package:netmanager/utils/gen_color.dart';
 
 class CellTowers extends StatelessWidget {
   final List<CellTower> cellTowers;
@@ -23,7 +23,7 @@ class CellTowers extends StatelessWidget {
     return MarkerLayer(
       markers: cellTowers.map((tower) {
         final isConnected = connectedTower != null && tower == connectedTower;
-        final towerColor = getTowerColor(context, tower.getMaxGen());
+        final towerColor = getGenColor(context, tower.getMaxGen());
 
         return Marker(
           point: tower.getLatLng(),
@@ -40,16 +40,17 @@ class CellTowers extends StatelessWidget {
                 showModalBottomSheet(
                   context: context,
                   showDragHandle: true,
-                  isScrollControlled: true,
                   useSafeArea: true,
+                  isScrollControlled: true,
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(
                       top: Radius.circular(24.0),
                     ),
                   ),
                   backgroundColor: Theme.of(context).colorScheme.surface,
-                  builder: (BuildContext context) =>
-                      TowerModal(cellTower: tower),
+                  builder: (BuildContext context) {
+                    return TowerModal(cellTower: tower);
+                  },
                 );
               }
 

@@ -221,6 +221,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
       showModalBottomSheet(
         context: context,
         showDragHandle: true,
+        useSafeArea: true,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
         ),
@@ -693,6 +694,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
       ),

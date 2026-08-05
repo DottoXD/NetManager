@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:netmanager/types/recording/recorded_data.dart';
 import 'package:netmanager/types/recording/record.dart';
+import 'package:netmanager/utils/format_utils.dart';
 import 'package:netmanager/utils/signal_color.dart';
 
 String _kmlColorForRecord(Record record) {
@@ -120,17 +121,13 @@ String recordedDataToKml(RecordedData data) {
   return buffer.toString();
 }
 
-String _csvEscape(String value) {
-  if (value.contains(',') || value.contains('"') || value.contains('\n')) {
-    return '"${value.replaceAll('"', '""')}"';
-  }
-  return value;
-}
-
 String recordedDataToCsv(RecordedData data) {
+  const separator = ",";
   final StringBuffer buffer = StringBuffer();
 
-  buffer.writeln(["Name", "Latitude", "Longitude", "Description"].join(","));
+  buffer.writeln(
+    ["Name", "Latitude", "Longitude", "Description"].join(separator),
+  );
 
   for (final Record record in data.records) {
     final String name =
@@ -143,12 +140,12 @@ String recordedDataToCsv(RecordedData data) {
         "Usable: ${record.usable ? "Yes" : "No"}";
 
     buffer.writeln(
-      [
-        _csvEscape(name),
+      encodeRow([
+        name,
         record.lat.toString(),
         record.lon.toString(),
-        _csvEscape(description),
-      ].join(","),
+        description,
+      ], separator),
     );
   }
 

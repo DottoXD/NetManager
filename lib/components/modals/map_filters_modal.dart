@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/types/map/tower_filter.dart';
 import 'package:netmanager/utils/haptic_service.dart';
-import 'package:netmanager/utils/tower_color.dart';
+import 'package:netmanager/utils/gen_color.dart';
 
 class MapFilters extends StatelessWidget {
   const MapFilters({super.key, required this.filterNotifier});
@@ -78,7 +78,7 @@ class MapFilters extends StatelessWidget {
                       runSpacing: 8,
                       children: TowerFilter.mobileGenerations.map((gen) {
                         final bool selected = selectedGenerations.contains(gen);
-                        final Color genColor = getTowerColor(context, gen);
+                        final Color genColor = getGenColor(context, gen);
 
                         return FilterChip(
                           label: Text("${gen}G"),
