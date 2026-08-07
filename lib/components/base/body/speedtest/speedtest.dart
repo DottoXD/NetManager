@@ -12,9 +12,11 @@ import 'package:netmanager/components/modals/server_modal.dart';
 import 'package:netmanager/components/modals/speedtest_history_modal.dart';
 import 'package:netmanager/database/speedtest_database.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
+import 'package:netmanager/types/device/data.dart';
 import 'package:netmanager/types/speedtest/history_result.dart';
 import 'package:netmanager/types/speedtest/metrics.dart';
 import 'package:netmanager/utils/haptic_service.dart';
+import 'package:netmanager/utils/share_speedtest.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -27,16 +29,20 @@ class SpeedtestBody extends StatefulWidget {
   final ValueNotifier<int> speedMeasurementUnitNotifier;
   final ValueNotifier<String> speedtestInstanceUrlNotifier;
   final ValueNotifier<bool> testRunningNotifier;
+  final ValueNotifier<bool> canShareResultNotifier;
 
   final void Function(VoidCallback) onHistoryButtonPressed;
+  final void Function(VoidCallback) onShareResultButtonPressed;
 
   const SpeedtestBody(
     this.platform,
     this.sharedPreferences,
     this.speedMeasurementUnitNotifier,
     this.speedtestInstanceUrlNotifier,
-    this.testRunningNotifier, {
+    this.testRunningNotifier,
+    this.canShareResultNotifier, {
     required this.onHistoryButtonPressed,
+    required this.onShareResultButtonPressed,
     super.key,
   });
 
@@ -56,6 +62,8 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
   final ValueNotifier<Map<String, dynamic>?> _selectedServerNotifier =
       ValueNotifier(null);
   final ValueNotifier<bool> _serversLoadingNotifier = ValueNotifier(false);
+  final ValueNotifier<SpeedtestHistoryResult?> _lastResultNotifier =
+      ValueNotifier(null);
   late AppLocalizations _appLocalizations;
 
   List<dynamic> _servers = [];
@@ -81,6 +89,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
 
     widget.speedtestInstanceUrlNotifier.addListener(_onServerUrlChanged);
     widget.onHistoryButtonPressed(_openHistoryModal);
+    widget.onShareResultButtonPressed(_shareResult);
 
     _fetchServers();
 
@@ -160,6 +169,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
           );
 
           widget.testRunningNotifier.value = false;
+          widget.canShareResultNotifier.value = false;
 
           if (!_dialogOpen && mounted) {
             _dialogOpen = true;
@@ -182,6 +192,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     _selectedServerNotifier.dispose();
     _metricsNotifier.dispose();
     _serversLoadingNotifier.dispose();
+    _lastResultNotifier.dispose();
     _serverUrlDebounce?.cancel();
     platform.setMethodCallHandler(null);
     widget.speedtestInstanceUrlNotifier.removeListener(_onServerUrlChanged);
@@ -241,25 +252,58 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
         await Sentry.captureException(e, stackTrace: e.stacktrace);
       }
 
-      await SpeedtestDatabase.insertResult(
-        SpeedtestHistoryResult(
-          timestamp: DateTime.now(),
-          download: download,
-          upload: upload,
-          ping: latencyMetrics.ping,
-          jitter: latencyMetrics.jitter,
-          packetLoss: latencyMetrics.packetLoss,
-          carrier: carrier,
-          plmn: plmn,
-          networkGen: networkGen > 0 ? networkGen : 0,
-          serverName: serverName,
-          latitude: latitude,
-          longitude: longitude,
-        ),
+      String? deviceModel;
+      String? rawDeviceData = sharedPreferences.getString("deviceData");
+      if (rawDeviceData != null) {
+        final device = json.decode(rawDeviceData);
+        if (device is! Map<String, dynamic>) {
+          return;
+        }
+
+        final Map<String, dynamic> map = device;
+        late final DeviceData deviceData;
+
+        try {
+          deviceData = DeviceData.fromJson(map);
+          deviceModel = deviceData.model;
+        } catch (e) {}
+      }
+
+      final SpeedtestHistoryResult historyResult = SpeedtestHistoryResult(
+        timestamp: DateTime.now(),
+        download: download,
+        upload: upload,
+        ping: latencyMetrics.ping,
+        jitter: latencyMetrics.jitter,
+        packetLoss: latencyMetrics.packetLoss,
+        carrier: carrier,
+        plmn: plmn,
+        networkGen: networkGen > 0 ? networkGen : 0,
+        serverName: serverName,
+        latitude: latitude,
+        longitude: longitude,
+        deviceModel: deviceModel,
       );
+
+      await SpeedtestDatabase.insertResult(historyResult);
+
+      _lastResultNotifier.value = historyResult;
+      widget.canShareResultNotifier.value = true;
     } on PlatformException catch (e) {
       await Sentry.captureException(e, stackTrace: e.stacktrace);
     }
+  }
+
+  void _shareResult() async {
+    final SpeedtestHistoryResult? result = _lastResultNotifier.value;
+    if (result == null) return;
+
+    await shareSpeedtestResult(
+      context: context,
+      platform: platform,
+      result: result,
+      unitIndex: widget.speedMeasurementUnitNotifier.value,
+    );
   }
 
   void _openHistoryModal() async {
@@ -274,6 +318,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (BuildContext context) {
         return SpeedtestHistoryModal(
+          platform: platform,
           speedMeasurementUnitNotifier: widget.speedMeasurementUnitNotifier,
         );
       },
@@ -361,10 +406,12 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
       final List<dynamic> data = json.decode(body);
 
       if (data.isNotEmpty) {
-        setState(() {
-          _servers = data;
-          _selectedServerNotifier.value = _servers[0];
-        });
+        if (!widget.testRunningNotifier.value) {
+          setState(() {
+            _servers = data;
+            _selectedServerNotifier.value = _servers[0];
+          });
+        }
 
         final List<Map<String, dynamic>> validResults = [];
 
@@ -427,10 +474,12 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
           setState(() {
             _servers = sortedServers;
 
-            if (_servers.isNotEmpty) {
-              _selectedServerNotifier.value = _servers[0];
-            } else {
-              _selectedServerNotifier.value = null;
+            if (!widget.testRunningNotifier.value) {
+              if (_servers.isNotEmpty) {
+                _selectedServerNotifier.value = _servers[0];
+              } else {
+                _selectedServerNotifier.value = null;
+              }
             }
 
             _serversLoadingNotifier.value = false;
@@ -467,6 +516,8 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
 
     _metricsNotifier.value = SpeedtestMetrics(stage: TestStage.LATENCY);
     widget.testRunningNotifier.value = true;
+    widget.canShareResultNotifier.value = false;
+    _lastResultNotifier.value = null;
 
     String baseUrl = server["server"];
     if (!baseUrl.endsWith('/')) baseUrl += '/';
@@ -483,12 +534,14 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final double availableHeight = constraints.maxHeight;
-        final bool isCompact = availableHeight < 600;
-        final bool isTiny = availableHeight < 500;
+        final double availableHeight = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : MediaQuery.sizeOf(context).height;
+        final bool isCompact = availableHeight < 640;
+        final bool isTiny = availableHeight < 520;
 
-        final double gaugeSize = isTiny ? 200 : (isCompact ? 240 : 280);
-        final double gaugeSpacer = isTiny ? 16 : (isCompact ? 28 : 48);
+        final double gaugeSize = (availableHeight * 0.34).clamp(180.0, 280.0);
+        final double gaugeSpacer = (availableHeight * 0.035).clamp(12.0, 48.0);
         final double serverSelectorPadding = isCompact ? 12 : 32;
 
         return Column(
@@ -654,7 +707,12 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                   ),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerLow,
+                    color: Color.alphaBlend(
+                      Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.06),
+                      Theme.of(context).colorScheme.surface,
+                    ),
                   ),
                   child: Text(
                     isUnconfigured

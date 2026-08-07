@@ -54,6 +54,9 @@ class _NetManagerState extends State<NetManager> {
   bool? _dynamicSupported;
 
   final ValueNotifier<bool> dynamicThemeNotifier = ValueNotifier<bool>(true);
+  final ValueNotifier<bool> harmonizedColorsNotifier = ValueNotifier<bool>(
+    true,
+  );
   final ValueNotifier<int> themeColorNotifier = ValueNotifier<int>(0xFFE6F0F2);
   final ValueNotifier<bool> material3Notifier = ValueNotifier<bool>(true);
   final ValueNotifier<bool> darkThemeNotifier = ValueNotifier<bool>(true);
@@ -64,6 +67,8 @@ class _NetManagerState extends State<NetManager> {
     super.initState();
 
     dynamicThemeNotifier.value = widget.prefs.getBool("dynamicTheme") ?? true;
+    harmonizedColorsNotifier.value =
+        widget.prefs.getBool("harmonizedColors") ?? true;
     themeColorNotifier.value = widget.prefs.getInt("themeColor") ?? 0xFFE6F0F2;
     material3Notifier.value = widget.prefs.getBool("material3") ?? true;
 
@@ -85,6 +90,7 @@ class _NetManagerState extends State<NetManager> {
   @override
   void dispose() {
     dynamicThemeNotifier.dispose();
+    harmonizedColorsNotifier.dispose();
     themeColorNotifier.dispose();
     material3Notifier.dispose();
     darkThemeNotifier.dispose();
@@ -97,6 +103,7 @@ class _NetManagerState extends State<NetManager> {
     return AnimatedBuilder(
       animation: Listenable.merge([
         dynamicThemeNotifier,
+        harmonizedColorsNotifier,
         themeColorNotifier,
         material3Notifier,
         darkThemeNotifier,
@@ -122,8 +129,19 @@ class _NetManagerState extends State<NetManager> {
             final ColorScheme darkScheme;
 
             if (lightDynamic != null && darkDynamic != null && useDynamic) {
-              lightScheme = lightDynamic.harmonized();
-              darkScheme = darkDynamic.harmonized();
+              if (harmonizedColorsNotifier.value) {
+                lightScheme = lightDynamic.harmonized();
+                darkScheme = darkDynamic.harmonized();
+              } else {
+                lightScheme = ColorScheme.fromSeed(
+                  seedColor: lightDynamic.primary,
+                  brightness: Brightness.light,
+                );
+                darkScheme = ColorScheme.fromSeed(
+                  seedColor: darkDynamic.primary,
+                  brightness: Brightness.dark,
+                );
+              }
             } else {
               final seedColor = Color(themeColorNotifier.value);
 
@@ -187,6 +205,7 @@ class _NetManagerState extends State<NetManager> {
               home: Perms(
                 widget.prefs,
                 dynamicThemeNotifier,
+                harmonizedColorsNotifier,
                 themeColorNotifier,
                 material3Notifier,
                 darkThemeNotifier,

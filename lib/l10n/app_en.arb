@@ -182,6 +182,7 @@
     }
   },
   "speedtestLocation": "Location",
+  "speedtestShareResult": "Share result",
   "mapRecord": "Record",
   "closeMapRecord": "Close record card",
   "mapSignalStrength": "Signal Strength",
@@ -255,6 +256,8 @@
   "settingsDarkThemeDescription": "Use the dark theme color scheme in NetManager.",
   "settingsDynamicThemeTitle": "Dynamic theme",
   "settingsDynamicThemeDescription": "Use Android's dynamic theme system. Supported on Material You (Android 12+.).",
+  "settingsHarmonizedColorsTitle": "Harmonized colors",
+  "settingsHarmonizedColorsDescription": "Use dynamically harmonized colors with Android's dynamic theme.",
   "settingsThemeColorTitle": "Theme color",
   "settingsThemeColorDescription": "Choose a custom theme color if you are not using Android's dynamic theme feature.",
   "settingsLogEventsTitle": "Log events",

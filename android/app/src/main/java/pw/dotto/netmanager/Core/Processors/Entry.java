@@ -12,14 +12,14 @@ import pw.dotto.netmanager.Utils.DeviceData;
  * the various entries that shall be ran on certain devices.
  *
  * @author DottoXD
- * @version 0.1.2
+ * @version 0.1.3
  */
 public class Entry {
     private final DeviceData targetData;
     public final Supplier<?> factory;
 
     public Entry(String manufacturer, String modem, Supplier<?> factory) {
-        this.targetData = new DeviceData(manufacturer, modem);
+        this.targetData = new DeviceData(manufacturer, modem, "");
         this.factory = factory;
     }
 

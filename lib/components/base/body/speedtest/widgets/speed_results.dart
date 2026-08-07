@@ -49,7 +49,10 @@ class SpeedResults extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(30.0, 24.0, 24.0, 24.0),
           decoration: BoxDecoration(
             borderRadius: topRadius,
-            color: Theme.of(context).colorScheme.surfaceContainerLow,
+            color: Color.alphaBlend(
+              Theme.of(context).colorScheme.primary.withValues(alpha: 0.06),
+              Theme.of(context).colorScheme.surface,
+            ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

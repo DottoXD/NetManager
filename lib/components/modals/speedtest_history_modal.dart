@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/dialogs/speedtest_detail.dart';
@@ -16,9 +17,11 @@ import 'package:netmanager/utils/speed_methods.dart';
 class SpeedtestHistoryModal extends StatefulWidget {
   const SpeedtestHistoryModal({
     super.key,
+    required this.platform,
     required this.speedMeasurementUnitNotifier,
   });
 
+  final MethodChannel platform;
   final ValueNotifier<int> speedMeasurementUnitNotifier;
 
   @override
@@ -42,6 +45,7 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
 
   Future<void> _delete(int id) async {
     await SpeedtestDatabase.deleteResult(id);
+
     _refresh();
   }
 
@@ -208,12 +212,26 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               IconButton(
-                onPressed: _importHistory,
+                onPressed: () async {
+                  await HapticService().triggerHaptic(
+                    HapticType.selection,
+                    context,
+                  );
+
+                  await _importHistory();
+                },
                 icon: const Icon(Icons.file_download_outlined),
                 tooltip: appLocalizations.speedtestImportHistory,
               ),
               IconButton(
-                onPressed: _exportHistory,
+                onPressed: () async {
+                  await HapticService().triggerHaptic(
+                    HapticType.selection,
+                    context,
+                  );
+
+                  await _exportHistory();
+                },
                 icon: const Icon(Icons.file_upload_outlined),
                 tooltip: appLocalizations.speedtestExportHistory,
               ),
@@ -246,19 +264,23 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
                                 onPressed: () => Navigator.pop(context, false),
                                 child: Text(appLocalizations.cancel),
                               ),
-                              FilledButton.tonal(
-                                onPressed: () => Navigator.pop(context, true),
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: Theme.of(
-                                    context,
-                                  ).colorScheme.errorContainer,
-                                  foregroundColor: Theme.of(
-                                    context,
-                                  ).colorScheme.onErrorContainer,
+                              FilledButton.icon(
+                                icon: const Icon(
+                                  Icons.cleaning_services_outlined,
                                 ),
-                                child: Text(
+                                label: Text(
                                   appLocalizations.speedtestClearHistory,
                                 ),
+                                onPressed: () async {
+                                  await HapticService().triggerHaptic(
+                                    HapticType.selection,
+                                    context,
+                                  );
+
+                                  if (context.mounted) {
+                                    Navigator.pop(context, true);
+                                  }
+                                },
                               ),
                             ],
                           );
@@ -344,6 +366,11 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
                           ),
                         ),
                         confirmDismiss: (_) async {
+                          await HapticService().triggerHaptic(
+                            HapticType.light,
+                            context,
+                          );
+
                           if (result.id != null) await _delete(result.id!);
 
                           return true;
@@ -393,7 +420,7 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
                               ],
                             ],
                           ),
-                          trailing: const Icon(Icons.chevron_right),
+                          trailing: const Icon(Icons.chevron_right_outlined),
                           onTap: () async {
                             await HapticService().triggerHaptic(
                               HapticType.selection,
@@ -406,6 +433,7 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
                               context: context,
                               builder: (BuildContext context) {
                                 return SpeedtestDetailDialog(
+                                  platform: widget.platform,
                                   speedtestResult: result,
                                   unitIndex: unitIndex,
                                 );

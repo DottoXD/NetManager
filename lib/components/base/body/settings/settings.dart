@@ -23,6 +23,7 @@ class SettingsBody extends StatefulWidget {
     this.platform,
     this.sharedPreferences,
     this.dynamicThemeNotifier,
+    this.harmonizedColorsNotifier,
     this.themeColorNotifier,
     this.material3Notifier,
     this.darkThemeNotifier,
@@ -46,6 +47,7 @@ class SettingsBody extends StatefulWidget {
   final SharedPreferences sharedPreferences;
 
   final ValueNotifier<bool> dynamicThemeNotifier;
+  final ValueNotifier<bool> harmonizedColorsNotifier;
   final ValueNotifier<int> themeColorNotifier;
   final ValueNotifier<bool> material3Notifier;
   final ValueNotifier<bool> darkThemeNotifier;
@@ -75,6 +77,7 @@ class _SettingsBodyState extends State<SettingsBody>
   late SharedPreferences sharedPreferences;
 
   late ValueNotifier<bool> dynamicThemeNotifier;
+  late ValueNotifier<bool> harmonizedColorsNotifier;
   late ValueNotifier<int> themeColorNotifier;
   late ValueNotifier<bool> material3Notifier;
   late ValueNotifier<bool> darkThemeNotifier;
@@ -129,6 +132,7 @@ class _SettingsBodyState extends State<SettingsBody>
   bool _darkTheme = true;
   bool _dynamicSupported = true;
   bool _dynamicTheme = true;
+  bool _harmonizedColors = true;
   bool _debug = false;
 
   List<EventTypes> _loggedEventTypes = EventTypes.values.toList();
@@ -152,6 +156,7 @@ class _SettingsBodyState extends State<SettingsBody>
     platform = widget.platform;
     sharedPreferences = widget.sharedPreferences;
     dynamicThemeNotifier = widget.dynamicThemeNotifier;
+    harmonizedColorsNotifier = widget.harmonizedColorsNotifier;
     themeColorNotifier = widget.themeColorNotifier;
     material3Notifier = widget.material3Notifier;
     darkThemeNotifier = widget.darkThemeNotifier;
@@ -263,6 +268,8 @@ class _SettingsBodyState extends State<SettingsBody>
           sharedPreferences.getBool("hapticFeedback") ?? _hapticFeedback;
       _dynamicTheme =
           sharedPreferences.getBool("dynamicTheme") ?? _dynamicTheme;
+      _harmonizedColors =
+          sharedPreferences.getBool("harmonizedColors") ?? _harmonizedColors;
       _themeColor = sharedPreferences.getInt("themeColor") ?? _themeColor;
       _dynamicSupported =
           sharedPreferences.getBool("dynamicSupported") ?? _dynamicSupported;
@@ -789,6 +796,30 @@ class _SettingsBodyState extends State<SettingsBody>
                   )
                 : const SizedBox.shrink()),
           ),
+          if (_dynamicSupported) ...[
+            ListTile(
+              title: Text(_appLocalizations.settingsHarmonizedColorsTitle),
+              subtitle: Text(
+                _appLocalizations.settingsHarmonizedColorsDescription,
+              ),
+              enabled: _material3 && _dynamicTheme,
+              trailing: (_material3 && _dynamicTheme
+                  ? Switch(
+                      value: _harmonizedColors,
+                      onChanged: (bool value) async {
+                        await HapticService().triggerHaptic(
+                          HapticType.selection,
+                          context,
+                        );
+
+                        setBool("harmonizedColors", value);
+                        updateData();
+                        harmonizedColorsNotifier.value = value;
+                      },
+                    )
+                  : const SizedBox.shrink()),
+            ),
+          ],
           ListTile(
             title: Text(_appLocalizations.settingsThemeColorTitle),
             subtitle: Text(_appLocalizations.settingsThemeColorDescription),

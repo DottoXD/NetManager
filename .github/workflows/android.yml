@@ -13,6 +13,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+    working-directory: /tmp/build
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -20,6 +25,10 @@ jobs:
     steps:
       - name: 📁 Checkout
         uses: actions/checkout@v7.0.1
+
+      - name: 📦 Change directory
+        run: |
+          mv "$GITHUB_WORKSPACE" /tmp/build
 
       - name: 📋 Cache Flutter
         uses: actions/cache@v6.1.0
@@ -42,16 +51,20 @@ jobs:
         uses: actions/setup-java@v5.6.0
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
       - name: 🦋 Setup Flutter
         uses: subosito/flutter-action@v2.23.0
         with:
           channel: stable
-          flutter-version: 3.44.8
+          flutter-version: 3.44.9
+
+      - name: ⌚ Timestamps
+        run: |
+          echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
 
       - name: 🪛 Dependencies
-        run: flutter pub get
+        run: flutter pub get --enforce-lockfile
 
       - name: ✅ Tests
         run: flutter test --coverage
@@ -69,7 +82,7 @@ jobs:
         run: flutter build apk --release --flavor play --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN }} --dart-define=flutter.flutter_map.unblockOSM=${{ secrets.UNBLOCK_OSM }} --dart-define=GIT_COMMIT=$GIT_COMMIT --target-platform android-arm,android-arm64
 
       - name: ⛏️ App APK (Android without proprietary libraries)
-        run: flutter build apk --release --flavor foss --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN }} --dart-define=flutter.flutter_map.unblockOSM=${{ secrets.UNBLOCK_OSM }} --dart-define=GIT_COMMIT=$GIT_COMMIT --dart-define=FOSS=true --target-platform android-arm,android-arm64
+        run: flutter build apk --release --flavor foss --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN_FOSS }} --dart-define=flutter.flutter_map.unblockOSM=${{ secrets.UNBLOCK_OSM }} --dart-define=GIT_COMMIT=$GIT_COMMIT --dart-define=FOSS=true --target-platform android-arm,android-arm64
 
       - name: ⛏️ App APK (WearOS)
         run: |

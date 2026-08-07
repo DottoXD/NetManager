@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/types/speedtest/history_result.dart';
+import 'package:netmanager/utils/haptic_service.dart';
+import 'package:netmanager/utils/share_speedtest.dart';
 import 'package:netmanager/utils/speed_methods.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SpeedtestDetailDialog extends StatelessWidget {
   const SpeedtestDetailDialog({
     super.key,
+    required this.platform,
     required this.speedtestResult,
     required this.unitIndex,
   });
 
+  final MethodChannel platform;
   final SpeedtestHistoryResult speedtestResult;
   final int unitIndex;
 
@@ -55,15 +60,15 @@ class SpeedtestDetailDialog extends StatelessWidget {
             _detailRow(
               context,
               "Download",
-              "${formatSpeed(speedtestResult.download, unitIndex)} ${getUnitString(unitIndex)}",
+              "${formatSpeed(speedtestResult.download, unitIndex)}${getUnitString(unitIndex)}",
             ),
             _detailRow(
               context,
               "Upload",
-              "${formatSpeed(speedtestResult.upload, unitIndex)} ${getUnitString(unitIndex)}",
+              "${formatSpeed(speedtestResult.upload, unitIndex)}${getUnitString(unitIndex)}",
             ),
-            _detailRow(context, "Ping", "${speedtestResult.ping} ms"),
-            _detailRow(context, "Jitter", "${speedtestResult.jitter} ms"),
+            _detailRow(context, "Ping", "${speedtestResult.ping}ms"),
+            _detailRow(context, "Jitter", "${speedtestResult.jitter}ms"),
             _detailRow(
               context,
               "Loss",
@@ -95,10 +100,16 @@ class SpeedtestDetailDialog extends StatelessWidget {
                       ),
                     ),
                     TextButton.icon(
-                      onPressed: () {
+                      onPressed: () async {
+                        await HapticService().triggerHaptic(
+                          HapticType.selection,
+                          context,
+                        );
+
                         final Uri url = Uri.parse(
                           "https://maps.google.com/?q=${speedtestResult.latitude},${speedtestResult.longitude}",
                         );
+
                         launchUrl(url);
                       },
                       icon: const Icon(Icons.map_outlined, size: 18),
@@ -117,6 +128,22 @@ class SpeedtestDetailDialog extends StatelessWidget {
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: Text(appLocalizations.close),
+        ),
+        FilledButton.icon(
+          onPressed: () async {
+            await HapticService().triggerHaptic(HapticType.selection, context);
+
+            if (context.mounted) {
+              await shareSpeedtestResult(
+                context: context,
+                platform: platform,
+                result: speedtestResult,
+                unitIndex: unitIndex,
+              );
+            }
+          },
+          icon: const Icon(Icons.camera_alt_outlined),
+          label: Text(appLocalizations.speedtestShareResult),
         ),
       ],
     );

@@ -13,6 +13,7 @@ class Perms extends StatefulWidget {
   const Perms(
     this.sharedPreferences,
     this.dynamicThemeNotifier,
+    this.harmonizedColorsNotifier,
     this.themeColorNotifier,
     this.material3Notifier,
     this.darkThemeNotifier,
@@ -22,6 +23,7 @@ class Perms extends StatefulWidget {
   final SharedPreferences sharedPreferences;
 
   final ValueNotifier<bool> dynamicThemeNotifier;
+  final ValueNotifier<bool> harmonizedColorsNotifier;
   final ValueNotifier<int> themeColorNotifier;
   final ValueNotifier<bool> material3Notifier;
   final ValueNotifier<bool> darkThemeNotifier;
@@ -257,6 +259,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
     return Home(
       widget.sharedPreferences,
       widget.dynamicThemeNotifier,
+      widget.harmonizedColorsNotifier,
       widget.themeColorNotifier,
       widget.material3Notifier,
       widget.darkThemeNotifier,

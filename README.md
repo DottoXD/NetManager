@@ -6,6 +6,9 @@ Built from scratch with Flutter, NetManager respects Material guidelines for use
 
 ## Downloads and builds
 Official stable and pre-release builds are available in the [Releases](https://github.com/DottoXD/NetManager/actions) tab on GitHub.
+Stable releases for the FOSS Android flavor are also available on [F-Droid](https://f-droid.org/packages/pw.dotto.netmanager.foss).
+Please do note that, at this moment, the GitHub FOSS build and the F-Droid FOSS build are not interchangeable as they are signed with different keypairs.
+[<img src="https://f-droid.org/badge/get-it-on.png" alt="Get it on F-Droid" height="80">](https://f-droid.org/packages/pw.dotto.netmanager.foss)
 
 Development builds are available at [GitHub Actions](https://github.com/DottoXD/NetManager/actions).
 NetManager will be released on other platforms soon.

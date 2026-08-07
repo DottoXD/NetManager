@@ -182,6 +182,7 @@
     }
   },
   "speedtestLocation": "Posizione",
+  "speedtestShareResult": "Condividi risultato",
   "mapRecord": "Registrazione",
   "closeMapRecord": "Chiudi scheda",
   "mapSignalStrength": "Segnale",
@@ -255,6 +256,8 @@
   "settingsDarkThemeDescription": "Usa lo schema di colori scuro in NetManager.",
   "settingsDynamicThemeTitle": "Tema dinamico",
   "settingsDynamicThemeDescription": "Usa il sistema di temi dinamici di Android. Supportato su Material You (Android 12+.).",
+  "settingsHarmonizedColorsTitle": "Colori armonizzati",
+  "settingsHarmonizedColorsDescription": "Usa dei colori dinamicamente armonizzati con il sistema di tema dinamico su Android.",
   "settingsThemeColorTitle": "Colore del tema",
   "settingsThemeColorDescription": "Seleziona manualmente un colore nel caso in cui tu non stia usando i temi dinamici.",
   "settingsLogEventsTitle": "Logga eventi",

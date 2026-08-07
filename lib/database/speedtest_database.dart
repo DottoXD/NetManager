@@ -16,7 +16,7 @@ class SpeedtestDatabase {
 
     return await openDatabase(
       dbPath,
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE speedtest_history (
@@ -32,7 +32,8 @@ class SpeedtestDatabase {
             networkGen INTEGER,
             serverName TEXT,
             latitude REAL,
-            longitude REAL
+            longitude REAL,
+            deviceModel TEXT,
           )
         ''');
 
@@ -47,6 +48,12 @@ class SpeedtestDatabase {
           );
           await db.execute(
             "ALTER TABLE speedtest_history ADD COLUMN longitude REAL",
+          );
+        }
+
+        if (oldVersion < 3) {
+          await db.execute(
+            "ALTER TABLE speedtest_history ADD COLUMN deviceModel TEXT",
           );
         }
       },

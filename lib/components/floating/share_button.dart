@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 
-class FilterButton extends StatelessWidget {
+class ShareResultButton extends StatelessWidget {
   final VoidCallback? onPressed;
 
-  const FilterButton({super.key, required this.onPressed});
+  const ShareResultButton({super.key, this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -17,8 +17,8 @@ class FilterButton extends StatelessWidget {
 
         onPressed!();
       },
-      tooltip: AppLocalizations.of(context)!.mapFilters,
-      child: const Icon(Icons.filter_alt_outlined),
+      tooltip: AppLocalizations.of(context)!.speedtestShareResult,
+      child: const Icon(Icons.camera_alt_outlined, size: 18),
     );
   }
 }

@@ -11,23 +11,25 @@ import com.google.gson.Gson;
  * This is useful to filter vendor-specific features.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.1.3
  */
 public class DeviceData {
     private static DeviceData instance;
 
     private final String manufacturer;
     private final String modem;
+    private final String model;
 
-    public DeviceData(String manufacturer, String modem) {
+    public DeviceData(String manufacturer, String modem, String model) {
         this.manufacturer = manufacturer.toLowerCase();
         this.modem = modem.toLowerCase();
+        this.model = model;
     }
 
     public static synchronized DeviceData getInstance(SharedPreferences prefs) {
         if (instance == null) {
-            instance = new DeviceData(Build.MANUFACTURER, Build.HARDWARE);
-            DebugLogger.add("DeviceData: " + instance.manufacturer + ", " + instance.modem);
+            instance = new DeviceData(Build.MANUFACTURER, Build.HARDWARE, Build.MODEL);
+            DebugLogger.add("DeviceData: " + instance.manufacturer + ", " + instance.modem + ", " + instance.model + ".");
             instance.save(prefs);
         }
 
@@ -52,5 +54,9 @@ public class DeviceData {
 
     public String getModem() {
         return modem;
+    }
+
+    public String getModel() {
+        return model;
     }
 }

@@ -15,6 +15,7 @@ class SpeedtestHistoryResult {
   final String? serverName;
   final double? latitude;
   final double? longitude;
+  final String? deviceModel;
 
   const SpeedtestHistoryResult({
     this.id,
@@ -30,10 +31,11 @@ class SpeedtestHistoryResult {
     this.serverName,
     this.latitude,
     this.longitude,
+    this.deviceModel,
   });
 
   String getNetworkGenLabel() {
-    return networkGen > 0 ? "${networkGen}G" : "-";
+    return networkGen > 0 ? "${networkGen}G" : "N/A";
   }
 
   bool hasLocation() {
@@ -55,6 +57,7 @@ class SpeedtestHistoryResult {
       "serverName": serverName,
       "latitude": latitude,
       "longitude": longitude,
+      "deviceModel": deviceModel,
     };
   }
 
@@ -73,6 +76,7 @@ class SpeedtestHistoryResult {
       serverName: map["serverName"] as String?,
       latitude: (map["latitude"] as num?)?.toDouble(),
       longitude: (map["longitude"] as num?)?.toDouble(),
+      deviceModel: (map["deviceModel"] as String? ?? ""),
     );
   }
 
@@ -89,6 +93,7 @@ class SpeedtestHistoryResult {
     "serverName",
     "latitude",
     "longitude",
+    "deviceModel",
   ];
 
   List<String> toCsvFields() {
@@ -105,6 +110,7 @@ class SpeedtestHistoryResult {
       serverName ?? "",
       latitude?.toString() ?? "",
       longitude?.toString() ?? "",
+      deviceModel?.toString() ?? "",
     ];
   }
 
@@ -153,6 +159,9 @@ class SpeedtestHistoryResult {
       longitude: fields.length > 11 && fields[11].trim().isNotEmpty
           ? double.tryParse(fields[11])
           : null,
+      deviceModel: fields.length > 12 && fields[12].trim().isEmpty
+          ? null
+          : fields[12],
     );
   }
 }

@@ -52,7 +52,7 @@ class _TopBarState extends State<TopBar> {
   String _plmn = "00000";
   int _gen = 0;
   bool _isEmergency = false;
-  int simCount = 0;
+  int _simCount = 0;
   bool _isLoading = true;
 
   @override
@@ -66,29 +66,37 @@ class _TopBarState extends State<TopBar> {
     speedtestRunningNotifier = widget.speedtestRunningNotifier;
 
     platformSignalNotifier.addListener(_restartTimer);
+    speedtestRunningNotifier.addListener(_onSpeedtestRunningChanged);
 
     _startTimer();
-    _init();
+    _configure();
   }
 
   @override
   void dispose() {
     widget.platformSignalNotifier.removeListener(_restartTimer);
+    widget.speedtestRunningNotifier.removeListener(_onSpeedtestRunningChanged);
 
     _timer.cancel();
 
     super.dispose();
   }
 
-  Future<void> _init() async {
+  Future<void> _configure() async {
     final count = await platform.invokeMethod("getSimCount") ?? 0;
-    if (mounted && count != simCount) setState(() => simCount = count);
+    if (mounted && count != _simCount) setState(() => _simCount = count);
 
     if (count > 0) {
       final activeSelected =
           await platform.invokeMethod("isActiveSubscriptionSelected") ?? true;
 
-      if (!activeSelected) _switchSim();
+      if (!activeSelected) _switchSim(force: true);
+    }
+  }
+
+  void _onSpeedtestRunningChanged() {
+    if (speedtestRunningNotifier.value) {
+      _configure();
     }
   }
 
@@ -100,6 +108,7 @@ class _TopBarState extends State<TopBar> {
       _gen = await platform.invokeMethod<int>("getNetworkGen") ?? -1;
       _isEmergency =
           await platform.invokeMethod<bool>("getEmergencyOnly") ?? false;
+      final count = await platform.invokeMethod<int>("getSimCount") ?? 0;
 
       if (!mounted) return;
 
@@ -108,6 +117,7 @@ class _TopBarState extends State<TopBar> {
         _plmn;
         _gen;
         _isEmergency;
+        _simCount = count;
         _isLoading = false;
       });
     } on PlatformException catch (e) {
@@ -119,8 +129,8 @@ class _TopBarState extends State<TopBar> {
     }
   }
 
-  void _switchSim() async {
-    if (speedtestRunningNotifier.value) return;
+  void _switchSim({bool force = false}) async {
+    if (!force && speedtestRunningNotifier.value) return;
 
     await platform.invokeMethod("switchSim");
     await update();
@@ -322,7 +332,7 @@ class _TopBarState extends State<TopBar> {
           icon: const Icon(Icons.info_outlined),
           tooltip: appLocalizations.radioInfoSettings,
         ),
-        if (simCount > 1)
+        if (_simCount > 1)
           ValueListenableBuilder(
             valueListenable: speedtestRunningNotifier,
             builder: (context, isTestRunning, _) {
