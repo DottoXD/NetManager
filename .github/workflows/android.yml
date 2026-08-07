@@ -13,11 +13,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-defaults:
-  run:
-    shell: bash
-    working-directory: /tmp/build
-
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -25,10 +20,6 @@ jobs:
     steps:
       - name: 📁 Checkout
         uses: actions/checkout@v7.0.1
-
-      - name: 📦 Change directory
-        run: |
-          mv "$GITHUB_WORKSPACE" /tmp/build
 
       - name: 📋 Cache Flutter
         uses: actions/cache@v6.1.0
