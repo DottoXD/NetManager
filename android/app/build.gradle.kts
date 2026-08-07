@@ -32,6 +32,10 @@ android {
         versionName = flutter.versionName
     }
 
+    dependenciesInfo {
+        includeInApk = false
+    }
+
     signingConfigs {
         create("release") {
             if(keystorePropertiesFileExists) {

@@ -125,8 +125,8 @@ class _NetManagerState extends State<NetManager> {
 
             final bool useDynamic =
                 dynamicAvailable && dynamicThemeNotifier.value;
-            final ColorScheme lightScheme;
-            final ColorScheme darkScheme;
+            ColorScheme lightScheme;
+            ColorScheme darkScheme;
 
             if (lightDynamic != null && darkDynamic != null && useDynamic) {
               if (harmonizedColorsNotifier.value) {
@@ -153,6 +153,11 @@ class _NetManagerState extends State<NetManager> {
                 seedColor: seedColor,
                 brightness: Brightness.dark,
               );
+
+              if (harmonizedColorsNotifier.value) {
+                lightScheme = lightScheme.harmonized();
+                darkScheme = darkScheme.harmonized();
+              }
             }
 
             const transitionTheme = PageTransitionsTheme(

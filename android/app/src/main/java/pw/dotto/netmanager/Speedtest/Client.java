@@ -24,6 +24,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -42,9 +43,6 @@ import okio.BufferedSink;
 /**
  * NetManager's Speed test client class is the speed test component which
  * currently does pretty much everything for in-app speed test.
- * This component is heavily WIP and should be considered in an early testing
- * stage.
- * Data may be inaccurate or straight up wrong.
  * The only supported backend at this time is LibreSpeed, an open source Speed
  * test software solution.
  *
@@ -129,13 +127,20 @@ public class Client {
                 if (mobileNetwork != null) {
                     clientBuilder.socketFactory(mobileNetwork.getSocketFactory());
                     clientBuilder.dns(hostname -> {
-                        Future<List<InetAddress>> lookup = dnsExecutor.submit(
-                                () -> Arrays.asList(mobileNetwork.getAllByName(hostname)));
+                        if (dnsExecutor.isShutdown()) {
+                            throw new UnknownHostException("DNS executor is shut down for " + hostname);
+                        }
                         try {
-                            return lookup.get(4, TimeUnit.SECONDS);
-                        } catch (Exception e) {
-                            lookup.cancel(true);
-                            throw new UnknownHostException("DNS lookup timed out for " + hostname);
+                            Future<List<InetAddress>> lookup = dnsExecutor.submit(
+                                    () -> Arrays.asList(mobileNetwork.getAllByName(hostname)));
+                            try {
+                                return lookup.get(4, TimeUnit.SECONDS);
+                            } catch (Exception e) {
+                                lookup.cancel(true);
+                                throw new UnknownHostException("DNS lookup timed out for " + hostname);
+                            }
+                        } catch (RejectedExecutionException e) {
+                            throw new UnknownHostException("DNS lookup rejected for " + hostname);
                         }
                     });
                 }
@@ -286,36 +291,42 @@ public class Client {
 
         try {
             for (int i = 0; i < streams; i++) {
-                futures.add(executor.submit(() -> {
-                    Request request = new Request.Builder()
-                            .url(downloadUrl + "?ckSize=100")
-                            .addHeader("Accept-Encoding", "identity")
-                            .build();
+                if (executor.isShutdown())
+                    break;
+                try {
+                    futures.add(executor.submit(() -> {
+                        Request request = new Request.Builder()
+                                .url(downloadUrl + "?ckSize=100")
+                                .addHeader("Accept-Encoding", "identity")
+                                .build();
 
-                    while (running.get()) {
-                        try (Response response = httpClient.newCall(request).execute()) {
-                            InputStream is = response.body().byteStream();
-                            byte[] buf = new byte[BUFFER_SIZE];
-                            int read;
-                            long tempBytes = 0;
+                        while (running.get()) {
+                            try (Response response = httpClient.newCall(request).execute()) {
+                                InputStream is = response.body().byteStream();
+                                byte[] buf = new byte[BUFFER_SIZE];
+                                int read;
+                                long tempBytes = 0;
 
-                            while (running.get() && (read = is.read(buf)) != -1) {
-                                tempBytes += read;
-                                if (tempBytes >= BATCH_UPDATE_THRESHOLD) {
-                                    totalBytes.addAndGet(tempBytes);
-                                    tempBytes = 0;
+                                while (running.get() && (read = is.read(buf)) != -1) {
+                                    tempBytes += read;
+                                    if (tempBytes >= BATCH_UPDATE_THRESHOLD) {
+                                        totalBytes.addAndGet(tempBytes);
+                                        tempBytes = 0;
+                                    }
+                                }
+                                totalBytes.addAndGet(tempBytes);
+                            } catch (Exception ignored) {
+                                try {
+                                    Thread.sleep(100);
+                                } catch (InterruptedException e) {
+                                    return;
                                 }
                             }
-                            totalBytes.addAndGet(tempBytes);
-                        } catch (Exception ignored) {
-                            try {
-                                Thread.sleep(100);
-                            } catch (InterruptedException e) {
-                                return;
-                            }
                         }
-                    }
-                }));
+                    }));
+                } catch (RejectedExecutionException ignored) {
+                    break;
+                }
             }
 
             return monitorProgress(channel, "DOWNLOAD", startTime, totalBytes, running);
@@ -340,35 +351,41 @@ public class Client {
 
         try {
             for (int i = 0; i < streams; i++) {
-                futures.add(executor.submit(() -> {
-                    RequestBody requestBody = new RequestBody() {
-                        @Override
-                        public MediaType contentType() {
-                            return MediaType.parse("application/octet-stream");
-                        }
-
-                        @Override
-                        public void writeTo(@NonNull BufferedSink sink) throws IOException {
-                            long tempBytes = 0;
-
-                            while (running.get()) {
-                                sink.write(payload);
-                                tempBytes += payload.length;
-                                if (tempBytes >= BATCH_UPDATE_THRESHOLD) {
-                                    totalBytes.addAndGet(tempBytes);
-                                    tempBytes = 0;
-                                }
+                if (executor.isShutdown())
+                    break;
+                try {
+                    futures.add(executor.submit(() -> {
+                        RequestBody requestBody = new RequestBody() {
+                            @Override
+                            public MediaType contentType() {
+                                return MediaType.parse("application/octet-stream");
                             }
 
-                            totalBytes.addAndGet(tempBytes);
-                        }
-                    };
+                            @Override
+                            public void writeTo(@NonNull BufferedSink sink) throws IOException {
+                                long tempBytes = 0;
 
-                    Request request = new Request.Builder().url(uploadUrl).post(requestBody).build();
-                    try (Response response = httpClient.newCall(request).execute()) {
-                    } catch (Exception ignored) {
-                    }
-                }));
+                                while (running.get()) {
+                                    sink.write(payload);
+                                    tempBytes += payload.length;
+                                    if (tempBytes >= BATCH_UPDATE_THRESHOLD) {
+                                        totalBytes.addAndGet(tempBytes);
+                                        tempBytes = 0;
+                                    }
+                                }
+
+                                totalBytes.addAndGet(tempBytes);
+                            }
+                        };
+
+                        Request request = new Request.Builder().url(uploadUrl).post(requestBody).build();
+                        try (Response response = httpClient.newCall(request).execute()) {
+                        } catch (Exception ignored) {
+                        }
+                    }));
+                } catch (RejectedExecutionException ignored) {
+                    break;
+                }
             }
 
             return monitorProgress(channel, "UPLOAD", startTime, totalBytes, running);
@@ -430,26 +447,31 @@ public class Client {
     }
 
     private void trackPacketLoss(String pingUrl, AtomicBoolean isTrackerActive) {
-        executor.execute(() -> {
-            while (isTrackerActive.get()) {
-                Request request = new Request.Builder().url(pingUrl).head().build();
-                globalPingsSent.incrementAndGet();
-                try (Response response = httpClient.newCall(request).execute()) {
-                    if (!response.isSuccessful()) {
+        if (executor.isShutdown())
+            return;
+        try {
+            executor.execute(() -> {
+                while (isTrackerActive.get()) {
+                    Request request = new Request.Builder().url(pingUrl).head().build();
+                    globalPingsSent.incrementAndGet();
+                    try (Response response = httpClient.newCall(request).execute()) {
+                        if (!response.isSuccessful()) {
+                            globalPingsFailed.incrementAndGet();
+                        }
+                    } catch (IOException e) {
                         globalPingsFailed.incrementAndGet();
                     }
-                } catch (IOException e) {
-                    globalPingsFailed.incrementAndGet();
-                }
 
-                try {
-                    Thread.sleep(GLOBAL_PING_INTERVAL_MS);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
+                    try {
+                        Thread.sleep(GLOBAL_PING_INTERVAL_MS);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
                 }
-            }
-        });
+            });
+        } catch (RejectedExecutionException ignored) {
+        }
     }
 
     private double getPacketLoss() {
@@ -514,21 +536,25 @@ public class Client {
     }
 
     public void shutdown() {
+        if (httpClient != null) {
+            httpClient.dispatcher().cancelAll();
+        }
+
         executor.shutdown();
         watchdogExecutor.shutdown();
         dnsExecutor.shutdown();
 
         new Thread(() -> {
             try {
-                if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                if (!executor.awaitTermination(3, TimeUnit.SECONDS)) {
                     executor.shutdownNow();
                 }
 
-                if (!watchdogExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                if (!watchdogExecutor.awaitTermination(3, TimeUnit.SECONDS)) {
                     watchdogExecutor.shutdownNow();
                 }
 
-                if (!dnsExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                if (!dnsExecutor.awaitTermination(3, TimeUnit.SECONDS)) {
                     dnsExecutor.shutdownNow();
                 }
             } catch (InterruptedException e) {

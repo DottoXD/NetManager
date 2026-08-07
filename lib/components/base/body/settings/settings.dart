@@ -777,6 +777,28 @@ class _SettingsBodyState extends State<SettingsBody>
             ),
           ),
           ListTile(
+            title: Text(_appLocalizations.settingsHarmonizedColorsTitle),
+            subtitle: Text(
+              _appLocalizations.settingsHarmonizedColorsDescription,
+            ),
+            enabled: _material3,
+            trailing: (_material3
+                ? Switch(
+                    value: _harmonizedColors,
+                    onChanged: (bool value) async {
+                      await HapticService().triggerHaptic(
+                        HapticType.selection,
+                        context,
+                      );
+
+                      setBool("harmonizedColors", value);
+                      updateData();
+                      harmonizedColorsNotifier.value = value;
+                    },
+                  )
+                : const SizedBox.shrink()),
+          ),
+          ListTile(
             title: Text(_appLocalizations.settingsDynamicThemeTitle),
             subtitle: Text(_appLocalizations.settingsDynamicThemeDescription),
             enabled: _dynamicSupported && _material3,
@@ -796,30 +818,6 @@ class _SettingsBodyState extends State<SettingsBody>
                   )
                 : const SizedBox.shrink()),
           ),
-          if (_dynamicSupported) ...[
-            ListTile(
-              title: Text(_appLocalizations.settingsHarmonizedColorsTitle),
-              subtitle: Text(
-                _appLocalizations.settingsHarmonizedColorsDescription,
-              ),
-              enabled: _material3 && _dynamicTheme,
-              trailing: (_material3 && _dynamicTheme
-                  ? Switch(
-                      value: _harmonizedColors,
-                      onChanged: (bool value) async {
-                        await HapticService().triggerHaptic(
-                          HapticType.selection,
-                          context,
-                        );
-
-                        setBool("harmonizedColors", value);
-                        updateData();
-                        harmonizedColorsNotifier.value = value;
-                      },
-                    )
-                  : const SizedBox.shrink()),
-            ),
-          ],
           ListTile(
             title: Text(_appLocalizations.settingsThemeColorTitle),
             subtitle: Text(_appLocalizations.settingsThemeColorDescription),

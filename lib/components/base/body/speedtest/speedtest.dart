@@ -555,115 +555,136 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
               },
             ),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 24),
-                    ValueListenableBuilder(
-                      valueListenable: _selectedServerNotifier,
-                      builder: (context, selectedServer, child) {
-                        return ValueListenableBuilder(
-                          valueListenable: _metricsNotifier,
-                          builder: (context, metrics, child) {
-                            final bool isRunning =
-                                metrics.stage != TestStage.IDLE &&
-                                metrics.stage != TestStage.FINISHED;
+              child: LayoutBuilder(
+                builder: (context, scrollConstraints) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: scrollConstraints.maxHeight,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 24),
+                          ValueListenableBuilder(
+                            valueListenable: _selectedServerNotifier,
+                            builder: (context, selectedServer, child) {
+                              return ValueListenableBuilder(
+                                valueListenable: _metricsNotifier,
+                                builder: (context, metrics, child) {
+                                  final bool isRunning =
+                                      metrics.stage != TestStage.IDLE &&
+                                      metrics.stage != TestStage.FINISHED;
 
-                            String sponsorName = "";
-                            if (selectedServer != null) {
-                              sponsorName = selectedServer["sponsorName"];
-                            }
+                                  String sponsorName = "";
+                                  if (selectedServer != null) {
+                                    sponsorName = selectedServer["sponsorName"];
+                                  }
 
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                bottom: serverSelectorPadding,
-                              ),
-                              child: OutlinedButton.icon(
-                                onPressed: isRunning
-                                    ? null
-                                    : () async {
-                                        await HapticService().triggerHaptic(
-                                          HapticType.selection,
-                                          context,
-                                        );
+                                  return Padding(
+                                    padding: EdgeInsets.only(
+                                      bottom: serverSelectorPadding,
+                                    ),
+                                    child: OutlinedButton.icon(
+                                      onPressed: isRunning
+                                          ? null
+                                          : () async {
+                                              await HapticService()
+                                                  .triggerHaptic(
+                                                    HapticType.selection,
+                                                    context,
+                                                  );
 
-                                        if (context.mounted) {
-                                          showModalBottomSheet(
-                                            context: context,
-                                            showDragHandle: true,
-                                            useSafeArea: true,
-                                            shape: const RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.vertical(
-                                                    top: Radius.circular(24.0),
+                                              if (context.mounted) {
+                                                showModalBottomSheet(
+                                                  context: context,
+                                                  showDragHandle: true,
+                                                  useSafeArea: true,
+                                                  shape: const RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.vertical(
+                                                          top: Radius.circular(
+                                                            24.0,
+                                                          ),
+                                                        ),
                                                   ),
-                                            ),
-                                            backgroundColor: Theme.of(
-                                              context,
-                                            ).colorScheme.surface,
-                                            builder: (BuildContext context) {
-                                              return ServerModal(
-                                                servers: _servers,
-                                                selectedServerNotifier:
-                                                    _selectedServerNotifier,
-                                              );
+                                                  backgroundColor: Theme.of(
+                                                    context,
+                                                  ).colorScheme.surface,
+                                                  builder: (BuildContext context) {
+                                                    return ServerModal(
+                                                      servers: _servers,
+                                                      selectedServerNotifier:
+                                                          _selectedServerNotifier,
+                                                    );
+                                                  },
+                                                );
+                                              }
                                             },
-                                          );
-                                        }
-                                      },
-                                icon: const Icon(Icons.dns_outlined, size: 18),
-                                label: Text(
-                                  selectedServer != null
-                                      ? "$sponsorName (${(selectedServer["name"]).toString().replaceAll(" ($sponsorName)", "")})"
-                                      : _appLocalizations.noSpeedtestServer,
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
+                                      icon: const Icon(
+                                        Icons.dns_outlined,
+                                        size: 18,
+                                      ),
+                                      label: Text(
+                                        selectedServer != null
+                                            ? "$sponsorName (${(selectedServer["name"]).toString().replaceAll(" ($sponsorName)", "")})"
+                                            : _appLocalizations
+                                                  .noSpeedtestServer,
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                          ValueListenableBuilder(
+                            valueListenable:
+                                widget.speedMeasurementUnitNotifier,
+                            builder: (context, unitIndex, child) {
+                              return ValueListenableBuilder(
+                                valueListenable: _metricsNotifier,
+                                builder: (context, metrics, child) {
+                                  return Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      HeroGauge(
+                                        stage: metrics.stage,
+                                        latencyProgress:
+                                            metrics.latencyProgress,
+                                        currentSpeed: metrics.currentSpeed,
+                                        maxSpeedScale: metrics.maxSpeedScale,
+                                        ping: metrics.ping,
+                                        downloadResult: metrics.downloadResult,
+                                        uploadResult: metrics.uploadResult,
+                                        unitIndex: unitIndex,
+                                        size: gaugeSize,
+                                      ),
+                                      SizedBox(height: gaugeSpacer),
+                                      if (!isTiny)
+                                        QualityMetrics(
+                                          ping: metrics.ping,
+                                          jitter: metrics.jitter,
+                                          packetLoss: metrics.packetLoss,
+                                        ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                    ValueListenableBuilder(
-                      valueListenable: widget.speedMeasurementUnitNotifier,
-                      builder: (context, unitIndex, child) {
-                        return ValueListenableBuilder(
-                          valueListenable: _metricsNotifier,
-                          builder: (context, metrics, child) {
-                            return Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                HeroGauge(
-                                  stage: metrics.stage,
-                                  latencyProgress: metrics.latencyProgress,
-                                  currentSpeed: metrics.currentSpeed,
-                                  maxSpeedScale: metrics.maxSpeedScale,
-                                  ping: metrics.ping,
-                                  downloadResult: metrics.downloadResult,
-                                  uploadResult: metrics.uploadResult,
-                                  unitIndex: unitIndex,
-                                  size: gaugeSize,
-                                ),
-                                SizedBox(height: gaugeSpacer),
-                                if (!isTiny)
-                                  QualityMetrics(
-                                    ping: metrics.ping,
-                                    jitter: metrics.jitter,
-                                    packetLoss: metrics.packetLoss,
-                                  ),
-                              ],
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
             ),
             ValueListenableBuilder(
