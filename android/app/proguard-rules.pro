@@ -8,5 +8,4 @@
 
 -dontwarn pw.dotto.netmanager.Core.Listeners.**
 
--keepattributes Signature
--keepattributes *Annotation*
+-keepattributes Signature, *Annotation*, Exceptions, InnerClasses, EnclosingMethod

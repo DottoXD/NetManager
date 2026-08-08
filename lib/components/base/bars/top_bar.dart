@@ -180,7 +180,6 @@ class _TopBarState extends State<TopBar> {
       showModalBottomSheet(
         context: context,
         showDragHandle: true,
-        useSafeArea: true,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
         ),

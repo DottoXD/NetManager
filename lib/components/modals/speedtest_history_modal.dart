@@ -203,253 +203,269 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12.0, 4.0, 12.0, 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              IconButton(
-                onPressed: () async {
-                  await HapticService().triggerHaptic(
-                    HapticType.selection,
-                    context,
-                  );
+    return SafeArea(
+      top: false,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12.0, 4.0, 12.0, 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  onPressed: () async {
+                    await HapticService().triggerHaptic(
+                      HapticType.selection,
+                      context,
+                    );
 
-                  await _importHistory();
-                },
-                icon: const Icon(Icons.file_download_outlined),
-                tooltip: appLocalizations.speedtestImportHistory,
-              ),
-              IconButton(
-                onPressed: () async {
-                  await HapticService().triggerHaptic(
-                    HapticType.selection,
-                    context,
-                  );
+                    await _importHistory();
+                  },
+                  icon: const Icon(Icons.file_download_outlined),
+                  tooltip: appLocalizations.speedtestImportHistory,
+                ),
+                IconButton(
+                  onPressed: () async {
+                    await HapticService().triggerHaptic(
+                      HapticType.selection,
+                      context,
+                    );
 
-                  await _exportHistory();
-                },
-                icon: const Icon(Icons.file_upload_outlined),
-                tooltip: appLocalizations.speedtestExportHistory,
-              ),
-              FutureBuilder<List<SpeedtestHistoryResult>>(
-                future: _speedtestResults,
-                builder: (context, snapshot) {
-                  final hasResults = (snapshot.data ?? []).isNotEmpty;
-                  if (!hasResults) return const SizedBox.shrink();
+                    await _exportHistory();
+                  },
+                  icon: const Icon(Icons.file_upload_outlined),
+                  tooltip: appLocalizations.speedtestExportHistory,
+                ),
+                FutureBuilder<List<SpeedtestHistoryResult>>(
+                  future: _speedtestResults,
+                  builder: (context, snapshot) {
+                    final hasResults = (snapshot.data ?? []).isNotEmpty;
+                    if (!hasResults) return const SizedBox.shrink();
 
-                  return IconButton(
-                    onPressed: () async {
-                      await HapticService().triggerHaptic(
-                        HapticType.selection,
-                        context,
-                      );
+                    return IconButton(
+                      onPressed: () async {
+                        await HapticService().triggerHaptic(
+                          HapticType.selection,
+                          context,
+                        );
 
-                      if (!context.mounted) return;
+                        if (!context.mounted) return;
 
-                      final bool? confirmed = await showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Text(appLocalizations.speedtestClearHistory),
-                            content: Text(
-                              appLocalizations
-                                  .speedtestClearHistoryConfirmation,
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: Text(appLocalizations.cancel),
+                        final bool? confirmed = await showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text(
+                                appLocalizations.speedtestClearHistory,
                               ),
-                              FilledButton.icon(
-                                icon: const Icon(
-                                  Icons.cleaning_services_outlined,
-                                ),
-                                label: Text(
-                                  appLocalizations.speedtestClearHistory,
-                                ),
-                                onPressed: () async {
-                                  await HapticService().triggerHaptic(
-                                    HapticType.selection,
-                                    context,
-                                  );
-
-                                  if (context.mounted) {
-                                    Navigator.pop(context, true);
-                                  }
-                                },
+                              content: Text(
+                                appLocalizations
+                                    .speedtestClearHistoryConfirmation,
                               ),
-                            ],
-                          );
-                        },
-                      );
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: Text(appLocalizations.cancel),
+                                ),
+                                FilledButton.icon(
+                                  icon: const Icon(
+                                    Icons.cleaning_services_outlined,
+                                  ),
+                                  label: Text(
+                                    appLocalizations.speedtestClearHistory,
+                                  ),
+                                  onPressed: () async {
+                                    await HapticService().triggerHaptic(
+                                      HapticType.selection,
+                                      context,
+                                    );
 
-                      if (confirmed == true) {
-                        await SpeedtestDatabase.clearHistory();
-                        _refresh();
-                      }
-                    },
-                    icon: const Icon(Icons.delete_sweep_outlined),
-                    tooltip: appLocalizations.speedtestClearHistory,
-                  );
-                },
-              ),
-            ],
+                                    if (context.mounted) {
+                                      Navigator.pop(context, true);
+                                    }
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
+
+                        if (confirmed == true) {
+                          await SpeedtestDatabase.clearHistory();
+                          _refresh();
+                        }
+                      },
+                      icon: const Icon(Icons.delete_sweep_outlined),
+                      tooltip: appLocalizations.speedtestClearHistory,
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
-        ),
-        Expanded(
-          child: FutureBuilder<List<SpeedtestHistoryResult>>(
-            future: _speedtestResults,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done) {
-                return const Center(child: CircularProgressIndicator());
-              }
+          Expanded(
+            child: FutureBuilder<List<SpeedtestHistoryResult>>(
+              future: _speedtestResults,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-              final results = snapshot.data ?? [];
+                final results = snapshot.data ?? [];
 
-              if (results.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.history_outlined,
-                          size: 40,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          appLocalizations.speedtestNoHistory,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-
-              return ValueListenableBuilder<int>(
-                valueListenable: widget.speedMeasurementUnitNotifier,
-                builder: (context, unitIndex, child) {
-                  final String unitLabel = getUnitString(unitIndex);
-
-                  return ListView.builder(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    itemCount: results.length,
-                    itemBuilder: (context, i) {
-                      final result = results[i];
-                      final genColor = getGenColor(context, result.networkGen);
-
-                      return Dismissible(
-                        key: ValueKey(result.id ?? i),
-                        direction: DismissDirection.endToStart,
-                        background: Container(
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                          color: Theme.of(context).colorScheme.errorContainer,
-                          child: Icon(
-                            Icons.delete_outlined,
+                if (results.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.history_outlined,
+                            size: 40,
                             color: Theme.of(
                               context,
-                            ).colorScheme.onErrorContainer,
+                            ).colorScheme.onSurfaceVariant,
                           ),
-                        ),
-                        confirmDismiss: (_) async {
-                          await HapticService().triggerHaptic(
-                            HapticType.light,
-                            context,
-                          );
-
-                          if (result.id != null) await _delete(result.id!);
-
-                          return true;
-                        },
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: genColor.withValues(alpha: 0.15),
-                            child: Text(
-                              result.getNetworkGenLabel(),
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: genColor,
-                              ),
-                            ),
-                          ),
-                          title: Text(
-                            DateFormat(
-                              "dd/MM/yyyy HH:mm:ss",
-                            ).format(result.timestamp),
-                          ),
-                          subtitle: Row(
-                            children: [
-                              const Icon(
-                                Icons.arrow_downward_outlined,
-                                size: 14,
-                              ),
-                              const SizedBox(width: 2),
-                              Text(
-                                "${formatSpeed(result.download, unitIndex)} $unitLabel",
-                              ),
-                              const SizedBox(width: 12),
-                              const Icon(Icons.arrow_upward_outlined, size: 14),
-                              const SizedBox(width: 2),
-                              Text(
-                                "${formatSpeed(result.upload, unitIndex)} $unitLabel",
-                              ),
-                              if (result.hasLocation()) ...[
-                                const SizedBox(width: 12),
-                                Icon(
-                                  Icons.location_on_outlined,
-                                  size: 14,
+                          const SizedBox(height: 12),
+                          Text(
+                            appLocalizations.speedtestNoHistory,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
                                   color: Theme.of(
                                     context,
                                   ).colorScheme.onSurfaceVariant,
                                 ),
-                              ],
-                            ],
                           ),
-                          trailing: const Icon(Icons.chevron_right_outlined),
-                          onTap: () async {
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                return ValueListenableBuilder<int>(
+                  valueListenable: widget.speedMeasurementUnitNotifier,
+                  builder: (context, unitIndex, child) {
+                    final String unitLabel = getUnitString(unitIndex);
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      itemCount: results.length,
+                      itemBuilder: (context, i) {
+                        final result = results[i];
+                        final genColor = getGenColor(
+                          context,
+                          result.networkGen,
+                        );
+
+                        return Dismissible(
+                          key: ValueKey(result.id ?? i),
+                          direction: DismissDirection.endToStart,
+                          background: Container(
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24.0,
+                            ),
+                            color: Theme.of(context).colorScheme.errorContainer,
+                            child: Icon(
+                              Icons.delete_outlined,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onErrorContainer,
+                            ),
+                          ),
+                          confirmDismiss: (_) async {
                             await HapticService().triggerHaptic(
-                              HapticType.selection,
+                              HapticType.light,
                               context,
                             );
 
-                            if (!context.mounted) return;
+                            if (result.id != null) await _delete(result.id!);
 
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return SpeedtestDetailDialog(
-                                  platform: widget.platform,
-                                  speedtestResult: result,
-                                  unitIndex: unitIndex,
-                                );
-                              },
-                            );
+                            return true;
                           },
-                        ),
-                      );
-                    },
-                  );
-                },
-              );
-            },
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: genColor.withValues(alpha: 0.15),
+                              child: Text(
+                                result.getNetworkGenLabel(),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: genColor,
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              DateFormat(
+                                "dd/MM/yyyy HH:mm:ss",
+                              ).format(result.timestamp),
+                            ),
+                            subtitle: Row(
+                              children: [
+                                const Icon(
+                                  Icons.arrow_downward_outlined,
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  "${formatSpeed(result.download, unitIndex)} $unitLabel",
+                                ),
+                                const SizedBox(width: 12),
+                                const Icon(
+                                  Icons.arrow_upward_outlined,
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  "${formatSpeed(result.upload, unitIndex)} $unitLabel",
+                                ),
+                                if (result.hasLocation()) ...[
+                                  const SizedBox(width: 12),
+                                  Icon(
+                                    Icons.location_on_outlined,
+                                    size: 14,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
+                                ],
+                              ],
+                            ),
+                            trailing: const Icon(Icons.chevron_right_outlined),
+                            onTap: () async {
+                              await HapticService().triggerHaptic(
+                                HapticType.selection,
+                                context,
+                              );
+
+                              if (!context.mounted) return;
+
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return SpeedtestDetailDialog(
+                                    platform: widget.platform,
+                                    speedtestResult: result,
+                                    unitIndex: unitIndex,
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

@@ -73,6 +73,10 @@ android {
             dimension = "distribution"
             applicationIdSuffix = ".foss"
             versionNameSuffix = "-foss"
+
+            ndk {
+                debugSymbolLevel = "NONE"
+            }
         }
         create("play") {
             dimension = "distribution"

@@ -195,9 +195,9 @@ class _NetManagerState extends State<NetManager> {
                         statusBarBrightness: isDark
                             ? Brightness.dark
                             : Brightness.light,
-                        systemNavigationBarColor: Theme.of(innerContext)
-                            .colorScheme
-                            .surface, // sdk < 27 -> make it Colors.black
+                        systemNavigationBarColor: Colors.transparent,
+                        systemNavigationBarDividerColor: Colors.transparent,
+                        systemNavigationBarContrastEnforced: false,
                         systemNavigationBarIconBrightness: isDark
                             ? Brightness.light
                             : Brightness.dark,

@@ -50,7 +50,7 @@ class SpeedResults extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: topRadius,
             color: Color.alphaBlend(
-              Theme.of(context).colorScheme.primary.withValues(alpha: 0.06),
+              Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
               Theme.of(context).colorScheme.surface,
             ),
           ),

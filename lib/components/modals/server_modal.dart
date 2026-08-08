@@ -15,40 +15,46 @@ class ServerModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      shrinkWrap: true,
-      padding: const EdgeInsets.only(bottom: 16),
-      itemCount: servers.length,
-      itemBuilder: (context, i) {
-        final sponsorName = servers[i]["sponsorName"];
+    return SafeArea(
+      top: false,
+      child: ListView.builder(
+        shrinkWrap: true,
+        padding: const EdgeInsets.only(bottom: 16),
+        itemCount: servers.length,
+        itemBuilder: (context, i) {
+          final sponsorName = servers[i]["sponsorName"];
 
-        return ListTile(
-          title: Text(
-            "$sponsorName (${(servers[i]["name"]).toString().replaceAll(" ($sponsorName)", "")})",
-          ),
-          trailing: servers[i]["sponsorURL"] != null
-              ? IconButton(
-                  onPressed: () async {
-                    await HapticService().triggerHaptic(
-                      HapticType.selection,
-                      context,
-                    );
+          return ListTile(
+            title: Text(
+              "$sponsorName (${(servers[i]["name"]).toString().replaceAll(" ($sponsorName)", "")})",
+            ),
+            trailing: servers[i]["sponsorURL"] != null
+                ? IconButton(
+                    onPressed: () async {
+                      await HapticService().triggerHaptic(
+                        HapticType.selection,
+                        context,
+                      );
 
-                    Uri url = Uri.parse(servers[i]["sponsorURL"]);
-                    launchUrl(url);
-                  },
-                  icon: const Icon(Icons.open_in_new),
-                  tooltip: AppLocalizations.of(context)!.visitServerHost,
-                )
-              : null,
-          onTap: () async {
-            await HapticService().triggerHaptic(HapticType.selection, context);
+                      Uri url = Uri.parse(servers[i]["sponsorURL"]);
+                      launchUrl(url);
+                    },
+                    icon: const Icon(Icons.open_in_new),
+                    tooltip: AppLocalizations.of(context)!.visitServerHost,
+                  )
+                : null,
+            onTap: () async {
+              await HapticService().triggerHaptic(
+                HapticType.selection,
+                context,
+              );
 
-            selectedServerNotifier.value = servers[i];
-            if (context.mounted) Navigator.pop(context);
-          },
-        );
-      },
+              selectedServerNotifier.value = servers[i];
+              if (context.mounted) Navigator.pop(context);
+            },
+          );
+        },
+      ),
     );
   }
 }

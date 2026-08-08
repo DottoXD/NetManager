@@ -310,7 +310,6 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
-      useSafeArea: true,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
@@ -564,7 +563,6 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                         minHeight: scrollConstraints.maxHeight,
                       ),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const SizedBox(height: 24),
                           ValueListenableBuilder(
@@ -600,7 +598,6 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                                                 showModalBottomSheet(
                                                   context: context,
                                                   showDragHandle: true,
-                                                  useSafeArea: true,
                                                   shape: const RoundedRectangleBorder(
                                                     borderRadius:
                                                         BorderRadius.vertical(
@@ -645,40 +642,46 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                               );
                             },
                           ),
-                          ValueListenableBuilder(
-                            valueListenable:
-                                widget.speedMeasurementUnitNotifier,
-                            builder: (context, unitIndex, child) {
-                              return ValueListenableBuilder(
-                                valueListenable: _metricsNotifier,
-                                builder: (context, metrics, child) {
-                                  return Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      HeroGauge(
-                                        stage: metrics.stage,
-                                        latencyProgress:
-                                            metrics.latencyProgress,
-                                        currentSpeed: metrics.currentSpeed,
-                                        maxSpeedScale: metrics.maxSpeedScale,
-                                        ping: metrics.ping,
-                                        downloadResult: metrics.downloadResult,
-                                        uploadResult: metrics.uploadResult,
-                                        unitIndex: unitIndex,
-                                        size: gaugeSize,
-                                      ),
-                                      SizedBox(height: gaugeSpacer),
-                                      if (!isTiny)
-                                        QualityMetrics(
-                                          ping: metrics.ping,
-                                          jitter: metrics.jitter,
-                                          packetLoss: metrics.packetLoss,
-                                        ),
-                                    ],
+                          Expanded(
+                            child: Center(
+                              child: ValueListenableBuilder(
+                                valueListenable:
+                                    widget.speedMeasurementUnitNotifier,
+                                builder: (context, unitIndex, child) {
+                                  return ValueListenableBuilder(
+                                    valueListenable: _metricsNotifier,
+                                    builder: (context, metrics, child) {
+                                      return Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          HeroGauge(
+                                            stage: metrics.stage,
+                                            latencyProgress:
+                                                metrics.latencyProgress,
+                                            currentSpeed: metrics.currentSpeed,
+                                            maxSpeedScale:
+                                                metrics.maxSpeedScale,
+                                            ping: metrics.ping,
+                                            downloadResult:
+                                                metrics.downloadResult,
+                                            uploadResult: metrics.uploadResult,
+                                            unitIndex: unitIndex,
+                                            size: gaugeSize,
+                                          ),
+                                          SizedBox(height: gaugeSpacer),
+                                          if (!isTiny)
+                                            QualityMetrics(
+                                              ping: metrics.ping,
+                                              jitter: metrics.jitter,
+                                              packetLoss: metrics.packetLoss,
+                                            ),
+                                        ],
+                                      );
+                                    },
                                   );
                                 },
-                              );
-                            },
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -731,7 +734,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                     color: Color.alphaBlend(
                       Theme.of(
                         context,
-                      ).colorScheme.primary.withValues(alpha: 0.06),
+                      ).colorScheme.primary.withValues(alpha: 0.05),
                       Theme.of(context).colorScheme.surface,
                     ),
                   ),

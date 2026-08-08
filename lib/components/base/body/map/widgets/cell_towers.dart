@@ -40,7 +40,6 @@ class CellTowers extends StatelessWidget {
                 showModalBottomSheet(
                   context: context,
                   showDragHandle: true,
-                  useSafeArea: true,
                   isScrollControlled: true,
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(

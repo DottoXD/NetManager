@@ -10,20 +10,23 @@ class InfoModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: options.map((option) {
-          return ListTile(
-            leading: Icon(option.icon),
-            title: Text(option.title),
-            onTap: () async {
-              Navigator.pop(context);
-              await platform.invokeMethod(option.method);
-            },
-          );
-        }).toList(),
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: options.map((option) {
+            return ListTile(
+              leading: Icon(option.icon),
+              title: Text(option.title),
+              onTap: () async {
+                Navigator.pop(context);
+                await platform.invokeMethod(option.method);
+              },
+            );
+          }).toList(),
+        ),
       ),
     );
   }

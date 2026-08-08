@@ -21,40 +21,43 @@ class GraphsModal extends StatelessWidget {
     final AppLocalizations appLocalizations = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
-    return ListenableBuilder(
-      listenable: graphsUpdateNotifier,
-      builder: (context, _) {
-        final List<GraphMetric> metrics = metricsBuilder();
+    return SafeArea(
+      top: false,
+      child: ListenableBuilder(
+        listenable: graphsUpdateNotifier,
+        builder: (context, _) {
+          final List<GraphMetric> metrics = metricsBuilder();
 
-        return ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: metrics.isEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.all(32.0),
-                        child: Text(
-                          appLocalizations.homeGraphsEmpty,
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+          return ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: metrics.isEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.all(32.0),
+                          child: Text(
+                            appLocalizations.homeGraphsEmpty,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
+                        )
+                      : ListView(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                          shrinkWrap: true,
+                          children: _buildRows(theme, metrics),
                         ),
-                      )
-                    : ListView(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                        shrinkWrap: true,
-                        children: _buildRows(theme, metrics),
-                      ),
-              ),
-            ],
-          ),
-        );
-      },
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
