@@ -1,0 +1,6 @@
+- UI degli speed test migliorata
+- Correzione di bug relativi agli speed test
+- Aggiunto un sistema di cronologia degli speed test
+- Aggiunto un post-processore per le celle vicine per i dispositivi Qualcomm
+- Aggiunte card degli speed test condivisibili
+- E altro...
