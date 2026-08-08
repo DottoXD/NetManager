@@ -73,7 +73,15 @@ jobs:
         run: flutter build apk --release --flavor play --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN }} --dart-define=flutter.flutter_map.unblockOSM=${{ secrets.UNBLOCK_OSM }} --dart-define=GIT_COMMIT=$GIT_COMMIT --target-platform android-arm,android-arm64
 
       - name: ⛏️ App APK (Android without proprietary libraries)
-        run: flutter build apk --release --flavor foss --extra-gen-snapshot-options=--strip --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN_FOSS }} --dart-define=flutter.flutter_map.unblockOSM=${{ secrets.UNBLOCK_OSM }} --dart-define=GIT_COMMIT=$GIT_COMMIT --dart-define=FOSS=true --target-platform android-arm,android-arm64
+        run: |
+          rm -rf /tmp/build
+          mkdir -p /tmp/build
+          cp -r ./. /tmp/build/
+          cd /tmp/build
+          flutter clean
+          flutter pub get --enforce-lockfile
+          flutter build apk --release --flavor foss --extra-gen-snapshot-options=--strip --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN_FOSS }} --dart-define=flutter.flutter_map.unblockOSM=${{ secrets.UNBLOCK_OSM }} --dart-define=GIT_COMMIT=$GIT_COMMIT --dart-define=FOSS=true --target-platform android-arm,android-arm64
+          cp build/app/outputs/flutter-apk/app-foss-release.apk "$GITHUB_WORKSPACE/build/app/outputs/flutter-apk/"
 
       - name: ⛏️ App APK (WearOS)
         run: |

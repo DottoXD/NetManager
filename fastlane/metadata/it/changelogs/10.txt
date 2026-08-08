@@ -1,0 +1,3 @@
+- Bug della versione precedente risolti
+- Aggiunto un post-processore per le celle duplicate
+- Aggiornati alcuni post-processori

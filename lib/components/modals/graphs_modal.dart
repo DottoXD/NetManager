@@ -22,7 +22,6 @@ class GraphsModal extends StatelessWidget {
     final theme = Theme.of(context);
 
     return SafeArea(
-      top: false,
       child: ListenableBuilder(
         listenable: graphsUpdateNotifier,
         builder: (context, _) {

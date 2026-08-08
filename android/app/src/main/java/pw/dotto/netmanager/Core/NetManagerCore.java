@@ -3,6 +3,7 @@ package pw.dotto.netmanager.Core;
 import static android.content.Context.MODE_PRIVATE;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
@@ -53,7 +54,7 @@ import pw.dotto.netmanager.Utils.Permissions;
  * data sources and pretty much everything else related to mobile cell data.
  *
  * @author DottoXD
- * @version 0.1.2
+ * @version 0.1.4
  */
 public class NetManagerCore {
     private static volatile NetManagerCore instance;
@@ -252,32 +253,7 @@ public class NetManagerCore {
             emitIfChanged(EventTypes.MOBILE_NODE_CHANGED, simId, node, data);
         }
 
-        boolean isActiveData;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && slot.telephony != null) {
-            isActiveData = (slot.telephony.getSubscriptionId() == SubscriptionManager.getActiveDataSubscriptionId());
-        } else {
-            isActiveData = false;
-            SubscriptionManager sm = (SubscriptionManager) appContext
-                    .getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
-
-            if (sm != null) {
-                try {
-                    SubscriptionInfo info = sm.getActiveSubscriptionInfoForSimSlotIndex(simId);
-                    if (info != null) {
-                        int subId = info.getSubscriptionId();
-
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            isActiveData = (subId == SubscriptionManager.getActiveDataSubscriptionId());
-                        } else {
-                            isActiveData = (subId == SubscriptionManager.getDefaultDataSubscriptionId());
-                        }
-                    }
-                } catch (Exception ignored) {
-                }
-            }
-        }
-
-        if (isActiveData) {
+        if (isActiveDataSubscription(simId)) {
             String simName = getNetwork(simId);
             if (!simName.equals("NetManager"))
                 emitIfChanged(EventTypes.MOBILE_DATA_SIM_CHANGED, simId, simName, data);
@@ -354,6 +330,34 @@ public class NetManagerCore {
         }
 
         return str.toString().trim();
+    }
+
+    @SuppressLint("MissingPermission")
+    public boolean isActiveDataSubscription(int simId) {
+        SIMSlotState slot = getSlot(simId);
+        if (slot == null || slot.telephony == null) {
+            return false;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            int subId = slot.telephony.getSubscriptionId();
+            return subId != SubscriptionManager.INVALID_SUBSCRIPTION_ID
+                    && subId == SubscriptionManager.getActiveDataSubscriptionId();
+        } else {
+            SubscriptionManager sm = (SubscriptionManager) appContext
+                    .getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+            if (sm != null) {
+                try {
+                    SubscriptionInfo info = sm.getActiveSubscriptionInfoForSimSlotIndex(simId);
+                    if (info != null) {
+                        return info.getSubscriptionId() == SubscriptionManager.getDefaultDataSubscriptionId();
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        }
+
+        return false;
     }
 
     public String getNetwork(int simId) {

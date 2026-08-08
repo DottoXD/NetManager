@@ -14,28 +14,37 @@ class SpeedtestDatabase {
   static Future<Database> _initDatabase() async {
     final dbPath = "${await getDatabasesPath()}/netmanager_speedtests.db";
 
+    try {
+      return await _openDatabaseInstance(dbPath);
+    } catch (e) {
+      await deleteDatabase(dbPath);
+      return await _openDatabaseInstance(dbPath);
+    }
+  }
+
+  static Future<Database> _openDatabaseInstance(String path) async {
     return await openDatabase(
-      dbPath,
+      path,
       version: 3,
       onCreate: (db, version) async {
         await db.execute('''
-          CREATE TABLE speedtest_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp INTEGER,
-            downloadMbps REAL,
-            uploadMbps REAL,
-            ping INTEGER,
-            jitter INTEGER,
-            packetLoss REAL,
-            carrier TEXT,
-            plmn TEXT,
-            networkGen INTEGER,
-            serverName TEXT,
-            latitude REAL,
-            longitude REAL,
-            deviceModel TEXT,
-          )
-        ''');
+        CREATE TABLE speedtest_history (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          timestamp INTEGER,
+          downloadMbps REAL,
+          uploadMbps REAL,
+          ping INTEGER,
+          jitter INTEGER,
+          packetLoss REAL,
+          carrier TEXT,
+          plmn TEXT,
+          networkGen INTEGER,
+          serverName TEXT,
+          latitude REAL,
+          longitude REAL,
+          deviceModel TEXT
+        )
+      ''');
 
         await db.execute(
           "CREATE INDEX idx_speedtest_history_timestamp ON speedtest_history (timestamp)",

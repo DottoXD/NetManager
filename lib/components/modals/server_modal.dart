@@ -16,7 +16,6 @@ class ServerModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      top: false,
       child: ListView.builder(
         shrinkWrap: true,
         padding: const EdgeInsets.only(bottom: 16),

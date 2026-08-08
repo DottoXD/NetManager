@@ -55,6 +55,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             vcsInfo.include = false
+            isCrunchPngs = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 file("proguard-rules.pro")
@@ -74,8 +75,12 @@ android {
             applicationIdSuffix = ".foss"
             versionNameSuffix = "-foss"
 
-            ndk {
-                debugSymbolLevel = "NONE"
+            packaging {
+                jniLibs {
+                    keepDebugSymbols.add("**/armeabi-v7a/*.so")
+                    keepDebugSymbols.add("**/arm64-v8a/*.so")
+                    keepDebugSymbols.add("**/x86_64/*.so")
+                }
             }
         }
         create("play") {

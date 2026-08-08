@@ -204,7 +204,6 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
     final appLocalizations = AppLocalizations.of(context)!;
 
     return SafeArea(
-      top: false,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

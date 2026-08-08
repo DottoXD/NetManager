@@ -19,13 +19,13 @@ import pw.dotto.netmanager.Core.NetManagerCore;
  * adds missing NR NSA cells on Samsung devices running on Snapdragon modems.
  *
  * @author DottoXD
- * @version 0.1.2
+ * @version 0.1.4
  */
 public class SamsungNrNsaPostprocessor implements Postprocessor {
     @Override
     public SIMData process(SIMData data, int simId, NetManagerCore netManagerCore) {
         if (netManagerCore == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || data == null
-                || data.getNetworkGen() != 4)
+                || data.getNetworkGen() != 4 || data.getActiveCells() == null)
             return data;
 
         SIMSlotState simSlotState = netManagerCore.getSlot(simId);
