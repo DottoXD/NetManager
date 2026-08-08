@@ -74,14 +74,6 @@ android {
             dimension = "distribution"
             applicationIdSuffix = ".foss"
             versionNameSuffix = "-foss"
-
-            packaging {
-                jniLibs {
-                    keepDebugSymbols.add("**/armeabi-v7a/*.so")
-                    keepDebugSymbols.add("**/arm64-v8a/*.so")
-                    keepDebugSymbols.add("**/x86_64/*.so")
-                }
-            }
         }
         create("play") {
             dimension = "distribution"
