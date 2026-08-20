@@ -67,17 +67,18 @@ class PrimaryCellCard extends StatelessWidget {
                   message: _getTooltip(appLocalizations, altCellView),
                   child: FilledButton(
                     style: FilledButton.styleFrom(
-                      overlayColor: Theme.of(
-                        context,
-                      ).colorScheme.onPrimaryContainer.withAlpha(35),
+                      overlayColor: Theme.of(context)
+                          .colorScheme
+                          .onPrimaryContainer
+                          .withAlpha(35),
                       elevation: 1,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20.0),
                       ),
                       padding: EdgeInsets.zero,
-                      backgroundColor: Theme.of(
-                        context,
-                      ).colorScheme.primaryContainer,
+                      backgroundColor: Theme.of(context)
+                          .colorScheme
+                          .primaryContainer,
                     ),
                     onPressed: onToggle,
                     child: Ink(
@@ -91,9 +92,9 @@ class PrimaryCellCard extends StatelessWidget {
                               _getUtilText(altCellView),
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onPrimaryContainer,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onPrimaryContainer,
                               ),
                             ),
                             const SizedBox(height: 3),
@@ -104,18 +105,18 @@ class PrimaryCellCard extends StatelessWidget {
                               Icon(
                                 Icons.cell_tower_outlined,
                                 size: 40,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onPrimaryContainer,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onPrimaryContainer,
                               ),
                               const SizedBox(width: 6),
                               Text(
                                 _getTitle(appLocalizations, altCellView),
                                 style: TextStyle(
                                   fontSize: 24,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onPrimaryContainer,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onPrimaryContainer,
                                 ),
                               ),
                             ],

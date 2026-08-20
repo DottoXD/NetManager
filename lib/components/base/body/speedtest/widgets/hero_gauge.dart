@@ -104,11 +104,12 @@ class HeroGauge extends StatelessWidget {
           ),
           if (stage == TestStage.DOWNLOAD || stage == TestStage.UPLOAD)
             Positioned(
-              bottom: 40,
+              bottom: size * 0.12,
               child: Text(
                 "0 — ${formatSpeed(maxSpeedScale, unitIndex)} ${getUnitString(unitIndex)}",
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: Theme.of(context).colorScheme.outlineVariant,
+                  fontSize: (size * 0.045).clamp(10.0, 12.0),
                 ),
               ),
             ),

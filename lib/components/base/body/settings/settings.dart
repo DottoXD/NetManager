@@ -20,6 +20,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 class SettingsBody extends StatefulWidget {
   const SettingsBody(
+    this.controller,
     this.platform,
     this.sharedPreferences,
     this.dynamicThemeNotifier,
@@ -42,6 +43,8 @@ class SettingsBody extends StatefulWidget {
     this.homeGraphsRetentionTimeNotifier, {
     super.key,
   });
+
+  final ScrollController controller;
 
   final MethodChannel platform;
   final SharedPreferences sharedPreferences;
@@ -73,6 +76,8 @@ class SettingsBody extends StatefulWidget {
 
 class _SettingsBodyState extends State<SettingsBody>
     with WidgetsBindingObserver {
+  late ScrollController controller;
+
   late MethodChannel platform;
   late SharedPreferences sharedPreferences;
 
@@ -117,7 +122,7 @@ class _SettingsBodyState extends State<SettingsBody>
   int _maximumLogs = 10;
   int _updateInterval = 3;
   int _backgroundUpdateInterval = 3;
-  bool _homeDataGraphs = false;
+  bool _homeDataGraphs = true;
   int _homeGraphsRetentionTime = 30;
   int _positionPrecision = 3;
   int _speedMeasurementUnit = 1;
@@ -153,6 +158,7 @@ class _SettingsBodyState extends State<SettingsBody>
       _appLocalizations.settingsPositionHigh,
     ];
 
+    controller = widget.controller;
     platform = widget.platform;
     sharedPreferences = widget.sharedPreferences;
     dynamicThemeNotifier = widget.dynamicThemeNotifier;
@@ -396,10 +402,9 @@ class _SettingsBodyState extends State<SettingsBody>
       final String debugLogs = await platform.invokeMethod("getDebugLogs");
       if (debugLogs.trim().isEmpty) return;
 
-      final List<String> debugLogsList =
-          (json.decode(debugLogs) as List<dynamic>)
-              .map((e) => e.toString())
-              .toList();
+      final List<String> debugLogsList = (json.decode(
+        debugLogs,
+      ) as List<dynamic>).map((e) => e.toString()).toList();
 
       if (!mounted) return;
 
@@ -428,15 +433,15 @@ class _SettingsBodyState extends State<SettingsBody>
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       behavior: HitTestBehavior.opaque,
       child: ListView(
+        controller: controller,
         shrinkWrap: true,
         physics: const ClampingScrollPhysics(),
         children: <Widget>[
           if (!_isIgnoringBatteryOptimisations) ...[
             Card(
               margin: const EdgeInsets.all(12.0),
-              color: Theme.of(
-                context,
-              ).colorScheme.errorContainer.withValues(alpha: 0.5),
+              color: Theme.of(context).colorScheme.errorContainer
+                  .withValues(alpha: 0.5),
               child: ListTile(
                 leading: Icon(
                   Icons.battery_3_bar_outlined,
@@ -1012,9 +1017,8 @@ class _SettingsBodyState extends State<SettingsBody>
                 border: const UnderlineInputBorder(),
                 hintText: "https://librespeed.org",
                 hintStyle: TextStyle(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.5),
+                  color: Theme.of(context).colorScheme.onSurface
+                      .withValues(alpha: 0.5),
                 ),
               ),
               onChanged: (String value) async {

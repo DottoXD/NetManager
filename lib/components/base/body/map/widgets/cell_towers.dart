@@ -41,6 +41,7 @@ class CellTowers extends StatelessWidget {
                   context: context,
                   showDragHandle: true,
                   isScrollControlled: true,
+                  useSafeArea: true,
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(
                       top: Radius.circular(24.0),
@@ -57,9 +58,8 @@ class CellTowers extends StatelessWidget {
             },
             child: Container(
               decoration: BoxDecoration(
-                color: Theme.of(
-                  context,
-                ).colorScheme.surface.withValues(alpha: 0.8),
+                color: Theme.of(context).colorScheme.surface
+                    .withValues(alpha: 0.8),
                 shape: BoxShape.circle,
                 border: isConnected
                     ? Border.all(color: towerColor, width: 2.5)

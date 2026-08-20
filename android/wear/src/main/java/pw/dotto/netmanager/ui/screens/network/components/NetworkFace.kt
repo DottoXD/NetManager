@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material3.*
 import pw.dotto.netmanager.types.CellData
+import pw.dotto.netmanager.utils.Calculations
 import pw.dotto.netmanager.utils.Calculations.Companion.genLabel
 import pw.dotto.netmanager.utils.Calculations.Companion.genToneColor
 import pw.dotto.netmanager.utils.Calculations.Companion.signalFraction
@@ -52,7 +53,10 @@ fun NetworkFace(
     )
 
     val animatedFraction by animateFloatAsState(
-        targetValue = signalFraction(data.processedSignal, data.networkGen),
+        targetValue = if (Calculations.isValidSignal(data.processedSignal)) signalFraction(
+            data.processedSignal,
+            data.networkGen
+        ) else 0f,
         animationSpec = animationSpec,
         label = "signalArc",
     )
@@ -159,7 +163,7 @@ fun NetworkFace(
             )
 
             Text(
-                text = if (data.processedSignal != 0) "${data.processedSignal} dBm" else "- dBm",
+                text = if (Calculations.isValidSignal((data.processedSignal))) "${data.processedSignal} dBm" else "- dBm",
                 style = typography.bodySmall,
                 color = colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -178,7 +182,7 @@ fun NetworkFace(
                         contentColor = colorScheme.onSurface,
                     )
                 }
-                if (data.node.isNotBlank()) {
+                if (Calculations.isValidString(data.node)) {
                     InfoChip(
                         label = data.node,
                         containerColor = colorScheme.surfaceContainer,

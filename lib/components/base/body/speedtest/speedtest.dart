@@ -311,6 +311,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
       ),
@@ -533,16 +534,6 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final double availableHeight = constraints.maxHeight.isFinite
-            ? constraints.maxHeight
-            : MediaQuery.sizeOf(context).height;
-        final bool isCompact = availableHeight < 640;
-        final bool isTiny = availableHeight < 520;
-
-        final double gaugeSize = (availableHeight * 0.34).clamp(180.0, 280.0);
-        final double gaugeSpacer = (availableHeight * 0.035).clamp(12.0, 48.0);
-        final double serverSelectorPadding = isCompact ? 12 : 32;
-
         return Column(
           children: [
             ValueListenableBuilder(
@@ -555,136 +546,143 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
             ),
             Expanded(
               child: LayoutBuilder(
-                builder: (context, scrollConstraints) {
-                  return SingleChildScrollView(
+                builder: (context, innerConstraints) {
+                  final double availableHeight = innerConstraints.maxHeight;
+                  final bool isCompact = availableHeight < 500;
+                  final bool isTiny = availableHeight < 400;
+
+                  final double gaugeSize = (availableHeight * 0.40).clamp(
+                    220.0,
+                    320.0,
+                  );
+                  final double gaugeSpacer = (availableHeight * 0.06).clamp(
+                    16.0,
+                    56.0,
+                  );
+                  final double serverSelectorPadding = isCompact ? 8 : 16;
+
+                  return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: scrollConstraints.maxHeight,
-                      ),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 24),
-                          ValueListenableBuilder(
-                            valueListenable: _selectedServerNotifier,
-                            builder: (context, selectedServer, child) {
-                              return ValueListenableBuilder(
-                                valueListenable: _metricsNotifier,
-                                builder: (context, metrics, child) {
-                                  final bool isRunning =
-                                      metrics.stage != TestStage.IDLE &&
-                                      metrics.stage != TestStage.FINISHED;
+                    child: Column(
+                      children: [
+                        SizedBox(height: isCompact ? 8 : 16),
+                        ValueListenableBuilder(
+                          valueListenable: _selectedServerNotifier,
+                          builder: (context, selectedServer, child) {
+                            return ValueListenableBuilder(
+                              valueListenable: _metricsNotifier,
+                              builder: (context, metrics, child) {
+                                final bool isRunning =
+                                    metrics.stage != TestStage.IDLE &&
+                                    metrics.stage != TestStage.FINISHED;
 
-                                  String sponsorName = "";
-                                  if (selectedServer != null) {
-                                    sponsorName = selectedServer["sponsorName"];
-                                  }
+                                String sponsorName = "";
+                                if (selectedServer != null) {
+                                  sponsorName = selectedServer["sponsorName"];
+                                }
 
-                                  return Padding(
-                                    padding: EdgeInsets.only(
-                                      bottom: serverSelectorPadding,
-                                    ),
-                                    child: OutlinedButton.icon(
-                                      onPressed: isRunning
-                                          ? null
-                                          : () async {
-                                              await HapticService()
-                                                  .triggerHaptic(
-                                                    HapticType.selection,
-                                                    context,
-                                                  );
+                                return Padding(
+                                  padding: EdgeInsets.only(
+                                    bottom: serverSelectorPadding,
+                                  ),
+                                  child: OutlinedButton.icon(
+                                    onPressed: isRunning
+                                        ? null
+                                        : () async {
+                                            await HapticService().triggerHaptic(
+                                              HapticType.selection,
+                                              context,
+                                            );
 
-                                              if (context.mounted) {
-                                                showModalBottomSheet(
-                                                  context: context,
-                                                  showDragHandle: true,
-                                                  shape: const RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.vertical(
-                                                          top: Radius.circular(
-                                                            24.0,
+                                            if (context.mounted) {
+                                              showModalBottomSheet(
+                                                context: context,
+                                                showDragHandle: true,
+                                                shape:
+                                                    const RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.vertical(
+                                                            top:
+                                                                Radius.circular(
+                                                                  24.0,
+                                                                ),
                                                           ),
-                                                        ),
-                                                  ),
-                                                  backgroundColor: Theme.of(
-                                                    context,
-                                                  ).colorScheme.surface,
-                                                  builder: (BuildContext context) {
-                                                    return ServerModal(
-                                                      servers: _servers,
-                                                      selectedServerNotifier:
-                                                          _selectedServerNotifier,
-                                                    );
-                                                  },
-                                                );
-                                              }
-                                            },
-                                      icon: const Icon(
-                                        Icons.dns_outlined,
-                                        size: 18,
-                                      ),
-                                      label: Text(
-                                        selectedServer != null
-                                            ? "$sponsorName (${(selectedServer["name"]).toString().replaceAll(" ($sponsorName)", "")})"
-                                            : _appLocalizations
-                                                  .noSpeedtestServer,
-                                      ),
-                                      style: OutlinedButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
+                                                    ),
+                                                backgroundColor: Theme.of(
+                                                  context,
+                                                ).colorScheme.surface,
+                                                builder: (BuildContext context) {
+                                                  return ServerModal(
+                                                    servers: _servers,
+                                                    selectedServerNotifier:
+                                                        _selectedServerNotifier,
+                                                  );
+                                                },
+                                              );
+                                            }
+                                          },
+                                    icon: const Icon(
+                                      Icons.dns_outlined,
+                                      size: 18,
+                                    ),
+                                    label: Text(
+                                      selectedServer != null
+                                          ? "$sponsorName (${(selectedServer["name"]).toString().replaceAll(" ($sponsorName)", "")})"
+                                          : _appLocalizations.noSpeedtestServer,
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                          Expanded(
-                            child: Center(
-                              child: ValueListenableBuilder(
-                                valueListenable:
-                                    widget.speedMeasurementUnitNotifier,
-                                builder: (context, unitIndex, child) {
-                                  return ValueListenableBuilder(
-                                    valueListenable: _metricsNotifier,
-                                    builder: (context, metrics, child) {
-                                      return Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          HeroGauge(
-                                            stage: metrics.stage,
-                                            latencyProgress:
-                                                metrics.latencyProgress,
-                                            currentSpeed: metrics.currentSpeed,
-                                            maxSpeedScale:
-                                                metrics.maxSpeedScale,
-                                            ping: metrics.ping,
-                                            downloadResult:
-                                                metrics.downloadResult,
-                                            uploadResult: metrics.uploadResult,
-                                            unitIndex: unitIndex,
-                                            size: gaugeSize,
-                                          ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                        Expanded(
+                          child: Center(
+                            child: ValueListenableBuilder(
+                              valueListenable:
+                                  widget.speedMeasurementUnitNotifier,
+                              builder: (context, unitIndex, child) {
+                                return ValueListenableBuilder(
+                                  valueListenable: _metricsNotifier,
+                                  builder: (context, metrics, child) {
+                                    return Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        HeroGauge(
+                                          stage: metrics.stage,
+                                          latencyProgress:
+                                              metrics.latencyProgress,
+                                          currentSpeed: metrics.currentSpeed,
+                                          maxSpeedScale: metrics.maxSpeedScale,
+                                          ping: metrics.ping,
+                                          downloadResult:
+                                              metrics.downloadResult,
+                                          uploadResult: metrics.uploadResult,
+                                          unitIndex: unitIndex,
+                                          size: gaugeSize,
+                                        ),
+                                        if (!isTiny) ...[
                                           SizedBox(height: gaugeSpacer),
-                                          if (!isTiny)
-                                            QualityMetrics(
-                                              ping: metrics.ping,
-                                              jitter: metrics.jitter,
-                                              packetLoss: metrics.packetLoss,
-                                            ),
+                                          QualityMetrics(
+                                            ping: metrics.ping,
+                                            jitter: metrics.jitter,
+                                            packetLoss: metrics.packetLoss,
+                                          ),
                                         ],
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   );
                 },
@@ -703,7 +701,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                       progress: metrics.progress,
                       startTest: _startTest,
                       unitIndex: unitIndex,
-                      isCompact: isCompact,
+                      isCompact: constraints.maxHeight < 480,
                     );
                   },
                 );
@@ -725,28 +723,30 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                   width: double.maxFinite,
                   padding: EdgeInsets.fromLTRB(
                     12.0,
-                    isCompact ? 2.0 : 4.0,
+                    constraints.maxHeight < 640 ? 2.0 : 4.0,
                     12.0,
-                    isCompact ? 8.0 : 20.0,
+                    constraints.maxHeight < 640 ? 8.0 : 20.0,
                   ),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: Color.alphaBlend(
-                      Theme.of(
-                        context,
-                      ).colorScheme.primary.withValues(alpha: 0.05),
+                      Theme.of(context).colorScheme.primary
+                          .withValues(alpha: 0.05),
                       Theme.of(context).colorScheme.surface,
                     ),
                   ),
-                  child: Text(
-                    isUnconfigured
-                        ? _appLocalizations.speedtestNoServerConfigured
-                        : _appLocalizations.speedtestLibrespeed,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontSize: 12,
-                    ),
-                  ),
+                  child: isDefaultServer
+                      ? Text(
+                          _appLocalizations.speedtestLibrespeed,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                                fontSize: 12,
+                              ),
+                        )
+                      : const SizedBox.shrink(),
                 );
               },
             ),

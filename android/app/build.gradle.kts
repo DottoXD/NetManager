@@ -56,10 +56,24 @@ android {
             isShrinkResources = true
             vcsInfo.include = false
             isCrunchPngs = false
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 file("proguard-rules.pro")
             )
+
+            ndk {
+                abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a"))
+            }
+
+            externalNativeBuild {
+                cmake {
+                    cppFlags(
+                        "-ffile-prefix-map=${project.rootDir}=/build",
+                        "-ffile-prefix-map=/home/runner/work/NetManager/NetManager=."
+                    )
+                }
+            }
         }
 
         debug {

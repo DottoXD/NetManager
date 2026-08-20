@@ -324,9 +324,9 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
                           Icon(
                             Icons.history_outlined,
                             size: 40,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
                           ),
                           const SizedBox(height: 12),
                           Text(
@@ -334,9 +334,9 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
                                 ),
                           ),
                         ],
@@ -371,9 +371,9 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
                             color: Theme.of(context).colorScheme.errorContainer,
                             child: Icon(
                               Icons.delete_outlined,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onErrorContainer,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onErrorContainer,
                             ),
                           ),
                           confirmDismiss: (_) async {
@@ -399,9 +399,8 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
                               ),
                             ),
                             title: Text(
-                              DateFormat(
-                                "dd/MM/yyyy HH:mm:ss",
-                              ).format(result.timestamp),
+                              DateFormat("dd/MM/yyyy HH:mm:ss")
+                                  .format(result.timestamp),
                             ),
                             subtitle: Row(
                               children: [
@@ -427,9 +426,9 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
                                   Icon(
                                     Icons.location_on_outlined,
                                     size: 14,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
                                   ),
                                 ],
                               ],

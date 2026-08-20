@@ -14,6 +14,7 @@ import android.telephony.TelephonyManager;
 
 import androidx.core.app.NotificationCompat;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
@@ -31,7 +32,7 @@ import pw.dotto.netmanager.MainActivity;
  * service.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.1.5
  */
 public class Manager {
     private final Service context;
@@ -263,22 +264,24 @@ public class Manager {
 
         try {
             int simCount = context.getManager().getSimCount();
-            int selectedSubscription = 1;
+            int selectedSubscription;
+
+            List<Integer> simSlotIds = context.getManager().getSimSlotIds();
 
             if (simCount < 2) {
-                selectedSubscription = 0;
+                selectedSubscription = simSlotIds.isEmpty() ? 0 : simSlotIds.get(0);
             } else {
+                selectedSubscription = 1;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     int status = context.getManager().getDataStatus(1);
 
-                    switch (status) {
-                        case TelephonyManager.DATA_DISCONNECTED:
-                        case TelephonyManager.DATA_DISCONNECTING:
-                        case TelephonyManager.DATA_SUSPENDED:
-                        case TelephonyManager.DATA_UNKNOWN:
-                            selectedSubscription = 0;
-                            break;
-                    }
+                    selectedSubscription = switch (status) {
+                        case TelephonyManager.DATA_DISCONNECTED,
+                                TelephonyManager.DATA_DISCONNECTING, TelephonyManager.DATA_SUSPENDED,
+                                TelephonyManager.DATA_UNKNOWN ->
+                            0;
+                        default -> selectedSubscription;
+                    };
 
                 } else if (Build.VERSION.SDK_INT == Build.VERSION_CODES.R) {
                     TelephonyManager subscription = context.getManager().getSubscription(1);

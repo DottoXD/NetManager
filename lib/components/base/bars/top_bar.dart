@@ -301,14 +301,17 @@ class _TopBarState extends State<TopBar> {
     if (_isLoading) {
       titleText = appLocalizations.topBarLoading;
     } else {
-      String displayCarrier = (_carrier == "Unknown" || _carrier.trim().isEmpty)
+      String displayCarrier =
+          (_carrier == "Unknown" ||
+              _carrier.trim().isEmpty ||
+              _carrier == "NetManager")
           ? appLocalizations.unknown
           : _carrier;
 
       if (_isEmergency) {
         String genString = _gen > 0 ? "${_gen}G " : "";
 
-        if (displayCarrier == "NetManager" && _plmn != "00000") {
+        if (displayCarrier == appLocalizations.unknown && _plmn != "00000") {
           displayCarrier = _plmn;
         }
 

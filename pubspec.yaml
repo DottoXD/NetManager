@@ -2,29 +2,30 @@ name: netmanager
 description: "A Material mobile network monitoring app built with ease-of-use and speed in mind."
 publish_to: 'none'
 
-version: 0.1.4+10
+version: 0.1.5+11
 
 environment:
-  sdk: ^3.12.2
-  flutter: ^3.44.9
+  sdk: 3.13.0
+  flutter: 3.47.0
 
 dependencies:
   flutter:
     sdk: flutter
 
-  dynamic_color: 1.8.1
+  dynamic_color: 1.9.0
   shared_preferences: 2.5.5
   url_launcher: 6.3.2
   flutter_map: 8.3.1
   latlong2: 0.9.1
-  sentry_flutter: 9.26.0
+  sentry_flutter: 9.27.0
   http: 1.6.0
-  intl: 0.20.2
+  intl: 0.20.3
   path_provider: 2.1.6
   file_selector: 1.1.0
   sqflite: 2.4.3
   flutter_localizations:
     sdk: flutter
+  material_ui: 1.0.0
 
 dev_dependencies:
   flutter_test:

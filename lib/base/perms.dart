@@ -41,7 +41,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
   bool _showOnboarding = true;
   bool _hasAcceptedPrivacyPolicy = false;
 
-  static final int _requiredPerms =
+  static const int _requiredPerms =
       Permissions.READ_PHONE_STATE |
       Permissions.ACCESS_FINE_LOCATION |
       Permissions.ACCESS_BACKGROUND_LOCATION;

@@ -1,0 +1,96 @@
+name: 🔨 Build & Release NetManager Play .APKs
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*.*.*' ]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📁 Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: 📋 Cache Flutter
+        uses: actions/cache@v6.1.0
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: ${{ runner.os }}-pub-
+
+      - name: 📋 Cache Gradle
+        uses: actions/cache@v6.1.0
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: ☕️ Java
+        uses: actions/setup-java@v5.6.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: 🦋 Setup Flutter
+        uses: subosito/flutter-action@v2.23.0
+        with:
+          channel: stable
+          flutter-version: 3.47.0
+
+      - name: ⌚ Timestamps
+        run: |
+          echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
+
+      - name: 🪛 Dependencies
+        run: flutter pub get --enforce-lockfile
+
+      - name: ✅ Tests
+        run: flutter test --coverage
+
+      - name: 🔓 Key.properties
+        run: echo "${{ secrets.KEY_PROPERTIES }}" > $GITHUB_WORKSPACE/android/key.properties
+
+      - name: 🗄️ Upload-keystore.jks
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > $GITHUB_WORKSPACE/android/upload-keystore.jks
+
+      - name: 📝 Define GIT_COMMIT
+        run: echo "GIT_COMMIT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: ✔️ Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v3
+
+      - name: ⛏️ App APK (Android with Play Services)
+        run: flutter build apk --release --flavor play --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN }} --dart-define=flutter.flutter_map.unblockOSM="${{ secrets.UNBLOCK_OSM }}" --dart-define=GIT_COMMIT=$GIT_COMMIT --target-platform android-arm,android-arm64
+
+      - name: ⛏️ App APK (WearOS)
+        run: |
+          cd android
+          ./gradlew :wear:assembleRelease
+          cd ..
+
+      - name: 📦 Artifacts
+        run: |
+          mkdir -p artifacts
+          cp build/app/outputs/flutter-apk/*.apk artifacts/
+          cp build/wear/outputs/apk/release/*.apk artifacts/
+          mv artifacts/app-play-release.apk artifacts/NetManager-Play.apk
+          mv artifacts/wear-release.apk artifacts/NetManager-WearOS.apk
+
+      - name: 📤 Upload
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          path: artifacts/*.apk
+          retention-days: 3

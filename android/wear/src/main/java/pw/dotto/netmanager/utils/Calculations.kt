@@ -64,7 +64,11 @@ class Calculations {
         fun isValidString(value: String): Boolean {
             return !((value.contains("-1") && (!value.endsWith("dB") && !value.contains("dB"))) || value.contains(
                 "2147483647"
-            ) || value.contains("268435455") || value.contains("null") || value.contains("-1dBm") || value.trim() == "0.0")
+            ) || value.contains("268435455") || value.contains("null") || value.contains("-1dBm") || value.trim() == "0.0" || value.trim() == "-")
+        }
+
+        fun isValidSignal(dbm: Int): Boolean {
+            return dbm != Int.MAX_VALUE && dbm != 268435455 && dbm != -1 && dbm != 0
         }
     }
 }

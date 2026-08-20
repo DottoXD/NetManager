@@ -1,19 +1,19 @@
 package pw.dotto.netmanager.Core.Processors.Postprocessors;
 
 import pw.dotto.netmanager.Core.Mobile.CellDatas.CellData;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.NrCellData;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
 import pw.dotto.netmanager.Core.NetManagerCore;
 
 /**
- * NetManager's PixelTAPostprocessor is a cell data postprocessor which filters
- * out cells with a value equal to 0 on Google Pixel phones.
- * Most Google Pixel models often return 0 as a placeholder timing advance value
- * on secondary SIMs.
+ * NetManager's PixelDataPostprocessor is a cell data postprocessor which
+ * filters
+ * out invalid cell data on Google Pixel phones.
  *
  * @author DottoXD
- * @version 0.1.2
+ * @version 0.1.5
  */
-public class PixelTAPostprocessor implements Postprocessor {
+public class PixelDataPostprocessor implements Postprocessor {
     @Override
     public SIMData process(SIMData data, int simId, NetManagerCore netManagerCore) {
         if (data.getPrimaryCell() != null && data.getPrimaryCell().getTimingAdvance() == 0)
@@ -25,6 +25,10 @@ public class PixelTAPostprocessor implements Postprocessor {
 
             if (cell.getTimingAdvance() == 0)
                 cell.setTimingAdvance(-1);
+
+            if (cell instanceof NrCellData && cell.getSignalNoise() == 0 && cell.getSignalQuality() > -12) {
+                cell.setSignalNoise(-1);
+            }
         }
 
         return data;

@@ -135,12 +135,13 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
 
     private fun switchSim() {
         val ids = knownSimSlotIds
-        
+
         currentSim = when {
             ids.size > 1 -> {
                 val idx = ids.indexOf(currentSim)
                 ids[(idx + 1) % ids.size]
             }
+
             ids.isNotEmpty() -> ids.first()
             else -> 0
         }

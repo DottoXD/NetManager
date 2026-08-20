@@ -664,7 +664,6 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
       if (!listEquals(towers, _cellTowersNotifier.value)) {
         _cellTowersNotifier.value = towers;
       }
-    } catch (e) {
     } finally {
       _towerQueryInProgress = false;
     }

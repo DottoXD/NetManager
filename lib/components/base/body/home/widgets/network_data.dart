@@ -20,6 +20,18 @@ class NetworkData extends StatelessWidget {
     if (simData.primaryCell.channelNumberString == "ARFCN") {
       // terrible (yet working) way of detecting gsm...
       timingAdvanceDistance = simData.primaryCell.timingAdvance * 550;
+    } else if (simData.primaryCell.channelNumberString == "NR-ARFCN") {
+      int factor = 78; // 78.12
+      final frequency = simData.primaryCell.basicCellData.frequency;
+      if (frequency > 1000 && frequency <= 7125) {
+        factor = 39; // 39.06
+      } else if (frequency > 7125 && frequency <= 24125) {
+        factor = 19; // 19.53
+      } else if (frequency > 24125) {
+        factor = 10; // 9.77
+      }
+
+      timingAdvanceDistance = simData.primaryCell.timingAdvance * factor;
     } else {
       timingAdvanceDistance = simData.primaryCell.timingAdvance * 78; // 78.12
     }
@@ -67,9 +79,8 @@ class NetworkData extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20.0),
             ),
-            color: Theme.of(
-              context,
-            ).colorScheme.primaryContainer.withAlpha(230),
+            color: Theme.of(context).colorScheme.primaryContainer
+                .withAlpha(230),
             child: SizedBox(
               width: cardWidth,
               height: cardHeight,
@@ -92,9 +103,9 @@ class NetworkData extends StatelessWidget {
                       children: <Widget>[
                         Icon(
                           getTrailingIcon(simData, label),
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onPrimaryContainer,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onPrimaryContainer,
                         ),
                       ],
                     ),

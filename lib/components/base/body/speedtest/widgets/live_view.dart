@@ -27,7 +27,7 @@ class LiveView extends StatelessWidget {
         Text(
           stage.name,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            letterSpacing: 4,
+            letterSpacing: 3,
             fontWeight: FontWeight.bold,
             color: stage == TestStage.LATENCY
                 ? Theme.of(context).colorScheme.secondary
@@ -36,20 +36,22 @@ class LiveView extends StatelessWidget {
                       : Theme.of(context).colorScheme.primary),
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          showingLatency ? "$ping" : formatSpeed(currentSpeed, unitIndex),
-          style: Theme.of(context).textTheme.displayLarge?.copyWith(
-            fontSize: 72,
-            fontWeight: FontWeight.w300,
-            fontFeatures: [const FontFeature.tabularFigures()],
+        const SizedBox(height: 4),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Text(
+            showingLatency ? "$ping" : formatSpeed(currentSpeed, unitIndex),
+            style: Theme.of(context).textTheme.displayLarge?.copyWith(
+              fontSize: 56,
+              fontWeight: FontWeight.w300,
+              fontFeatures: [const FontFeature.tabularFigures()],
+            ),
           ),
         ),
         Text(
           showingLatency ? "ms" : getUnitString(unitIndex),
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: Theme.of(context).colorScheme.outline,
-          ),
+          style: Theme.of(context).textTheme.titleMedium
+              ?.copyWith(color: Theme.of(context).colorScheme.outline),
         ),
       ],
     );

@@ -32,9 +32,8 @@ class ResultsColumn extends StatelessWidget {
           ),
           Text(
             "${formatSpeed(value, unitIndex)} ${getUnitString(unitIndex)}",
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.bold),
           ),
         ],
       ),

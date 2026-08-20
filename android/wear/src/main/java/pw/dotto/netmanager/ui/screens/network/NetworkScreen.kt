@@ -38,10 +38,10 @@ fun NetworkScreen(
         targetState = data.isPlaceholder,
         transitionSpec = {
             (fadeIn(tween(400)) + scaleIn(tween(400), initialScale = 0.92f)).togetherWith(
-                    fadeOut(
-                        tween(300)
-                    ) + scaleOut(tween(300), targetScale = 0.92f)
-                )
+                fadeOut(
+                    tween(300)
+                ) + scaleOut(tween(300), targetScale = 0.92f)
+            )
         },
         label = "loadingToMain",
     ) { isPlaceholder ->

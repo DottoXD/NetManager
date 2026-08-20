@@ -7,9 +7,8 @@ class LocationDot extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(
-          context,
-        ).colorScheme.primaryContainer.withValues(alpha: 0.9),
+        color: Theme.of(context).colorScheme.primaryContainer
+            .withValues(alpha: 0.9),
         shape: BoxShape.circle,
         border: Border.all(
           color: Colors.white, //color to be changed

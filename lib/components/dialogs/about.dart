@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
@@ -12,8 +14,6 @@ class FullAboutDialog extends StatelessWidget {
     "GIT_COMMIT",
     defaultValue: "development",
   );
-
-  static const isFoss = String.fromEnvironment("FOSS", defaultValue: "false");
 
   static const _darkInvertFilter = ColorFilter.matrix(<double>[
     -1, 0, 0, 0, 255, // red
@@ -47,6 +47,7 @@ class FullAboutDialog extends StatelessWidget {
         return AboutDialog(
           applicationLegalese: "2025 - ${DateTime.now().year} @ DottoXD",
           applicationName: "NetManager",
+
           applicationIcon: Builder(
             builder: (context) {
               bool lightTheme =
@@ -63,7 +64,7 @@ class FullAboutDialog extends StatelessWidget {
             },
           ),
           applicationVersion:
-              "$version ${isFoss == "true" ? "FOSS " : ""}($gitCommit)",
+              "v$version - p${Platform.version.split(" ").first} ($gitCommit)",
         );
       },
     );

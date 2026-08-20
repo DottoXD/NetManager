@@ -1,0 +1,5 @@
+- Improvements to the Speed test UI.
+- Network name changes can now be tracked.
+- The background notification icon has been fixed.
+- The TA value for 5G networks is now calculated correctly.
+- Invalid radio values are now filtered out correctly on the Wear OS companion app.

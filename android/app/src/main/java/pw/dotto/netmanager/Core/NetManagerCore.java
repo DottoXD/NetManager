@@ -11,7 +11,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
-import android.telephony.TelephonyManager;
 
 import androidx.annotation.RequiresPermission;
 
@@ -54,7 +53,7 @@ import pw.dotto.netmanager.Utils.Permissions;
  * data sources and pretty much everything else related to mobile cell data.
  *
  * @author DottoXD
- * @version 0.1.4
+ * @version 0.1.5
  */
 public class NetManagerCore {
     private static volatile NetManagerCore instance;
@@ -187,8 +186,10 @@ public class NetManagerCore {
             return;
 
         SIMData processed = raw;
-        for (Postprocessor postprocessor : postprocessors)
+        for (Postprocessor postprocessor : postprocessors) {
             processed = postprocessor.process(processed, simSlotState.simId, this);
+            DebugLogger.add("Successfully executed " + postprocessor.getClass().getSimpleName() + ".");
+        }
 
         emitEventsIfChanged(simSlotState, processed);
         simStateCache.updateSimData(simSlotState.simId, processed);
@@ -258,6 +259,9 @@ public class NetManagerCore {
             if (!simName.equals("NetManager"))
                 emitIfChanged(EventTypes.MOBILE_DATA_SIM_CHANGED, simId, simName, data);
         }
+
+        String networkName = getNetwork(simId);
+        emitIfChanged(EventTypes.MOBILE_NETWORK_CHANGED, simId, networkName, data);
     }
 
     private void emitIfChanged(EventTypes type, int simId, String value, SIMData data) {

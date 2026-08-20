@@ -18,12 +18,14 @@ import 'package:netmanager/utils/screenshot_helper.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
 import 'package:netmanager/utils/simdata_parser.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+
 import 'dart:async';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeBody extends StatefulWidget {
   const HomeBody(
+    this.controller,
     this.platform,
     this.sharedPreferences,
     this.homeLoadedNotifier,
@@ -39,6 +41,8 @@ class HomeBody extends StatefulWidget {
     this.onScreenshotButtonPressed,
     this.onGraphsButtonPressed,
   });
+
+  final ScrollController controller;
 
   final MethodChannel platform;
   final SharedPreferences sharedPreferences;
@@ -60,6 +64,8 @@ class HomeBody extends StatefulWidget {
 }
 
 class _HomeBodyState extends State<HomeBody> {
+  late ScrollController controller;
+
   late MethodChannel platform;
   late Timer timer;
   late SharedPreferences sharedPreferences;
@@ -104,6 +110,9 @@ class _HomeBodyState extends State<HomeBody> {
   void initState() {
     super.initState();
     _appLocalizations = AppLocalizations.of(context)!;
+
+    controller = widget.controller;
+
     platform = widget.platform;
     sharedPreferences = widget.sharedPreferences;
     homeLoadedNotifier = widget.homeLoadedNotifier;
@@ -351,6 +360,7 @@ class _HomeBodyState extends State<HomeBody> {
     }
 
     return SingleChildScrollView(
+      controller: controller,
       scrollDirection: Axis.vertical,
       child: Column(
         children: <Widget>[

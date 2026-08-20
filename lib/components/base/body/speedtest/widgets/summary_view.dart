@@ -39,9 +39,8 @@ class SummaryView extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               formatSpeed(downloadResult, unitIndex),
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(width: 4),
             Text(
@@ -62,9 +61,8 @@ class SummaryView extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               formatSpeed(uploadResult, unitIndex),
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(width: 4),
             Text(

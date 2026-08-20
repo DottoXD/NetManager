@@ -29,7 +29,7 @@ import pw.dotto.netmanager.Utils.DebugLogger;
  * WearOS bridge for NetManager.
  *
  * @author DottoXD
- * @version 0.1.1
+ * @version 0.1.5
  */
 public class WearHandler implements WearIntegration, MessageClient.OnMessageReceivedListener {
     private Context context;
@@ -184,6 +184,8 @@ public class WearHandler implements WearIntegration, MessageClient.OnMessageRece
                     metricsList.add(timingAdvanceMetric);
 
                     dataMap.putDataMapArrayList("metrics", metricsList);
+                } else {
+                    dataMap.putLong("timestamp", System.currentTimeMillis());
                 }
             }
 

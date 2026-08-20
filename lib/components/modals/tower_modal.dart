@@ -17,9 +17,8 @@ class TowerModal extends StatelessWidget {
           children: [
             Text(
               cellTower.getLatLng().toSexagesimal(),
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             const Divider(),

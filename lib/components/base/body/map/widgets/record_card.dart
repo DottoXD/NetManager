@@ -44,9 +44,8 @@ class RecordCard extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          color: Theme.of(
-            context,
-          ).colorScheme.secondaryContainer.withAlpha(200),
+          color: Theme.of(context).colorScheme.secondaryContainer
+              .withAlpha(200),
           child: Padding(
             padding: const EdgeInsets.all(14.0),
             child: Column(
@@ -60,9 +59,9 @@ class RecordCard extends StatelessWidget {
                       "${index >= 0 ? "${appLocalizations.mapRecord} #$index - " : ""}${record.networkGen < 2 ? "N/A" : "${record.networkGen}G"}",
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSecondaryContainer,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSecondaryContainer,
                       ),
                     ),
                     IconButton(
@@ -93,9 +92,9 @@ class RecordCard extends StatelessWidget {
                             appLocalizations.mapSignalStrength,
                             style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
                                 ),
                           ),
                           const SizedBox(height: 2),
@@ -103,9 +102,9 @@ class RecordCard extends StatelessWidget {
                             appLocalizations.mapTimestamp,
                             style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
                                 ),
                           ),
                           if (!record.usable) ...[
@@ -114,9 +113,9 @@ class RecordCard extends StatelessWidget {
                               appLocalizations.mapPingTimeout,
                               style: Theme.of(context).textTheme.titleSmall
                                   ?.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
                                   ),
                             ),
                           ],
@@ -136,9 +135,8 @@ class RecordCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          DateFormat(
-                            "dd/MM/yyyy HH:mm:ss",
-                          ).format(record.dateTime.toLocal()),
+                          DateFormat("dd/MM/yyyy HH:mm:ss")
+                              .format(record.dateTime.toLocal()),
                           style: Theme.of(context).textTheme.titleSmall
                               ?.copyWith(
                                 fontWeight: FontWeight.bold,

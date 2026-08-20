@@ -7,6 +7,7 @@ import 'package:netmanager/utils/screen_utils.dart';
 import 'package:netmanager/base/perms.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'dart:io';
 
 void main() async {

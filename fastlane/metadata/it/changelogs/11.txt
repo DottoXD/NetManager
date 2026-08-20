@@ -1,0 +1,5 @@
+- Miglioramenti all'interfaccia di Speed test.
+- I cambi di nome della rete ora possono essere tracciati.
+- L'icona della notifica in background è stata corretta.
+- La TA delle celle 5G ora viene calcolata correttamente.
+- I valori radio invalidi ora vengono filtrati correttamente dall'app di companion per Wear OS.

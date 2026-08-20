@@ -30,15 +30,17 @@ class SpeedtestShareCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
         Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 16, color: color),
             const SizedBox(width: 4),
             Text(
               label,
+              textAlign: TextAlign.center,
               style: theme.textTheme.labelMedium?.copyWith(
                 color: color,
                 fontWeight: FontWeight.w600,
@@ -132,9 +134,8 @@ class SpeedtestShareCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  DateFormat(
-                    "dd/MM/yyyy HH:mm:ss",
-                  ).format(speedtestResult.timestamp),
+                  DateFormat("dd/MM/yyyy HH:mm:ss")
+                      .format(speedtestResult.timestamp),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),

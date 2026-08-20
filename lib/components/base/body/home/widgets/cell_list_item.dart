@@ -97,9 +97,8 @@ class CellListItem extends StatelessWidget {
           trailing: showSignalIcon
               ? Icon(
                   icons[_calculateIconIndex()],
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onPrimaryContainer.withValues(alpha: 0.85),
+                  color: Theme.of(context).colorScheme.onPrimaryContainer
+                      .withValues(alpha: 0.85),
                 )
               : null,
         ),

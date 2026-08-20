@@ -1,7 +1,7 @@
 package pw.dotto.netmanager.Core.Processors;
 
 import pw.dotto.netmanager.Core.Processors.Postprocessors.DuplicateCellsPostprocessor;
-import pw.dotto.netmanager.Core.Processors.Postprocessors.PixelTAPostprocessor;
+import pw.dotto.netmanager.Core.Processors.Postprocessors.PixelDataPostprocessor;
 import pw.dotto.netmanager.Core.Processors.Postprocessors.QualcommActiveCellsPostprocessor;
 import pw.dotto.netmanager.Core.Processors.Postprocessors.SamsungNrNsaPostprocessor;
 
@@ -10,7 +10,7 @@ import pw.dotto.netmanager.Core.Processors.Postprocessors.SamsungNrNsaPostproces
  * preprocessors and postprocessors to the DevicePatchRegistry.
  *
  * @author DottoXD
- * @version 0.1.4
+ * @version 0.1.5
  */
 public class DevicePatches {
     private static volatile boolean registered = false;
@@ -22,7 +22,7 @@ public class DevicePatches {
         if (registered)
             return;
 
-        DevicePatchRegistry.registerPostprocessor("google", "*", PixelTAPostprocessor::new);
+        DevicePatchRegistry.registerPostprocessor("google", "*", PixelDataPostprocessor::new);
         DevicePatchRegistry.registerPostprocessor("samsung", "qcom", SamsungNrNsaPostprocessor::new);
         DevicePatchRegistry.registerPostprocessor("*", "qcom", QualcommActiveCellsPostprocessor::new);
         DevicePatchRegistry.registerPostprocessor("*", "*", DuplicateCellsPostprocessor::new);

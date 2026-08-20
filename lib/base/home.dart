@@ -77,11 +77,14 @@ class _HomeState extends State<Home> {
   final ValueNotifier<bool> _databaseCellsInMapNotifier = ValueNotifier(true);
   final ValueNotifier<bool> _bearingLineNotifier = ValueNotifier(true);
 
-  final ValueNotifier<bool> _homeDataGraphsNotifier = ValueNotifier(false);
+  final ValueNotifier<bool> _homeDataGraphsNotifier = ValueNotifier(true);
   final ValueNotifier<int> _homeGraphsRetentionTimeNotifier = ValueNotifier(30);
 
   final ValueNotifier<int> _currentSimSlotNotifier = ValueNotifier(0);
   final ValueNotifier<bool> _speedtestRunningNotifier = ValueNotifier(false);
+
+  final ScrollController _homeScrollController = ScrollController();
+  final ScrollController _settingsScrollController = ScrollController();
 
   @override
   void initState() {
@@ -119,7 +122,7 @@ class _HomeState extends State<Home> {
     _bearingLineNotifier.value =
         widget.sharedPreferences.getBool("bearingLine") ?? true;
     _homeDataGraphsNotifier.value =
-        widget.sharedPreferences.getBool("homeDataGraphs") ?? false;
+        widget.sharedPreferences.getBool("homeDataGraphs") ?? true;
     _homeGraphsRetentionTimeNotifier.value =
         widget.sharedPreferences.getInt("homeGraphsRetentionTime") ?? 30;
 
@@ -177,11 +180,30 @@ class _HomeState extends State<Home> {
     _currentSimSlotNotifier.dispose();
     _speedtestRunningNotifier.dispose();
 
+    _homeScrollController.dispose();
+    _settingsScrollController.dispose();
+
     super.dispose();
   }
 
   void updatePage(int page) {
-    if (_currentPage == page) return;
+    if (_currentPage == page) {
+      if (page == 0 && _homeScrollController.hasClients) {
+        _homeScrollController.animateTo(
+          0.0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+        );
+      } else if (page == 3 && _settingsScrollController.hasClients) {
+        _settingsScrollController.animateTo(
+          0.0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+        );
+      }
+
+      return;
+    }
 
     setState(() {
       _currentPage = page;
@@ -213,6 +235,7 @@ class _HomeState extends State<Home> {
           index: _currentPage,
           children: [
             HomeBody(
+              _homeScrollController,
               widget.platform,
               widget.sharedPreferences,
               _homeLoadedNotifier,
@@ -266,6 +289,7 @@ class _HomeState extends State<Home> {
               },
             ),
             SettingsBody(
+              _settingsScrollController,
               widget.platform,
               widget.sharedPreferences,
               widget.dynamicThemeNotifier,
