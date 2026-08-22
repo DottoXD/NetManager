@@ -70,7 +70,7 @@ import pw.dotto.netmanager.Utils.Permissions;
  * API.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.1.5
  */
 public class TelephonyCellDataSource implements CellDataSource {
     public static final int CELL_INFO_UNAVAILABLE = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
@@ -186,8 +186,10 @@ public class TelephonyCellDataSource implements CellDataSource {
             }
         }
 
-        for (Preprocessor preprocessor : preprocessors)
+        for (Preprocessor preprocessor : preprocessors) {
             cellInfo = preprocessor.process(cellInfo, simId);
+            DebugLogger.add("Successfully executed " + preprocessor.getClass().getSimpleName() + ".");
+        }
 
         SIMData data = new SIMData(getSimCarrier(context, telephony, simSlotState), getSimOperator(context, telephony),
                 getSimNetworkGen(context, telephony), telephony.getSimOperator(),

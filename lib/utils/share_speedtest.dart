@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/base/body/speedtest/widgets/share_card.dart';
 import 'package:netmanager/types/speedtest/history_result.dart';

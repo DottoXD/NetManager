@@ -20,17 +20,21 @@ import pw.dotto.netmanager.Utils.DebugLogger;
  * user wants different kinds of cell events logged.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.1.5
  */
 public class EventManager {
     private static EventManager instance;
     private final ArrayList<NetManagerEvent> events = new ArrayList<>();
     private final SharedPreferences sharedPreferences;
     private final Gson gson;
+    private final EventNotifications eventNotifications;
 
     private EventManager(Context context) {
         gson = new Gson();
         sharedPreferences = context.getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
+
+        eventNotifications = new EventNotifications(context.getApplicationContext());
+        eventNotifications.setupChannel();
 
         if (!loadEvents())
             DebugLogger.add("Unexpected error while loading events.");
@@ -75,6 +79,10 @@ public class EventManager {
                 return;
 
             events.add(mobileNetmanagerEvent);
+
+            if (sharedPreferences.getBoolean("flutter.eventsNotification", false)) {
+                eventNotifications.send(mobileNetmanagerEvent);
+            }
 
             long maxLogs = 10;
             try {

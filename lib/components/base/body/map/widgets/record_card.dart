@@ -1,7 +1,7 @@
 import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 import 'package:netmanager/types/recording/record.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart';
 import 'package:netmanager/types/recording/recorded_data.dart';
 

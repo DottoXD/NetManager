@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:netmanager/types/recording/recorded_data.dart';
 import 'package:netmanager/types/recording/record.dart';
 import 'package:netmanager/utils/format_utils.dart';

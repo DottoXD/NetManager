@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:netmanager/types/graph/graph_point.dart';
 
 class SignalAreaChart extends StatelessWidget {

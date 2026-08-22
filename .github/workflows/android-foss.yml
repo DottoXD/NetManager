@@ -48,7 +48,7 @@ jobs:
         uses: subosito/flutter-action@v2.23.0
         with:
           channel: stable
-          flutter-version: 3.47.0
+          flutter-version: 3.47.1
 
       - name: ⌚ Timestamps
         run: |
@@ -74,13 +74,13 @@ jobs:
       - name: 📝 Define GIT_COMMIT
         run: echo "GIT_COMMIT=$(git rev-parse --short=7 HEAD)" >> $GITHUB_ENV
 
-      - name: ✔️ Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v3
-
       - name: ⛏️ App APK (Android without proprietary libraries)
         run: |
           export PUB_CACHE=$(pwd)/.pub-cache
           flutter build apk --release --flavor foss --extra-gen-snapshot-options=--strip --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN_FOSS }} --dart-define=flutter.flutter_map.unblockOSM="${{ secrets.UNBLOCK_OSM }}" --dart-define=GIT_COMMIT=$GIT_COMMIT --target-platform android-arm,android-arm64
+
+      - name: ✔️ Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v3
 
       - name: 📦 Artifacts
         run: |

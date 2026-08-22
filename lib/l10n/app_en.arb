@@ -264,6 +264,8 @@
   "settingsLogEventsDescription": "Log various events such as changes between mobile cells and technologies.",
   "settingsMaximumLogsTitle": "Maximum logs",
   "settingsMaximumLogsDescription": "The maximum amount of events that should be logged and stored.",
+  "settingsEventsNotificationTitle": "Events notification",
+  "settingsEventsNotificationDescription": "Send a system notification whenever one of the selected events occur.",
   "settingsMetricSystemTitle": "Metric system",
   "settingsMetricSystemDescription": "Use the metric system for speed measurements in the map.",
   "settingsMapTileTemplateTitle": "Map tiles template URL",

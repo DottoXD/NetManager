@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class LocationDot extends StatelessWidget {
   const LocationDot({super.key});

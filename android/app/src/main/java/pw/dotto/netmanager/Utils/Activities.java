@@ -34,7 +34,7 @@ public class Activities {
      * This method starts up Android's Radio Info package.
      *
      * @param context A valid application Context.
-     * @return Whether or not the Activity was started successfully.
+     * @return Whether the Activity was started successfully.
      */
     public static boolean openRadioInfo(Context context) {
         Intent intent = new Intent(Intent.ACTION_MAIN);
@@ -58,7 +58,7 @@ public class Activities {
      * This method starts up Samsung's Radio Info package.
      *
      * @param context A valid application Context.
-     * @return Whether or not the Activity was started successfully.
+     * @return Whether the Activity was started successfully.
      */
     public static boolean openSamsungInfo(Context context) {
         Intent intent = new Intent(Intent.ACTION_MAIN);
@@ -77,7 +77,7 @@ public class Activities {
      * This method starts up Huawei's ProjectMenu package.
      *
      * @param context A valid application Context.
-     * @return Whether or not the Activity was started successfully.
+     * @return Whether the Activity was started successfully.
      */
     public static boolean openHuaweiInfo(Context context) {
         Intent intent = new Intent(Intent.ACTION_MAIN);
@@ -96,7 +96,7 @@ public class Activities {
      * This method starts up Mediatek's EngineerMode package.
      *
      * @param context A valid application Context.
-     * @return Whether or not the Activity was started successfully.
+     * @return Whether the Activity was started successfully.
      */
     public static boolean openMediatekInfo(Context context) {
         Intent intent = new Intent(Intent.ACTION_MAIN);
@@ -115,7 +115,7 @@ public class Activities {
      * This method starts up Xiaomi's BandMode package.
      *
      * @param context A valid application Context.
-     * @return Whether or not the Activity was started successfully.
+     * @return Whether the Activity was started successfully.
      */
     public static boolean openXiaomiInfo(Context context) {
         Intent intent = new Intent(Intent.ACTION_MAIN);

@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/dialogs/about.dart';
 import 'package:netmanager/components/dialogs/database_manager.dart';
@@ -120,6 +120,7 @@ class _SettingsBodyState extends State<SettingsBody>
   bool _metricSystem = true;
   String _mapTilesTemplate = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
   int _maximumLogs = 10;
+  bool _eventsNotification = false;
   int _updateInterval = 3;
   int _backgroundUpdateInterval = 3;
   bool _homeDataGraphs = true;
@@ -241,6 +242,9 @@ class _SettingsBodyState extends State<SettingsBody>
       _mapTilesTemplate =
           sharedPreferences.getString("mapTilesTemplate") ?? _mapTilesTemplate;
       _maximumLogs = sharedPreferences.getInt("maximumLogs") ?? _maximumLogs;
+      _eventsNotification =
+          sharedPreferences.getBool("eventsNotification") ??
+          _eventsNotification;
       _updateInterval =
           sharedPreferences.getInt("updateInterval") ?? _updateInterval;
       _backgroundUpdateInterval =
@@ -378,6 +382,37 @@ class _SettingsBodyState extends State<SettingsBody>
     setBool("backgroundService", finalValue);
     setState(() {
       _backgroundService = finalValue;
+    });
+  }
+
+  Future<void> onToggleEventsNotification(bool value) async {
+    bool perms =
+        await platform.invokeMethod<bool>("checkPermissions", {
+          "perms": Permissions.POST_NOTIFICATIONS,
+        }) ??
+        false;
+
+    bool finalValue = value;
+
+    if (value && !perms) {
+      await platform.invokeMethod<bool>("requestPermissions", {
+        "perms": Permissions.POST_NOTIFICATIONS,
+      });
+
+      bool finalPerms =
+          await platform.invokeMethod<bool>("checkPermissions", {
+            "perms": Permissions.POST_NOTIFICATIONS,
+          }) ??
+          false;
+
+      if (!finalPerms) {
+        finalValue = false;
+      }
+    }
+
+    setBool("eventsNotification", finalValue);
+    setState(() {
+      _eventsNotification = finalValue;
     });
   }
 
@@ -900,6 +935,26 @@ class _SettingsBodyState extends State<SettingsBody>
                 updateData();
               },
             ),
+          ListTile(
+            title: Text(_appLocalizations.settingsEventsNotificationTitle),
+            subtitle: Text(
+              _appLocalizations.settingsEventsNotificationDescription,
+            ),
+            enabled: _logEvents,
+            trailing: _logEvents
+                ? Switch(
+                    value: _eventsNotification,
+                    onChanged: (bool value) async {
+                      await HapticService().triggerHaptic(
+                        HapticType.selection,
+                        context,
+                      );
+
+                      await onToggleEventsNotification(value);
+                    },
+                  )
+                : const SizedBox.shrink(),
+          ),
           Divider(
             height: 0,
             color: Theme.of(context).colorScheme.outlineVariant,

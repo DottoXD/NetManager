@@ -107,7 +107,7 @@ flutter {
 
 dependencies {
     implementation("com.google.code.gson:gson:2.14.0")
-    implementation("com.squareup.okhttp3:okhttp:5.4.0")
+    implementation("com.squareup.okhttp3:okhttp:5.5.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
     "playImplementation"("com.google.android.gms:play-services-wearable:20.0.1")

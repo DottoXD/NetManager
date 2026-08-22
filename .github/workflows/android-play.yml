@@ -48,14 +48,17 @@ jobs:
         uses: subosito/flutter-action@v2.23.0
         with:
           channel: stable
-          flutter-version: 3.47.0
+          flutter-version: 3.47.1
 
       - name: ⌚ Timestamps
         run: |
           echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
 
       - name: 🪛 Dependencies
-        run: flutter pub get --enforce-lockfile
+        run: |
+          export PUB_CACHE=$(pwd)/.pub-cache
+          flutter config --no-analytics
+          flutter pub get --enforce-lockfile
 
       - name: ✅ Tests
         run: flutter test --coverage
@@ -69,11 +72,11 @@ jobs:
       - name: 📝 Define GIT_COMMIT
         run: echo "GIT_COMMIT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
-      - name: ✔️ Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v3
-
       - name: ⛏️ App APK (Android with Play Services)
         run: flutter build apk --release --flavor play --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN }} --dart-define=flutter.flutter_map.unblockOSM="${{ secrets.UNBLOCK_OSM }}" --dart-define=GIT_COMMIT=$GIT_COMMIT --target-platform android-arm,android-arm64
+
+      - name: ✔️ Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v3
 
       - name: ⛏️ App APK (WearOS)
         run: |

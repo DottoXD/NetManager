@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/base/body/speedtest/widgets/hero_gauge.dart';
 import 'package:netmanager/components/base/body/speedtest/widgets/quality_metrics.dart';

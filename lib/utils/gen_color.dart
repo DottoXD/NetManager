@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 Color getGenColor(BuildContext context, int maxGen) {
   final colorScheme = Theme.of(context).colorScheme;

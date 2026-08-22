@@ -1,7 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:netmanager/components/dialogs/error.dart';
@@ -78,32 +79,30 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
 
     try {
       const separator = ",";
-      final String content = await selectedFile.readAsString();
-      final List<String> lines = content
-          .split(RegExp(r"\r\n|\n"))
-          .where((line) => line.trim().isNotEmpty)
-          .toList();
-
-      if (lines.isEmpty) {
-        throw FormatException(appLocalizations.speedtestImportNoValidRows);
-      }
-
-      final List<String> firstRowFields = decodeRow(lines.first, separator);
-      final bool firstRowIsHeader =
-          firstRowFields.isEmpty ||
-          DateTime.tryParse(firstRowFields.first) == null;
-      final int startIndex = firstRowIsHeader ? 1 : 0;
+      final file = File(selectedFile.path);
+      final Stream<String> linesStream = file
+          .openRead()
+          .transform(utf8.decoder)
+          .transform(const LineSplitter());
 
       final List<SpeedtestHistoryResult> parsed = [];
-      for (int i = startIndex; i < lines.length; i++) {
+      bool isFirstLine = true;
+
+      await for (final line in linesStream) {
+        if (line.trim().isEmpty) continue;
+
+        final List<String> fields = decodeRow(line, separator);
+
+        if (isFirstLine) {
+          isFirstLine = false;
+          final bool isHeader =
+              fields.isEmpty || DateTime.tryParse(fields.first) == null;
+          if (isHeader) continue;
+        }
+
         try {
           if (mounted) {
-            parsed.add(
-              SpeedtestHistoryResult.fromCsvFields(
-                decodeRow(lines[i], separator),
-                context,
-              ),
-            );
+            parsed.add(SpeedtestHistoryResult.fromCsvFields(fields, context));
           }
         } catch (_) {
           continue;

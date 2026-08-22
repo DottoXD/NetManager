@@ -264,6 +264,8 @@
   "settingsLogEventsDescription": "Logga svariati tipi di eventi, come i cambi di tecnologia o di stazione mobile.",
   "settingsMaximumLogsTitle": "Log massimi",
   "settingsMaximumLogsDescription": "Il numero massimo di eventi che possono essere loggati e salvati allo stesso tempo.",
+  "settingsEventsNotificationTitle": "Notifiche degli eventi",
+  "settingsEventsNotificationDescription": "Invia una notifica di sistema quando avviene uno degli eventi selezionati.",
   "settingsMetricSystemTitle": "Sistema metrico",
   "settingsMetricSystemDescription": "Usa il sistema metrico per le misurazioni di velocità nella mappa.",
   "settingsMapTileTemplateTitle": "URL del server cartografico",

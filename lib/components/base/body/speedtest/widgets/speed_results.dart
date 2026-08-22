@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:netmanager/components/base/body/speedtest/widgets/results_column.dart';
 import 'package:netmanager/components/base/body/speedtest/speedtest.dart';
 import 'package:netmanager/l10n/app_localizations.dart';

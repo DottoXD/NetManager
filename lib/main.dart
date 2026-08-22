@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
@@ -28,6 +28,10 @@ void main() async {
     defaultValue: "",
   );
 
+  if (Platform.isAndroid && (sharedPreferences.getBool("material3") ?? true)) {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  }
+
   if (!analytics || sentryDsn.isEmpty) {
     runApp(NetManager(prefs: sharedPreferences));
   } else {
@@ -36,10 +40,6 @@ void main() async {
       options.sendDefaultPii = false;
       options.tracesSampleRate = 1;
     }, appRunner: () => runApp(NetManager(prefs: sharedPreferences)));
-  }
-
-  if (Platform.isAndroid && (sharedPreferences.getBool("material3") ?? true)) {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
 }
 
@@ -182,30 +182,32 @@ class _NetManagerState extends State<NetManager> {
                   ? ThemeMode.dark
                   : ThemeMode.light,
               builder: (context, child) {
-                return Builder(
-                  builder: (innerContext) {
-                    final isDark =
-                        Theme.of(innerContext).brightness == Brightness.dark;
+                return MaterialUiCompatibilityBridge(
+                  child: Builder(
+                    builder: (innerContext) {
+                      final isDark =
+                          Theme.of(innerContext).brightness == Brightness.dark;
 
-                    return AnnotatedRegion(
-                      value: SystemUiOverlayStyle(
-                        statusBarColor: Colors.transparent,
-                        statusBarIconBrightness: isDark
-                            ? Brightness.light
-                            : Brightness.dark,
-                        statusBarBrightness: isDark
-                            ? Brightness.dark
-                            : Brightness.light,
-                        systemNavigationBarColor: Colors.transparent,
-                        systemNavigationBarDividerColor: Colors.transparent,
-                        systemNavigationBarContrastEnforced: false,
-                        systemNavigationBarIconBrightness: isDark
-                            ? Brightness.light
-                            : Brightness.dark,
-                      ),
-                      child: child!,
-                    );
-                  },
+                      return AnnotatedRegion<SystemUiOverlayStyle>(
+                        value: SystemUiOverlayStyle(
+                          statusBarColor: Colors.transparent,
+                          statusBarIconBrightness: isDark
+                              ? Brightness.light
+                              : Brightness.dark,
+                          statusBarBrightness: isDark
+                              ? Brightness.dark
+                              : Brightness.light,
+                          systemNavigationBarColor: Colors.transparent,
+                          systemNavigationBarDividerColor: Colors.transparent,
+                          systemNavigationBarContrastEnforced: false,
+                          systemNavigationBarIconBrightness: isDark
+                              ? Brightness.light
+                              : Brightness.dark,
+                        ),
+                        child: child!,
+                      );
+                    },
+                  ),
                 );
               },
               home: Perms(

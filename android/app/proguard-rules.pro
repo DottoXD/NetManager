@@ -6,6 +6,9 @@
 -keep class pw.dotto.netmanager.Core.Listeners.ExtendedPhoneStateListener { *; }
 -keep class pw.dotto.netmanager.Core.Listeners.LegacyPhoneStateListener { *; }
 
+-keep class pw.dotto.netmanager.Core.Processors.Preprocessors.** { *; }
+-keep class pw.dotto.netmanager.Core.Processors.Postprocessors.** { *; }
+
 -dontwarn pw.dotto.netmanager.Core.Listeners.**
 
 -keepattributes Signature, *Annotation*, Exceptions, InnerClasses, EnclosingMethod

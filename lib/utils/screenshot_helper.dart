@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
@@ -24,8 +24,14 @@ class ScreenshotHelper {
       RenderRepaintBoundary boundary =
           captureKey.currentContext!.findRenderObject()
               as RenderRepaintBoundary;
-      final image = await boundary.toImage(pixelRatio: 3.0);
+
+      if (!context.mounted) return;
+
+      final double devicePixelRatio = MediaQuery.of(context).devicePixelRatio
+          .clamp(1.0, 1.5);
+      final image = await boundary.toImage(pixelRatio: devicePixelRatio);
       ByteData? byteData = await image.toByteData(format: ImageByteFormat.png);
+      image.dispose();
       Uint8List pngBytes = byteData!.buffer.asUint8List();
       final file = File(
         "${exportFolder.path}/${DateTime.now().toIso8601String().replaceAll(":", "-")}.png",

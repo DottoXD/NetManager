@@ -104,7 +104,7 @@ public class Manager {
     /**
      * Sends the currently saved activeNotification.
      *
-     * @return Whether or not the notification was sent successfully.
+     * @return Whether the notification was sent successfully.
      */
     public boolean send() {
         activeNotification = build();
