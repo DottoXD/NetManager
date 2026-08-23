@@ -47,16 +47,16 @@ import okio.BufferedSink;
  * test software solution.
  *
  * @author DottoXD
- * @version 0.1.3
+ * @version 0.1.5
  */
 public class Client {
-    private static final String USER_AGENT = "NetManager-SpeedTest/0.1.3";
+    private static final String USER_AGENT = "NetManager-SpeedTest/0.1.5";
 
     private static final int BUFFER_SIZE = 256 * 1024;
     private static final int UPLOAD_CHUNK_SIZE = 1024 * 1024;
     private static final int UI_UPDATE_INTERVAL = 200;
 
-    private static final long BATCH_UPDATE_THRESHOLD = 1024 * 1024;
+    private static final long BATCH_UPDATE_THRESHOLD = 64 * 1024;
 
     private static final int LATENCY_MAX_MS = 5000;
     private static final int PHASE_MAX_MS = 20000;
@@ -215,14 +215,18 @@ public class Client {
         }
 
         while (sent < PING_COUNT && (System.currentTimeMillis() - startTime) < LATENCY_MAX_MS) {
-            Request request = new Request.Builder().url(pingUrl).head().build();
+            String currentPingUrl = pingUrl.contains("empty")
+                    ? pingUrl + (pingUrl.contains("?") ? "&n=" : "?n=") + System.nanoTime()
+                    : pingUrl;
+
+            Request request = new Request.Builder().url(currentPingUrl).head().build();
             long start = System.currentTimeMillis();
             sent++;
             globalPingsSent.incrementAndGet();
 
             try (Response response = httpClient.newCall(request).execute()) {
                 long rtt = System.currentTimeMillis() - start;
-                if (response.isSuccessful()) {
+                if (response.code() != 0) {
                     pings.add(rtt);
                 } else {
                     failed++;
@@ -295,26 +299,45 @@ public class Client {
                     break;
                 try {
                     futures.add(executor.submit(() -> {
+                        String finalDownloadUrl = downloadUrl;
+
+                        if (downloadUrl.contains("garbage") || downloadUrl.contains("getSpeed")) {
+                            finalDownloadUrl += downloadUrl.contains("?") ? "&ckSize=100" : "?ckSize=100";
+                        }
+
                         Request request = new Request.Builder()
-                                .url(downloadUrl + "?ckSize=100")
+                                .url(finalDownloadUrl)
                                 .addHeader("Accept-Encoding", "identity")
                                 .build();
 
+                        byte[] buf = new byte[BUFFER_SIZE];
+
                         while (running.get()) {
+                            if (finalDownloadUrl.contains("downloading"))
+                                request = new Request.Builder()
+                                        .url(finalDownloadUrl + (downloadUrl.contains("?") ? "&n=" : "?n=")
+                                                + System.nanoTime())
+                                        .addHeader("Accept-Encoding", "identity")
+                                        .build();
+
                             try (Response response = httpClient.newCall(request).execute()) {
                                 InputStream is = response.body().byteStream();
-                                byte[] buf = new byte[BUFFER_SIZE];
+
                                 int read;
                                 long tempBytes = 0;
 
-                                while (running.get() && (read = is.read(buf)) != -1) {
-                                    tempBytes += read;
-                                    if (tempBytes >= BATCH_UPDATE_THRESHOLD) {
-                                        totalBytes.addAndGet(tempBytes);
-                                        tempBytes = 0;
+                                try {
+                                    while (running.get() && (read = is.read(buf)) != -1) {
+                                        tempBytes += read;
+                                        if (tempBytes >= BATCH_UPDATE_THRESHOLD) {
+                                            totalBytes.addAndGet(tempBytes);
+                                            tempBytes = 0;
+                                        }
                                     }
+                                } finally {
+                                    if (tempBytes > 0)
+                                        totalBytes.addAndGet(tempBytes);
                                 }
-                                totalBytes.addAndGet(tempBytes);
                             } catch (Exception ignored) {
                                 try {
                                     Thread.sleep(100);
@@ -365,20 +388,30 @@ public class Client {
                             public void writeTo(@NonNull BufferedSink sink) throws IOException {
                                 long tempBytes = 0;
 
-                                while (running.get()) {
-                                    sink.write(payload);
-                                    tempBytes += payload.length;
-                                    if (tempBytes >= BATCH_UPDATE_THRESHOLD) {
-                                        totalBytes.addAndGet(tempBytes);
-                                        tempBytes = 0;
-                                    }
-                                }
+                                try {
+                                    while (running.get()) {
+                                        sink.write(payload);
+                                        sink.flush();
 
-                                totalBytes.addAndGet(tempBytes);
+                                        tempBytes += payload.length;
+                                        if (tempBytes >= BATCH_UPDATE_THRESHOLD) {
+                                            totalBytes.addAndGet(tempBytes);
+                                            tempBytes = 0;
+                                        }
+                                    }
+                                } finally {
+                                    if (tempBytes > 0)
+                                        totalBytes.addAndGet(tempBytes);
+                                }
                             }
                         };
 
-                        Request request = new Request.Builder().url(uploadUrl).post(requestBody).build();
+                        String finalUploadUrl = uploadUrl;
+                        if (!uploadUrl.contains("upload.php")) {
+                            finalUploadUrl += (uploadUrl.contains("?") ? "&n=" : "?n=") + System.nanoTime();
+                        }
+
+                        Request request = new Request.Builder().url(finalUploadUrl).post(requestBody).build();
                         try (Response response = httpClient.newCall(request).execute()) {
                         } catch (Exception ignored) {
                         }
@@ -452,10 +485,12 @@ public class Client {
         try {
             executor.execute(() -> {
                 while (isTrackerActive.get()) {
-                    Request request = new Request.Builder().url(pingUrl).head().build();
+                    Request request = new Request.Builder().url(pingUrl.contains("empty")
+                            ? pingUrl + (pingUrl.contains("?") ? "&n=" : "?n=") + System.nanoTime()
+                            : pingUrl).head().build();
                     globalPingsSent.incrementAndGet();
                     try (Response response = httpClient.newCall(request).execute()) {
-                        if (!response.isSuccessful()) {
+                        if (!(response.code() != 0)) {
                             globalPingsFailed.incrementAndGet();
                         }
                     } catch (IOException e) {

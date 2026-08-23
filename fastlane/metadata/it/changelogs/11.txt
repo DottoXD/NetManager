@@ -5,3 +5,4 @@
 - I valori radio invalidi ora vengono filtrati correttamente dall'app di companion per Wear OS.
 - Risolto un crash in caso di acquisizione di uno screenshot nella schermata home o durante l'importazione di uno storico di speed test su alcuni dispositivi.
 - Gli utenti ora possono farsi notificare quando avviene uno degli eventi selezionati nelle impostazioni.
+- I backend personalizzati o OpenSpeedTest sono ora supportati (insieme a LibreSpeed).

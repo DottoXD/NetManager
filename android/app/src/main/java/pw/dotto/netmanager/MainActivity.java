@@ -222,7 +222,14 @@ public class MainActivity extends FlutterActivity {
 
         case "startTest":
           Client client = new Client();
-          client.runSpeedTest(this, call.argument("pingUrl"), call.argument("downloadUrl"), call.argument("uploadUrl"),
+          String pingUrl = call.argument("pingUrl");
+          String downloadUrl = call.argument("downloadUrl");
+          String uploadUrl = call.argument("uploadUrl");
+
+          DebugLogger.add("Starting a speed test with pingUrl '" + pingUrl + "', downloadUrl '" + downloadUrl
+              + "', uploadUrl '" + uploadUrl + "'.");
+
+          client.runSpeedTest(this, pingUrl, downloadUrl, uploadUrl,
               new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL));
           result.success(null);
           break;

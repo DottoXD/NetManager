@@ -5,3 +5,4 @@
 - Invalid radio values are now filtered out correctly on the Wear OS companion app.
 - Fixed an OOM crash when taking a screenshot of the home screen or importing big speed test histories on certain devices.
 - Users can now get notified whenever a settings-selected event occurs.
+- OpenSpeedTest backends and custom backends are now supported along with LibreSpeed.

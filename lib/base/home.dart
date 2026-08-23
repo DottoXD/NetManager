@@ -72,6 +72,7 @@ class _HomeState extends State<Home> {
     "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
   );
   final ValueNotifier<int> _speedMeasurementUnitNotifier = ValueNotifier(1);
+  final ValueNotifier<int> _speedtestBackendNotifier = ValueNotifier(1);
   final ValueNotifier<String> _speedtestInstanceNotifier = ValueNotifier("");
   final ValueNotifier<bool> _externalDatabasesNotifier = ValueNotifier(true);
   final ValueNotifier<bool> _databaseCellsInMapNotifier = ValueNotifier(true);
@@ -113,6 +114,8 @@ class _HomeState extends State<Home> {
         "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
     _speedMeasurementUnitNotifier.value =
         widget.sharedPreferences.getInt("speedMeasurementUnit") ?? 1;
+    _speedtestBackendNotifier.value =
+        widget.sharedPreferences.getInt("speedtestBackend") ?? 1;
     _speedtestInstanceNotifier.value =
         widget.sharedPreferences.getString("speedtestInstance") ?? "";
     _externalDatabasesNotifier.value =
@@ -171,6 +174,7 @@ class _HomeState extends State<Home> {
     _metricSystemNotifier.dispose();
     _mapTilesTemplateNotifier.dispose();
     _speedMeasurementUnitNotifier.dispose();
+    _speedtestBackendNotifier.dispose();
     _speedtestInstanceNotifier.dispose();
     _externalDatabasesNotifier.dispose();
     _databaseCellsInMapNotifier.dispose();
@@ -278,6 +282,7 @@ class _HomeState extends State<Home> {
               widget.platform,
               widget.sharedPreferences,
               _speedMeasurementUnitNotifier,
+              _speedtestBackendNotifier,
               _speedtestInstanceNotifier,
               _speedtestRunningNotifier,
               _canShareResultNotifier,
@@ -304,6 +309,7 @@ class _HomeState extends State<Home> {
               _metricSystemNotifier,
               _mapTilesTemplateNotifier,
               _speedMeasurementUnitNotifier,
+              _speedtestBackendNotifier,
               _speedtestInstanceNotifier,
               _externalDatabasesNotifier,
               _databaseCellsInMapNotifier,

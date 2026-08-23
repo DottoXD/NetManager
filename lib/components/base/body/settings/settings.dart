@@ -9,6 +9,7 @@ import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/dialogs/language.dart';
 import 'package:netmanager/components/dialogs/position_precision.dart';
 import 'package:netmanager/components/dialogs/speed_unit.dart';
+import 'package:netmanager/components/dialogs/speedtest_backend.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/components/base/body/settings/widgets/color_selection.dart';
 import 'package:netmanager/components/base/body/settings/widgets/event_selection.dart';
@@ -35,6 +36,7 @@ class SettingsBody extends StatefulWidget {
     this.metricSystemNotifier,
     this.mapTilesTemplateNotifier,
     this.speedMeasurementUnitNotifier,
+    this.speedtestBackendNotifier,
     this.speedtestInstanceNotifier,
     this.externalDatabasesNotifier,
     this.databaseCellsInMapNotifier,
@@ -63,6 +65,7 @@ class SettingsBody extends StatefulWidget {
   final ValueNotifier<bool> metricSystemNotifier;
   final ValueNotifier<String> mapTilesTemplateNotifier;
   final ValueNotifier<int> speedMeasurementUnitNotifier;
+  final ValueNotifier<int> speedtestBackendNotifier;
   final ValueNotifier<String> speedtestInstanceNotifier;
   final ValueNotifier<bool> externalDatabasesNotifier;
   final ValueNotifier<bool> databaseCellsInMapNotifier;
@@ -95,6 +98,7 @@ class _SettingsBodyState extends State<SettingsBody>
   late ValueNotifier<bool> metricSystemNotifier;
   late ValueNotifier<String> mapTilesTemplateNotifier;
   late ValueNotifier<int> speedMeasurementUnitNotifier;
+  late ValueNotifier<int> speedtestBackendNotifier;
   late ValueNotifier<String> speedtestInstanceNotifier;
   late ValueNotifier<bool> externalDatabasesNotifier;
   late ValueNotifier<bool> databaseCellsInMapNotifier;
@@ -107,6 +111,11 @@ class _SettingsBodyState extends State<SettingsBody>
 
   late List<String> positionPrecisions;
   final List<String> speedMeasurementUnits = ["Gbps", "Mbps", "Kbps"];
+  final List<String> speedtestBackends = [
+    "Custom",
+    "LibreSpeed",
+    "OpenSpeedTest",
+  ];
 
   late AppLocalizations _appLocalizations;
 
@@ -127,6 +136,7 @@ class _SettingsBodyState extends State<SettingsBody>
   int _homeGraphsRetentionTime = 30;
   int _positionPrecision = 3;
   int _speedMeasurementUnit = 1;
+  int _speedtestBackend = 1;
   String _speedtestInstance = "";
   bool _externalDatabases = true;
   bool _databaseCellsInMap = true;
@@ -145,6 +155,7 @@ class _SettingsBodyState extends State<SettingsBody>
 
   late String _positionPrecisionSelection;
   late String _speedMeasurementUnitSelection;
+  late String _speedtestBackendSelection;
 
   @override
   void initState() {
@@ -174,6 +185,7 @@ class _SettingsBodyState extends State<SettingsBody>
     metricSystemNotifier = widget.metricSystemNotifier;
     mapTilesTemplateNotifier = widget.mapTilesTemplateNotifier;
     speedMeasurementUnitNotifier = widget.speedMeasurementUnitNotifier;
+    speedtestBackendNotifier = widget.speedtestBackendNotifier;
     speedtestInstanceNotifier = widget.speedtestInstanceNotifier;
     externalDatabasesNotifier = widget.externalDatabasesNotifier;
     databaseCellsInMapNotifier = widget.databaseCellsInMapNotifier;
@@ -185,6 +197,7 @@ class _SettingsBodyState extends State<SettingsBody>
     _positionPrecisionSelection = positionPrecisions[_positionPrecision];
     _speedMeasurementUnitSelection =
         speedMeasurementUnits[_speedMeasurementUnit];
+    _speedtestBackendSelection = speedtestBackends[_speedtestBackend];
 
     _mapTilesTemplateController = TextEditingController(
       text: _mapTilesTemplate,
@@ -260,6 +273,8 @@ class _SettingsBodyState extends State<SettingsBody>
       _speedMeasurementUnit =
           sharedPreferences.getInt("speedMeasurementUnit") ??
           _speedMeasurementUnit;
+      _speedtestBackend =
+          sharedPreferences.getInt("speedtestBackend") ?? _speedtestBackend;
       _speedtestInstance =
           sharedPreferences.getString("speedtestInstance") ??
           _speedtestInstance;
@@ -1051,6 +1066,43 @@ class _SettingsBodyState extends State<SettingsBody>
             ),
           ),
           ListTile(
+            title: Text(
+              "${_appLocalizations.settingsSpeedBackendTitle} (${speedtestBackends[_speedtestBackend]})",
+            ),
+            subtitle: Text(_appLocalizations.settingsSpeedBackendDescription),
+            trailing: IconButton(
+              icon: const Icon(Icons.edit),
+              tooltip: _appLocalizations.openDialog,
+              onPressed: () async {
+                await HapticService().triggerHaptic(
+                  HapticType.selection,
+                  context,
+                );
+
+                if (context.mounted) {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return SpeedtestBackendDialog(
+                        speedtestBackends: speedtestBackends,
+                        currentSelection: _speedtestBackendSelection,
+                        onChanged: (index, value) {
+                          setState(() {
+                            _speedtestBackendSelection = value;
+                          });
+
+                          setInt("speedtestBackend", index);
+                          speedtestBackendNotifier.value = index;
+                          updateData();
+                        },
+                      );
+                    },
+                  );
+                }
+              },
+            ),
+          ),
+          ListTile(
             title: Text(_appLocalizations.settingsSpeedInstanceTitle),
             subtitle: Text(_appLocalizations.settingsSpeedInstanceDescription),
           ),
@@ -1065,7 +1117,7 @@ class _SettingsBodyState extends State<SettingsBody>
               controller: _speedtestInstanceController,
               inputFormatters: [
                 FilteringTextInputFormatter.allow(
-                  RegExp(r"[a-zA-Z0-9:\/\.\-?#%&={}\[\]+]"),
+                  RegExp(r"[a-zA-Z0-9:\/\.\-?#%&={}\[\]+;]"),
                 ),
               ],
               decoration: InputDecoration(
@@ -1081,6 +1133,8 @@ class _SettingsBodyState extends State<SettingsBody>
                   HapticType.selection,
                   context,
                 );
+
+                value = value.replaceFirst("http://", "https://");
 
                 setString("speedtestInstance", value);
                 _speedtestInstance = value;

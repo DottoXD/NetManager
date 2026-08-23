@@ -27,6 +27,7 @@ class SpeedtestBody extends StatefulWidget {
   final SharedPreferences sharedPreferences;
 
   final ValueNotifier<int> speedMeasurementUnitNotifier;
+  final ValueNotifier<int> speedtestBackendNotifier;
   final ValueNotifier<String> speedtestInstanceUrlNotifier;
   final ValueNotifier<bool> testRunningNotifier;
   final ValueNotifier<bool> canShareResultNotifier;
@@ -38,6 +39,7 @@ class SpeedtestBody extends StatefulWidget {
     this.platform,
     this.sharedPreferences,
     this.speedMeasurementUnitNotifier,
+    this.speedtestBackendNotifier,
     this.speedtestInstanceUrlNotifier,
     this.testRunningNotifier,
     this.canShareResultNotifier, {
@@ -88,6 +90,8 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     sharedPreferences = widget.sharedPreferences;
 
     widget.speedtestInstanceUrlNotifier.addListener(_onServerUrlChanged);
+    widget.speedtestBackendNotifier.addListener(_onServerUrlChanged);
+
     widget.onHistoryButtonPressed(_openHistoryModal);
     widget.onShareResultButtonPressed(_shareResult);
 
@@ -171,17 +175,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
           widget.testRunningNotifier.value = false;
           widget.canShareResultNotifier.value = false;
 
-          if (!_dialogOpen && mounted) {
-            _dialogOpen = true;
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return ErrorDialog(
-                  e: "${_appLocalizations.speedtest}: ${call.arguments}",
-                );
-              },
-            ).then((_) => _dialogOpen = false);
-          }
+          _showErrorDialog("${_appLocalizations.speedtest}: ${call.arguments}");
           break;
       }
     });
@@ -196,6 +190,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     _serverUrlDebounce?.cancel();
     platform.setMethodCallHandler(null);
     widget.speedtestInstanceUrlNotifier.removeListener(_onServerUrlChanged);
+    widget.speedtestBackendNotifier.removeListener(_onServerUrlChanged);
     super.dispose();
   }
 
@@ -205,6 +200,19 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
       _fetchServersRetries = 0;
       _fetchServers();
     });
+  }
+
+  void _showErrorDialog(String message) {
+    if (!_dialogOpen && mounted) {
+      _dialogOpen = true;
+
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return ErrorDialog(e: message);
+        },
+      ).then((_) => _dialogOpen = false);
+    }
   }
 
   Future<void> _saveHistoryResult(
@@ -222,11 +230,17 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
 
       String? serverName;
       final server = _selectedServerNotifier.value;
+      final backend = widget.speedtestBackendNotifier.value;
+
       if (server != null) {
-        final sponsorName = server["sponsorName"];
-        serverName = sponsorName != null
-            ? "$sponsorName (${(server["name"]).toString().replaceAll(" ($sponsorName)", "")})"
-            : server["name"]?.toString();
+        if (backend == 1) {
+          final sponsorName = server["sponsorName"];
+          serverName = sponsorName != null
+              ? "$sponsorName (${(server["name"]).toString().replaceAll(" ($sponsorName)", "")})"
+              : server["name"]?.toString();
+        } else {
+          serverName = server["name"]?.toString();
+        }
       }
 
       double? latitude;
@@ -256,17 +270,12 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
       String? rawDeviceData = sharedPreferences.getString("deviceData");
       if (rawDeviceData != null) {
         final device = json.decode(rawDeviceData);
-        if (device is! Map<String, dynamic>) {
-          return;
+        if (device is Map<String, dynamic>) {
+          try {
+            final deviceData = DeviceData.fromJson(device);
+            deviceModel = deviceData.model;
+          } catch (e) {}
         }
-
-        final Map<String, dynamic> map = device;
-        late final DeviceData deviceData;
-
-        try {
-          deviceData = DeviceData.fromJson(map);
-          deviceModel = deviceData.model;
-        } catch (e) {}
       }
 
       final SpeedtestHistoryResult historyResult = SpeedtestHistoryResult(
@@ -326,6 +335,101 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
   }
 
   Future<void> _fetchServers() async {
+    final int backend = widget.speedtestBackendNotifier.value;
+    final String instanceUrl = widget.speedtestInstanceUrlNotifier.value.trim();
+
+    if (backend == 0) {
+      if (instanceUrl.isEmpty || !instanceUrl.contains(";")) {
+        _serversLoadingNotifier.value = false;
+
+        setState(() {
+          _servers = [];
+          _selectedServerNotifier.value = null;
+        });
+
+        _showErrorDialog(_appLocalizations.speedtestNoServerConfigured);
+        return;
+      }
+
+      final parts = instanceUrl.split(";");
+      final String dlUrl = parts[0].trim();
+      final String ulUrl = parts.length > 1 ? parts[1].trim() : "";
+
+      if (dlUrl.isEmpty || ulUrl.isEmpty) {
+        _serversLoadingNotifier.value = false;
+
+        setState(() {
+          _servers = [];
+          _selectedServerNotifier.value = null;
+        });
+
+        _showErrorDialog(_appLocalizations.speedtestNoServerConfigured);
+        return;
+      }
+
+      final Uri? uri = Uri.tryParse(dlUrl);
+      final String domain = (uri != null && uri.host.isNotEmpty)
+          ? uri.host
+          : dlUrl;
+
+      final customServer = {
+        "name": domain,
+        "server": "",
+        "pingURL": dlUrl,
+        "dlURL": dlUrl,
+        "ulURL": ulUrl,
+        "isCustom": true,
+      };
+
+      if (mounted) {
+        setState(() {
+          _servers = [customServer];
+          _selectedServerNotifier.value = customServer;
+          _serversLoadingNotifier.value = false;
+        });
+      }
+
+      return;
+    }
+
+    if (backend == 2) {
+      String baseUrl = _getSpeedtestServer();
+      if (baseUrl.isEmpty) {
+        _serversLoadingNotifier.value = false;
+
+        setState(() {
+          _servers = [];
+          _selectedServerNotifier.value = null;
+        });
+
+        _showErrorDialog(_appLocalizations.speedtestNoServerConfigured);
+        return;
+      }
+
+      if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
+        baseUrl = "https://$baseUrl";
+      }
+
+      final ostServer = {
+        "name": "OpenSpeedTest",
+        "server": baseUrl,
+        "pingURL": "/empty",
+        "dlURL": "/downloading",
+        "ulURL": "/upload",
+        "isOpenSpeedTest": true,
+      };
+
+      if (mounted) {
+        setState(() {
+          _servers = [ostServer];
+          _selectedServerNotifier.value = ostServer;
+          _serversLoadingNotifier.value = false;
+        });
+      }
+
+      return;
+    }
+
     if (_getSpeedtestServer().isEmpty) {
       _serversLoadingNotifier.value = false;
 
@@ -334,19 +438,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
         _selectedServerNotifier.value = null;
       });
 
-      if (!_dialogOpen && mounted) {
-        _dialogOpen = true;
-
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return ErrorDialog(
-              e: _appLocalizations.speedtestNoServerConfigured,
-            );
-          },
-        ).then((_) => _dialogOpen = false);
-      }
-
+      _showErrorDialog(_appLocalizations.speedtestNoServerConfigured);
       return;
     }
 
@@ -381,17 +473,9 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
         Future.delayed(const Duration(milliseconds: 2000)).then((val) {
           if (mounted) {
             if (_fetchServersRetries >= 3) {
-              if (!_dialogOpen) {
-                _dialogOpen = true;
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return ErrorDialog(
-                      e: "${_appLocalizations.speedtest}: ${_appLocalizations.speedtestServerUnreachable}",
-                    );
-                  },
-                ).then((_) => _dialogOpen = false);
-              }
+              _showErrorDialog(
+                "${_appLocalizations.speedtest}: ${_appLocalizations.speedtestServerUnreachable}",
+              );
             } else {
               _fetchServers();
             }
@@ -491,17 +575,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
       Future.delayed(const Duration(seconds: 2)).then((val) {
         if (mounted) {
           if (_fetchServersRetries >= 3) {
-            if (!_dialogOpen) {
-              _dialogOpen = true;
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return ErrorDialog(
-                    e: _appLocalizations.speedtestServerUnreachable,
-                  );
-                },
-              ).then((_) => _dialogOpen = false);
-            }
+            _showErrorDialog(_appLocalizations.speedtestServerUnreachable);
           } else {
             _fetchServers();
           }
@@ -519,14 +593,32 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     widget.canShareResultNotifier.value = false;
     _lastResultNotifier.value = null;
 
-    String baseUrl = server["server"];
-    if (!baseUrl.endsWith('/')) baseUrl += '/';
+    if (server["isCustom"] == true) {
+      platform.invokeMethod("startTest", {
+        "pingUrl": server["pingURL"],
+        "downloadUrl": server["dlURL"],
+        "uploadUrl": server["ulURL"],
+      });
+
+      return;
+    }
+
+    String baseUrl = server["server"] ?? "";
+    if (!baseUrl.endsWith("/")) baseUrl += "/";
     if (baseUrl.startsWith("//")) baseUrl = "https:$baseUrl";
 
+    String pingUrl = server["pingURL"] ?? "";
+    String dlUrl = server["dlURL"] ?? "";
+    String ulUrl = server["ulURL"] ?? "";
+
+    if (pingUrl.startsWith("/")) pingUrl = pingUrl.substring(1);
+    if (dlUrl.startsWith("/")) dlUrl = dlUrl.substring(1);
+    if (ulUrl.startsWith("/")) ulUrl = ulUrl.substring(1);
+
     platform.invokeMethod("startTest", {
-      "pingUrl": baseUrl + server["pingURL"],
-      "downloadUrl": baseUrl + server["dlURL"],
-      "uploadUrl": baseUrl + server["ulURL"],
+      "pingUrl": baseUrl + pingUrl,
+      "downloadUrl": baseUrl + dlUrl,
+      "uploadUrl": baseUrl + ulUrl,
     });
   }
 
@@ -551,11 +643,11 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                   final bool isCompact = availableHeight < 500;
                   final bool isTiny = availableHeight < 400;
 
-                  final double gaugeSize = (availableHeight * 0.40).clamp(
+                  final double gaugeSize = (availableHeight * 0.425).clamp(
                     220.0,
                     320.0,
                   );
-                  final double gaugeSpacer = (availableHeight * 0.06).clamp(
+                  final double gaugeSpacer = (availableHeight * 0.07).clamp(
                     16.0,
                     56.0,
                   );
@@ -567,39 +659,63 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                       children: [
                         SizedBox(height: isCompact ? 8 : 16),
                         ValueListenableBuilder(
-                          valueListenable: _selectedServerNotifier,
-                          builder: (context, selectedServer, child) {
+                          valueListenable: widget.speedtestBackendNotifier,
+                          builder: (context, backend, child) {
                             return ValueListenableBuilder(
-                              valueListenable: _metricsNotifier,
-                              builder: (context, metrics, child) {
-                                final bool isRunning =
-                                    metrics.stage != TestStage.IDLE &&
-                                    metrics.stage != TestStage.FINISHED;
+                              valueListenable: _selectedServerNotifier,
+                              builder: (context, selectedServer, child) {
+                                return ValueListenableBuilder(
+                                  valueListenable: _metricsNotifier,
+                                  builder: (context, metrics, child) {
+                                    final bool isRunning =
+                                        metrics.stage != TestStage.IDLE &&
+                                        metrics.stage != TestStage.FINISHED;
 
-                                String sponsorName = "";
-                                if (selectedServer != null) {
-                                  sponsorName = selectedServer["sponsorName"];
-                                }
+                                    String buttonLabel;
+                                    bool canSelectServer = false;
 
-                                return Padding(
-                                  padding: EdgeInsets.only(
-                                    bottom: serverSelectorPadding,
-                                  ),
-                                  child: OutlinedButton.icon(
-                                    onPressed: isRunning
-                                        ? null
-                                        : () async {
-                                            await HapticService().triggerHaptic(
-                                              HapticType.selection,
-                                              context,
-                                            );
+                                    if (backend == 1) {
+                                      canSelectServer =
+                                          !isRunning && _servers.length > 1;
+                                      if (selectedServer != null) {
+                                        final sponsorName =
+                                            selectedServer["sponsorName"];
+                                        buttonLabel = sponsorName != null
+                                            ? "$sponsorName (${(selectedServer["name"]).toString().replaceAll(" ($sponsorName)", "")})"
+                                            : selectedServer["name"]
+                                                      ?.toString() ??
+                                                  _appLocalizations
+                                                      .noSpeedtestServer;
+                                      } else {
+                                        buttonLabel =
+                                            _appLocalizations.noSpeedtestServer;
+                                      }
+                                    } else if (backend == 2) {
+                                      buttonLabel = "OpenSpeedTest";
+                                    } else {
+                                      buttonLabel = selectedServer != null
+                                          ? selectedServer["name"].toString()
+                                          : _appLocalizations.noSpeedtestServer;
+                                    }
 
-                                            if (context.mounted) {
-                                              showModalBottomSheet(
-                                                context: context,
-                                                showDragHandle: true,
-                                                shape:
-                                                    const RoundedRectangleBorder(
+                                    return Padding(
+                                      padding: EdgeInsets.only(
+                                        bottom: serverSelectorPadding,
+                                      ),
+                                      child: OutlinedButton.icon(
+                                        onPressed: canSelectServer
+                                            ? () async {
+                                                await HapticService()
+                                                    .triggerHaptic(
+                                                      HapticType.selection,
+                                                      context,
+                                                    );
+
+                                                if (context.mounted) {
+                                                  showModalBottomSheet(
+                                                    context: context,
+                                                    showDragHandle: true,
+                                                    shape: const RoundedRectangleBorder(
                                                       borderRadius:
                                                           BorderRadius.vertical(
                                                             top:
@@ -608,34 +724,35 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                                                                 ),
                                                           ),
                                                     ),
-                                                backgroundColor: Theme.of(
-                                                  context,
-                                                ).colorScheme.surface,
-                                                builder: (BuildContext context) {
-                                                  return ServerModal(
-                                                    servers: _servers,
-                                                    selectedServerNotifier:
-                                                        _selectedServerNotifier,
+                                                    backgroundColor: Theme.of(
+                                                      context,
+                                                    ).colorScheme.surface,
+                                                    builder: (BuildContext context) {
+                                                      return ServerModal(
+                                                        servers: _servers,
+                                                        selectedServerNotifier:
+                                                            _selectedServerNotifier,
+                                                      );
+                                                    },
                                                   );
-                                                },
-                                              );
-                                            }
-                                          },
-                                    icon: const Icon(
-                                      Icons.dns_outlined,
-                                      size: 18,
-                                    ),
-                                    label: Text(
-                                      selectedServer != null
-                                          ? "$sponsorName (${(selectedServer["name"]).toString().replaceAll(" ($sponsorName)", "")})"
-                                          : _appLocalizations.noSpeedtestServer,
-                                    ),
-                                    style: OutlinedButton.styleFrom(
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
+                                                }
+                                              }
+                                            : null,
+                                        icon: const Icon(
+                                          Icons.dns_outlined,
+                                          size: 18,
+                                        ),
+                                        label: Text(buttonLabel),
+                                        style: OutlinedButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
+                                    );
+                                  },
                                 );
                               },
                             );
@@ -708,15 +825,28 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
               },
             ),
             ValueListenableBuilder(
-              valueListenable: widget.speedtestInstanceUrlNotifier,
-              builder: (context, urlValue, child) {
-                final bool isUnconfigured = urlValue.trim().isEmpty;
-                final bool isDefaultServer =
-                    urlValue.trim().isEmpty ||
-                    urlValue.trim() == defaultSpeedtestServer;
-
-                if (!isUnconfigured && !isDefaultServer) {
+              valueListenable: widget.speedtestBackendNotifier,
+              builder: (context, backend, child) {
+                if (backend == 0) {
                   return const SizedBox.shrink();
+                }
+
+                String bannerText = "";
+                if (backend == 1) {
+                  final String urlValue = widget
+                      .speedtestInstanceUrlNotifier
+                      .value
+                      .trim();
+                  final bool isDefaultServer =
+                      urlValue.isEmpty || urlValue == defaultSpeedtestServer;
+
+                  if (isDefaultServer) {
+                    bannerText = _appLocalizations.speedtestLibrespeed;
+                  } else {
+                    return const SizedBox.shrink();
+                  }
+                } else if (backend == 2) {
+                  bannerText = _appLocalizations.speedtestOpenSpeedTest;
                 }
 
                 return Container(
@@ -735,18 +865,13 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                       Theme.of(context).colorScheme.surface,
                     ),
                   ),
-                  child: isDefaultServer
-                      ? Text(
-                          _appLocalizations.speedtestLibrespeed,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
-                                fontSize: 12,
-                              ),
-                        )
-                      : const SizedBox.shrink(),
+                  child: Text(
+                    bannerText,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                  ),
                 );
               },
             ),
