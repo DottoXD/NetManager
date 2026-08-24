@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:netmanager/components/dialogs/cell_editor.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/database/cell_database.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
@@ -280,12 +281,28 @@ class DatabaseManagerDialog extends StatelessWidget {
                         subtitle: Text(
                           appLocalizations.databaseFormat(formatType),
                         ),
-                        trailing: IconButton(
-                          tooltip: appLocalizations.deleteDatabase,
-                          icon: const Icon(Icons.delete_outlined),
-                          onPressed: () async {
-                            await _handleRemove(dbName, setDialogState);
-                          },
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              tooltip: appLocalizations.editDatabase,
+                              icon: const Icon(Icons.edit_outlined),
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) =>
+                                      CellEditorDialog(plmn: plmnLabel),
+                                );
+                              },
+                            ),
+                            IconButton(
+                              tooltip: appLocalizations.deleteDatabase,
+                              icon: const Icon(Icons.delete_outlined),
+                              onPressed: () async {
+                                await _handleRemove(dbName, setDialogState);
+                              },
+                            ),
+                          ],
                         ),
                       );
                     },

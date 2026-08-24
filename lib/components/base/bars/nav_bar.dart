@@ -9,7 +9,12 @@ class NavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppLocalizations appLocalizations = AppLocalizations.of(context)!;
+    final AppLocalizations? appLocalizations = AppLocalizations.of(context);
+
+    if (appLocalizations == null) {
+      return const SizedBox.shrink();
+    }
+
     final ThemeData theme = Theme.of(context);
 
     int page = currentPage;

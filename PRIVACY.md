@@ -2,7 +2,7 @@
 
 **Effective Date:** July 25, 2026
 
-**Last Updated:** July 25, 2026
+**Last Updated:** August 24, 2026
 
 **NetManager** is a free and open-source mobile network monitoring application built with privacy in mind. This policy explains how we handle your data.
 
@@ -38,6 +38,7 @@ To display map tiles, execute speed tests, or perform update checks, NetManager 
 
 * **OpenStreetMap (OSM):** Map rendering and tile loading ([Privacy Policy](https://wiki.osmfoundation.org/wiki/Privacy_Policy)).
 * **LibreSpeed:** On-demand network speed testing.
+* **OpenSpeedTest:** On-demand, user-hosted network speed testing.
 * **GitHub, Inc.:** Opt-in software update checks.
 
 ### Network Logs & IP Address Transmission
@@ -50,7 +51,7 @@ When using features that connect to GitHub servers located in the United States,
 
 ### End-User Control
 
-You have full control over where your app connects. Both OpenStreetMap tile servers and LibreSpeed backend URLs can be customized or pointed to self-hosted endpoints directly within the app settings.
+You have full control over where your app connects. Both OpenStreetMap tile servers and speed test backend URLs can be customized and pointed to self-hosted endpoints directly within the app settings.
 
 ## Your Data Rights
 

@@ -220,7 +220,10 @@ class _NetManagerState extends State<NetManager> {
                 localeNotifier,
               ),
               debugShowCheckedModeBanner: false,
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              localizationsDelegates: const [
+                ...AppLocalizations.localizationsDelegates,
+                GlobalMaterialLocalizations.delegate,
+              ],
               supportedLocales: AppLocalizations.supportedLocales,
               locale: localeNotifier.value,
             );

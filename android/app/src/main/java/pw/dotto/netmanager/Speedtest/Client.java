@@ -490,7 +490,7 @@ public class Client {
                             : pingUrl).head().build();
                     globalPingsSent.incrementAndGet();
                     try (Response response = httpClient.newCall(request).execute()) {
-                        if (!(response.code() != 0)) {
+                        if (response.code() == 0) {
                             globalPingsFailed.incrementAndGet();
                         }
                     } catch (IOException e) {

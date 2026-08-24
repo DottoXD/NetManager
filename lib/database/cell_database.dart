@@ -204,4 +204,65 @@ class CellDatabase {
       );
     }).toList();
   }
+
+  static Future<List<Map<String, dynamic>>> getCellsForPlmn(
+    String plmn, {
+    String searchQuery = "",
+    int limit = 100,
+  }) async {
+    final db = await getDatabase();
+    if (searchQuery.trim().isEmpty) {
+      return await db.query(
+        "cells",
+        where: "plmn = ?",
+        whereArgs: [plmn],
+        limit: limit,
+        orderBy: "cid ASC",
+      );
+    }
+
+    final intSearch = int.tryParse(searchQuery);
+    if (intSearch != null) {
+      return await db.query(
+        "cells",
+        where: "plmn = ? AND cid LIKE ?",
+        whereArgs: [plmn, "%$intSearch%", "%$searchQuery%"],
+        limit: limit,
+        orderBy: "cid ASC",
+      );
+    } else {
+      return await db.query(
+        "cells",
+        where: "plmn = ? AND description LIKE ?",
+        whereArgs: [plmn, "%$searchQuery%"],
+        limit: limit,
+        orderBy: "cid ASC",
+      );
+    }
+  }
+
+  static Future<int> updateCell({
+    required int id,
+    required int cid,
+    required int networkGen,
+    required double latitude,
+    required double longitude,
+    required String description,
+    int? channelNumber,
+  }) async {
+    final db = await getDatabase();
+    return await db.update(
+      "cells",
+      {
+        "cid": cid,
+        "networkgen": networkGen,
+        "latitude": latitude,
+        "longitude": longitude,
+        "description": description,
+        "channelnumber": channelNumber,
+      },
+      where: "id = ?",
+      whereArgs: [id],
+    );
+  }
 }

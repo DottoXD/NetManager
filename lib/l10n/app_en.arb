@@ -117,6 +117,7 @@
       }
     }
   },
+  "editDatabase": "Edit database",
   "deleteDatabase": "Delete database",
   "import": "Import",
   "updateAvailable": "A new version of NetManager is available!",
@@ -333,5 +334,11 @@
   "privacyPolicyAccept": "Accept & continue",
   "permissionPhoneState": "Phone state",
   "permissionLocation": "Location",
-  "permissionBackgroundLocation": "Background location"
+  "permissionBackgroundLocation": "Background location",
+  "cellDescription": "Description",
+  "cellLatitude": "Latitude",
+  "cellLongitude": "Longitude",
+  "cellChannelNumber": "Channel number",
+  "cellSearch": "Search by Cell ID or name",
+  "cellNoneFound": "No cells found."
 }

@@ -6,3 +6,4 @@
 - Risolto un crash in caso di acquisizione di uno screenshot nella schermata home o durante l'importazione di uno storico di speed test su alcuni dispositivi.
 - Gli utenti ora possono farsi notificare quando avviene uno degli eventi selezionati nelle impostazioni.
 - I backend personalizzati o OpenSpeedTest sono ora supportati (insieme a LibreSpeed).
+- Gli utenti ora possono modificare le celle dei database importati nella schermata delle impostazioni.

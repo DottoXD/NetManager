@@ -695,6 +695,8 @@ public class TelephonyCellDataSource implements CellDataSource {
 
         List<CellSignalStrengthNr> signalStrengths = new ArrayList<>();
         CellSignalStrength[] rawSignalStrengths = getSignalStrengths(context, simSlotState, telephony);
+        DebugLogger.add("Raw signal strengths for SIM " + simSlotState.simId + ": " + Arrays.toString(rawSignalStrengths));
+
         if (rawSignalStrengths != null) {
             for (CellSignalStrength cellSignalStrength : rawSignalStrengths) {
                 if (cellSignalStrength instanceof CellSignalStrengthNr)

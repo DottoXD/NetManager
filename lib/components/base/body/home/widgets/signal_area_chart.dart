@@ -10,6 +10,7 @@ class SignalAreaChart extends StatelessWidget {
   final bool showTrend;
   final bool trendUp;
   final Color trendColor;
+  final VoidCallback? onTap;
 
   const SignalAreaChart({
     super.key,
@@ -21,6 +22,7 @@ class SignalAreaChart extends StatelessWidget {
     required this.showTrend,
     required this.trendUp,
     required this.trendColor,
+    this.onTap,
   });
 
   @override
@@ -29,65 +31,69 @@ class SignalAreaChart extends StatelessWidget {
 
     return Card(
       elevation: 1,
+      clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
       color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: theme.colorScheme.onPrimaryContainer,
+      child: InkWell(
+        onTap: onTap ?? () {},
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
                     ),
                   ),
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      value,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: color,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        value,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: color,
+                        ),
                       ),
+                      if (showTrend)
+                        Icon(
+                          trendUp
+                              ? Icons.arrow_drop_up_outlined
+                              : Icons.arrow_drop_down_outlined,
+                          size: 18,
+                          color: trendColor,
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              SizedBox(
+                height: 90,
+                width: double.infinity,
+                child: CustomPaint(
+                  painter: _AreaChartPainter(
+                    graphPoints: graphPoints,
+                    dataRetentionSeconds: dataRetentionSeconds,
+                    lineColor: color,
+                    gridColor: theme.colorScheme.onPrimaryContainer.withValues(
+                      alpha: 0.25,
                     ),
-                    if (showTrend)
-                      Icon(
-                        trendUp
-                            ? Icons.arrow_drop_up_outlined
-                            : Icons.arrow_drop_down_outlined,
-                        size: 18,
-                        color: trendColor,
-                      ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            SizedBox(
-              height: 90,
-              width: double.infinity,
-              child: CustomPaint(
-                painter: _AreaChartPainter(
-                  graphPoints: graphPoints,
-                  dataRetentionSeconds: dataRetentionSeconds,
-                  lineColor: color,
-                  gridColor: theme.colorScheme.onPrimaryContainer.withValues(
-                    alpha: 0.25,
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

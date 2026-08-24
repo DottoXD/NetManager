@@ -206,12 +206,14 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     if (!_dialogOpen && mounted) {
       _dialogOpen = true;
 
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return ErrorDialog(e: message);
-        },
-      ).then((_) => _dialogOpen = false);
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return ErrorDialog(e: message);
+          },
+        ).then((_) => _dialogOpen = false);
+      }
     }
   }
 
@@ -339,7 +341,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     final String instanceUrl = widget.speedtestInstanceUrlNotifier.value.trim();
 
     if (backend == 0) {
-      if (instanceUrl.isEmpty || !instanceUrl.contains(";")) {
+      if (instanceUrl.isEmpty) {
         _serversLoadingNotifier.value = false;
 
         setState(() {
@@ -348,6 +350,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
         });
 
         _showErrorDialog(_appLocalizations.speedtestNoServerConfigured);
+
         return;
       }
 
@@ -364,6 +367,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
         });
 
         _showErrorDialog(_appLocalizations.speedtestNoServerConfigured);
+
         return;
       }
 
@@ -403,10 +407,11 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
         });
 
         _showErrorDialog(_appLocalizations.speedtestNoServerConfigured);
+
         return;
       }
 
-      if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
+      if (!baseUrl.startsWith("http://")) {
         baseUrl = "https://$baseUrl";
       }
 
@@ -611,14 +616,20 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     String dlUrl = server["dlURL"] ?? "";
     String ulUrl = server["ulURL"] ?? "";
 
-    if (pingUrl.startsWith("/")) pingUrl = pingUrl.substring(1);
-    if (dlUrl.startsWith("/")) dlUrl = dlUrl.substring(1);
-    if (ulUrl.startsWith("/")) ulUrl = ulUrl.substring(1);
+    String resolveUrl(String path) {
+      if (path.startsWith("//")) path = "https:$path";
+      if (path.startsWith("http://") || path.startsWith("https://")) {
+        return path;
+      }
+      if (path.startsWith("/")) path = path.substring(1);
+
+      return baseUrl + path;
+    }
 
     platform.invokeMethod("startTest", {
-      "pingUrl": baseUrl + pingUrl,
-      "downloadUrl": baseUrl + dlUrl,
-      "uploadUrl": baseUrl + ulUrl,
+      "pingUrl": resolveUrl(pingUrl),
+      "downloadUrl": resolveUrl(dlUrl),
+      "uploadUrl": resolveUrl(ulUrl),
     });
   }
 
