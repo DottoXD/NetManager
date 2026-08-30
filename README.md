@@ -19,11 +19,27 @@ Official stable and pre-release builds are available in the [Releases](https://g
 Development builds are available at [GitHub Actions](https://github.com/DottoXD/NetManager/actions).
 NetManager will be released on other platforms & stores soon.
 
-## Screenshots
-![Dark home screen](./fastlane/metadata/en-US/images/phoneScreenshots/1.png)
-![Dark map](./fastlane/metadata/en-US/images/phoneScreenshots/3.png)
-![Light home screen](./fastlane/metadata/en-US/images/phoneScreenshots/5.png)
-![Light map](./fastlane/metadata/en-US/images/phoneScreenshots/7.png)
+## Features
+NetManager cleanly displays key network metrics across all cellular technologies up to 5G NR. 
+
+The app allows users to import custom cell databases (`.ntm` and `.clf` v3 formats) to enrich the information displayed across various screens.
+
+A sleek map page powered by [OpenStreetMap](https://www.openstreetmap.org/) displays the user's location and maps nearby active cell towers from the current mobile network, if a database is imported; through this interface, users can also record radio signal strength and network technology changes during trips (drive tests) and replay them later both inside the app or outside (e.g on Google Earth with the built in KML/CSV conversion feature!).
+The map backend is fully customisable, allowing users to switch if preferred.
+
+Additionally, NetManager includes a built-in network speed test utility with custom backend servers ([LibreSpeed](https://github.com/librespeed/speedtest), OpenSpeedTest and custom backends are supported). 
+
+For advanced monitoring, the app provides a detailed event log capturing real-time network changes, such as cell handoffs and frequency band adjustments. Users can also opt-in to receive system notifications at the occurrency of their selected network events.
+
+To ensure uninterrupted tracking, an optional background service handles all network event and trip logging even when the app is closed, keeping you informed via a status notification displaying the main live network metrics.
+
+NetManager also allows you to open the main Android field testing menus (Android phone information menu, Samsung ServiceMode, MTK Engineer mode, Huawei ProjectMenu, MIUI BandMode) without complicated dialer combinations.
+
+Full dual SIM support is also included, allowing seamless, concurrent data monitoring for multiple SIM cards on the same device.
+
+NetManager also includes various data preprocessing/postprocessing algorithms that filter out bad data exposed by Android's Telephony API, gather extra data from additional APIs and merge all pieces of information from all data sources into a single SIM data object.
+
+All major data sources, such as the event log or the map trip logs, are fully exportable in text files.
 
 ## Supported platforms
 NetManager currently has stable support for Android 7+ (SDK ver. 24).
@@ -69,32 +85,15 @@ Comparison based on publicly documented features as of August 2026.
 | Open source | ✔️ | ❗ (Only NetMonster Core) | ❌ | ❌ | ❌ |
 | Fully free | ✔️ | ❗ (Ads) | ❌ | ✔️ | ❗ (Ads) |
 
-## Features
-NetManager cleanly displays key network metrics across all cellular technologies up to 5G NR. 
-
-The app allows users to import custom cell databases (`.ntm` and `.clf` v3 formats) to enrich the information displayed across various screens.
-
-A sleek map page powered by [OpenStreetMap](https://www.openstreetmap.org/) displays the user's location and maps nearby active cell towers from the current mobile network, if a database is imported; through this interface, users can also record radio signal strength and network technology changes during trips (drive tests) and replay them later both inside the app or outside (e.g on Google Earth with the built in KML/CSV conversion feature!).
-The map backend is fully customisable, allowing users to switch if preferred.
-
-Additionally, NetManager includes a built-in network speed test utility with custom backend servers ([LibreSpeed](https://github.com/librespeed/speedtest), OpenSpeedTest and custom backends are supported). 
-
-For advanced monitoring, the app provides a detailed event log capturing real-time network changes, such as cell handoffs and frequency band adjustments. Users can also opt-in to receive system notifications at the occurrency of their selected network events.
-
-To ensure uninterrupted tracking, an optional background service handles all network event and trip logging even when the app is closed, keeping you informed via a status notification displaying the main live network metrics.
-
-NetManager also allows you to open the main Android field testing menus (Android phone information menu, Samsung ServiceMode, MTK Engineer mode, Huawei ProjectMenu, MIUI BandMode) without complicated dialer combinations.
-
-Full dual SIM support is also included, allowing seamless, concurrent data monitoring for multiple SIM cards on the same device.
-
-NetManager also includes various data preprocessing/postprocessing algorithms that filter out bad data exposed by Android's Telephony API, gather extra data from additional APIs and merge all pieces of information from all data sources into a single SIM data object.
-
-All major data sources, such as the event log or the map trip logs, are fully exportable in text files.
-
 ## Issues and pull requests
 Feel free to open an issue for any question, suggestion or any actual issue (such as the app returning wrong cell data) that you might be facing with NetManager.
 
 Pull requests are highly appreciated as long as they're tested.
+
+## Screenshots
+| Dark Home | Dark Map | Light Home | Light Map |
+| :-: | :-: | :-: | :-: |
+| ![Dark home screen](./fastlane/metadata/en-US/images/phoneScreenshots/1.png) | ![Dark map](./fastlane/metadata/en-US/images/phoneScreenshots/3.png) | ![Light home screen](./fastlane/metadata/en-US/images/phoneScreenshots/5.png) | ![Light map](./fastlane/metadata/en-US/images/phoneScreenshots/7.png) |
 
 ## License
 ```
