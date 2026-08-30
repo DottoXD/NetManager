@@ -13,6 +13,10 @@ if (keystorePropertiesFileExists) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+val isReleaseBuild = gradle.startParameter.taskNames.any {
+    it.contains("Release", ignoreCase = true)
+}
+
 android {
     namespace = "pw.dotto.netmanager"
     ndkVersion = "28.2.13676358" //flutter.ndkVersion
@@ -33,10 +37,29 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        if(isReleaseBuild) {
+            ndk {
+                abiFilters.clear()
+                abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a"))
+            }
+        }
+    }
+
+    packaging {
+        jniLibs {
+            if (isReleaseBuild) {
+                excludes += listOf(
+                    "lib/x86/**",
+                    "lib/x86_64/**"
+                )
+            }
+        }
     }
 
     dependenciesInfo {
         includeInApk = false
+        includeInBundle = false
     }
 
     signingConfigs {
@@ -65,16 +88,13 @@ android {
                 file("proguard-rules.pro")
             )
 
-            ndk {
-                abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a"))
-            }
-
             externalNativeBuild {
                 cmake {
                     cppFlags(
                         "-ffile-prefix-map=${project.rootDir}=/build",
                         "-ffile-prefix-map=/home/runner/work/NetManager/NetManager=."
                     )
+                    arguments.add("-DCMAKE_SHARED_LINKER_FLAGS=-Wl,--build-id=none")
                 }
             }
         }
