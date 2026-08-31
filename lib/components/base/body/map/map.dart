@@ -198,6 +198,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
             _selectedRecord = null;
             _liveRecords = [];
             _liveRecordTimer?.cancel();
+            _liveRecordTimer = null;
           }
         } catch (e) {
           if (!_dialogOpen && mounted) {
@@ -309,6 +310,34 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
     _cellTimer?.cancel();
     startCellTimer();
+
+    _checkExistingRecording();
+  }
+
+  Future<void> _checkExistingRecording() async {
+    if (_activeReplayData != null) return;
+
+    try {
+      final jsonStr = await platform.invokeMethod("getLiveRecording");
+
+      if (jsonStr != null && jsonStr.toString().isNotEmpty) {
+        final Map<String, dynamic> parsedJson = json.decode(jsonStr);
+        final List<dynamic> recordsList = parsedJson["records"] ?? [];
+        final List<Record> existingRecords = recordsList
+            .whereType<Map<String, dynamic>>()
+            .map((item) => Record.fromJson(item))
+            .toList();
+
+        if (mounted) {
+          setState(() {
+            _liveRecords = existingRecords;
+            recordingActionNotifier.value = true;
+          });
+
+          liveRecordDataPoller();
+        }
+      }
+    } catch (_) {}
   }
 
   @override

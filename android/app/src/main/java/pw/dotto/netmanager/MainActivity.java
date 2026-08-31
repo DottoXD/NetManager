@@ -38,7 +38,7 @@ import pw.dotto.netmanager.WearOS.WearHandler;
  * This class also manages communications with WearOS devices.
  *
  * @author DottoXD
- * @version 0.1.1
+ * @version 0.1.6
  */
 public class MainActivity extends FlutterActivity {
   private static final String CHANNEL = "pw.dotto.netmanager/bridge";
@@ -152,7 +152,8 @@ public class MainActivity extends FlutterActivity {
 
         case "getDebugLogs":
           String[] logs = DebugLogger.getLogs();
-          result.success(gson.toJson(logs));
+          String jsonLogs = gson.toJson(logs);
+          result.success(jsonLogs);
           break;
 
         case "getLocation":
@@ -221,7 +222,6 @@ public class MainActivity extends FlutterActivity {
           break;
 
         case "startTest":
-          Client client = new Client();
           String pingUrl = call.argument("pingUrl");
           String downloadUrl = call.argument("downloadUrl");
           String uploadUrl = call.argument("uploadUrl");
@@ -229,6 +229,7 @@ public class MainActivity extends FlutterActivity {
           DebugLogger.add("Starting a speed test with pingUrl '" + pingUrl + "', downloadUrl '" + downloadUrl
               + "', uploadUrl '" + uploadUrl + "'.");
 
+          Client client = new Client();
           client.runSpeedTest(this, pingUrl, downloadUrl, uploadUrl,
               new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL));
           result.success(null);
@@ -476,9 +477,11 @@ public class MainActivity extends FlutterActivity {
       sensors.destroy();
     }
 
-    Location locationFetcher = Location.getInstance(this);
-    if (locationFetcher != null) {
-      locationFetcher.dispose();
+    if (pw.dotto.netmanager.Recording.Service.getInstance() == null) {
+      Location locationFetcher = Location.getInstance(this);
+      if (locationFetcher != null) {
+        locationFetcher.dispose();
+      }
     }
 
     super.onStop();

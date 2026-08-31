@@ -15,6 +15,8 @@ import 'package:netmanager/utils/gen_color.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 import 'package:netmanager/utils/speed_methods.dart';
 
+import 'package:http/http.dart' as http;
+
 class SpeedtestHistoryModal extends StatefulWidget {
   const SpeedtestHistoryModal({
     super.key,
@@ -87,25 +89,102 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
 
       final List<SpeedtestHistoryResult> parsed = [];
       bool isFirstLine = true;
+      bool? isOtherFormat;
 
       await for (final line in linesStream) {
         if (line.trim().isEmpty) continue;
 
         final List<String> fields = decodeRow(line, separator);
+        if (fields.isEmpty) continue;
 
         if (isFirstLine) {
           isFirstLine = false;
-          final bool isHeader =
-              fields.isEmpty || DateTime.tryParse(fields.first) == null;
-          if (isHeader) continue;
+
+          isOtherFormat =
+              fields.length >= 13 || fields.last.toLowerCase().contains("url");
+
+          if (isOtherFormat || DateTime.tryParse(fields.first) == null) {
+            continue;
+          }
         }
 
-        try {
-          if (mounted) {
-            parsed.add(SpeedtestHistoryResult.fromCsvFields(fields, context));
+        if (isOtherFormat == true) {
+          if (fields.length < 13) continue;
+
+          final connTypeCsv = fields[1].trim().toLowerCase();
+          if (connTypeCsv.contains("wifi")) continue;
+
+          final rawUrl = fields.last.trim();
+          final resultId = rawUrl.contains("/")
+              ? rawUrl.split("/").last
+              : rawUrl;
+          if (resultId.isEmpty || int.tryParse(resultId) == null) continue;
+
+          try {
+            final response = await http
+                .get(
+                  Uri.parse("https://www.speedtest.net/api/result/a/$resultId"),
+                  headers: {"User-Agent": "NetManager"},
+                )
+                .timeout(const Duration(seconds: 5));
+
+            if (response.statusCode == 200) {
+              final Map<String, dynamic> data = json.decode(response.body);
+
+              if (data["connection"] == "cellular") {
+                final double downloadMbps = (data["download"] as num) / 1000.0;
+                final double uploadMbps = (data["upload"] as num) / 1000.0;
+                final String serverName =
+                    "${data["server_name"] ?? ""} (${data["sponsor_name"] ?? ""})"
+                        .trim();
+
+                int networkGen = 0;
+                final String icon = (data["connection_icon"] ?? "")
+                    .toString()
+                    .toLowerCase();
+                if (icon.contains("5g")) {
+                  networkGen = 5;
+                } else if (icon.contains("lte") || icon.contains("4g")) {
+                  networkGen = 4;
+                } else if (icon.contains("3g")) {
+                  networkGen = 3;
+                }
+
+                parsed.add(
+                  SpeedtestHistoryResult(
+                    timestamp: DateTime.fromMillisecondsSinceEpoch(
+                      (data["date"] as int) * 1000,
+                    ),
+                    download: downloadMbps,
+                    upload: uploadMbps,
+                    ping: (data["latency"] as num).toInt(),
+                    jitter: (data["jitter"] as num).toInt(),
+                    packetLoss: 0.0,
+                    carrier:
+                        data["display_provider_name"]?.toString() ??
+                        data["isp_name"]?.toString() ??
+                        "Unknown",
+                    plmn: "00000",
+                    networkGen: networkGen,
+                    serverName: serverName,
+                    deviceModel: data["model"]?.toString(),
+                  ),
+                );
+              }
+            }
+          } catch (_) {
+            continue;
           }
-        } catch (_) {
-          continue;
+
+          await Future.delayed(const Duration(milliseconds: 250));
+        } else {
+          try {
+            if (mounted) {
+              parsed.add(SpeedtestHistoryResult.fromCsvFields(fields, context));
+            }
+          } catch (_) {
+            continue;
+          }
         }
       }
 
@@ -381,9 +460,10 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
                               context,
                             );
 
-                            if (result.id != null) await _delete(result.id!);
-
                             return true;
+                          },
+                          onDismissed: (_) {
+                            if (result.id != null) _delete(result.id!);
                           },
                           child: ListTile(
                             leading: CircleAvatar(

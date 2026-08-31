@@ -4,7 +4,7 @@ Built with Flutter and adhering to Material Design guidelines, it provides a cle
 <b>Features</b>
 Cleanly displays real-time network metrics across all cellular technologies up to 5G NR, complete with full Dual SIM support for concurrent monitoring.
 Import custom cell database files (`.ntm` and `.clf` v3) to enrich network details and view active cell towers on a customizable map powered by OpenStreetMap.
-Record radio signal strength and network technology changes during trips (drive tests). Replay them inside the app or export them to KML/CSV formats to view in external tools like Google Earth.
+Record radio signal strength and network info during trips (drive tests). Replay them inside the app or export them to `.kml`/`.csv` formats to view in external tools like Google Earth.
 Built-in speed test utility supporting LibreSpeed, OpenSpeedTest and custom backends.
 Tracks real-time network changes, such as cell handoffs and frequency band adjustments; receive system notifications for the events you choose.
 Optional background service records network events and trip data even when the app is closed, keeping you updated via an active status notification.

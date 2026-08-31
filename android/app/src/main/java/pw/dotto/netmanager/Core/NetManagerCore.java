@@ -53,7 +53,7 @@ import pw.dotto.netmanager.Utils.Permissions;
  * data sources and pretty much everything else related to mobile cell data.
  *
  * @author DottoXD
- * @version 0.1.5
+ * @version 0.1.6
  */
 public class NetManagerCore {
     private static volatile NetManagerCore instance;
@@ -64,6 +64,7 @@ public class NetManagerCore {
     private final SubscriptionTracker subscriptionTracker;
     private final SIMStateCache simStateCache = new SIMStateCache();
     private final EventManager eventManager;
+    private final TelephonyCellDataSource telephonySource;
     private final DataSourceSelector sourceSelector;
     private final List<Postprocessor> postprocessors;
 
@@ -90,7 +91,7 @@ public class NetManagerCore {
         List<Preprocessor> preprocessors = DevicePatchRegistry.preprocessorsFor(deviceData);
         this.postprocessors = DevicePatchRegistry.postprocessorsFor(deviceData);
 
-        CellDataSource telephonySource = new TelephonyCellDataSource(preprocessors);
+        this.telephonySource = new TelephonyCellDataSource(preprocessors);
         this.sourceSelector = new DataSourceSelector(telephonySource);
 
         this.subscriptionTracker.setOnSlotRemovedListener(simId -> {
@@ -424,6 +425,8 @@ public class NetManagerCore {
     public void dispose() {
         stopPolling();
         subscriptionTracker.dispose();
+
+        telephonySource.shutdown();
 
         synchronized (NetManagerCore.class) {
             if (instance == this)

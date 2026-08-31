@@ -30,8 +30,8 @@
   "unknownBandwidth": "Unknown bandwidth",
   "noInfoCell": "No info for this cell.",
   "visitServerHost": "Visit the server's host in a browser.",
-  "newRecording": "New recording",
-  "recordingSetupDialog": "You will be taken to the recording setup dialog.",
+  "newRecording": "New drive test",
+  "recordingSetupDialog": "You will be taken to the drive test setup dialog.",
   "fileName": "File name",
   "recordingInterval": "Interval between recordings",
   "trackUsability": "Track usability",
@@ -40,7 +40,7 @@
   "selectedSaveLocation": "Selected save location:",
   "cancel": "Cancel",
   "start": "Start",
-  "recordingStarted": "Recording {name} started...",
+  "recordingStarted": "Drive test {name} started...",
   "@recordingStarted": {
     "description": "A text telling the user that a recording started.",
     "placeholders": {
@@ -50,12 +50,12 @@
       }
     }
   },
-  "replayRecording": "Replay recording",
+  "replayRecording": "Replay drive test",
   "selectRecording": "You will be asked to select a valid .nmr (NetManager Recording) file.",
-  "convertRecording": "Convert recording",
-  "conversionDescription": "You will convert an .nmr (NetManager Recording) file to a .csv/.kml/.kmz file.",
+  "convertRecording": "Convert drive test",
+  "conversionDescription": "You will convert an .nmr (NetManager Recording) file to a .csv/.kml file.",
   "exportFormatTitle": "Export format",
-  "exportFormatDescription": "Choose a format to convert this recording to.",
+  "exportFormatDescription": "Choose a format to convert this drive test to.",
   "exportFormatSaved": "Exported to: {path}",
   "@exportFormatSaved": {
     "description": "A recording converted to another format got saved.",

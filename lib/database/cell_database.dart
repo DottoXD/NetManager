@@ -226,7 +226,7 @@ class CellDatabase {
       return await db.query(
         "cells",
         where: "plmn = ? AND cid LIKE ?",
-        whereArgs: [plmn, "%$intSearch%", "%$searchQuery%"],
+        whereArgs: [plmn, "%$intSearch%"],
         limit: limit,
         orderBy: "cid ASC",
       );

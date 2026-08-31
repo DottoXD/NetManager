@@ -1,0 +1,3 @@
+- Svariati bug sono stati risolti
+- Gli utenti possono ora importare gli speedtest effettuati su altre app.
+- Bug fix di alcune parti della funzionalità di drive test (registrazione delle celle).

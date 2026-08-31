@@ -47,10 +47,10 @@ import okio.BufferedSink;
  * test software solution.
  *
  * @author DottoXD
- * @version 0.1.5
+ * @version 0.1.6
  */
 public class Client {
-    private static final String USER_AGENT = "NetManager-SpeedTest/0.1.5";
+    private String USER_AGENT = "NetManager-SpeedTest/Unknown";
 
     private static final int BUFFER_SIZE = 256 * 1024;
     private static final int UPLOAD_CHUNK_SIZE = 1024 * 1024;
@@ -87,6 +87,14 @@ public class Client {
     public void runSpeedTest(Context context, String pingUrl, String downloadUrl, String uploadUrl,
             MethodChannel channel) {
         errorReported.set(false);
+
+        try {
+            String version = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
+            if (version == null)
+                version = "0.0.0";
+            this.USER_AGENT = this.USER_AGENT.replace("Unknown", version);
+        } catch (Exception ignored) {
+        }
 
         ScheduledFuture<?>[] watchdogHolder = new ScheduledFuture<?>[1];
         AtomicReference<Future<?>> testFutureRef = new AtomicReference<>();

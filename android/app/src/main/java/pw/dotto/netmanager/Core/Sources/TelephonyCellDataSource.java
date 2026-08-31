@@ -3,7 +3,6 @@ package pw.dotto.netmanager.Core.Sources;
 import static pw.dotto.netmanager.Core.Mobile.Extractors.Cells.NrExtractor.getMaximumNrMhz;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
 import android.telephony.CellIdentity;
@@ -25,10 +24,8 @@ import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,6 +39,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import pw.dotto.netmanager.Core.Base.SIMSlotState;
 import pw.dotto.netmanager.Core.Mobile.CellDatas.CdmaCellData;
@@ -70,7 +69,7 @@ import pw.dotto.netmanager.Utils.Permissions;
  * API.
  *
  * @author DottoXD
- * @version 0.1.5
+ * @version 0.1.6
  */
 public class TelephonyCellDataSource implements CellDataSource {
     public static final int CELL_INFO_UNAVAILABLE = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
@@ -94,6 +93,8 @@ public class TelephonyCellDataSource implements CellDataSource {
     private final Map<Integer, Date> lastModemUpdateBySlot = new ConcurrentHashMap<>();
 
     private final List<Preprocessor> preprocessors;
+
+    private final ExecutorService cellInfoExecutor = Executors.newSingleThreadExecutor();
 
     public TelephonyCellDataSource(List<Preprocessor> preprocessors) {
         this.preprocessors = preprocessors == null ? Collections.emptyList() : preprocessors;
@@ -129,7 +130,7 @@ public class TelephonyCellDataSource implements CellDataSource {
                             .isBefore(new Date().toInstant());
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && shouldUpdate) {
-                telephony.requestCellInfoUpdate(ContextCompat.getMainExecutor(context),
+                telephony.requestCellInfoUpdate(cellInfoExecutor,
                         new TelephonyManager.CellInfoCallback() {
                             @Override
                             public void onCellInfo(@NonNull List<CellInfo> cellInfo) {
@@ -695,7 +696,8 @@ public class TelephonyCellDataSource implements CellDataSource {
 
         List<CellSignalStrengthNr> signalStrengths = new ArrayList<>();
         CellSignalStrength[] rawSignalStrengths = getSignalStrengths(context, simSlotState, telephony);
-        DebugLogger.add("Raw signal strengths for SIM " + simSlotState.simId + ": " + Arrays.toString(rawSignalStrengths));
+        DebugLogger
+                .add("Raw signal strengths for SIM " + simSlotState.simId + ": " + Arrays.toString(rawSignalStrengths));
 
         if (rawSignalStrengths != null) {
             for (CellSignalStrength cellSignalStrength : rawSignalStrengths) {
@@ -1124,5 +1126,11 @@ public class TelephonyCellDataSource implements CellDataSource {
         String mncStr = String.format(Locale.ENGLISH, "%0" + mncLen + "d", mnc);
 
         return mccStr + mncStr;
+    }
+
+    public void shutdown() {
+        if (cellInfoExecutor != null && !cellInfoExecutor.isShutdown()) {
+            cellInfoExecutor.shutdown();
+        }
     }
 }

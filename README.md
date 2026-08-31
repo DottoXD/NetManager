@@ -24,7 +24,7 @@ NetManager cleanly displays key network metrics across all cellular technologies
 
 The app allows users to import custom cell databases (`.ntm` and `.clf` v3 formats) to enrich the information displayed across various screens.
 
-A sleek map page powered by [OpenStreetMap](https://www.openstreetmap.org/) displays the user's location and maps nearby active cell towers from the current mobile network, if a database is imported; through this interface, users can also record radio signal strength and network technology changes during trips (drive tests) and replay them later both inside the app or outside (e.g on Google Earth with the built in KML/CSV conversion feature!).
+A sleek map page powered by [OpenStreetMap](https://www.openstreetmap.org/) displays the user's location and maps nearby active cell towers from the current mobile network, if a database is imported; through this interface, users can also record radio signal strength, network usability and network info during trips (drive tests) and replay them later both inside the app or outside (e.g on Google Earth with the built in `.kml`/`.csv` conversion feature!).
 The map backend is fully customisable, allowing users to switch if preferred.
 
 Additionally, NetManager includes a built-in network speed test utility with custom backend servers ([LibreSpeed](https://github.com/librespeed/speedtest), OpenSpeedTest and custom backends are supported). 

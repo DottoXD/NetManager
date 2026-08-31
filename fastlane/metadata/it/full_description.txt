@@ -4,7 +4,7 @@ Realizzato con Flutter e, rispettando le linee guida di Material 3, fornisce un 
 <b>Funzionalità</b>
 Visualizza in modo chiaro le informazioni di rete in tempo reale su tutte le tecnologie mobili fino al 5G, con supporto Dual SIM completo per il monitoraggio simultaneo.
 Importa file di database delle celle personalizzati (`.ntm` e `.clf` v3) per arricchire i dettagli della rete e visualizzare le antenne cellulari attive su una mappa personalizzabile basata su OpenStreetMap.
-Registra le variazioni del segnale radio e della tecnologia di rete durante i viaggi (drive test). Riproducile all'interno dell'app o esportale in formato KML/CSV per visualizzarle in strumenti esterni come Google Earth.
+Registra le variazioni del segnale radio e le informazioni radio durante i viaggi (drive test). Riproducile all'interno dell'app o esportale in formato `.kml`/`.csv` per visualizzarle in strumenti esterni come Google Earth.
 Funzionalità di speed test integrata con supporto per i backend LibreSpeed, OpenSpeedTest, o backend personalizzati.
 Tiene traccia delle modifiche di rete in tempo reale, come gli handoff o i cambi di banda; ricevi notifiche di sistema per gli eventi che preferisci.
 Il servizio opzionale in background registra gli eventi di rete e i dati di viaggio anche quando l'app è chiusa, tenendoti aggiornato tramite una notifica.

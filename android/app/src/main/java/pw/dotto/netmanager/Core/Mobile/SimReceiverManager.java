@@ -5,8 +5,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.telephony.TelephonyManager;
 
+import io.sentry.Hint;
 import io.sentry.Sentry;
 
 /**
@@ -14,7 +17,7 @@ import io.sentry.Sentry;
  * changes.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.1.6
  */
 public class SimReceiverManager {
     private static SimReceiverManager instance;
@@ -22,6 +25,9 @@ public class SimReceiverManager {
     private Context context;
     private BroadcastReceiver simReceiver;
     private boolean isRegistered = false;
+
+    private HandlerThread receiverThread;
+    private Handler backgroundHandler;
 
     private SimReceiverManager(Context context) {
         if (context != null)
@@ -48,8 +54,12 @@ public class SimReceiverManager {
     public void registerStateReceiver(Runnable onUpdate) {
         if (isRegistered)
             return;
-        simReceiver = new BroadcastReceiver() {
 
+        receiverThread = new HandlerThread("SimReceiverThread");
+        receiverThread.start();
+        backgroundHandler = new Handler(receiverThread.getLooper());
+
+        simReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (TelephonyManager.ACTION_SUBSCRIPTION_CARRIER_IDENTITY_CHANGED.equals(intent.getAction()) ||
@@ -70,17 +80,17 @@ public class SimReceiverManager {
         try {
             if (context != null) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    context.registerReceiver(simReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+                    context.registerReceiver(simReceiver, filter, null, backgroundHandler,
+                            Context.RECEIVER_NOT_EXPORTED);
                 } else {
-                    context.registerReceiver(simReceiver, filter);
+                    context.registerReceiver(simReceiver, filter, null, backgroundHandler);
                 }
                 isRegistered = true;
             }
         } catch (IllegalArgumentException e) {
-            Sentry.captureException(e);
+            Sentry.captureException(e, scope -> scope.setExtra("feature", "SimReceiverManager registerReceiver"));
         }
     }
-
 
     /**
      * Useful to release the current SimReceiverManager instance.
@@ -103,10 +113,17 @@ public class SimReceiverManager {
             if (context != null)
                 context.unregisterReceiver(simReceiver);
         } catch (IllegalArgumentException e) {
-            Sentry.captureException(e);
+            Sentry.captureException(e,
+                    scope -> scope.setExtra("feature", "SimReceiverManager unregisterStateReceiver"));
         } finally {
             isRegistered = false;
             simReceiver = null;
+
+            if (receiverThread != null) {
+                receiverThread.quitSafely();
+                receiverThread = null;
+                backgroundHandler = null;
+            }
         }
     }
 }

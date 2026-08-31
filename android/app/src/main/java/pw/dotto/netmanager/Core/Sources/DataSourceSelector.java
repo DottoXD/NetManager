@@ -6,12 +6,12 @@ package pw.dotto.netmanager.Core.Sources;
  * available data sources.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.1.6
  */
 public class DataSourceSelector {
-    private final CellDataSource telephonySource;
+    private final TelephonyCellDataSource telephonySource;
 
-    public DataSourceSelector(CellDataSource telephonySource) {
+    public DataSourceSelector(TelephonyCellDataSource telephonySource) {
         this.telephonySource = telephonySource;
     }
 

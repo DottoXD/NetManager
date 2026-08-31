@@ -18,7 +18,7 @@ import pw.dotto.netmanager.Utils.Permissions;
  * component to display the user's position.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.1.6
  */
 public class Location {
     private static final int UPDATES_INTERVAL = 3000;
@@ -75,13 +75,17 @@ public class Location {
             }
         }
 
+        locationListener = location -> lastLocation = location;
+
         locationManager.requestLocationUpdates(
                 provider,
                 UPDATES_INTERVAL,
                 minDistance,
-                locationListener = location -> lastLocation = location);
+                locationListener);
 
-        lastLocation = locationManager.getLastKnownLocation(provider);
+        if (locationManager != null) {
+            lastLocation = locationManager.getLastKnownLocation(provider);
+        }
 
         updateAccess();
     }
@@ -131,8 +135,13 @@ public class Location {
      * Disposes the Location object.
      */
     public void dispose() {
+        handler.removeCallbacks(selfDestruct);
+
         if (locationManager != null && locationListener != null) {
-            locationManager.removeUpdates(locationListener);
+            try {
+                locationManager.removeUpdates(locationListener);
+            } catch (Exception ignored) {
+            }
             locationListener = null;
         }
 

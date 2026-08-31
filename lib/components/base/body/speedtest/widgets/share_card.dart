@@ -209,7 +209,7 @@ class SpeedtestShareCard extends StatelessWidget {
               context,
               icon: Icons.sim_card_outlined,
               text:
-                  "${speedtestResult.carrier} (${speedtestResult.plmn}) - ${speedtestResult.getNetworkGenLabel()}",
+                  "${speedtestResult.carrier} ${speedtestResult.plmn.isNotEmpty && speedtestResult.plmn != "00000" ? "(${speedtestResult.plmn}) " : ""}- ${speedtestResult.getNetworkGenLabel()}",
             ),
             if (speedtestResult.serverName != null) ...[
               const SizedBox(height: 4),

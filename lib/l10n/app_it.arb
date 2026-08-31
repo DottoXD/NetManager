@@ -30,8 +30,8 @@
   "unknownBandwidth": "Larghezza di banda sconosciuta",
   "noInfoCell": "Nessuna informazione su questa cella.",
   "visitServerHost": "Visita l'host del server nel browser.",
-  "newRecording": "Nuova registrazione",
-  "recordingSetupDialog": "Sarai portato alla finestra di configurazione della registrazione.",
+  "newRecording": "Nuovo drive test",
+  "recordingSetupDialog": "Sarai portato alla finestra di configurazione del drive test.",
   "fileName": "Nome del file",
   "recordingInterval": "Intervallo tra le registrazioni",
   "trackUsability": "Traccia usabilità",
@@ -40,7 +40,7 @@
   "selectedSaveLocation": "Percorso di salvataggio selezionato:",
   "cancel": "Annulla",
   "start": "Inizia",
-  "recordingStarted": "Registrazione {name} iniziata...",
+  "recordingStarted": "Drive test {name} iniziato...",
   "@recordingStarted": {
     "description": "A text telling the user that a recording started.",
     "placeholders": {
@@ -50,12 +50,12 @@
       }
     }
   },
-  "replayRecording": "Riproduci registrazione",
+  "replayRecording": "Riproduci drive test",
   "selectRecording": "Ti sarà chiesto di selezionare un file .nmr (NetManager Recording) valido.",
-  "convertRecording": "Converti registrazione",
-  "conversionDescription": "Convertirai un file .nmr (NetManager Recording) in un file .csv/.kml/.kmz.",
+  "convertRecording": "Converti drive test",
+  "conversionDescription": "Convertirai un file .nmr (NetManager Recording) in un file .csv/.kml.",
   "exportFormatTitle": "Formato di esportazione",
-  "exportFormatDescription": "Scegli un formato in cui esportare questa registrazione.",
+  "exportFormatDescription": "Scegli un formato in cui esportare questo drive test.",
   "exportFormatSaved": "Esportato a: {path}",
   "@exportFormatSaved": {
     "description": "A recording converted to another format got saved.",

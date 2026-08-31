@@ -44,15 +44,15 @@ import pw.dotto.netmanager.R;
  * all cell coverage recording actions.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.1.6
  */
 public class Service extends android.app.Service {
+    private String USER_AGENT = "NetManager-DriveTest/Unknown";
     private static final int DEFAULT_RECORDING_INTERVAL_SECONDS = 10;
 
     private static Service instance = null;
     private ScheduledExecutorService executorService;
 
-    private Location serviceLocationFetcher;
     private Manager core;
     private RecordedData recordedData;
     private final Object recordedDataLock = new Object();
@@ -74,6 +74,13 @@ public class Service extends android.app.Service {
             .retryOnConnectionFailure(false)
             .followRedirects(false)
             .followSslRedirects(false)
+            .addInterceptor(chain -> {
+                Request original = chain.request();
+                Request withUA = original.newBuilder()
+                        .header("User-Agent", USER_AGENT)
+                        .build();
+                return chain.proceed(withUA);
+            })
             .build();
 
     public static Service getInstance() {
@@ -94,7 +101,7 @@ public class Service extends android.app.Service {
         try {
             startForeground();
             core = new Manager(this, "recording", DEFAULT_RECORDING_INTERVAL_SECONDS);
-            serviceLocationFetcher = Location.getInstance(this);
+            Location.getInstance(this);
         } catch (Exception e) {
             stopSelf();
         }
@@ -178,12 +185,12 @@ public class Service extends android.app.Service {
     }
 
     private void record() {
-        if (serviceLocationFetcher != null) {
-            serviceLocationFetcher.updateAccess();
-        } else {
-            serviceLocationFetcher = Location.getInstance(this);
+        Location locationFetcher = Location.getInstance(this);
+        if (locationFetcher == null) {
+            return;
         }
-        android.location.Location loc = serviceLocationFetcher.getLastLocation();
+
+        android.location.Location loc = locationFetcher.getLastLocation();
 
         SIMData data = core.getSimNetworkData(selectedSim);
 
@@ -262,7 +269,7 @@ public class Service extends android.app.Service {
                 String json = gson.toJson(recordedData);
                 fos.write(json.getBytes(StandardCharsets.UTF_8));
             } catch (IOException e) {
-                Sentry.captureException(e);
+                Sentry.captureException(e, scope -> scope.setExtra("feature", "Service saveToFile"));
             }
         }
     }
@@ -308,9 +315,9 @@ public class Service extends android.app.Service {
 
         instance = null;
 
-        if (serviceLocationFetcher != null) {
-            serviceLocationFetcher.dispose();
-            serviceLocationFetcher = null;
+        Location locationFetcher = Location.getInstance(this);
+        if (locationFetcher != null) {
+            locationFetcher.dispose();
         }
 
         if (core != null) {
