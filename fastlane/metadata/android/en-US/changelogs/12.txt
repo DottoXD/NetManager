@@ -1,3 +1,4 @@
 - Various bugs have been fixed.
 - Users can now import speed tests from other apps.
 - Drive test (cell recording) bug fixes.
+- Drive test rework (more data, new UI...).

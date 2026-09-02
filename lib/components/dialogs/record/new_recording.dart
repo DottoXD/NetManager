@@ -35,6 +35,15 @@ class _NewRecordingState extends State<NewRecording> {
     null,
   );
   late final ValueNotifier<bool> _trackUsableNotifier = ValueNotifier(false);
+  late final ValueNotifier<bool> _dualSimNotifier = ValueNotifier(false);
+
+  int _simCount = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSimCount();
+  }
 
   @override
   void dispose() {
@@ -43,8 +52,14 @@ class _NewRecordingState extends State<NewRecording> {
     _usabilityTestUrlController.dispose();
     _directoryPathNotifier.dispose();
     _trackUsableNotifier.dispose();
+    _dualSimNotifier.dispose();
 
     super.dispose();
+  }
+
+  Future<void> _loadSimCount() async {
+    final count = await widget.platform.invokeMethod<int>("getSimCount");
+    if (mounted) setState(() => _simCount = count ?? 1);
   }
 
   Future<void> _openSetupDialog() async {
@@ -109,6 +124,29 @@ class _NewRecordingState extends State<NewRecording> {
                     );
                   },
                 ),
+                if (_simCount > 1) ...[
+                  const SizedBox(height: 16),
+                  ValueListenableBuilder(
+                    valueListenable: _dualSimNotifier,
+                    builder: (context, dualSim, _) {
+                      return SwitchListTile(
+                        title: const Text("Dual SIM Drive Test"),
+                        subtitle: const Text(
+                          "Saves separate files for SIM 1 and SIM 2",
+                        ),
+                        value: dualSim,
+                        onChanged: (val) async {
+                          await HapticService().triggerHaptic(
+                            HapticType.selection,
+                            context,
+                          );
+
+                          _dualSimNotifier.value = val;
+                        },
+                      );
+                    },
+                  ),
+                ],
                 const SizedBox(height: 16),
                 ValueListenableBuilder<String?>(
                   valueListenable: _directoryPathNotifier,
@@ -184,6 +222,7 @@ class _NewRecordingState extends State<NewRecording> {
       "name": _nameController.text,
       "interval": interval,
       "path": _directoryPathNotifier.value,
+      "dualSimMode": _dualSimNotifier.value,
       "trackUsable": _trackUsableNotifier.value,
       "usabilityTestUrl": _usabilityTestUrlController.text,
     });

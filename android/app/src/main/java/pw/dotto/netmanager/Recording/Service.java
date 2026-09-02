@@ -22,7 +22,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -40,8 +44,7 @@ import pw.dotto.netmanager.R;
 
 /**
  * NetManager's Recording Service class is the recording component which
- * coordinates
- * all cell coverage recording actions.
+ * coordinates all cell coverage recording actions.
  *
  * @author DottoXD
  * @version 0.1.6
@@ -54,13 +57,16 @@ public class Service extends android.app.Service {
     private ScheduledExecutorService executorService;
 
     private Manager core;
-    private RecordedData recordedData;
+
+    private final Map<Integer, RecordedData> recordedDataMap = new ConcurrentHashMap<>();
+    private final Map<Integer, String> pathMap = new ConcurrentHashMap<>();
+    private final List<Integer> activeSimSlots = new ArrayList<>();
+
     private final Object recordedDataLock = new Object();
     private int selectedSim = 0;
 
     private final Gson gson = new Gson();
     private int selectedId = -1;
-    private String path;
     private boolean trackUsable = false;
     private String usabilityTestUrl = "";
 
@@ -108,7 +114,11 @@ public class Service extends android.app.Service {
     }
 
     public RecordedData getRecordedData() {
-        return this.recordedData;
+        return recordedDataMap.get(selectedSim);
+    }
+
+    public RecordedData getRecordedData(int simSlot) {
+        return recordedDataMap.get(simSlot);
     }
 
     @Override
@@ -122,14 +132,15 @@ public class Service extends android.app.Service {
             executorService = Executors.newSingleThreadScheduledExecutor();
         }
 
-        if (this.recordedData != null) {
+        if (!recordedDataMap.isEmpty()) {
             return START_NOT_STICKY;
         }
 
         String name = intent.getStringExtra("name");
         int intervalSeconds = intent.getIntExtra("interval", DEFAULT_RECORDING_INTERVAL_SECONDS);
-        String path = intent.getStringExtra("path");
+        String basePath = intent.getStringExtra("path");
         int selectedSim = intent.getIntExtra("selectedSim", 0);
+        boolean dualSimMode = intent.getBooleanExtra("dualSimMode", false);
         boolean trackUsable = intent.getBooleanExtra("trackUsable", false);
         String usabilityTestUrl = intent.getStringExtra("usabilityTestUrl");
 
@@ -140,9 +151,24 @@ public class Service extends android.app.Service {
             usabilityTestUrl = DEFAULT_USABILITY_TEST_URL;
 
         this.selectedSim = selectedSim;
-        this.path = path + "/" + name;
         this.trackUsable = trackUsable;
         this.usabilityTestUrl = usabilityTestUrl;
+
+        activeSimSlots.clear();
+        activeSimSlots.add(selectedSim);
+        if (dualSimMode && core != null && core.getSimCount() > 1) {
+            activeSimSlots.add(selectedSim == 0 ? 1 : 0);
+        }
+
+        pathMap.clear();
+        recordedDataMap.clear();
+        for (int simSlot : activeSimSlots) {
+            String suffix = dualSimMode ? "_SIM" + (simSlot + 1) : "";
+            String fullPath = basePath + "/" + name + suffix + ".nmr";
+
+            pathMap.put(simSlot, fullPath);
+            recordedDataMap.put(simSlot, new RecordedData(core.getSimOperator(simSlot), core.getPlmn(simSlot)));
+        }
 
         Intent closingIntent = new Intent(this, Receiver.class);
         closingIntent.setAction("CLOSE_RECORDING_NOTIFICATION");
@@ -154,9 +180,13 @@ public class Service extends android.app.Service {
         PendingIntent openPendingIntent = PendingIntent.getActivity(this, 0, openIntent,
                 PendingIntent.FLAG_IMMUTABLE);
 
+        String notificationMessage = dualSimMode
+                ? "You are currently recording all Dual SIM cell data (" + name + ")"
+                : "You are currently recording all cell data (" + name + ")";
+
         Notification recordingNotification = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL)
                 .setContentTitle("NetManager Recording Service")
-                .setContentText("You are currently recording all cell data (" + name + ")")
+                .setContentText(notificationMessage)
                 .setSmallIcon(R.drawable.ic_launcher_monochrome)
                 .setSilent(true)
                 .setOngoing(true)
@@ -170,13 +200,7 @@ public class Service extends android.app.Service {
         }
 
         try {
-            recordedData = new RecordedData(core.getSimOperator(selectedSim), core.getPlmn(selectedSim));
-            executorService.scheduleWithFixedDelay(new Runnable() {
-                @Override
-                public void run() {
-                    record();
-                }
-            }, 0, intervalSeconds, TimeUnit.SECONDS);
+            executorService.scheduleWithFixedDelay(this::record, 0, intervalSeconds, TimeUnit.SECONDS);
         } catch (Exception e) {
             stopSelf();
         }
@@ -191,31 +215,30 @@ public class Service extends android.app.Service {
         }
 
         android.location.Location loc = locationFetcher.getLastLocation();
+        if (loc == null) {
+            return;
+        }
 
-        SIMData data = core.getSimNetworkData(selectedSim);
+        boolean isUsable = true;
+        if (trackUsable) {
+            isUsable = testUsability();
+        }
 
-        if (loc != null && data != null) {
-            int gen = data.getNetworkGen();
-            if (gen == 4 && core.getNsaStatus(selectedSim))
-                gen++;
+        for (int simSlot : activeSimSlots) {
+            SIMData data = core.getSimNetworkData(simSlot);
 
-            int processedSignal;
-            if (data.getPrimaryCell() != null) {
-                processedSignal = data.getPrimaryCell().getProcessedSignal();
-            } else {
-                processedSignal = -1;
+            if (data == null) {
+                continue;
             }
 
-            boolean isUsable = true;
-            if (trackUsable) {
-                isUsable = testUsability();
-            }
-
-            Record record = new Record(gen, processedSignal, isUsable, loc.getLatitude(), loc.getLongitude());
+            Record record = new Record(isUsable, loc.getLatitude(), loc.getLongitude(), data);
 
             synchronized (recordedDataLock) {
-                recordedData.addRecord(record);
-                saveToFile();
+                RecordedData targetData = recordedDataMap.get(simSlot);
+                if (targetData != null) {
+                    targetData.addRecord(record);
+                    saveToFile(simSlot);
+                }
             }
         }
     }
@@ -263,14 +286,25 @@ public class Service extends android.app.Service {
         }
     }
 
-    private void saveToFile() {
+    private void saveToFile(int simSlot) {
+        String filePath = pathMap.get(simSlot);
+        RecordedData recData = recordedDataMap.get(simSlot);
+        if (filePath == null || recData == null)
+            return;
+
         synchronized (recordedDataLock) {
-            try (FileOutputStream fos = new FileOutputStream(new File(path))) {
-                String json = gson.toJson(recordedData);
+            try (FileOutputStream fos = new FileOutputStream(new File(filePath))) {
+                String json = gson.toJson(recData);
                 fos.write(json.getBytes(StandardCharsets.UTF_8));
             } catch (IOException e) {
-                Sentry.captureException(e, scope -> scope.setExtra("feature", "Service saveToFile"));
+                Sentry.captureException(e, scope -> scope.setExtra("feature", "Service saveToFile SIM" + simSlot));
             }
+        }
+    }
+
+    private void saveAllFiles() {
+        for (int simSlot : activeSimSlots) {
+            saveToFile(simSlot);
         }
     }
 
@@ -311,7 +345,7 @@ public class Service extends android.app.Service {
 
     @Override
     public void onDestroy() {
-        saveToFile();
+        saveAllFiles();
 
         instance = null;
 

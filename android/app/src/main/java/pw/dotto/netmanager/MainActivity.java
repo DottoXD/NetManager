@@ -381,6 +381,7 @@ public class MainActivity extends FlutterActivity {
               int recordingInterval = call.argument("interval");
               String recordingPath = call.argument("path");
               boolean trackUsable = call.argument("trackUsable");
+              boolean dualSimMode = Boolean.TRUE.equals(call.argument("dualSimMode"));
               String usabilityTestUrl = call.argument("usabilityTestUrl");
 
               if (recordingInterval < 1 || recordingInterval > 300 || recordingName == null || recordingPath == null) {
@@ -395,6 +396,7 @@ public class MainActivity extends FlutterActivity {
                 recordingIntent.putExtra("interval", recordingInterval);
                 recordingIntent.putExtra("path", recordingPath);
                 recordingIntent.putExtra("selectedSim", selectedSim);
+                recordingIntent.putExtra("dualSimMode", dualSimMode);
                 recordingIntent.putExtra("trackUsable", trackUsable);
                 recordingIntent.putExtra("usabilityTestUrl", usabilityTestUrl);
 
@@ -419,9 +421,15 @@ public class MainActivity extends FlutterActivity {
             case "getLiveRecording":
               pw.dotto.netmanager.Recording.Service serviceInstance = pw.dotto.netmanager.Recording.Service
                   .getInstance();
-              if (serviceInstance != null && serviceInstance.getRecordedData() != null) {
-                String jsonStr = gson.toJson(serviceInstance.getRecordedData());
-                result.success(jsonStr);
+              if (serviceInstance != null) {
+                Integer requestedSim = call.argument("simSlot");
+                int targetSlot = (requestedSim != null) ? requestedSim : selectedSim;
+
+                if (serviceInstance.getRecordedData(targetSlot) != null) {
+                  String jsonStr = gson.toJson(serviceInstance.getRecordedData(targetSlot));
+                  result.success(jsonStr);
+                  break;
+                }
               } else {
                 result.success(null);
               }

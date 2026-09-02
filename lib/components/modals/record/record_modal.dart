@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
-import 'package:netmanager/components/modals/record/convert_recording.dart';
-import 'package:netmanager/components/modals/record/new_recording.dart';
+import 'package:netmanager/components/dialogs/record/convert_recording.dart';
+import 'package:netmanager/components/dialogs/record/new_recording.dart';
 import 'package:netmanager/components/modals/record/replay_recording.dart';
 import 'package:netmanager/types/recording/recorded_data.dart';
 

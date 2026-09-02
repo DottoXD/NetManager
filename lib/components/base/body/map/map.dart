@@ -6,20 +6,23 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:netmanager/components/base/body/map/widgets/live_map.dart';
-import 'package:netmanager/components/base/body/map/widgets/record_card.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/floating/filter_button.dart';
 import 'package:netmanager/components/modals/map_filters_modal.dart';
 import 'package:netmanager/components/modals/record/record_modal.dart';
+import 'package:netmanager/components/modals/record/record_sheet.dart';
 import 'package:netmanager/database/cell_database.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/types/database/cell_tower.dart';
+import 'package:netmanager/types/events/mobile_netmanager_event.dart';
+import 'package:netmanager/types/events/netmanager_event.dart';
 import 'package:netmanager/types/map/tower_filter.dart';
 import 'package:netmanager/utils/cell_utils.dart';
 import 'package:netmanager/components/base/body/map/widgets/map_overlay.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
 import 'package:netmanager/types/recording/recorded_data.dart';
 import 'package:netmanager/types/recording/record.dart';
+import 'package:netmanager/utils/event_utils.dart';
 import 'package:netmanager/utils/simdata_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:latlong2/latlong.dart';
@@ -629,6 +632,37 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     });
   }
 
+  Future<List<NetmanagerEvent>> _fetchAndMatchEvents(Record record) async {
+    try {
+      final String? rawLogs = await platform.invokeMethod("getEvents");
+      if (rawLogs == null || rawLogs.trim().isEmpty) return [];
+
+      final List<dynamic> jsonList = json.decode(rawLogs);
+      final List<NetmanagerEvent> events = [];
+
+      for (final item in jsonList) {
+        if (item is Map) {
+          final map = Map<String, dynamic>.from(item);
+          if (map.containsKey("simSlot") && map.containsKey("network")) {
+            events.add(MobileNetmanagerEvent.fromJson(map));
+          } else {
+            events.add(NetmanagerEvent.fromJson(map));
+          }
+        }
+      }
+
+      final allRecords = _activeReplayData?.records ?? _liveRecords;
+
+      return getEventsForRecord(
+        currentRecord: record,
+        sortedRecords: allRecords,
+        events: events,
+      );
+    } catch (e) {
+      return [];
+    }
+  }
+
   void checkAndLoadTowers(LatLngBounds visibleBounds) async {
     if (_towerQueryInProgress ||
         !widget.externalDatabaseNotifier.value ||
@@ -759,7 +793,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                 onPositionChanged: (camera) {
                   _scheduleTowerCheck(camera.visibleBounds);
                 },
-                onMarkerTap: (record) {
+                onMarkerTap: (record) async {
                   setState(() {
                     _selectedRecord = record;
                     _follow = false;
@@ -770,6 +804,31 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                     LatLng(record.lat, record.lon),
                     const Duration(milliseconds: 500),
                   );
+
+                  final matchedEvents = await _fetchAndMatchEvents(record);
+
+                  if (!context.mounted) return;
+
+                  showModalBottomSheet(
+                    context: context,
+                    showDragHandle: true,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(24.0),
+                      ),
+                    ),
+                    backgroundColor: Theme.of(context).colorScheme.surface,
+                    builder: (context) {
+                      return RecordSheet(
+                        record: record,
+                        matchedEvents: matchedEvents,
+                      );
+                    },
+                  ).then((_) {
+                    if (mounted) {
+                      setState(() => _selectedRecord = null);
+                    }
+                  });
                 },
                 onMapInteraction: (shouldUnfollow) {
                   if (shouldUnfollow && _follow) {
@@ -822,12 +881,6 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                     MapOverlay(
                       titlesNotifier: _displayTitlesNotifier,
                       valuesNotifier: _displayValuesNotifier,
-                    ),
-                    RecordCard(
-                      selectedRecord: _selectedRecord,
-                      liveRecords: _liveRecords,
-                      activeReplayData: _activeReplayData,
-                      onClose: () => setState(() => _selectedRecord = null),
                     ),
                     ValueListenableBuilder(
                       valueListenable: widget.externalDatabaseNotifier,

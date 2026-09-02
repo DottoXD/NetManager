@@ -6,12 +6,11 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * NetManager's RecordedData class is the component that contains all base
- * attributes for
- * a cell coverage record.
+ * NetManager's RecordedData class contains base
+ * attributes for a cell coverage record file.
  *
  * @author DottoXD
- * @version 0.0.5
+ * @version 0.1.6
  */
 public class RecordedData {
     private final String operator;
@@ -26,12 +25,28 @@ public class RecordedData {
     }
 
     public void addRecord(Record record) {
-        if (!records.contains(record))
+        if (record != null) {
             records.add(record);
+        }
     }
 
     public void removeRecord(Record record) {
-        if (records.contains(record))
-            records.remove(record);
+        records.remove(record);
+    }
+
+    public String getOperator() {
+        return operator;
+    }
+
+    public String getNetwork() {
+        return network;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public List<Record> getRecords() {
+        return records;
     }
 }
