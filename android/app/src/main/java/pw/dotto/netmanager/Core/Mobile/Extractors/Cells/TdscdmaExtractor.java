@@ -14,7 +14,7 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.TdscdmaCellData;
  * object based on the provided cell info.
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.1.6
  */
 public class TdscdmaExtractor {
     @NonNull
@@ -22,6 +22,7 @@ public class TdscdmaExtractor {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             return new TdscdmaCellData(
                     "-1",
+                    -1,
                     -1,
                     -1,
                     -1,
@@ -49,6 +50,7 @@ public class TdscdmaExtractor {
                 identityTdscdma.getLac(),
                 -1, // signalTdscdma.getRsrq(),
                 -1, // signalTdscdma.getSnr(),
+                -1, // signalTdscdma.getCqi(),
                 -1, // signalTdscdma.getTimingAdvance(),
                 -1, // identityTdscdma.getBandwidth(),
                 band,

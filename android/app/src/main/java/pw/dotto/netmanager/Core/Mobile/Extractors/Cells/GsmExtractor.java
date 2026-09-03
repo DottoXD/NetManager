@@ -16,7 +16,7 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.GsmCellData;
  * based on the provided cell info.
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.1.6
  */
 public class GsmExtractor {
     private static final String REFLECTION_RSSI = "mSignalStrength";
@@ -38,6 +38,7 @@ public class GsmExtractor {
                 identityGsm.getLac(),
                 -1, // signalGsm.getRsrq(),
                 -1, // signalGsm.getSnr(),
+                -1, // signalGsm.getCqi(),
                 (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? signalGsm.getTimingAdvance() : -1),
                 -1, // identityGsm.getBandwidth(),
                 band,

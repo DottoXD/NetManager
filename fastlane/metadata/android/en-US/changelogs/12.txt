@@ -2,3 +2,5 @@
 - Users can now import speed tests from other apps.
 - Drive test (cell recording) bug fixes.
 - Drive test rework (more data, new UI...).
+- CQI is now retrieved from Telephony and tracked.
+- Possible fix to wrong cell bandwidths being assigned.

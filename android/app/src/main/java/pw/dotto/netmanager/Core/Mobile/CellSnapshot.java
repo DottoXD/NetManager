@@ -27,6 +27,8 @@ public class CellSnapshot {
     private final String signalQualityString;
     private final int signalNoise;
     private final String signalNoiseString;
+    private final int channelQuality;
+    private final String channelQualityString;
     private final int timingAdvance;
     private final String timingAdvanceString;
     private final long timestamp;
@@ -34,7 +36,8 @@ public class CellSnapshot {
     public CellSnapshot(String network, String node, int band, int networkGen, int rawSignal, String rawSignalString,
             int processedSignal, String processedSignalString, int channelNumber, String channelNumberString,
             int stationIdentity, String stationIdentityString, int areaCode, String areaCodeString, int signalQuality,
-            String signalQualityString, int signalNoise, String signalNoiseString, int timingAdvance,
+            String signalQualityString, int signalNoise, String signalNoiseString, int channelQuality,
+            String channelQualityString, int timingAdvance,
             String timingAdvanceString) {
         this.network = network;
         this.node = node;
@@ -54,6 +57,8 @@ public class CellSnapshot {
         this.signalQualityString = signalQualityString;
         this.signalNoise = signalNoise;
         this.signalNoiseString = signalNoiseString;
+        this.channelQuality = channelQuality;
+        this.channelQualityString = channelQualityString;
         this.timingAdvance = timingAdvance;
         this.timingAdvanceString = timingAdvanceString;
         this.timestamp = System.currentTimeMillis();
@@ -129,6 +134,14 @@ public class CellSnapshot {
 
     public String getSignalNoiseString() {
         return signalNoiseString;
+    }
+
+    public int getChannelQuality() {
+        return channelQuality;
+    }
+
+    public String getChannelQualityString() {
+        return channelQualityString;
     }
 
     public int getTimingAdvance() {

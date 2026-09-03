@@ -17,7 +17,7 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.LteCellData;
  * based on the provided cell info.
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.1.6
  */
 public class LteExtractor {
     private static final int MAXIMUM_LTE_MHZ = 20;
@@ -49,6 +49,7 @@ public class LteExtractor {
                 identityLte.getTac(),
                 (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? signalLte.getRsrq() : -1),
                 (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? signalLte.getRssnr() : -1),
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? signalLte.getCqi() : -1),
                 signalLte.getTimingAdvance(),
                 (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P ? identityLte.getBandwidth() : -1),
                 band,

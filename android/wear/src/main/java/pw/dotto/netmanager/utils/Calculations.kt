@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.CellTower
 import androidx.compose.material.icons.rounded.Landscape
+import androidx.compose.material.icons.rounded.Lightbulb
 import androidx.compose.material.icons.rounded.PermIdentity
 import androidx.compose.material.icons.rounded.SettingsInputAntenna
 import androidx.compose.material.icons.rounded.Shortcut
@@ -55,6 +56,7 @@ class Calculations {
                 "stationIdentity" -> Icons.Rounded.PermIdentity
                 "channelNumber" -> Icons.Rounded.WifiChannel
                 "signalNoise" -> Icons.Rounded.SpatialTracking
+                "channelQuality" -> Icons.Rounded.Lightbulb
                 "signalQuality" -> Icons.Rounded.SettingsInputAntenna
                 "timingAdvance" -> Icons.Rounded.Shortcut
                 else -> Icons.Rounded.BarChart

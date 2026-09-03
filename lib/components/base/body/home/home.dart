@@ -502,6 +502,12 @@ class _HomeBodyState extends State<HomeBody> {
         primaryCell.signalNoise,
       ),
       (
+        "channelQuality",
+        primaryCell.channelQualityString,
+        "",
+        primaryCell.channelQuality,
+      ),
+      (
         "timingAdvance",
         primaryCell.timingAdvanceString,
         "",
@@ -543,6 +549,7 @@ class _HomeBodyState extends State<HomeBody> {
       "processedSignal",
       "signalQuality",
       "signalNoise",
+      "channelQuality",
       "timingAdvance",
     ];
 

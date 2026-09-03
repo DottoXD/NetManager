@@ -297,6 +297,7 @@ public class NetManagerCore {
                 primaryCell.getAreaCode(), primaryCell.getAreaCodeString(),
                 primaryCell.getSignalQuality(), primaryCell.getSignalQualityString(),
                 primaryCell.getSignalNoise(), primaryCell.getSignalNoiseString(),
+                primaryCell.getChannelQuality(), primaryCell.getChannelQualityString(),
                 primaryCell.getTimingAdvance(), primaryCell.getTimingAdvanceString());
     }
 

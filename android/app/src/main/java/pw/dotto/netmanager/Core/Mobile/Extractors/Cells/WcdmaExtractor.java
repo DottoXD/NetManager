@@ -14,7 +14,7 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.WcdmaCellData;
  * object based on the provided cell info.
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.1.6
  */
 public class WcdmaExtractor {
     @NonNull
@@ -33,6 +33,7 @@ public class WcdmaExtractor {
                 identityWcdma.getLac(),
                 -1, // signalWcdma.getRsrq(),
                 -1, // signalWcdma.getRssnr(),
+                -1, // signalWcdma.getCqi(),
                 -1, // signalWcdma.getTimingAdvance(),
                 -1, // identityWcdma.getBandwidth(),
                 band,

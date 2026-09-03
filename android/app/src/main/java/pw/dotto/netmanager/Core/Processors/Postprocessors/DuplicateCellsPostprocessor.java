@@ -16,7 +16,7 @@ import pw.dotto.netmanager.Core.NetManagerCore;
  * which removes duplicate active cells & neighbor cells.
  *
  * @author DottoXD
- * @version 0.1.4
+ * @version 0.1.6
  */
 public class DuplicateCellsPostprocessor implements Postprocessor {
     @Override
@@ -25,6 +25,7 @@ public class DuplicateCellsPostprocessor implements Postprocessor {
             return data;
 
         Set<String> seenIdentifiers = new HashSet<>();
+        Set<Integer> seenChannelNumbers = new HashSet<>();
         List<CellData> activeDuplicates = new ArrayList<>();
         List<CellData> neighborDuplicates = new java.util.ArrayList<>();
 
@@ -32,12 +33,24 @@ public class DuplicateCellsPostprocessor implements Postprocessor {
             if (cell == null)
                 continue;
 
+            boolean isDuplicate = false;
+
             String id = cell.getCellIdentifier();
-            if (id != null && !id.equals(String.valueOf(CELL_INFO_UNAVAILABLE)) && !id.equals("0")
-                    && !id.equals("-1")) {
+            if (isValidIdentifier(id)) {
                 if (!seenIdentifiers.add(id)) {
-                    activeDuplicates.add(cell);
+                    isDuplicate = true;
                 }
+            }
+
+            int channelNumber = cell.getChannelNumber();
+            if (!isDuplicate && isValidChannelNumber(channelNumber)) {
+                if (!seenChannelNumbers.add(channelNumber)) {
+                    isDuplicate = true;
+                }
+            }
+
+            if (isDuplicate) {
+                activeDuplicates.add(cell);
             }
         }
 
@@ -45,12 +58,17 @@ public class DuplicateCellsPostprocessor implements Postprocessor {
             if (cell == null)
                 continue;
 
+            boolean isDuplicate = false;
+
             String id = cell.getCellIdentifier();
-            if (id != null && !id.equals(String.valueOf(CELL_INFO_UNAVAILABLE)) && !id.equals("0")
-                    && !id.equals("-1")) {
+            if (isValidIdentifier(id)) {
                 if (!seenIdentifiers.add(id)) {
-                    neighborDuplicates.add(cell);
+                    isDuplicate = true;
                 }
+            }
+
+            if (isDuplicate) {
+                neighborDuplicates.add(cell);
             }
         }
 
@@ -60,5 +78,14 @@ public class DuplicateCellsPostprocessor implements Postprocessor {
             data.removeNeighborCell(cell);
 
         return data;
+    }
+
+    private boolean isValidIdentifier(String id) {
+        return id != null && !id.equals(String.valueOf(CELL_INFO_UNAVAILABLE)) && !id.equals("0")
+                && !id.equals("-1");
+    }
+
+    private boolean isValidChannelNumber(int channelNumber) {
+        return channelNumber != CELL_INFO_UNAVAILABLE && channelNumber > 0;
     }
 }

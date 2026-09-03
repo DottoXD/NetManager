@@ -10,6 +10,7 @@ class CellData {
   final String areaCodeString;
   final String signalQualityString;
   final String signalNoiseString;
+  final String channelQualityString;
   final String timingAdvanceString;
   final String bandwidthString;
   final String bandString;
@@ -23,6 +24,7 @@ class CellData {
   final int areaCode;
   final int signalQuality;
   final int signalNoise;
+  final int channelQuality;
   final int timingAdvance;
   final int bandwidth;
   final int band;
@@ -40,6 +42,7 @@ class CellData {
     required this.areaCodeString,
     required this.signalQualityString,
     required this.signalNoiseString,
+    required this.channelQualityString,
     required this.timingAdvanceString,
     required this.bandwidthString,
     required this.bandString,
@@ -52,6 +55,7 @@ class CellData {
     required this.areaCode,
     required this.signalQuality,
     required this.signalNoise,
+    required this.channelQuality,
     required this.timingAdvance,
     required this.bandwidth,
     required this.band,
@@ -71,6 +75,7 @@ class CellData {
       areaCodeString: json["areaCodeString"],
       signalQualityString: json["signalQualityString"],
       signalNoiseString: json["signalNoiseString"],
+      channelQualityString: json["channelQualityString"],
       timingAdvanceString: json["timingAdvanceString"],
       bandwidthString: json["bandwidthString"],
       bandString: json["bandString"],
@@ -83,6 +88,7 @@ class CellData {
       areaCode: json["areaCode"],
       signalQuality: json["signalQuality"],
       signalNoise: json["signalNoise"],
+      channelQuality: json["channelQuality"],
       timingAdvance: json["timingAdvance"],
       bandwidth: json["bandwidth"],
       band: json["band"],

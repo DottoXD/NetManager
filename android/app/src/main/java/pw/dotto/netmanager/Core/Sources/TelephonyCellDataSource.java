@@ -615,8 +615,6 @@ public class TelephonyCellDataSource implements CellDataSource {
     }
 
     private void assignBandwidths(SIMData data, List<Integer> cellBandwidths) {
-        // after pretty much everything, just before setting general bandwidth. might
-        // confuse between multiple NR bands...
         CellData[] activeCells = data.getActiveCells();
         Arrays.sort(activeCells, (a, b) -> {
             boolean invalidA = a.getBandwidth() <= 0;
@@ -665,9 +663,14 @@ public class TelephonyCellDataSource implements CellDataSource {
                     cell.setBandwidth(nrBw);
                     availableBandwidths.remove(Integer.valueOf(nrBw));
                 }
-            } else if (!availableBandwidths.isEmpty()) {
-                int lteBw = availableBandwidths.remove(0);
-                cell.setBandwidth(lteBw);
+            } else if (cell instanceof LteCellData) {
+                Optional<Integer> possibleBw = availableBandwidths.stream().filter(b -> b <= 20).findFirst();
+
+                if (possibleBw.isPresent()) {
+                    int lteBw = possibleBw.get();
+                    cell.setBandwidth(lteBw);
+                    availableBandwidths.remove(Integer.valueOf(lteBw));
+                }
             }
         }
     }
@@ -734,6 +737,12 @@ public class TelephonyCellDataSource implements CellDataSource {
                 } else if (ssNr.getCsiRsrq() != CELL_INFO_UNAVAILABLE) {
                     nrCell.setSignalQuality(ssNr.getCsiRsrq());
                     nrCell.setSignalNoiseString("CSI RSRQ");
+                }
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && nrCell.getChannelQuality() == CELL_INFO_UNAVAILABLE) {
+                if (!ssNr.getCsiCqiReport().isEmpty()) {
+                    nrCell.setChannelQuality(ssNr.getCsiCqiReport().get(0));
                 }
             }
 

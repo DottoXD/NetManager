@@ -7,7 +7,7 @@ import androidx.annotation.NonNull;
  * about cells.
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.1.6
  */
 public abstract class CellData {
     protected final String cellIdentifierString;
@@ -19,6 +19,7 @@ public abstract class CellData {
     protected final String areaCodeString;
     protected String signalQualityString;
     protected String signalNoiseString;
+    protected String channelQualityString;
     protected final String timingAdvanceString;
     protected final String bandwidthString;
     protected final String bandString;
@@ -32,6 +33,7 @@ public abstract class CellData {
     private int areaCode;
     private int signalQuality;
     private int signalNoise;
+    private int channelQuality;
     private int timingAdvance;
     private int bandwidth;
     private int band;
@@ -49,6 +51,7 @@ public abstract class CellData {
             String areaCodeString,
             String signalQualityString,
             String signalNoiseString,
+            String channelQualityString,
             String timingAdvanceString,
             String bandwidthString,
             String bandString,
@@ -60,6 +63,7 @@ public abstract class CellData {
             int areaCode,
             int signalQuality,
             int signalNoise,
+            int channelQuality,
             int timingAdvance,
             int bandwidth,
             int band,
@@ -73,6 +77,7 @@ public abstract class CellData {
         this.areaCodeString = areaCodeString;
         this.signalQualityString = signalQualityString;
         this.signalNoiseString = signalNoiseString;
+        this.channelQualityString = channelQualityString;
         this.timingAdvanceString = timingAdvanceString;
         this.bandwidthString = bandwidthString;
         this.bandString = bandString;
@@ -85,6 +90,7 @@ public abstract class CellData {
         this.areaCode = areaCode;
         this.signalQuality = signalQuality;
         this.signalNoise = signalNoise;
+        this.channelQuality = channelQuality;
         this.timingAdvance = timingAdvance;
         this.bandwidth = bandwidth;
         this.band = band;
@@ -122,6 +128,14 @@ public abstract class CellData {
 
     public int getSignalNoise() {
         return signalNoise;
+    }
+
+    public int getChannelQuality() {
+        return channelQuality;
+    }
+
+    public void setChannelQuality(int channelQuality) {
+        this.channelQuality = channelQuality;
     }
 
     public int getTimingAdvance() {
@@ -182,6 +196,14 @@ public abstract class CellData {
 
     public void setSignalQualityString(String signalQualityString) {
         this.signalQualityString = signalQualityString;
+    }
+
+    public String getChannelQualityString() {
+        return channelQualityString;
+    }
+
+    public void setChannelQualityString(String channelQualityString) {
+        this.channelQualityString = channelQualityString;
     }
 
     public String getStationIdentityString() {
@@ -258,7 +280,8 @@ public abstract class CellData {
                 + processedSignalString + ": " + processedSignal + ", " + channelNumberString + ": " + channelNumber
                 + ", " + stationIdentityString + ": " + stationIdentity + ", " + areaCodeString + ": " + areaCode + ", "
                 + signalQualityString + ": " + signalQuality + ", " + signalNoiseString + ": " + signalNoise + ", "
-                + timingAdvanceString + ": " + timingAdvance + ", " + bandwidthString + ": " + bandwidth + ", "
+                + channelQualityString + ": " + channelQuality + ", " + timingAdvanceString + ": " + timingAdvance
+                + ", " + bandwidthString + ": " + bandwidth + ", "
                 + bandString + ": " + band;
     }
 }

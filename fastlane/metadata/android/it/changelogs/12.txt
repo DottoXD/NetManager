@@ -2,3 +2,5 @@
 - Gli utenti possono ora importare gli speedtest effettuati su altre app.
 - Bug fix di alcune parti della funzionalità di drive test (registrazione delle celle).
 - Rework della funzionalità di drive test (più dati, nuova interfaccia...).
+- Il CQI ora viene ottenuto da Telephony e tracciato.
+- Possibile fix a delle bw errate assegnate ad alcune bande.

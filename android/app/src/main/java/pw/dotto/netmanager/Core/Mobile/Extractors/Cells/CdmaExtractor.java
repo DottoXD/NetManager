@@ -13,7 +13,7 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.CdmaCellData;
  * based on the provided cell info.
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.1.6
  */
 public class CdmaExtractor {
     @NonNull
@@ -32,6 +32,7 @@ public class CdmaExtractor {
                 -1, // identityCdma.getTac(),
                 -1, // signalCdma.getRsrq(),
                 signalCdma.getEvdoSnr(),
+                -1, // signalCdma.getCqi(),
                 -1, // signalCdma.getTimingAdvance(),
                 -1, // identityCdma.getBandwidth(),
                 band,

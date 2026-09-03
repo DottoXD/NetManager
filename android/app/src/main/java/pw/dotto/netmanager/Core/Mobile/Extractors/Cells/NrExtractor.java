@@ -18,7 +18,7 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.NrCellData;
  * based on the provided cell info.
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.1.6
  */
 public class NrExtractor {
     private static final String REFLECTION_TA = "mTimingAdvance";
@@ -28,6 +28,7 @@ public class NrExtractor {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             return new NrCellData(
                     "-1",
+                    -1,
                     -1,
                     -1,
                     -1,
@@ -60,6 +61,9 @@ public class NrExtractor {
                 identityNr.getTac(),
                 signalNr.getSsRsrq(),
                 signalNr.getSsSinr(),
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !signalNr.getCsiCqiReport().isEmpty()
+                        ? signalNr.getCsiCqiReport().get(0)
+                        : -1),
                 (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
                         ? signalNr.getTimingAdvanceMicros()
                         : -1),
@@ -68,7 +72,7 @@ public class NrExtractor {
                 baseCell.isRegistered());
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            nrCellData.setTimingAdvance(getReflectedField(signalNr, REFLECTION_TA));
+            nrCellData.setTimingAdvance(getReflectedSignalStrength(signalNr, REFLECTION_TA));
         }
 
         processRsrq(nrCellData, signalNr);
@@ -77,7 +81,8 @@ public class NrExtractor {
         return nrCellData;
     }
 
-    public static int getReflectedField(CellSignalStrengthNr cellSignalStrengthNr, String fieldName) {
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    public static int getReflectedSignalStrength(CellSignalStrengthNr cellSignalStrengthNr, String fieldName) {
         try {
             Field field = CellSignalStrengthNr.class.getDeclaredField(fieldName);
             field.setAccessible(true);
@@ -117,13 +122,16 @@ public class NrExtractor {
     }
 
     public static int getMaximumNrMhz(int frequency) {
-        if (frequency <= 1000)
-            return 20;
-        if (frequency <= 3000)
-            return 50;
-        if (frequency <= 7000)
+        if (frequency >= 24000) {
+            return 400;
+        } else if (frequency >= 2300) {
             return 100;
+        } else if (frequency >= 1000) {
+            return 50;
+        } else if (frequency > 0) {
+            return 20;
+        }
 
-        return 400;
+        return 100;
     }
 }

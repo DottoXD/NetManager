@@ -5,12 +5,13 @@ package pw.dotto.netmanager.Core.Mobile.CellDatas;
  * info about Gsm cells.
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.1.6
  */
 public class GsmCellData extends CellData {
 
     public GsmCellData(String cellIdentifier, int rawSignal, int processedSignal, int channelNumber,
-            int stationIdentity, int areaCode, int signalQuality, int signalNoise, int timingAdvance, int bandwidth,
+            int stationIdentity, int areaCode, int signalQuality, int signalNoise, int channelQuality,
+            int timingAdvance, int bandwidth,
             int band, boolean isRegistered) {
         super(
                 "Cell ID",
@@ -20,6 +21,7 @@ public class GsmCellData extends CellData {
                 "ARFCN",
                 "BSIC",
                 "LAC",
+                "-",
                 "-",
                 "-",
                 "TA",
@@ -33,6 +35,7 @@ public class GsmCellData extends CellData {
                 areaCode,
                 signalQuality,
                 signalNoise,
+                channelQuality,
                 timingAdvance,
                 bandwidth,
                 band,

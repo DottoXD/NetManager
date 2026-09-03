@@ -45,6 +45,8 @@ class NetworkData extends StatelessWidget {
       "${simData.primaryCell.signalQuality}dB",
       simData.primaryCell.signalNoiseString,
       "${simData.primaryCell.signalNoise}dB",
+      simData.primaryCell.channelQualityString,
+      simData.primaryCell.channelQuality.toString(),
       simData.primaryCell.channelNumberString,
       simData.primaryCell.channelNumber.toString(),
       simData.primaryCell.stationIdentityString,

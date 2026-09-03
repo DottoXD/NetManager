@@ -159,6 +159,12 @@ public class WearHandler implements WearIntegration, MessageClient.OnMessageRece
                     signalNoiseMetric.putString("iconKey", "signalNoise");
                     metricsList.add(signalNoiseMetric);
 
+                    DataMap channelQualityMetric = new DataMap();
+                    channelQualityMetric.putString("label", snapshot.getChannelQualityString());
+                    channelQualityMetric.putString("value", String.valueOf(snapshot.getChannelQuality()));
+                    channelQualityMetric.putString("iconKey", "channelQuality");
+                    metricsList.add(channelQualityMetric);
+
                     DataMap channelNumberMetric = new DataMap();
                     channelNumberMetric.putString("label", snapshot.getChannelNumberString());
                     channelNumberMetric.putString("value", String.valueOf(snapshot.getChannelNumber()));

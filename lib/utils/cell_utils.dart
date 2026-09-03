@@ -86,6 +86,9 @@ IconData getTrailingIcon(SIMData simData, String val) {
   } else if (val == simData.primaryCell.signalNoiseString) {
     //RSRQ
     return Icons.spatial_tracking;
+  } else if (val == simData.primaryCell.channelQualityString) {
+    //CQI
+    return Icons.lightbulb;
   } else if (val == simData.primaryCell.channelNumberString) {
     //EARFCN
     return Icons.wifi_channel;
@@ -168,6 +171,11 @@ String createCellContent(BuildContext context, CellData cell) {
   if (isValidInt(cell.signalQuality) &&
       isValidString(cell.signalQualityString)) {
     cellContent += "${cell.signalQualityString} ${cell.signalQuality}dB, ";
+  }
+
+  if (isValidInt(cell.channelQuality) &&
+      isValidString(cell.channelQualityString)) {
+    cellContent += "${cell.channelQualityString} ${cell.channelQuality}, ";
   }
 
   if (isValidInt(cell.signalNoise) && isValidString(cell.signalNoiseString)) {
