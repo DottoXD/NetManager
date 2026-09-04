@@ -29,7 +29,7 @@ public class CdmaExtractor {
                 signalCdma.getCdmaEcio(),
                 -1, // ??,
                 identityCdma.getSystemId(),
-                -1, // identityCdma.getTac(),
+                identityCdma.getNetworkId(),
                 -1, // signalCdma.getRsrq(),
                 signalCdma.getEvdoSnr(),
                 -1, // signalCdma.getCqi(),

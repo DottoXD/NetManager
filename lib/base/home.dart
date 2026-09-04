@@ -12,7 +12,6 @@ import 'package:netmanager/components/floating/position_button.dart';
 import 'package:netmanager/components/base/bars/top_bar.dart';
 import 'package:netmanager/components/floating/record_button.dart';
 import 'package:netmanager/components/floating/screenshot_button.dart';
-import 'package:netmanager/components/floating/share_button.dart';
 import 'package:netmanager/types/device/permissions.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -63,8 +62,6 @@ class _HomeState extends State<Home> {
   final ValueNotifier<VoidCallback?> _recordNotifier = ValueNotifier(null);
   final ValueNotifier<VoidCallback?> _graphsNotifier = ValueNotifier(null);
   final ValueNotifier<VoidCallback?> _historyNotifier = ValueNotifier(null);
-  final ValueNotifier<VoidCallback?> _shareResultNotifier = ValueNotifier(null);
-  final ValueNotifier<bool> _canShareResultNotifier = ValueNotifier(false);
 
   final ValueNotifier<int> _updateIntervalNotifier = ValueNotifier(3);
   final ValueNotifier<bool> _metricSystemNotifier = ValueNotifier(true);
@@ -167,8 +164,6 @@ class _HomeState extends State<Home> {
     _recordNotifier.dispose();
     _graphsNotifier.dispose();
     _historyNotifier.dispose();
-    _shareResultNotifier.dispose();
-    _canShareResultNotifier.dispose();
 
     _updateIntervalNotifier.dispose();
     _metricSystemNotifier.dispose();
@@ -285,12 +280,8 @@ class _HomeState extends State<Home> {
               _speedtestBackendNotifier,
               _speedtestInstanceNotifier,
               _speedtestRunningNotifier,
-              _canShareResultNotifier,
               onHistoryButtonPressed: (callback) {
                 _historyNotifier.value = callback;
-              },
-              onShareResultButtonPressed: (callback) {
-                _shareResultNotifier.value = callback;
               },
             ),
             SettingsBody(
@@ -376,24 +367,6 @@ class _HomeState extends State<Home> {
                       PositionButton(onPressed: callback),
                 ),
               ] else if (_currentPage == 2) ...[
-                ValueListenableBuilder(
-                  valueListenable: _canShareResultNotifier,
-                  builder: (context, canShare, _) {
-                    if (!canShare) return const SizedBox.shrink();
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        ValueListenableBuilder(
-                          valueListenable: _shareResultNotifier,
-                          builder: (context, callback, _) =>
-                              ShareResultButton(onPressed: callback),
-                        ),
-                        const SizedBox(height: 4),
-                      ],
-                    );
-                  },
-                ),
                 ValueListenableBuilder(
                   valueListenable: _historyNotifier,
                   builder: (context, callback, _) =>

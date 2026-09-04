@@ -186,6 +186,7 @@
   },
   "speedtestLocation": "Location",
   "speedtestShareResult": "Share result",
+  "speedtestStop": "Stop speed test",
   "mapRecord": "Record",
   "closeMapRecord": "Close record card",
   "mapSignalStrength": "Signal Strength",

@@ -26,6 +26,9 @@ public class PixelDataPostprocessor implements Postprocessor {
             if (cell.getTimingAdvance() == 0)
                 cell.setTimingAdvance(-1);
 
+            if (cell.getChannelQuality() == 0)
+                cell.setChannelQuality(-1);
+
             /*
              * if (cell instanceof NrCellData && cell.getSignalNoise() == 0 &&
              * cell.getSignalQuality() > -12) {

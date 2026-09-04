@@ -186,6 +186,7 @@
   },
   "speedtestLocation": "Posizione",
   "speedtestShareResult": "Condividi risultato",
+  "speedtestStop": "Ferma speed test",
   "mapRecord": "Registrazione",
   "closeMapRecord": "Chiudi scheda",
   "mapSignalStrength": "Segnale",

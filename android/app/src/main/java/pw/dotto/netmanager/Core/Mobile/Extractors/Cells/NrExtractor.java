@@ -1,5 +1,7 @@
 package pw.dotto.netmanager.Core.Mobile.Extractors.Cells;
 
+import static pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
+
 import android.os.Build;
 import android.telephony.CellIdentityNr;
 import android.telephony.CellInfo;
@@ -22,6 +24,9 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.NrCellData;
  */
 public class NrExtractor {
     private static final String REFLECTION_TA = "mTimingAdvance";
+    private static final String REFLECTION_SS_RSRP = "mSsRsrp";
+    private static final String REFLECTION_SS_RSRQ = "mSsRsrq";
+    private static final String REFLECTION_SS_SINR = "mSsSinr";
 
     @NonNull
     public static NrCellData get(CellInfoNr baseCell) {
@@ -73,6 +78,18 @@ public class NrExtractor {
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             nrCellData.setTimingAdvance(getReflectedSignalStrength(signalNr, REFLECTION_TA));
+        }
+
+        if (nrCellData.getProcessedSignal() == -1 || nrCellData.getProcessedSignal() == CELL_INFO_UNAVAILABLE) {
+            nrCellData.setProcessedSignal(getReflectedSignalStrength(signalNr, REFLECTION_SS_RSRP));
+        }
+
+        if (nrCellData.getSignalQuality() == -1 || nrCellData.getSignalQuality() == CELL_INFO_UNAVAILABLE) {
+            nrCellData.setSignalQuality(getReflectedSignalStrength(signalNr, REFLECTION_SS_RSRQ));
+        }
+
+        if (nrCellData.getSignalNoise() == -1 || nrCellData.getSignalNoise() == CELL_INFO_UNAVAILABLE) {
+            nrCellData.setSignalNoise(getReflectedSignalStrength(signalNr, REFLECTION_SS_SINR));
         }
 
         processRsrq(nrCellData, signalNr);

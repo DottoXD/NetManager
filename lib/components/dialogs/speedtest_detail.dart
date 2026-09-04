@@ -79,7 +79,9 @@ class SpeedtestDetailDialog extends StatelessWidget {
               appLocalizations.speedtestCarrier,
               speedtestResult.carrier,
             ),
-            _detailRow(context, "PLMN", speedtestResult.plmn),
+            if (speedtestResult.plmn != "00000") ...[
+              _detailRow(context, "PLMN", speedtestResult.plmn),
+            ],
             if (speedtestResult.serverName != null)
               _detailRow(
                 context,

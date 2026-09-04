@@ -4,3 +4,5 @@
 - Rework della funzionalità di drive test (più dati, nuova interfaccia...).
 - Il CQI ora viene ottenuto da Telephony e tracciato.
 - Possibile fix a delle bw errate assegnate ad alcune bande.
+- Gli speed test ora possono essere fermati.
+- Estrazione dei dati radio LTE migliorata.

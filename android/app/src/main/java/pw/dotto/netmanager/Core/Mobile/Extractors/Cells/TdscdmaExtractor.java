@@ -38,8 +38,6 @@ public class TdscdmaExtractor {
 
         CellIdentityTdscdma identityTdscdma = baseCell.getCellIdentity();
 
-        int band = -1;
-
         CellSignalStrengthTdscdma signalTdscdma = baseCell.getCellSignalStrength();
         return new TdscdmaCellData(
                 String.valueOf(identityTdscdma.getCid()),
@@ -53,7 +51,7 @@ public class TdscdmaExtractor {
                 -1, // signalTdscdma.getCqi(),
                 -1, // signalTdscdma.getTimingAdvance(),
                 -1, // identityTdscdma.getBandwidth(),
-                band,
+                -1, // identityTdscdma.getBand(),
                 baseCell.isRegistered());
     }
 }

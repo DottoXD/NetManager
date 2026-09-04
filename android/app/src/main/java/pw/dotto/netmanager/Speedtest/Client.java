@@ -83,6 +83,7 @@ public class Client {
     private final AtomicLong globalPingsFailed = new AtomicLong(0);
 
     private final AtomicBoolean errorReported = new AtomicBoolean(false);
+    private final AtomicBoolean isCancelled = new AtomicBoolean(false);
 
     public void runSpeedTest(Context context, String pingUrl, String downloadUrl, String uploadUrl,
             MethodChannel channel) {
@@ -191,8 +192,10 @@ public class Client {
                 });
 
             } catch (Exception e) {
-                String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-                reportError(channel, message);
+                if (!isCancelled.get()) {
+                    String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+                    reportError(channel, message);
+                }
             } finally {
                 if (watchdogHolder[0] != null) {
                     watchdogHolder[0].cancel(false);
@@ -525,7 +528,13 @@ public class Client {
     }
 
     private void updateUI(MethodChannel channel, String stage, double speed, double progress) {
+        if (isCancelled.get())
+            return;
+
         mainHandler.post(() -> {
+            if (isCancelled.get())
+                return;
+
             Map<String, Object> data = new HashMap<>();
             data.put("stage", stage);
             data.put("speed", speed);
@@ -573,9 +582,17 @@ public class Client {
     }
 
     private void reportError(MethodChannel channel, String message) {
+        if (isCancelled.get())
+            return;
+
         if (errorReported.compareAndSet(false, true)) {
             mainHandler.post(() -> channel.invokeMethod("error", message));
         }
+    }
+
+    public void stopTest() {
+        isCancelled.set(true);
+        shutdown();
     }
 
     public void shutdown() {
@@ -589,15 +606,15 @@ public class Client {
 
         new Thread(() -> {
             try {
-                if (!executor.awaitTermination(3, TimeUnit.SECONDS)) {
+                if (!executor.awaitTermination(2, TimeUnit.SECONDS)) {
                     executor.shutdownNow();
                 }
 
-                if (!watchdogExecutor.awaitTermination(3, TimeUnit.SECONDS)) {
+                if (!watchdogExecutor.awaitTermination(2, TimeUnit.SECONDS)) {
                     watchdogExecutor.shutdownNow();
                 }
 
-                if (!dnsExecutor.awaitTermination(3, TimeUnit.SECONDS)) {
+                if (!dnsExecutor.awaitTermination(2, TimeUnit.SECONDS)) {
                     dnsExecutor.shutdownNow();
                 }
             } catch (InterruptedException e) {

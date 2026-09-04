@@ -20,7 +20,7 @@ public class CdmaCellData extends CellData {
                 "EC/IO",
                 "-",
                 "PN",
-                "LAC",
+                "NID",
                 "-",
                 "-",
                 "-",

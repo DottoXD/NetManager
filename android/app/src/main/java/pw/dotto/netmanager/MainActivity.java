@@ -49,6 +49,7 @@ public class MainActivity extends FlutterActivity {
 
   private MethodChannel chn;
   private SharedPreferences sharedPreferences;
+  private Client activeSpeedtestClient = null;
 
   /**
    * This method is used to force NetManagerCore to only get data for existing
@@ -229,9 +230,22 @@ public class MainActivity extends FlutterActivity {
           DebugLogger.add("Starting a speed test with pingUrl '" + pingUrl + "', downloadUrl '" + downloadUrl
               + "', uploadUrl '" + uploadUrl + "'.");
 
-          Client client = new Client();
-          client.runSpeedTest(this, pingUrl, downloadUrl, uploadUrl,
+          if (activeSpeedtestClient != null) {
+            activeSpeedtestClient.stopTest();
+          }
+
+          activeSpeedtestClient = new Client();
+          activeSpeedtestClient.runSpeedTest(this, pingUrl, downloadUrl, uploadUrl,
               new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL));
+          result.success(null);
+          break;
+
+        case "stopTest":
+          if (activeSpeedtestClient != null) {
+            activeSpeedtestClient.stopTest();
+            activeSpeedtestClient = null;
+          }
+
           result.success(null);
           break;
 

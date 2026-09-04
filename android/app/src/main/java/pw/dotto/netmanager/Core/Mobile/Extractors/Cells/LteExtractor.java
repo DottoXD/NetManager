@@ -1,5 +1,7 @@
 package pw.dotto.netmanager.Core.Mobile.Extractors.Cells;
 
+import static pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
+
 import android.os.Build;
 import android.telephony.CellIdentityLte;
 import android.telephony.CellInfo;
@@ -27,6 +29,7 @@ public class LteExtractor {
     private static final String REFLECTION_RSRP = "mRsrp";
     private static final String REFLECTION_RSRQ = "mRsrq";
     private static final String REFLECTION_SNR = "mRssnr";
+    private static final String REFLECTION_CQI = "mCqi";
 
     @NonNull
     public static LteCellData get(CellInfoLte baseCell) {
@@ -55,18 +58,28 @@ public class LteExtractor {
                 band,
                 baseCell.isRegistered());
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+        if (lteCellData.getRawSignal() == -1 || lteCellData.getRawSignal() == CELL_INFO_UNAVAILABLE) {
             lteCellData.setRawSignal(getReflectedField(signalLte, REFLECTION_RSSI));
         }
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+        if (lteCellData.getBandwidth() == -1 || lteCellData.getBandwidth() == CELL_INFO_UNAVAILABLE) {
             lteCellData.setBandwidth(getReflectedField(signalLte, REFLECTION_BW));
         }
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        if (lteCellData.getProcessedSignal() == -1 || lteCellData.getProcessedSignal() == CELL_INFO_UNAVAILABLE) {
             lteCellData.setProcessedSignal(getReflectedField(signalLte, REFLECTION_RSRP));
+        }
+
+        if (lteCellData.getSignalQuality() == -1 || lteCellData.getSignalQuality() == CELL_INFO_UNAVAILABLE) {
             lteCellData.setSignalQuality(getReflectedField(signalLte, REFLECTION_RSRQ));
+        }
+
+        if (lteCellData.getSignalNoise() == -1 || lteCellData.getSignalNoise() == CELL_INFO_UNAVAILABLE) {
             lteCellData.setSignalNoise(getReflectedField(signalLte, REFLECTION_SNR));
+        }
+
+        if (lteCellData.getChannelQuality() == -1 || lteCellData.getChannelQuality() == CELL_INFO_UNAVAILABLE) {
+            lteCellData.setChannelQuality(getReflectedField(signalLte, REFLECTION_CQI));
         }
 
         processBandwidth(lteCellData, identityLte);

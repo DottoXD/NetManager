@@ -55,7 +55,10 @@ class RecordSheet extends StatelessWidget {
                         ),
                       const SizedBox(width: 12),
                       Text(
-                        sim?.operator ?? appLocalizations.unknown,
+                        sim?.operator ??
+                            (record.networkGen == -1
+                                ? appLocalizations.unknown
+                                : "${record.networkGen}G, ${record.processedSignal}dBm"),
                         style: Theme.of(context).textTheme.titleLarge
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),

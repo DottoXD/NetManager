@@ -22,7 +22,7 @@ public class NrCellData extends CellData {
                 "PCI",
                 "TAC",
                 "SS RSRQ",
-                "SS SNR",
+                "SS SINR",
                 "CSI CQI",
                 "TA (µs)",
                 "Total BW",

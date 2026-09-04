@@ -30,10 +30,8 @@ class SpeedtestBody extends StatefulWidget {
   final ValueNotifier<int> speedtestBackendNotifier;
   final ValueNotifier<String> speedtestInstanceUrlNotifier;
   final ValueNotifier<bool> testRunningNotifier;
-  final ValueNotifier<bool> canShareResultNotifier;
 
   final void Function(VoidCallback) onHistoryButtonPressed;
-  final void Function(VoidCallback) onShareResultButtonPressed;
 
   const SpeedtestBody(
     this.platform,
@@ -41,10 +39,8 @@ class SpeedtestBody extends StatefulWidget {
     this.speedMeasurementUnitNotifier,
     this.speedtestBackendNotifier,
     this.speedtestInstanceUrlNotifier,
-    this.testRunningNotifier,
-    this.canShareResultNotifier, {
+    this.testRunningNotifier, {
     required this.onHistoryButtonPressed,
-    required this.onShareResultButtonPressed,
     super.key,
   });
 
@@ -66,6 +62,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
   final ValueNotifier<bool> _serversLoadingNotifier = ValueNotifier(false);
   final ValueNotifier<SpeedtestHistoryResult?> _lastResultNotifier =
       ValueNotifier(null);
+  final ValueNotifier<bool> _canShareResultNotifier = ValueNotifier(false);
   late AppLocalizations _appLocalizations;
 
   List<dynamic> _servers = [];
@@ -93,7 +90,6 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     widget.speedtestBackendNotifier.addListener(_onServerUrlChanged);
 
     widget.onHistoryButtonPressed(_openHistoryModal);
-    widget.onShareResultButtonPressed(_shareResult);
 
     _fetchServers();
 
@@ -173,7 +169,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
           );
 
           widget.testRunningNotifier.value = false;
-          widget.canShareResultNotifier.value = false;
+          _canShareResultNotifier.value = false;
 
           _showErrorDialog("${_appLocalizations.speedtest}: ${call.arguments}");
           break;
@@ -183,6 +179,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
 
   @override
   void dispose() {
+    _canShareResultNotifier.dispose();
     _selectedServerNotifier.dispose();
     _metricsNotifier.dispose();
     _serversLoadingNotifier.dispose();
@@ -299,10 +296,21 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
       await SpeedtestDatabase.insertResult(historyResult);
 
       _lastResultNotifier.value = historyResult;
-      widget.canShareResultNotifier.value = true;
+      _canShareResultNotifier.value = true;
     } on PlatformException catch (e) {
       await Sentry.captureException(e, stackTrace: e.stacktrace);
     }
+  }
+
+  void _stopTest() {
+    platform.invokeMethod("stopTest");
+    _metricsNotifier.value = SpeedtestMetrics(
+      stage: TestStage.IDLE,
+      currentSpeed: 0.0,
+      progress: 0.0,
+    );
+    widget.testRunningNotifier.value = false;
+    _canShareResultNotifier.value = false;
   }
 
   void _shareResult() async {
@@ -595,7 +603,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
 
     _metricsNotifier.value = SpeedtestMetrics(stage: TestStage.LATENCY);
     widget.testRunningNotifier.value = true;
-    widget.canShareResultNotifier.value = false;
+    _canShareResultNotifier.value = false;
     _lastResultNotifier.value = null;
 
     if (server["isCustom"] == true) {
@@ -713,54 +721,156 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                                       padding: EdgeInsets.only(
                                         bottom: serverSelectorPadding,
                                       ),
-                                      child: OutlinedButton.icon(
-                                        onPressed: canSelectServer
-                                            ? () async {
-                                                await HapticService()
-                                                    .triggerHaptic(
-                                                      HapticType.selection,
-                                                      context,
-                                                    );
+                                      child: Row(
+                                        children: [
+                                          AnimatedSize(
+                                            duration: const Duration(
+                                              milliseconds: 300,
+                                            ),
+                                            curve: Curves.fastOutSlowIn,
+                                            child: isRunning
+                                                ? Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                          right: 8.0,
+                                                        ),
+                                                    child: IconButton.outlined(
+                                                      tooltip: _appLocalizations
+                                                          .speedtestStop,
+                                                      onPressed: () async {
+                                                        await HapticService()
+                                                            .triggerHaptic(
+                                                              HapticType.light,
+                                                              context,
+                                                            );
 
-                                                if (context.mounted) {
-                                                  showModalBottomSheet(
-                                                    context: context,
-                                                    showDragHandle: true,
-                                                    shape: const RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.vertical(
-                                                            top:
-                                                                Radius.circular(
-                                                                  24.0,
+                                                        _stopTest();
+                                                      },
+                                                      icon: const Icon(
+                                                        Icons.close_outlined,
+                                                        size: 18,
+                                                      ),
+                                                      style: IconButton.styleFrom(
+                                                        shape: RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                12,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  )
+                                                : const SizedBox.shrink(),
+                                          ),
+                                          Expanded(
+                                            child: OutlinedButton.icon(
+                                              onPressed: canSelectServer
+                                                  ? () async {
+                                                      await HapticService()
+                                                          .triggerHaptic(
+                                                            HapticType
+                                                                .selection,
+                                                            context,
+                                                          );
+
+                                                      if (context.mounted) {
+                                                        showModalBottomSheet(
+                                                          context: context,
+                                                          showDragHandle: true,
+                                                          shape: const RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius.vertical(
+                                                                  top:
+                                                                      Radius.circular(
+                                                                        24.0,
+                                                                      ),
                                                                 ),
                                                           ),
-                                                    ),
-                                                    backgroundColor: Theme.of(
-                                                      context,
-                                                    ).colorScheme.surface,
-                                                    builder: (BuildContext context) {
-                                                      return ServerModal(
-                                                        servers: _servers,
-                                                        selectedServerNotifier:
-                                                            _selectedServerNotifier,
-                                                      );
-                                                    },
-                                                  );
-                                                }
-                                              }
-                                            : null,
-                                        icon: const Icon(
-                                          Icons.dns_outlined,
-                                          size: 18,
-                                        ),
-                                        label: Text(buttonLabel),
-                                        style: OutlinedButton.styleFrom(
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              12,
+                                                          backgroundColor:
+                                                              Theme.of(context)
+                                                                  .colorScheme
+                                                                  .surface,
+                                                          builder: (BuildContext context) {
+                                                            return ServerModal(
+                                                              servers: _servers,
+                                                              selectedServerNotifier:
+                                                                  _selectedServerNotifier,
+                                                            );
+                                                          },
+                                                        );
+                                                      }
+                                                    }
+                                                  : null,
+                                              icon: const Icon(
+                                                Icons.dns_outlined,
+                                                size: 18,
+                                              ),
+                                              label: AnimatedSwitcher(
+                                                duration: const Duration(
+                                                  milliseconds: 300,
+                                                ),
+                                                child: Text(
+                                                  buttonLabel,
+                                                  key: ValueKey(buttonLabel),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              style: OutlinedButton.styleFrom(
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                        ),
+                                          ValueListenableBuilder(
+                                            valueListenable:
+                                                _canShareResultNotifier,
+                                            builder: (context, canShare, child) {
+                                              return AnimatedSize(
+                                                duration: const Duration(
+                                                  milliseconds: 300,
+                                                ),
+                                                curve: Curves.fastOutSlowIn,
+                                                child: canShare
+                                                    ? Padding(
+                                                        padding:
+                                                            const EdgeInsets.only(
+                                                              left: 8.0,
+                                                            ),
+                                                        child: IconButton.outlined(
+                                                          tooltip: _appLocalizations
+                                                              .speedtestShareResult,
+                                                          onPressed: () async {
+                                                            await HapticService()
+                                                                .triggerHaptic(
+                                                                  HapticType
+                                                                      .light,
+                                                                  context,
+                                                                );
+                                                            _shareResult();
+                                                          },
+                                                          icon: const Icon(
+                                                            Icons
+                                                                .share_outlined,
+                                                            size: 18,
+                                                          ),
+                                                          style: IconButton.styleFrom(
+                                                            shape: RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    12,
+                                                                  ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      )
+                                                    : const SizedBox.shrink(),
+                                              );
+                                            },
+                                          ),
+                                        ],
                                       ),
                                     );
                                   },

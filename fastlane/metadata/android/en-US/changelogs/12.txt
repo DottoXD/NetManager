@@ -4,3 +4,5 @@
 - Drive test rework (more data, new UI...).
 - CQI is now retrieved from Telephony and tracked.
 - Possible fix to wrong cell bandwidths being assigned.
+- Speed tests can now be stopped.
+- Improved LTE data extraction.
