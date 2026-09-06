@@ -130,9 +130,9 @@ class _NewRecordingState extends State<NewRecording> {
                     valueListenable: _dualSimNotifier,
                     builder: (context, dualSim, _) {
                       return SwitchListTile(
-                        title: const Text("Dual SIM Drive Test"),
-                        subtitle: const Text(
-                          "Saves separate files for SIM 1 and SIM 2",
+                        title: Text(appLocalizations.recordingDualSimTitle),
+                        subtitle: Text(
+                          appLocalizations.recordingDualSimDescription,
                         ),
                         value: dualSim,
                         onChanged: (val) async {

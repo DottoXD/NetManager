@@ -616,9 +616,19 @@ public class TelephonyCellDataSource implements CellDataSource {
 
     private void assignBandwidths(SIMData data, List<Integer> cellBandwidths) {
         CellData[] activeCells = data.getActiveCells();
+        if (activeCells == null || activeCells.length == 0)
+            return;
+
         Arrays.sort(activeCells, (a, b) -> {
-            boolean invalidA = a.getBandwidth() <= 0;
-            boolean invalidB = b.getBandwidth() <= 0;
+            if (a == null && b == null)
+                return 0;
+            if (a == null)
+                return 1;
+            if (b == null)
+                return -1;
+
+            boolean invalidA = a.getBandwidth() <= 0 || a.getBandwidth() == CELL_INFO_UNAVAILABLE;
+            boolean invalidB = b.getBandwidth() <= 0 || b.getBandwidth() == CELL_INFO_UNAVAILABLE;
 
             if (invalidA != invalidB)
                 return Boolean.compare(invalidA, invalidB);
@@ -627,13 +637,12 @@ public class TelephonyCellDataSource implements CellDataSource {
                 boolean isNrA = a instanceof NrCellData;
                 boolean isNrB = b instanceof NrCellData;
                 if (isNrA != isNrB)
-                    return Boolean.compare(isNrB, isNrA);
+                    return Boolean.compare(isNrA, isNrB);
 
-                if (isNrA) {
-                    int freqA = a.getBasicCellData().getFrequency();
-                    int freqB = b.getBasicCellData().getFrequency();
-                    return Integer.compare(freqB, freqA);
-                }
+                int freqA = (a.getBasicCellData() != null) ? a.getBasicCellData().getFrequency() : -1;
+                int freqB = (b.getBasicCellData() != null) ? b.getBasicCellData().getFrequency() : -1;
+
+                return Integer.compare(freqB, freqA);
             }
 
             return 0;
@@ -643,6 +652,9 @@ public class TelephonyCellDataSource implements CellDataSource {
 
         List<Integer> availableBandwidths = new ArrayList<>(cellBandwidths);
         for (CellData cell : activeCells) {
+            if (cell == null)
+                continue;
+
             int bw = cell.getBandwidth();
             if (bw > 0 && bw != CELL_INFO_UNAVAILABLE)
                 availableBandwidths.remove(Integer.valueOf(bw));
@@ -651,12 +663,16 @@ public class TelephonyCellDataSource implements CellDataSource {
         availableBandwidths.sort(Collections.reverseOrder());
 
         for (CellData cell : data.getActiveCells()) {
+            if (cell == null)
+                continue;
+
             int bw = cell.getBandwidth();
             if (bw > 0 && bw != CELL_INFO_UNAVAILABLE)
                 continue;
 
             if (cell instanceof NrCellData) {
-                int maxBw = getMaximumNrMhz(cell.getBasicCellData().getFrequency());
+                int freq = (cell.getBasicCellData() != null) ? cell.getBasicCellData().getFrequency() : -1;
+                int maxBw = getMaximumNrMhz(freq);
                 Optional<Integer> possibleBw = availableBandwidths.stream().filter(b -> b <= maxBw).findFirst();
                 if (possibleBw.isPresent()) {
                     int nrBw = possibleBw.get();
@@ -686,35 +702,48 @@ public class TelephonyCellDataSource implements CellDataSource {
                 if (nrCellData.getProcessedSignal() == CELL_INFO_UNAVAILABLE
                         || nrCellData.getRawSignal() == CELL_INFO_UNAVAILABLE
                         || nrCellData.getSignalNoise() == CELL_INFO_UNAVAILABLE
-                        || nrCellData.getSignalQuality() == CELL_INFO_UNAVAILABLE)
+                        || nrCellData.getSignalQuality() == CELL_INFO_UNAVAILABLE) {
                     nrCells.add(nrCellData);
+                }
             }
         }
 
-        nrCells.sort(
-                (a, b) -> Integer.compare(b.getBasicCellData().getFrequency(), a.getBasicCellData().getFrequency()));
+        if (nrCells.isEmpty())
+            return;
+
+        nrCells.sort((a, b) -> {
+            int freqA = (a != null && a.getBasicCellData() != null) ? a.getBasicCellData().getFrequency() : -1;
+            int freqB = (b != null && b.getBasicCellData() != null) ? b.getBasicCellData().getFrequency() : -1;
+            return Integer.compare(freqB, freqA);
+        });
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
             return;
 
-        List<CellSignalStrengthNr> signalStrengths = new ArrayList<>();
         CellSignalStrength[] rawSignalStrengths = getSignalStrengths(context, simSlotState, telephony);
-        DebugLogger
-                .add("Raw signal strengths for SIM " + simSlotState.simId + ": " + Arrays.toString(rawSignalStrengths));
 
-        if (rawSignalStrengths != null) {
-            for (CellSignalStrength cellSignalStrength : rawSignalStrengths) {
-                if (cellSignalStrength instanceof CellSignalStrengthNr)
-                    signalStrengths.add((CellSignalStrengthNr) cellSignalStrength);
+        if (rawSignalStrengths == null)
+            return;
+
+        List<CellSignalStrengthNr> signalStrengths = new ArrayList<>();
+        for (CellSignalStrength cellSignalStrength : rawSignalStrengths) {
+            if (cellSignalStrength instanceof CellSignalStrengthNr) {
+                signalStrengths.add((CellSignalStrengthNr) cellSignalStrength);
             }
         }
 
-        signalStrengths.sort(Comparator.comparingInt(CellSignalStrengthNr::getSsRsrp)); // -110dBm -> -99dBm -> -78dBm
+        if (signalStrengths.isEmpty())
+            return;
+
+        signalStrengths.sort(Comparator.comparingInt(CellSignalStrengthNr::getSsRsrp));
 
         int limit = Math.min(nrCells.size(), signalStrengths.size());
         for (int i = 0; i < limit; i++) {
             NrCellData nrCell = nrCells.get(i);
             CellSignalStrengthNr ssNr = signalStrengths.get(i);
+
+            if (nrCell == null || ssNr == null)
+                continue;
 
             if (nrCell.getProcessedSignal() == CELL_INFO_UNAVAILABLE && ssNr.getSsRsrp() != CELL_INFO_UNAVAILABLE)
                 nrCell.setProcessedSignal(ssNr.getSsRsrp());
@@ -736,13 +765,14 @@ public class TelephonyCellDataSource implements CellDataSource {
                     nrCell.setSignalQuality(ssNr.getSsRsrq());
                 } else if (ssNr.getCsiRsrq() != CELL_INFO_UNAVAILABLE) {
                     nrCell.setSignalQuality(ssNr.getCsiRsrq());
-                    nrCell.setSignalNoiseString("CSI RSRQ");
+                    nrCell.setSignalQualityString("CSI RSRQ");
                 }
             }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && nrCell.getChannelQuality() == CELL_INFO_UNAVAILABLE) {
-                if (!ssNr.getCsiCqiReport().isEmpty()) {
-                    nrCell.setChannelQuality(ssNr.getCsiCqiReport().get(0));
+                List<Integer> cqiReport = ssNr.getCsiCqiReport();
+                if (cqiReport != null && !cqiReport.isEmpty()) {
+                    nrCell.setChannelQuality(cqiReport.get(0));
                 }
             }
 

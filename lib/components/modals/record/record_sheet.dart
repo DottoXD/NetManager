@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart';
 import 'package:netmanager/components/base/body/home/widgets/cell_section.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
+import 'package:netmanager/types/cell/cell_data.dart';
 import 'package:netmanager/types/events/event_types.dart';
 import 'package:netmanager/types/recording/record.dart';
 import 'package:netmanager/types/events/netmanager_event.dart';
@@ -25,6 +26,11 @@ class RecordSheet extends StatelessWidget {
     final sim = record.simData;
     final formatter = DateFormat("HH:mm:ss");
     final Color genColor = getGenColor(context, sim?.networkGen ?? 0);
+
+    final activeCells = sim != null ? [...sim.activeCells] : <CellData>[];
+    activeCells.sort(
+      (a, b) => (b.isRegistered ? 1 : 0).compareTo(a.isRegistered ? 1 : 0),
+    );
 
     return SafeArea(
       top: false,
@@ -151,10 +157,10 @@ class RecordSheet extends StatelessWidget {
                         ),
                       ),
                     ],
-                    if (sim != null && sim.activeCells.isNotEmpty)
+                    if (sim != null && activeCells.isNotEmpty)
                       CellSection(
                         title: appLocalizations.homeActiveCells,
-                        cells: sim.activeCells,
+                        cells: activeCells,
                         isActive: true,
                         descriptions: const {},
                         guessedCids: const {},

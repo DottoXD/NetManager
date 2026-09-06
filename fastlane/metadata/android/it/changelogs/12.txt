@@ -7,3 +7,4 @@
 - Gli speed test ora possono essere fermati.
 - Estrazione dei dati radio LTE migliorata.
 - Gli speed test ora possono essere pianificati.
+- Aggiunti nuovi filtri per la mappa.

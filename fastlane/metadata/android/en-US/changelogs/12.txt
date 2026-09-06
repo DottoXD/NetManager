@@ -7,3 +7,4 @@
 - Speed tests can now be stopped.
 - Improved LTE data extraction.
 - Speed tests can now be scheduled.
+- New map filters have been added.

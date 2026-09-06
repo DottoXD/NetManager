@@ -122,6 +122,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     "N/A",
   ]);
 
+  final ValueNotifier<bool> _mapOverlayNotifier = ValueNotifier(true);
   final ValueNotifier<bool> _mapLoadingNotifier = ValueNotifier(false);
   bool _initialised = false;
 
@@ -365,6 +366,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     _cellTowersNotifier.dispose();
     _displayTitlesNotifier.dispose();
     _displayValuesNotifier.dispose();
+    _mapOverlayNotifier.dispose();
     _mapLoadingNotifier.dispose();
     _connectedTowerNotifier.dispose();
     _towerFilterNotifier.dispose();
@@ -760,7 +762,13 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
       ),
       backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (BuildContext context) {
-        return MapFilters(filterNotifier: _towerFilterNotifier);
+        return MapFilters(
+          filterNotifier: _towerFilterNotifier,
+          mapOverlayNotifier: _mapOverlayNotifier,
+          bearingLineNotifier: widget.bearingLineNotifier,
+          cellTowersNotifier: widget.databaseCellsInMapNotifier,
+          externalDatabaseNotifier: widget.externalDatabaseNotifier,
+        );
       },
     );
   }
@@ -878,37 +886,23 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    MapOverlay(
-                      titlesNotifier: _displayTitlesNotifier,
-                      valuesNotifier: _displayValuesNotifier,
-                    ),
                     ValueListenableBuilder(
-                      valueListenable: widget.externalDatabaseNotifier,
-                      builder: (context, externalDatabases, _) {
-                        if (!externalDatabases) return const SizedBox.shrink();
+                      valueListenable: _mapOverlayNotifier,
+                      builder: (context, showOverlay, _) {
+                        if (!showOverlay) return const SizedBox.shrink();
 
-                        return ValueListenableBuilder(
-                          valueListenable: widget.databaseCellsInMapNotifier,
-                          builder: (context, databaseCellsInMap, _) {
-                            if (!databaseCellsInMap) {
-                              return const SizedBox.shrink();
-                            }
-
-                            return Padding(
-                              padding: const EdgeInsets.only(
-                                top: 8.0,
-                                right: 16.0,
-                              ),
-                              child: Align(
-                                alignment: Alignment.centerRight,
-                                child: FilterButton(
-                                  onPressed: _openTowerFilters,
-                                ),
-                              ),
-                            );
-                          },
+                        return MapOverlay(
+                          titlesNotifier: _displayTitlesNotifier,
+                          valuesNotifier: _displayValuesNotifier,
                         );
                       },
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0, right: 16.0),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: FilterButton(onPressed: _openTowerFilters),
+                      ),
                     ),
                   ],
                 ),

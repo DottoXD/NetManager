@@ -40,6 +40,8 @@
   "selectedSaveLocation": "Selected save location:",
   "cancel": "Cancel",
   "start": "Start",
+  "recordingDualSimTitle": "Dual SIM Drive Test",
+  "recordingDualSimDescription": "Saves separate files for SIM 1 and SIM 2.",
   "recordingStarted": "Drive test {name} started...",
   "@recordingStarted": {
     "description": "A text telling the user that a recording started.",
@@ -355,5 +357,7 @@
   "cellLongitude": "Longitude",
   "cellChannelNumber": "Channel number",
   "cellSearch": "Search by Cell ID or name",
-  "cellNoneFound": "No cells found."
+  "cellNoneFound": "No cells found.",
+  "mapFiltersOverlayTitle": "Display the map overlay",
+  "mapFiltersOverlayDescription": "Show useful information on top of the map."
 }

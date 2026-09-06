@@ -5,9 +5,20 @@ import 'package:netmanager/utils/haptic_service.dart';
 import 'package:netmanager/utils/gen_color.dart';
 
 class MapFilters extends StatelessWidget {
-  const MapFilters({super.key, required this.filterNotifier});
+  const MapFilters({
+    super.key,
+    required this.filterNotifier,
+    required this.mapOverlayNotifier,
+    required this.bearingLineNotifier,
+    required this.cellTowersNotifier,
+    required this.externalDatabaseNotifier,
+  });
 
   final ValueNotifier<TowerFilter> filterNotifier;
+  final ValueNotifier<bool> mapOverlayNotifier;
+  final ValueNotifier<bool> bearingLineNotifier;
+  final ValueNotifier<bool> cellTowersNotifier;
+  final ValueNotifier<bool> externalDatabaseNotifier;
 
   static const int _minCellCountMinimum = 2;
   static const int _minCellCountMaximum = 20;
@@ -67,90 +78,201 @@ class MapFilters extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ListTile(
-                    title: Text(appLocalizations.displayedCellTowers),
-                    subtitle: Text(appLocalizations.cellTowersTechFiltering),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: TowerFilter.mobileGenerations.map((gen) {
-                        final bool selected = selectedGenerations.contains(gen);
-                        final Color genColor = getGenColor(context, gen);
-
-                        return FilterChip(
-                          label: Text("${gen}G"),
-                          tooltip: "${gen}G",
-                          selected: selected,
-                          showCheckmark: false,
-                          avatar: selected
-                              ? Icon(
-                                  Icons.cell_tower_outlined,
-                                  size: 18,
-                                  color: theme.colorScheme.onSecondaryContainer,
-                                )
-                              : null,
-                          selectedColor: genColor.withValues(alpha: 0.25),
-                          onSelected: (_) async {
+                  ValueListenableBuilder(
+                    valueListenable: mapOverlayNotifier,
+                    builder: (context, showOverlay, _) {
+                      return ListTile(
+                        title: Text(appLocalizations.mapFiltersOverlayTitle),
+                        subtitle: Text(
+                          appLocalizations.mapFiltersOverlayDescription,
+                        ),
+                        trailing: Switch(
+                          value: showOverlay,
+                          onChanged: (enabled) async {
                             await HapticService().triggerHaptic(
                               HapticType.selection,
                               context,
                             );
 
-                            _toggleGeneration(filter, gen);
+                            mapOverlayNotifier.value = enabled;
                           },
-                        );
-                      }).toList(),
-                    ),
+                        ),
+                      );
+                    },
                   ),
-                  const SizedBox(height: 12),
-                  ListTile(
-                    title: Text(appLocalizations.minimumCellsPerTower),
-                    subtitle: Text(
-                      minCellCountEnabled
-                          ? appLocalizations.minimumCellsFiltering(
-                              filter.minCellCount ?? 2,
-                            )
-                          : appLocalizations.noMinimumCellsFiltering,
-                    ),
-                    trailing: Switch(
-                      value: minCellCountEnabled,
-                      onChanged: (enabled) async {
-                        await HapticService().triggerHaptic(
-                          HapticType.selection,
-                          context,
-                        );
+                  ValueListenableBuilder(
+                    valueListenable: bearingLineNotifier,
+                    builder: (context, showBearing, _) {
+                      return ListTile(
+                        title: Text(appLocalizations.settingsBearingLineTitle),
+                        subtitle: Text(
+                          appLocalizations.settingsBearingLineDescription,
+                        ),
+                        trailing: Switch(
+                          value: showBearing,
+                          onChanged: (enabled) async {
+                            await HapticService().triggerHaptic(
+                              HapticType.selection,
+                              context,
+                            );
 
-                        _toggleMinCellCount(filter, enabled);
-                      },
-                    ),
+                            bearingLineNotifier.value = enabled;
+                          },
+                        ),
+                      );
+                    },
                   ),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    child: minCellCountEnabled
-                        ? Slider(
-                            inactiveColor: theme.colorScheme.outlineVariant,
-                            value: (filter.minCellCount ?? _defaultMinCellCount)
-                                .clamp(
-                                  _minCellCountMinimum,
-                                  _minCellCountMaximum,
-                                )
-                                .toDouble(),
-                            min: _minCellCountMinimum.toDouble(),
-                            max: _minCellCountMaximum.toDouble(),
-                            label: "${filter.minCellCount}",
-                            onChanged: (value) async {
-                              await HapticService().triggerHaptic(
-                                HapticType.selection,
-                                context,
-                              );
+                  ValueListenableBuilder(
+                    valueListenable: cellTowersNotifier,
+                    builder: (context, showTowers, _) {
+                      return ListTile(
+                        title: Text(
+                          appLocalizations.settingsDatabaseInMapTitle,
+                        ),
+                        subtitle: Text(
+                          appLocalizations.settingsDatabaseInMapDescription,
+                        ),
+                        trailing: Switch(
+                          value: showTowers,
+                          onChanged: (enabled) async {
+                            await HapticService().triggerHaptic(
+                              HapticType.selection,
+                              context,
+                            );
 
-                              _setMinCellCount(filter, value);
-                            },
-                          )
-                        : const SizedBox.shrink(),
+                            cellTowersNotifier.value = enabled;
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                  ValueListenableBuilder(
+                    valueListenable: externalDatabaseNotifier,
+                    builder: (context, externalDatabases, _) {
+                      if (!externalDatabases) return const SizedBox.shrink();
+
+                      return ValueListenableBuilder(
+                        valueListenable: cellTowersNotifier,
+                        builder: (context, databaseCellsInMap, _) {
+                          if (!databaseCellsInMap) {
+                            return const SizedBox.shrink();
+                          }
+
+                          return Column(
+                            children: [
+                              const Divider(),
+                              ListTile(
+                                title: Text(
+                                  appLocalizations.displayedCellTowers,
+                                ),
+                                subtitle: Text(
+                                  appLocalizations.cellTowersTechFiltering,
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                ),
+                                child: Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: TowerFilter.mobileGenerations.map((
+                                    gen,
+                                  ) {
+                                    final bool selected = selectedGenerations
+                                        .contains(gen);
+                                    final Color genColor = getGenColor(
+                                      context,
+                                      gen,
+                                    );
+
+                                    return FilterChip(
+                                      label: Text("${gen}G"),
+                                      tooltip: "${gen}G",
+                                      selected: selected,
+                                      showCheckmark: false,
+                                      avatar: selected
+                                          ? Icon(
+                                              Icons.cell_tower_outlined,
+                                              size: 18,
+                                              color: theme
+                                                  .colorScheme
+                                                  .onSecondaryContainer,
+                                            )
+                                          : null,
+                                      selectedColor: genColor.withValues(
+                                        alpha: 0.25,
+                                      ),
+                                      onSelected: (_) async {
+                                        await HapticService().triggerHaptic(
+                                          HapticType.selection,
+                                          context,
+                                        );
+
+                                        _toggleGeneration(filter, gen);
+                                      },
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              ListTile(
+                                title: Text(
+                                  appLocalizations.minimumCellsPerTower,
+                                ),
+                                subtitle: Text(
+                                  minCellCountEnabled
+                                      ? appLocalizations.minimumCellsFiltering(
+                                          filter.minCellCount ?? 2,
+                                        )
+                                      : appLocalizations
+                                            .noMinimumCellsFiltering,
+                                ),
+                                trailing: Switch(
+                                  value: minCellCountEnabled,
+                                  onChanged: (enabled) async {
+                                    await HapticService().triggerHaptic(
+                                      HapticType.selection,
+                                      context,
+                                    );
+
+                                    _toggleMinCellCount(filter, enabled);
+                                  },
+                                ),
+                              ),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 200),
+                                child: minCellCountEnabled
+                                    ? Slider(
+                                        inactiveColor:
+                                            theme.colorScheme.outlineVariant,
+                                        value:
+                                            (filter.minCellCount ??
+                                                    _defaultMinCellCount)
+                                                .clamp(
+                                                  _minCellCountMinimum,
+                                                  _minCellCountMaximum,
+                                                )
+                                                .toDouble(),
+                                        min: _minCellCountMinimum.toDouble(),
+                                        max: _minCellCountMaximum.toDouble(),
+                                        label: "${filter.minCellCount}",
+                                        onChanged: (value) async {
+                                          await HapticService().triggerHaptic(
+                                            HapticType.selection,
+                                            context,
+                                          );
+
+                                          _setMinCellCount(filter, value);
+                                        },
+                                      )
+                                    : const SizedBox.shrink(),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
                   ),
                 ],
               ),

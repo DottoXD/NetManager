@@ -40,6 +40,8 @@
   "selectedSaveLocation": "Percorso di salvataggio selezionato:",
   "cancel": "Annulla",
   "start": "Inizia",
+  "recordingDualSimTitle": "Drive test dual SIM",
+  "recordingDualSimDescription": "Salva file separati per la SIM 1 e per la SIM 2.",
   "recordingStarted": "Drive test {name} iniziato...",
   "@recordingStarted": {
     "description": "A text telling the user that a recording started.",
@@ -355,5 +357,7 @@
   "cellLongitude": "Longitudine",
   "cellChannelNumber": "Canale radio",
   "cellSearch": "Cerca per ID cella o nome",
-  "cellNoneFound": "Nessuna cella trovata."
+  "cellNoneFound": "Nessuna cella trovata.",
+  "mapFiltersOverlayTitle": "Mostra l'overlay della mappa",
+  "mapFiltersOverlayDescription": "Visualizza alcune informazioni utili sulla mappa."
 }

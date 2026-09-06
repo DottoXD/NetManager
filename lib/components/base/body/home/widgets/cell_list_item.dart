@@ -73,7 +73,10 @@ class CellListItem extends StatelessWidget {
 
     if (cellContent.contains(appLocalizations.unknownCell) &&
         cellContent.contains(appLocalizations.unknownBandwidth)) {
-      cellContent = cellContent.replaceFirst(cellContent.split("\n").first, "");
+      List<String> lines = cellContent.split('\n');
+      if (lines.isNotEmpty) {
+        cellContent = lines.skip(1).join('\n');
+      }
     }
 
     if (description != null && description!.isNotEmpty) {
