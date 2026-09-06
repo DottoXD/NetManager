@@ -80,6 +80,10 @@ public class Manager {
         return slot == null ? null : slot.telephony;
     }
 
+    public boolean isActiveDataSubscription(int simId) {
+        return core.isActiveDataSubscription(simId);
+    }
+
     public boolean getEmergencyStatus(int simId) {
         SIMSlotState slot = core.getSlot(simId);
         return slot != null && TelephonyCellDataSource.isEmergencyOnly(context, slot.telephony, slot);

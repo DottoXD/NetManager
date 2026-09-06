@@ -1,5 +1,7 @@
 package pw.dotto.netmanager.Core.Events;
 
+import static pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
+
 import androidx.annotation.Nullable;
 
 /**
@@ -7,7 +9,7 @@ import androidx.annotation.Nullable;
  * events.
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.1.6
  */
 public class MobileNetManagerEvent extends NetManagerEvent {
     private final int simSlot;
@@ -16,7 +18,7 @@ public class MobileNetManagerEvent extends NetManagerEvent {
     public MobileNetManagerEvent(EventTypes eventType, String newValue, int simSlot, String network) {
         super(eventType, newValue);
 
-        if (newValue.equals("00000") || newValue.contains("-1"))
+        if (newValue.equals("00000") || newValue.contains("-1") || newValue.contains(String.valueOf(CELL_INFO_UNAVAILABLE)))
             setNewValue("N/A");
 
         this.simSlot = simSlot;

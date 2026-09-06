@@ -187,6 +187,20 @@
   "speedtestLocation": "Location",
   "speedtestShareResult": "Share result",
   "speedtestStop": "Stop speed test",
+  "speedtestPlan": "Schedule speed test",
+  "speedtestPlanInterval": "Interval in minutes",
+  "speedtestPlanStop": "Scheduled speed tests stopped.",
+  "speedtestPlanned": "Speed test scheduled every {time} minutes.",
+  "@speedtestPlanned": {
+    "description": "A text with how often a scheduled speed test will run.",
+    "placeholders": {
+      "time": {
+        "type": "int",
+        "example": "0"
+      }
+    }
+  },
+  "schedule": "Schedule",
   "mapRecord": "Record",
   "closeMapRecord": "Close record card",
   "mapSignalStrength": "Signal Strength",

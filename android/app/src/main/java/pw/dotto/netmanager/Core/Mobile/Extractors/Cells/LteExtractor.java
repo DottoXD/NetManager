@@ -45,40 +45,40 @@ public class LteExtractor {
         CellSignalStrengthLte signalLte = baseCell.getCellSignalStrength();
         LteCellData lteCellData = new LteCellData(
                 String.valueOf(identityLte.getCi()),
-                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ? signalLte.getRssi() : -1),
-                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? signalLte.getRsrp() : -1),
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ? signalLte.getRssi() : CELL_INFO_UNAVAILABLE),
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? signalLte.getRsrp() : CELL_INFO_UNAVAILABLE),
                 identityLte.getEarfcn(),
                 identityLte.getPci(),
                 identityLte.getTac(),
-                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? signalLte.getRsrq() : -1),
-                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? signalLte.getRssnr() : -1),
-                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? signalLte.getCqi() : -1),
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? signalLte.getRsrq() : CELL_INFO_UNAVAILABLE),
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? signalLte.getRssnr() : CELL_INFO_UNAVAILABLE),
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? signalLte.getCqi() : CELL_INFO_UNAVAILABLE),
                 signalLte.getTimingAdvance(),
-                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P ? identityLte.getBandwidth() : -1),
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P ? identityLte.getBandwidth() : CELL_INFO_UNAVAILABLE),
                 band,
                 baseCell.isRegistered());
 
-        if (lteCellData.getRawSignal() == -1 || lteCellData.getRawSignal() == CELL_INFO_UNAVAILABLE) {
+        if (lteCellData.getRawSignal() == CELL_INFO_UNAVAILABLE) {
             lteCellData.setRawSignal(getReflectedField(signalLte, REFLECTION_RSSI));
         }
 
-        if (lteCellData.getBandwidth() == -1 || lteCellData.getBandwidth() == CELL_INFO_UNAVAILABLE) {
+        if (lteCellData.getBandwidth() == CELL_INFO_UNAVAILABLE) {
             lteCellData.setBandwidth(getReflectedField(signalLte, REFLECTION_BW));
         }
 
-        if (lteCellData.getProcessedSignal() == -1 || lteCellData.getProcessedSignal() == CELL_INFO_UNAVAILABLE) {
+        if (lteCellData.getProcessedSignal() == CELL_INFO_UNAVAILABLE) {
             lteCellData.setProcessedSignal(getReflectedField(signalLte, REFLECTION_RSRP));
         }
 
-        if (lteCellData.getSignalQuality() == -1 || lteCellData.getSignalQuality() == CELL_INFO_UNAVAILABLE) {
+        if (lteCellData.getSignalQuality() == CELL_INFO_UNAVAILABLE) {
             lteCellData.setSignalQuality(getReflectedField(signalLte, REFLECTION_RSRQ));
         }
 
-        if (lteCellData.getSignalNoise() == -1 || lteCellData.getSignalNoise() == CELL_INFO_UNAVAILABLE) {
+        if (lteCellData.getSignalNoise() == CELL_INFO_UNAVAILABLE) {
             lteCellData.setSignalNoise(getReflectedField(signalLte, REFLECTION_SNR));
         }
 
-        if (lteCellData.getChannelQuality() == -1 || lteCellData.getChannelQuality() == CELL_INFO_UNAVAILABLE) {
+        if (lteCellData.getChannelQuality() == CELL_INFO_UNAVAILABLE) {
             lteCellData.setChannelQuality(getReflectedField(signalLte, REFLECTION_CQI));
         }
 
@@ -94,7 +94,7 @@ public class LteExtractor {
 
             return (int) field.get(cellSignalStrengthLte);
         } catch (Exception ignored) {
-            return -1;
+            return CELL_INFO_UNAVAILABLE;
         }
     }
 

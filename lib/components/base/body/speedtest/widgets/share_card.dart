@@ -219,7 +219,8 @@ class SpeedtestShareCard extends StatelessWidget {
                 text: speedtestResult.serverName!,
               ),
             ],
-            if (speedtestResult.deviceModel != null) ...[
+            if (speedtestResult.deviceModel != null &&
+                speedtestResult.deviceModel!.isNotEmpty) ...[
               const SizedBox(height: 4),
               _infoLine(
                 context,

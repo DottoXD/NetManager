@@ -32,18 +32,18 @@ public class NrExtractor {
     public static NrCellData get(CellInfoNr baseCell) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             return new NrCellData(
-                    "-1",
-                    -1,
-                    -1,
-                    -1,
-                    -1,
-                    -1,
-                    -1,
-                    -1,
-                    -1,
-                    -1,
-                    -1,
-                    -1,
+                    "CELL_INFO_UNAVAILABLE",
+                    CELL_INFO_UNAVAILABLE,
+                    CELL_INFO_UNAVAILABLE,
+                    CELL_INFO_UNAVAILABLE,
+                    CELL_INFO_UNAVAILABLE,
+                    CELL_INFO_UNAVAILABLE,
+                    CELL_INFO_UNAVAILABLE,
+                    CELL_INFO_UNAVAILABLE,
+                    CELL_INFO_UNAVAILABLE,
+                    CELL_INFO_UNAVAILABLE,
+                    CELL_INFO_UNAVAILABLE,
+                    CELL_INFO_UNAVAILABLE,
                     baseCell.isRegistered());
         }
 
@@ -68,11 +68,11 @@ public class NrExtractor {
                 signalNr.getSsSinr(),
                 (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !signalNr.getCsiCqiReport().isEmpty()
                         ? signalNr.getCsiCqiReport().get(0)
-                        : -1),
+                        : CELL_INFO_UNAVAILABLE),
                 (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
                         ? signalNr.getTimingAdvanceMicros()
-                        : -1),
-                -1, // identityNr.getBandwidth()
+                        : CELL_INFO_UNAVAILABLE),
+                CELL_INFO_UNAVAILABLE, // identityNr.getBandwidth()
                 band,
                 baseCell.isRegistered());
 
@@ -80,15 +80,15 @@ public class NrExtractor {
             nrCellData.setTimingAdvance(getReflectedSignalStrength(signalNr, REFLECTION_TA));
         }
 
-        if (nrCellData.getProcessedSignal() == -1 || nrCellData.getProcessedSignal() == CELL_INFO_UNAVAILABLE) {
+        if (nrCellData.getProcessedSignal() == CELL_INFO_UNAVAILABLE) {
             nrCellData.setProcessedSignal(getReflectedSignalStrength(signalNr, REFLECTION_SS_RSRP));
         }
 
-        if (nrCellData.getSignalQuality() == -1 || nrCellData.getSignalQuality() == CELL_INFO_UNAVAILABLE) {
+        if (nrCellData.getSignalQuality() == CELL_INFO_UNAVAILABLE) {
             nrCellData.setSignalQuality(getReflectedSignalStrength(signalNr, REFLECTION_SS_RSRQ));
         }
 
-        if (nrCellData.getSignalNoise() == -1 || nrCellData.getSignalNoise() == CELL_INFO_UNAVAILABLE) {
+        if (nrCellData.getSignalNoise() == CELL_INFO_UNAVAILABLE) {
             nrCellData.setSignalNoise(getReflectedSignalStrength(signalNr, REFLECTION_SS_SINR));
         }
 
@@ -106,7 +106,7 @@ public class NrExtractor {
 
             return (int) field.get(cellSignalStrengthNr);
         } catch (Exception ignored) {
-            return -1;
+            return CELL_INFO_UNAVAILABLE;
         }
     }
 

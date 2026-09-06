@@ -6,7 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:netmanager/components/dialogs/error.dart';
-import 'package:netmanager/components/dialogs/speedtest_detail.dart';
+import 'package:netmanager/components/dialogs/speedtest/speedtest_detail.dart';
 import 'package:netmanager/database/speedtest_database.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/types/speedtest/history_result.dart';
@@ -16,16 +16,19 @@ import 'package:netmanager/utils/haptic_service.dart';
 import 'package:netmanager/utils/speed_methods.dart';
 
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SpeedtestHistoryModal extends StatefulWidget {
   const SpeedtestHistoryModal({
     super.key,
     required this.platform,
     required this.speedMeasurementUnitNotifier,
+    required this.sharedPreferences,
   });
 
   final MethodChannel platform;
   final ValueNotifier<int> speedMeasurementUnitNotifier;
+  final SharedPreferences sharedPreferences;
 
   @override
   State<SpeedtestHistoryModal> createState() => _SpeedtestHistoryModalState();
@@ -37,12 +40,50 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
   @override
   void initState() {
     super.initState();
-    _speedtestResults = SpeedtestDatabase.fetchHistory();
+    _speedtestResults = _fetchAndSyncHistory();
+  }
+
+  Future<List<SpeedtestHistoryResult>> _fetchAndSyncHistory() async {
+    try {
+      await widget.sharedPreferences.reload();
+
+      final String? rawPending = widget.sharedPreferences.getString(
+        "pendingSpeedtests",
+      );
+
+      if (rawPending != null && rawPending.isNotEmpty) {
+        final List<dynamic> pendingList = json.decode(rawPending);
+
+        for (final item in pendingList) {
+          final SpeedtestHistoryResult historyResult = SpeedtestHistoryResult(
+            timestamp: DateTime.fromMillisecondsSinceEpoch(
+              (item["timestamp"] as num).toInt(),
+            ),
+            download: (item["download"] as num).toDouble(),
+            upload: (item["upload"] as num).toDouble(),
+            ping: (item["ping"] as num).toInt(),
+            jitter: (item["jitter"] as num).toInt(),
+            packetLoss: (item["packetLoss"] as num).toDouble(),
+            carrier: item["carrier"]?.toString() ?? "NetManager",
+            plmn: item["plmn"]?.toString() ?? "00000",
+            deviceModel: item["deviceModel"]?.toString(),
+            networkGen: (item["networkGen"] as num?)?.toInt() ?? -1,
+            serverName: item["serverName"]?.toString() ?? "Custom",
+          );
+
+          await SpeedtestDatabase.insertResult(historyResult);
+        }
+
+        await widget.sharedPreferences.remove("pendingSpeedtests");
+      }
+    } catch (_) {}
+
+    return await SpeedtestDatabase.fetchHistory();
   }
 
   void _refresh() {
     setState(() {
-      _speedtestResults = SpeedtestDatabase.fetchHistory();
+      _speedtestResults = _fetchAndSyncHistory();
     });
   }
 

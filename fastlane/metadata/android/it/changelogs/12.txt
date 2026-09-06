@@ -6,3 +6,4 @@
 - Possibile fix a delle bw errate assegnate ad alcune bande.
 - Gli speed test ora possono essere fermati.
 - Estrazione dei dati radio LTE migliorata.
+- Gli speed test ora possono essere pianificati.

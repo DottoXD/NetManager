@@ -1,6 +1,7 @@
 package pw.dotto.netmanager.Speedtest;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
@@ -10,8 +11,12 @@ import android.os.Looper;
 
 import androidx.annotation.NonNull;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -39,6 +44,8 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okio.BufferedSink;
+import pw.dotto.netmanager.Core.Manager;
+import pw.dotto.netmanager.Utils.DeviceData;
 
 /**
  * NetManager's Speed test client class is the speed test component which
@@ -158,13 +165,15 @@ public class Client {
 
                 LatencyResult latency = measureLatency(pingUrl, channel);
 
-                mainHandler.post(() -> {
-                    Map<String, Object> data = new HashMap<>();
-                    data.put("ping", latency.avgPing);
-                    data.put("jitter", latency.jitter);
-                    data.put("packetLoss", latency.packetLoss);
-                    channel.invokeMethod("latency", data);
-                });
+                if (channel != null) {
+                    mainHandler.post(() -> {
+                        Map<String, Object> data = new HashMap<>();
+                        data.put("ping", latency.avgPing);
+                        data.put("jitter", latency.jitter);
+                        data.put("packetLoss", latency.packetLoss);
+                        channel.invokeMethod("latency", data);
+                    });
+                }
 
                 Thread.sleep(1000);
 
@@ -183,14 +192,19 @@ public class Client {
 
                 transitActive.set(false);
 
-                mainHandler.post(() -> {
-                    Map<String, Object> res = new HashMap<>();
-                    res.put("download", dlSpeed);
-                    res.put("upload", ulSpeed);
-                    res.put("packetLoss", getPacketLoss());
-                    channel.invokeMethod("complete", res);
-                });
-
+                if (channel != null) {
+                    mainHandler.post(() -> {
+                        Map<String, Object> res = new HashMap<>();
+                        res.put("download", dlSpeed);
+                        res.put("upload", ulSpeed);
+                        res.put("packetLoss", getPacketLoss());
+                        channel.invokeMethod("complete", res);
+                    });
+                } else {
+                    String serverName = pingUrl.replace("https://", "").split("/")[0];
+                    saveScheduledResultToPrefs(context, latency.avgPing, latency.jitter, getPacketLoss(), dlSpeed,
+                            ulSpeed, serverName);
+                }
             } catch (Exception e) {
                 if (!isCancelled.get()) {
                     String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
@@ -251,26 +265,28 @@ public class Client {
             final double progress = (double) sent / PING_COUNT;
             final List<Long> currentPings = new ArrayList<>(pings);
 
-            mainHandler.post(() -> {
-                Map<String, Object> data = new HashMap<>();
+            if (channel != null) {
+                mainHandler.post(() -> {
+                    Map<String, Object> data = new HashMap<>();
 
-                long sum = 0;
-                for (long tempPings : currentPings)
-                    sum += tempPings;
+                    long sum = 0;
+                    for (long tempPings : currentPings)
+                        sum += tempPings;
 
-                int avg = currentPings.isEmpty() ? 0 : (int) (sum / currentPings.size());
+                    int avg = currentPings.isEmpty() ? 0 : (int) (sum / currentPings.size());
 
-                long jitterSum = 0;
-                for (int i = 1; i < currentPings.size(); i++)
-                    jitterSum += Math.abs(currentPings.get(i) - currentPings.get(i - 1));
-                int jitter = currentPings.size() > 1 ? (int) (jitterSum / (currentPings.size() - 1)) : 0;
+                    long jitterSum = 0;
+                    for (int i = 1; i < currentPings.size(); i++)
+                        jitterSum += Math.abs(currentPings.get(i) - currentPings.get(i - 1));
+                    int jitter = currentPings.size() > 1 ? (int) (jitterSum / (currentPings.size() - 1)) : 0;
 
-                data.put("ping", avg);
-                data.put("jitter", jitter);
-                data.put("packetLoss", getPacketLoss());
-                data.put("progress", progress);
-                channel.invokeMethod("latency", data);
-            });
+                    data.put("ping", avg);
+                    data.put("jitter", jitter);
+                    data.put("packetLoss", getPacketLoss());
+                    data.put("progress", progress);
+                    channel.invokeMethod("latency", data);
+                });
+            }
 
             try {
                 Thread.sleep(PING_INTERVAL_MS);
@@ -528,7 +544,7 @@ public class Client {
     }
 
     private void updateUI(MethodChannel channel, String stage, double speed, double progress) {
-        if (isCancelled.get())
+        if (isCancelled.get() || channel == null)
             return;
 
         mainHandler.post(() -> {
@@ -581,8 +597,56 @@ public class Client {
         return selectedNetwork[0];
     }
 
+    private void saveScheduledResultToPrefs(Context context, int ping, int jitter, double packetLoss, double download,
+            double upload, String serverName) {
+        SharedPreferences prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE);
+        String existingJson = prefs.getString("flutter.pendingSpeedtests", "[]");
+
+        Gson gson = new Gson();
+        Type listType = new TypeToken<List<Map<String, Object>>>() {
+        }.getType();
+        List<Map<String, Object>> pendingList = gson.fromJson(existingJson, listType);
+
+        if (pendingList == null) {
+            pendingList = new ArrayList<>();
+        }
+
+        Manager manager = new Manager(context, "speedtest", 5);
+        int simId = 0;
+
+        if (manager.getSimCount() > 1) {
+            if (!manager.isActiveDataSubscription(simId))
+                simId = 1;
+        }
+
+        String carrier = manager.getSimCarrier(simId);
+        String plmn = manager.getPlmn(simId);
+        int gen = manager.getSimNetworkGen(simId);
+        if (manager.getNsaStatus(simId))
+            gen = 5;
+
+        manager.dispose();
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("timestamp", System.currentTimeMillis());
+        result.put("download", download);
+        result.put("upload", upload);
+        result.put("ping", ping);
+        result.put("jitter", jitter);
+        result.put("packetLoss", packetLoss);
+        result.put("carrier", carrier);
+        result.put("plmn", plmn);
+        result.put("networkGen", gen);
+        result.put("serverName", serverName);
+        result.put("deviceModel", DeviceData.getInstance(prefs).getModel());
+
+        pendingList.add(result);
+
+        prefs.edit().putString("flutter.pendingSpeedtests", gson.toJson(pendingList)).apply();
+    }
+
     private void reportError(MethodChannel channel, String message) {
-        if (isCancelled.get())
+        if (isCancelled.get() || channel == null)
             return;
 
         if (errorReported.compareAndSet(false, true)) {

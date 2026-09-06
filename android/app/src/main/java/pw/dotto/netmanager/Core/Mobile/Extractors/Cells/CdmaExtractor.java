@@ -1,5 +1,7 @@
 package pw.dotto.netmanager.Core.Mobile.Extractors.Cells;
 
+import static pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
+
 import android.telephony.CellIdentityCdma;
 import android.telephony.CellInfoCdma;
 import android.telephony.CellSignalStrengthCdma;
@@ -20,22 +22,20 @@ public class CdmaExtractor {
     public static CdmaCellData get(CellInfoCdma baseCell) {
         CellIdentityCdma identityCdma = baseCell.getCellIdentity();
 
-        int band = -1;
-
         CellSignalStrengthCdma signalCdma = baseCell.getCellSignalStrength();
         return new CdmaCellData(
                 String.valueOf(identityCdma.getBasestationId()),
                 signalCdma.getCdmaDbm(),
                 signalCdma.getCdmaEcio(),
-                -1, // ??,
+                CELL_INFO_UNAVAILABLE, // ??,
                 identityCdma.getSystemId(),
                 identityCdma.getNetworkId(),
-                -1, // signalCdma.getRsrq(),
+                CELL_INFO_UNAVAILABLE, // signalCdma.getRsrq(),
                 signalCdma.getEvdoSnr(),
-                -1, // signalCdma.getCqi(),
-                -1, // signalCdma.getTimingAdvance(),
-                -1, // identityCdma.getBandwidth(),
-                band,
+                CELL_INFO_UNAVAILABLE, // signalCdma.getCqi(),
+                CELL_INFO_UNAVAILABLE, // signalCdma.getTimingAdvance(),
+                CELL_INFO_UNAVAILABLE, // identityCdma.getBandwidth(),
+                CELL_INFO_UNAVAILABLE,
                 baseCell.isRegistered());
     }
 }

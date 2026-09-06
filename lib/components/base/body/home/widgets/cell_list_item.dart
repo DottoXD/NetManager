@@ -71,6 +71,11 @@ class CellListItem extends StatelessWidget {
           : appLocalizations.unknownCell),
     );
 
+    if (cellContent.contains(appLocalizations.unknownCell) &&
+        cellContent.contains(appLocalizations.unknownBandwidth)) {
+      cellContent = cellContent.replaceFirst(cellContent.split("\n").first, "");
+    }
+
     if (description != null && description!.isNotEmpty) {
       cellContent = "$description.\n$cellContent";
     }

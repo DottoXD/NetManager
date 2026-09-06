@@ -22,6 +22,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -81,6 +83,7 @@
         <service android:name=".Core.Startup.DelayedServiceStarter" android:foregroundServiceType="specialUse" android:exported="false" />
         <service android:name=".Core.Notifications.Service" android:foregroundServiceType="phoneCall" android:exported="false" />
         <service android:name=".Recording.Service" android:foregroundServiceType="location" android:exported="false" />
+        <service android:name=".Speedtest.Scheduler" android:foregroundServiceType="dataSync" android:exported="false" />
 
         <receiver android:name=".Widgets.SIMWidgetProvider" android:exported="true">
             <intent-filter>

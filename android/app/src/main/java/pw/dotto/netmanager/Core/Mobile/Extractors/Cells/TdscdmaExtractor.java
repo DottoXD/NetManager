@@ -1,5 +1,7 @@
 package pw.dotto.netmanager.Core.Mobile.Extractors.Cells;
 
+import static pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
+
 import android.os.Build;
 import android.telephony.CellIdentityTdscdma;
 import android.telephony.CellInfoTdscdma;
@@ -21,18 +23,18 @@ public class TdscdmaExtractor {
     public static TdscdmaCellData get(CellInfoTdscdma baseCell) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             return new TdscdmaCellData(
-                    "-1",
-                    -1,
-                    -1,
-                    -1,
-                    -1,
-                    -1,
-                    -1,
-                    -1,
-                    -1,
-                    -1,
-                    -1,
-                    -1,
+                    "CELL_INFO_UNAVAILABLE",
+                    CELL_INFO_UNAVAILABLE,
+                    CELL_INFO_UNAVAILABLE,
+                    CELL_INFO_UNAVAILABLE,
+                    CELL_INFO_UNAVAILABLE,
+                    CELL_INFO_UNAVAILABLE,
+                    CELL_INFO_UNAVAILABLE,
+                    CELL_INFO_UNAVAILABLE,
+                    CELL_INFO_UNAVAILABLE,
+                    CELL_INFO_UNAVAILABLE,
+                    CELL_INFO_UNAVAILABLE,
+                    CELL_INFO_UNAVAILABLE,
                     baseCell.isRegistered());
         }
 
@@ -46,12 +48,12 @@ public class TdscdmaExtractor {
                 identityTdscdma.getUarfcn(),
                 identityTdscdma.getCpid(),
                 identityTdscdma.getLac(),
-                -1, // signalTdscdma.getRsrq(),
-                -1, // signalTdscdma.getSnr(),
-                -1, // signalTdscdma.getCqi(),
-                -1, // signalTdscdma.getTimingAdvance(),
-                -1, // identityTdscdma.getBandwidth(),
-                -1, // identityTdscdma.getBand(),
+                CELL_INFO_UNAVAILABLE, // signalTdscdma.getRsrq(),
+                CELL_INFO_UNAVAILABLE, // signalTdscdma.getSnr(),
+                CELL_INFO_UNAVAILABLE, // signalTdscdma.getCqi(),
+                CELL_INFO_UNAVAILABLE, // signalTdscdma.getTimingAdvance(),
+                CELL_INFO_UNAVAILABLE, // identityTdscdma.getBandwidth(),
+                CELL_INFO_UNAVAILABLE, // identityTdscdma.getBand(),
                 baseCell.isRegistered());
     }
 }

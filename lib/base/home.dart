@@ -11,6 +11,7 @@ import 'package:netmanager/components/floating/history_button.dart';
 import 'package:netmanager/components/floating/position_button.dart';
 import 'package:netmanager/components/base/bars/top_bar.dart';
 import 'package:netmanager/components/floating/record_button.dart';
+import 'package:netmanager/components/floating/schedule_button.dart';
 import 'package:netmanager/components/floating/screenshot_button.dart';
 import 'package:netmanager/types/device/permissions.dart';
 import 'package:path_provider/path_provider.dart';
@@ -83,6 +84,9 @@ class _HomeState extends State<Home> {
 
   final ScrollController _homeScrollController = ScrollController();
   final ScrollController _settingsScrollController = ScrollController();
+
+  final ValueNotifier<VoidCallback?> _planNotifier = ValueNotifier(null);
+  final ValueNotifier<bool> _scheduleActionNotifier = ValueNotifier(false);
 
   @override
   void initState() {
@@ -182,6 +186,9 @@ class _HomeState extends State<Home> {
     _homeScrollController.dispose();
     _settingsScrollController.dispose();
 
+    _planNotifier.dispose();
+    _scheduleActionNotifier.dispose();
+
     super.dispose();
   }
 
@@ -280,8 +287,12 @@ class _HomeState extends State<Home> {
               _speedtestBackendNotifier,
               _speedtestInstanceNotifier,
               _speedtestRunningNotifier,
+              _scheduleActionNotifier,
               onHistoryButtonPressed: (callback) {
                 _historyNotifier.value = callback;
+              },
+              onPlanButtonPressed: (callback) {
+                _planNotifier.value = callback;
               },
             ),
             SettingsBody(
@@ -367,6 +378,14 @@ class _HomeState extends State<Home> {
                       PositionButton(onPressed: callback),
                 ),
               ] else if (_currentPage == 2) ...[
+                ValueListenableBuilder(
+                  valueListenable: _planNotifier,
+                  builder: (context, callback, _) => ScheduleButton(
+                    onPressed: callback,
+                    scheduleActionNotifier: _scheduleActionNotifier,
+                  ),
+                ),
+                const SizedBox(height: 4),
                 ValueListenableBuilder(
                   valueListenable: _historyNotifier,
                   builder: (context, callback, _) =>

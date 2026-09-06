@@ -24,6 +24,7 @@ import pw.dotto.netmanager.Core.Processors.DevicePatches;
 import pw.dotto.netmanager.Fetchers.Location;
 import pw.dotto.netmanager.Fetchers.Sensors;
 import pw.dotto.netmanager.Speedtest.Client;
+import pw.dotto.netmanager.Speedtest.Scheduler;
 import pw.dotto.netmanager.Utils.Activities;
 import pw.dotto.netmanager.Utils.DeviceData;
 import pw.dotto.netmanager.Utils.FileManager;
@@ -52,7 +53,7 @@ public class MainActivity extends FlutterActivity {
   private Client activeSpeedtestClient = null;
 
   /**
-   * This method is used to force NetManagerCore to only get data for existing
+   * This method is used to force NetManager Core to only get data for existing
    * subscriptions.
    */
   private void ensureValidSelectedSim() {
@@ -249,6 +250,43 @@ public class MainActivity extends FlutterActivity {
           result.success(null);
           break;
 
+        case "startScheduledTest":
+          String pUrl = call.argument("pingUrl");
+          String dUrl = call.argument("downloadUrl");
+          String uUrl = call.argument("uploadUrl");
+          int interval = call.argument("intervalMs");
+
+          sharedPreferences.edit().putBoolean("sIsScheduled", true).apply();
+
+          Intent startIntent = new Intent(this, Scheduler.class);
+          startIntent.putExtra("pingUrl", pUrl);
+          startIntent.putExtra("downloadUrl", dUrl);
+          startIntent.putExtra("uploadUrl", uUrl);
+          startIntent.putExtra("intervalMs", interval);
+
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(startIntent);
+          } else {
+            startService(startIntent);
+          }
+
+          result.success(true);
+          break;
+
+        case "stopScheduledTest":
+          sharedPreferences.edit().putBoolean("sIsScheduled", false).apply();
+
+          Intent stopIntent = new Intent(this, Scheduler.class);
+          stopIntent.setAction("STOP_SCHEDULE");
+          startService(stopIntent);
+
+          result.success(true);
+          break;
+
+        case "isScheduleActive":
+          result.success(sharedPreferences.getBoolean("sIsScheduled", false));
+          break;
+
         case "isIgnoringBatteryOptimisations":
           result.success(PowerUtils.isIgnoringBatteryOptimisations(this));
           break;
@@ -427,8 +465,8 @@ public class MainActivity extends FlutterActivity {
               break;
 
             case "stopRecording":
-              Intent stopIntent = new Intent(this, pw.dotto.netmanager.Recording.Service.class);
-              stopService(stopIntent);
+              Intent stopRecordingIntent = new Intent(this, pw.dotto.netmanager.Recording.Service.class);
+              stopService(stopRecordingIntent);
               result.success(true);
               break;
 

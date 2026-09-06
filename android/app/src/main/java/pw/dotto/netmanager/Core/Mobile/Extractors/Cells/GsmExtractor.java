@@ -1,5 +1,7 @@
 package pw.dotto.netmanager.Core.Mobile.Extractors.Cells;
 
+import static pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
+
 import android.os.Build;
 import android.telephony.CellIdentityGsm;
 import android.telephony.CellInfoGsm;
@@ -25,23 +27,21 @@ public class GsmExtractor {
     @NonNull
     public static GsmCellData get(CellInfoGsm baseCell) {
         CellIdentityGsm identityGsm = baseCell.getCellIdentity();
-
-        int band = -1;
-
+        
         CellSignalStrengthGsm signalGsm = baseCell.getCellSignalStrength();
         GsmCellData gsmCellData = new GsmCellData(
                 String.valueOf(identityGsm.getCid()),
-                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ? signalGsm.getRssi() : -1),
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ? signalGsm.getRssi() : CELL_INFO_UNAVAILABLE),
                 signalGsm.getDbm(),
                 identityGsm.getArfcn(),
                 identityGsm.getBsic(),
                 identityGsm.getLac(),
-                -1, // signalGsm.getRsrq(),
-                -1, // signalGsm.getSnr(),
-                -1, // signalGsm.getCqi(),
-                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? signalGsm.getTimingAdvance() : -1),
-                -1, // identityGsm.getBandwidth(),
-                band,
+                CELL_INFO_UNAVAILABLE, // signalGsm.getRsrq(),
+                CELL_INFO_UNAVAILABLE, // signalGsm.getSnr(),
+                CELL_INFO_UNAVAILABLE, // signalGsm.getCqi(),
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? signalGsm.getTimingAdvance() : CELL_INFO_UNAVAILABLE),
+                CELL_INFO_UNAVAILABLE, // identityGsm.getBandwidth(),
+                CELL_INFO_UNAVAILABLE,
                 baseCell.isRegistered());
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
@@ -62,7 +62,7 @@ public class GsmExtractor {
 
             return (int) field.get(cellSignalStrengthGsm);
         } catch (Exception ignored) {
-            return -1;
+            return CELL_INFO_UNAVAILABLE;
         }
     }
 }

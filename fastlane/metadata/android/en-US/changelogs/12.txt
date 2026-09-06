@@ -6,3 +6,4 @@
 - Possible fix to wrong cell bandwidths being assigned.
 - Speed tests can now be stopped.
 - Improved LTE data extraction.
+- Speed tests can now be scheduled.

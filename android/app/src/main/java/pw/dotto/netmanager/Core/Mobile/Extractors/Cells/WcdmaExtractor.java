@@ -1,5 +1,7 @@
 package pw.dotto.netmanager.Core.Mobile.Extractors.Cells;
 
+import static pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
+
 import android.os.Build;
 import android.telephony.CellIdentityWcdma;
 import android.telephony.CellInfoWcdma;
@@ -21,22 +23,20 @@ public class WcdmaExtractor {
     public static WcdmaCellData get(CellInfoWcdma baseCell) {
         CellIdentityWcdma identityWcdma = baseCell.getCellIdentity();
 
-        int band = -1;
-
         CellSignalStrengthWcdma signalWcdma = baseCell.getCellSignalStrength();
         return new WcdmaCellData(
                 String.valueOf(identityWcdma.getCid()),
-                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ? signalWcdma.getEcNo() : -1),
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ? signalWcdma.getEcNo() : CELL_INFO_UNAVAILABLE),
                 signalWcdma.getDbm(),
                 identityWcdma.getUarfcn(),
                 identityWcdma.getPsc(),
                 identityWcdma.getLac(),
-                -1, // signalWcdma.getRsrq(),
-                -1, // signalWcdma.getRssnr(),
-                -1, // signalWcdma.getCqi(),
-                -1, // signalWcdma.getTimingAdvance(),
-                -1, // identityWcdma.getBandwidth(),
-                band,
+                CELL_INFO_UNAVAILABLE, // signalWcdma.getRsrq(),
+                CELL_INFO_UNAVAILABLE, // signalWcdma.getRssnr(),
+                CELL_INFO_UNAVAILABLE, // signalWcdma.getCqi(),
+                CELL_INFO_UNAVAILABLE, // signalWcdma.getTimingAdvance(),
+                CELL_INFO_UNAVAILABLE, // identityWcdma.getBandwidth(),
+                CELL_INFO_UNAVAILABLE, // identityWcdma.getBand(),
                 baseCell.isRegistered());
     }
 }

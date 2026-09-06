@@ -187,6 +187,20 @@
   "speedtestLocation": "Posizione",
   "speedtestShareResult": "Condividi risultato",
   "speedtestStop": "Ferma speed test",
+  "speedtestPlan": "Pianifica speed test",
+  "speedtestPlanInterval": "Intervallo in minuti",
+  "speedtestPlanStop": "Speed test pianificati fermati.",
+  "speedtestPlanned": "Speed test pianificato ogni {time} minuti.",
+  "@speedtestPlanned": {
+    "description": "A text with how often a scheduled speed test will run.",
+    "placeholders": {
+      "time": {
+        "type": "int",
+        "example": "0"
+      }
+    }
+  },
+  "schedule": "Pianifica",
   "mapRecord": "Registrazione",
   "closeMapRecord": "Chiudi scheda",
   "mapSignalStrength": "Segnale",

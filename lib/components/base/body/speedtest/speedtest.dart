@@ -8,6 +8,7 @@ import 'package:netmanager/components/base/body/speedtest/widgets/hero_gauge.dar
 import 'package:netmanager/components/base/body/speedtest/widgets/quality_metrics.dart';
 import 'package:netmanager/components/base/body/speedtest/widgets/speed_results.dart';
 import 'package:netmanager/components/dialogs/error.dart';
+import 'package:netmanager/components/dialogs/speedtest/schedule_test.dart';
 import 'package:netmanager/components/modals/server_modal.dart';
 import 'package:netmanager/components/modals/speedtest_history_modal.dart';
 import 'package:netmanager/database/speedtest_database.dart';
@@ -30,8 +31,10 @@ class SpeedtestBody extends StatefulWidget {
   final ValueNotifier<int> speedtestBackendNotifier;
   final ValueNotifier<String> speedtestInstanceUrlNotifier;
   final ValueNotifier<bool> testRunningNotifier;
+  final ValueNotifier<bool> scheduleActionNotifier;
 
   final void Function(VoidCallback) onHistoryButtonPressed;
+  final void Function(VoidCallback) onPlanButtonPressed;
 
   const SpeedtestBody(
     this.platform,
@@ -39,8 +42,10 @@ class SpeedtestBody extends StatefulWidget {
     this.speedMeasurementUnitNotifier,
     this.speedtestBackendNotifier,
     this.speedtestInstanceUrlNotifier,
-    this.testRunningNotifier, {
+    this.testRunningNotifier,
+    this.scheduleActionNotifier, {
     required this.onHistoryButtonPressed,
+    required this.onPlanButtonPressed,
     super.key,
   });
 
@@ -90,8 +95,10 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     widget.speedtestBackendNotifier.addListener(_onServerUrlChanged);
 
     widget.onHistoryButtonPressed(_openHistoryModal);
+    widget.onPlanButtonPressed(_handlePlanTap);
 
     _fetchServers();
+    _checkScheduleStatus();
 
     platform.setMethodCallHandler((call) async {
       final currentMetrics = _metricsNotifier.value;
@@ -273,7 +280,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
           try {
             final deviceData = DeviceData.fromJson(device);
             deviceModel = deviceData.model;
-          } catch (e) {}
+          } catch (_) {}
         }
       }
 
@@ -339,6 +346,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
         return SpeedtestHistoryModal(
           platform: platform,
           speedMeasurementUnitNotifier: widget.speedMeasurementUnitNotifier,
+          sharedPreferences: sharedPreferences,
         );
       },
     );
@@ -540,7 +548,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                       "latency": stopwatch.elapsedMilliseconds,
                     };
                   }
-                } catch (e) {}
+                } catch (_) {}
               })
               .toList();
 
@@ -594,6 +602,79 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
           }
         }
       });
+    }
+  }
+
+  Future<void> _checkScheduleStatus() async {
+    final bool active =
+        await widget.platform.invokeMethod("isScheduleActive") ?? false;
+
+    widget.scheduleActionNotifier.value = active;
+  }
+
+  Future<void> _handlePlanTap() async {
+    if (widget.scheduleActionNotifier.value) {
+      await widget.platform.invokeMethod("stopScheduledTest");
+      widget.scheduleActionNotifier.value = false;
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_appLocalizations.speedtestPlanStop)),
+        );
+      }
+    } else {
+      final server = _selectedServerNotifier.value;
+
+      if (server == null) return;
+
+      String serverName;
+      String pingUrl;
+      String dlUrl;
+      String ulUrl;
+
+      if (server["isCustom"] == true) {
+        serverName = server["name"]?.toString() ?? "Custom";
+        pingUrl = server["pingURL"] ?? "";
+        dlUrl = server["dlURL"] ?? "";
+        ulUrl = server["ulURL"] ?? "";
+      } else {
+        String baseUrl = server["server"] ?? "";
+        if (!baseUrl.endsWith("/")) baseUrl += "/";
+        if (baseUrl.startsWith("//")) baseUrl = "https:$baseUrl";
+
+        String resolveUrl(String path) {
+          if (path.startsWith("//")) path = "https:$path";
+          if (path.startsWith("http://") || path.startsWith("https://")) {
+            return path;
+          }
+          if (path.startsWith("/")) path = path.substring(1);
+
+          return baseUrl + path;
+        }
+
+        serverName = server["name"]?.toString() ?? "Custom";
+        pingUrl = resolveUrl(server["pingURL"] ?? "");
+        dlUrl = resolveUrl(server["dlURL"] ?? "");
+        ulUrl = resolveUrl(server["ulURL"] ?? "");
+      }
+
+      final int? scheduledMinutes = await ScheduleSpeedtestDialog.show(
+        context,
+        platform: widget.platform,
+        serverName: serverName,
+        pingUrl: pingUrl,
+        downloadUrl: dlUrl,
+        uploadUrl: ulUrl,
+      );
+
+      if (scheduledMinutes != null && mounted) {
+        widget.scheduleActionNotifier.value = true;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_appLocalizations.speedtestPlanned(scheduledMinutes)),
+          ),
+        );
+      }
     }
   }
 
