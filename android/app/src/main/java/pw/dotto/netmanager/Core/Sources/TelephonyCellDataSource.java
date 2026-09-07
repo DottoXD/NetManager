@@ -221,19 +221,19 @@ public class TelephonyCellDataSource implements CellDataSource {
                 data.setNetworkPlmn(cellDerivedPlmn);
         }
 
-        if (data.getNetworkGen() == 0 && data.getPrimaryCell() != null) {
+        if (data.getPrimaryCell() != null) {
             CellData primaryCell = data.getPrimaryCell();
+
             if (primaryCell instanceof GsmCellData)
                 data.setNetworkGen(2);
-            else if (primaryCell instanceof CdmaCellData)
+            else if (primaryCell instanceof CdmaCellData || primaryCell instanceof TdscdmaCellData
+                    || primaryCell instanceof WcdmaCellData)
                 data.setNetworkGen(3);
-            else if (primaryCell instanceof TdscdmaCellData)
-                data.setNetworkGen(3);
-            else if (primaryCell instanceof WcdmaCellData)
-                data.setNetworkGen(3);
-            else if (primaryCell instanceof LteCellData)
-                data.setNetworkGen(4);
-            else if (primaryCell instanceof NrCellData)
+            else if (primaryCell instanceof LteCellData) {
+                if (data.getNetworkGen() != 5) {
+                    data.setNetworkGen(4);
+                }
+            } else if (primaryCell instanceof NrCellData)
                 data.setNetworkGen(5);
         }
 

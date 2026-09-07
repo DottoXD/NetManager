@@ -93,7 +93,7 @@ Pull requests are highly appreciated as long as they're tested.
 ## Screenshots
 | Dark Home | Dark Map | Light Home | Light Map |
 | :-: | :-: | :-: | :-: |
-| ![Dark home screen](./fastlane/metadata/en-US/images/phoneScreenshots/1.png) | ![Dark map](./fastlane/metadata/en-US/images/phoneScreenshots/3.png) | ![Light home screen](./fastlane/metadata/en-US/images/phoneScreenshots/5.png) | ![Light map](./fastlane/metadata/en-US/images/phoneScreenshots/7.png) |
+| ![Dark home screen](./fastlane/metadata/android/en-US/images/phoneScreenshots/1.png) | ![Dark map](./fastlane/metadata/android/en-US/images/phoneScreenshots/3.png) | ![Light home screen](./fastlane/metadata/android/en-US/images/phoneScreenshots/5.png) | ![Light map](./fastlane/metadata/android/en-US/images/phoneScreenshots/7.png) |
 
 ## License
 ```
