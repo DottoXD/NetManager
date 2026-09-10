@@ -42,7 +42,8 @@ class SettingsBody extends StatefulWidget {
     this.databaseCellsInMapNotifier,
     this.bearingLineNotifier,
     this.homeDataGraphsNotifier,
-    this.homeGraphsRetentionTimeNotifier, {
+    this.homeGraphsRetentionTimeNotifier,
+    this.likelyCellsNotifier, {
     super.key,
   });
 
@@ -72,6 +73,7 @@ class SettingsBody extends StatefulWidget {
   final ValueNotifier<bool> bearingLineNotifier;
   final ValueNotifier<bool> homeDataGraphsNotifier;
   final ValueNotifier<int> homeGraphsRetentionTimeNotifier;
+  final ValueNotifier<bool> likelyCellsNotifier;
 
   @override
   State<SettingsBody> createState() => _SettingsBodyState();
@@ -105,6 +107,7 @@ class _SettingsBodyState extends State<SettingsBody>
   late ValueNotifier<bool> bearingLineNotifier;
   late ValueNotifier<bool> homeDataGraphsNotifier;
   late ValueNotifier<int> homeGraphsRetentionTimeNotifier;
+  late ValueNotifier<bool> likelyCellsNotifier;
 
   late TextEditingController _mapTilesTemplateController;
   late TextEditingController _speedtestInstanceController;
@@ -134,6 +137,7 @@ class _SettingsBodyState extends State<SettingsBody>
   int _backgroundUpdateInterval = 3;
   bool _homeDataGraphs = true;
   int _homeGraphsRetentionTime = 30;
+  bool _likelyCells = false;
   int _positionPrecision = 3;
   int _speedMeasurementUnit = 1;
   int _speedtestBackend = 1;
@@ -192,6 +196,7 @@ class _SettingsBodyState extends State<SettingsBody>
     bearingLineNotifier = widget.bearingLineNotifier;
     homeDataGraphsNotifier = widget.homeDataGraphsNotifier;
     homeGraphsRetentionTimeNotifier = widget.homeGraphsRetentionTimeNotifier;
+    likelyCellsNotifier = widget.likelyCellsNotifier;
 
     updateData();
     _positionPrecisionSelection = positionPrecisions[_positionPrecision];
@@ -265,6 +270,7 @@ class _SettingsBodyState extends State<SettingsBody>
           _backgroundUpdateInterval;
       _homeDataGraphs =
           sharedPreferences.getBool("homeDataGraphs") ?? _homeDataGraphs;
+      _likelyCells = sharedPreferences.getBool("likelyCells") ?? _likelyCells;
       _homeGraphsRetentionTime =
           sharedPreferences.getInt("homeGraphsRetentionTime") ??
           _homeGraphsRetentionTime;
@@ -640,6 +646,23 @@ class _SettingsBodyState extends State<SettingsBody>
                     },
                   );
                 }
+              },
+            ),
+          ),
+          ListTile(
+            title: Text(_appLocalizations.settingsLikelyCellsTitle),
+            subtitle: Text(_appLocalizations.settingsLikelyCellsDescription),
+            trailing: Switch(
+              value: _likelyCells,
+              onChanged: (bool value) async {
+                await HapticService().triggerHaptic(
+                  HapticType.selection,
+                  context,
+                );
+
+                setBool("likelyCells", value);
+                likelyCellsNotifier.value = value;
+                updateData();
               },
             ),
           ),

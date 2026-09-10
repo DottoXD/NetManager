@@ -10,6 +10,7 @@ class SIMData {
   final CellData primaryCell;
   final double activeBw;
   final List<CellData> activeCells;
+  final List<CellData> likelyCells;
   final List<CellData> neighborCells;
 
   SIMData({
@@ -21,6 +22,7 @@ class SIMData {
     required this.primaryCell,
     required this.activeBw,
     required this.activeCells,
+    required this.likelyCells,
     required this.neighborCells,
   });
 
@@ -36,6 +38,9 @@ class SIMData {
           : _emptyCellData(),
       activeBw: (json["activeBw"] as num?)?.toDouble() ?? 0.0,
       activeCells: (json["activeCells"] as List<dynamic>? ?? [])
+          .map((e) => CellData.fromJson(e))
+          .toList(),
+      likelyCells: (json["likelyCells"] as List<dynamic>? ?? [])
           .map((e) => CellData.fromJson(e))
           .toList(),
       neighborCells: (json["neighborCells"] as List<dynamic>? ?? [])

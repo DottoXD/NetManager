@@ -638,7 +638,7 @@ public class Client {
         result.put("plmn", plmn);
         result.put("networkGen", gen);
         result.put("serverName", serverName);
-        result.put("deviceModel", DeviceData.getInstance(prefs).getModel());
+        result.put("deviceModel", DeviceData.getInstance(null).getModel());
 
         pendingList.add(result);
 

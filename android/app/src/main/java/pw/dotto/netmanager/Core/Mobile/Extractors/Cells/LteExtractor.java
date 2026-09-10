@@ -19,10 +19,10 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.LteCellData;
  * based on the provided cell info.
  *
  * @author DottoXD
- * @version 0.1.6
+ * @version 0.2.0
  */
 public class LteExtractor {
-    private static final int MAXIMUM_LTE_MHZ = 20;
+    public static final int MAXIMUM_LTE_MHZ = 20;
 
     private static final String REFLECTION_RSSI = "mSignalStrength";
     private static final String REFLECTION_BW = "mBandwidth";

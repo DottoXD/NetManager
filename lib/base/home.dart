@@ -79,6 +79,8 @@ class _HomeState extends State<Home> {
   final ValueNotifier<bool> _homeDataGraphsNotifier = ValueNotifier(true);
   final ValueNotifier<int> _homeGraphsRetentionTimeNotifier = ValueNotifier(30);
 
+  final ValueNotifier<bool> _likelyCellsNotifier = ValueNotifier(false);
+
   final ValueNotifier<int> _currentSimSlotNotifier = ValueNotifier(0);
   final ValueNotifier<bool> _speedtestRunningNotifier = ValueNotifier(false);
 
@@ -129,6 +131,8 @@ class _HomeState extends State<Home> {
         widget.sharedPreferences.getBool("homeDataGraphs") ?? true;
     _homeGraphsRetentionTimeNotifier.value =
         widget.sharedPreferences.getInt("homeGraphsRetentionTime") ?? 30;
+    _likelyCellsNotifier.value =
+        widget.sharedPreferences.getBool("likelyCells") ?? false;
 
     try {
       widget.platform.invokeMethod<bool>("requestPermissions", {
@@ -180,6 +184,7 @@ class _HomeState extends State<Home> {
     _bearingLineNotifier.dispose();
     _homeDataGraphsNotifier.dispose();
     _homeGraphsRetentionTimeNotifier.dispose();
+    _likelyCellsNotifier.dispose();
     _currentSimSlotNotifier.dispose();
     _speedtestRunningNotifier.dispose();
 
@@ -251,6 +256,7 @@ class _HomeState extends State<Home> {
               _externalDatabasesNotifier,
               _homeDataGraphsNotifier,
               _homeGraphsRetentionTimeNotifier,
+              _likelyCellsNotifier,
               _currentSimSlotNotifier,
               onUpdateButtonPressed: (callback) {
                 _homeUpdateNotifier.value = callback;
@@ -318,6 +324,7 @@ class _HomeState extends State<Home> {
               _bearingLineNotifier,
               _homeDataGraphsNotifier,
               _homeGraphsRetentionTimeNotifier,
+              _likelyCellsNotifier,
             ),
           ],
         ),

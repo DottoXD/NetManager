@@ -35,6 +35,7 @@ class HomeBody extends StatefulWidget {
     this.externalDatabasesNotifier,
     this.homeDataGraphsNotifier,
     this.homeGraphsRetentionTimeNotifier,
+    this.likelyCellsNotifier,
     this.currentSimSlotNotifier, {
     super.key,
     this.onUpdateButtonPressed,
@@ -53,6 +54,7 @@ class HomeBody extends StatefulWidget {
   final ValueNotifier<bool> externalDatabasesNotifier;
   final ValueNotifier<bool> homeDataGraphsNotifier;
   final ValueNotifier<int> homeGraphsRetentionTimeNotifier;
+  final ValueNotifier<bool> likelyCellsNotifier;
   final ValueNotifier<int> currentSimSlotNotifier;
 
   final ValueSetter<VoidCallback>? onUpdateButtonPressed;
@@ -427,6 +429,21 @@ class _HomeBodyState extends State<HomeBody> {
                           guessedCids: widget.externalDatabasesNotifier.value
                               ? _guessedCids
                               : {},
+                        ),
+                      if (_simData != null && _simData!.likelyCells.isNotEmpty)
+                        ValueListenableBuilder(
+                          valueListenable: widget.likelyCellsNotifier,
+                          builder: (context, showLikelyCells, _) {
+                            return showLikelyCells
+                                ? CellSection(
+                                    title: _appLocalizations.homeLikelyCells,
+                                    cells: _simData!.likelyCells,
+                                    isActive: true,
+                                    descriptions: const {},
+                                    guessedCids: const {},
+                                  )
+                                : const SizedBox.shrink();
+                          },
                         ),
                     ],
                   ),

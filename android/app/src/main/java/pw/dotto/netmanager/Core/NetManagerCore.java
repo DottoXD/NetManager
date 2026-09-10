@@ -1,11 +1,8 @@
 package pw.dotto.netmanager.Core;
 
-import static android.content.Context.MODE_PRIVATE;
-
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -53,7 +50,7 @@ import pw.dotto.netmanager.Utils.Permissions;
  * data sources and pretty much everything else related to mobile cell data.
  *
  * @author DottoXD
- * @version 0.1.6
+ * @version 0.2.0
  */
 public class NetManagerCore {
     private static volatile NetManagerCore instance;
@@ -86,8 +83,7 @@ public class NetManagerCore {
 
         this.eventManager = EventManager.getInstance(appContext);
 
-        SharedPreferences sharedPreferences = context.getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
-        DeviceData deviceData = DeviceData.getInstance(sharedPreferences);
+        DeviceData deviceData = DeviceData.getInstance(null);
         List<Preprocessor> preprocessors = DevicePatchRegistry.preprocessorsFor(deviceData);
         this.postprocessors = DevicePatchRegistry.postprocessorsFor(deviceData);
 
@@ -369,6 +365,11 @@ public class NetManagerCore {
     public String getNetwork(int simId) {
         SIMSlotState slot = subscriptionTracker.getSlot(simId);
         return slot == null ? "NetManager" : TelephonyCellDataSource.getSimCarrier(appContext, slot.telephony, slot);
+    }
+
+    public List<Integer> getCellBandwidths(int simId) {
+        SIMSlotState slot = subscriptionTracker.getSlot(simId);
+        return slot == null ? List.of() : TelephonyCellDataSource.readCellBandwidths(slot.telephony, slot, appContext);
     }
 
     /*

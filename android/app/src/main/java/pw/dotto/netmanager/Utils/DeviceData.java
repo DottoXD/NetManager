@@ -11,7 +11,7 @@ import com.google.gson.Gson;
  * This is useful to filter vendor-specific features.
  *
  * @author DottoXD
- * @version 0.1.3
+ * @version 0.2.0
  */
 public class DeviceData {
     private static DeviceData instance;
@@ -30,7 +30,9 @@ public class DeviceData {
         if (instance == null) {
             instance = new DeviceData(Build.MANUFACTURER, Build.HARDWARE, Build.MODEL);
             DebugLogger.add("DeviceData: " + instance.manufacturer + ", " + instance.modem + ", " + instance.model + ".");
-            instance.save(prefs);
+
+            if(prefs != null)
+                instance.save(prefs);
         }
 
         return instance;

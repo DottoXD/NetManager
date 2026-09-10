@@ -69,7 +69,7 @@ import pw.dotto.netmanager.Utils.Permissions;
  * API.
  *
  * @author DottoXD
- * @version 0.1.6
+ * @version 0.2.0
  */
 public class TelephonyCellDataSource implements CellDataSource {
     public static final int CELL_INFO_UNAVAILABLE = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
@@ -507,7 +507,7 @@ public class TelephonyCellDataSource implements CellDataSource {
     }
 
     @SuppressLint("MissingPermission")
-    private List<Integer> readCellBandwidths(TelephonyManager telephony, SIMSlotState slot, Context context) {
+    public static List<Integer> readCellBandwidths(TelephonyManager telephony, SIMSlotState slot, Context context) {
         List<Integer> cellBandwidths = new ArrayList<>();
 
         try {
@@ -545,6 +545,7 @@ public class TelephonyCellDataSource implements CellDataSource {
         } catch (Exception e) {
             DebugLogger.add("Bandwidth calculator exception: " + e.getMessage());
         }
+
         return cellBandwidths;
     }
 
@@ -724,6 +725,9 @@ public class TelephonyCellDataSource implements CellDataSource {
 
         if (rawSignalStrengths == null)
             return;
+
+        DebugLogger
+                .add("Raw signal strengths for SIM " + simSlotState.simId + ": " + Arrays.toString(rawSignalStrengths));
 
         List<CellSignalStrengthNr> signalStrengths = new ArrayList<>();
         for (CellSignalStrength cellSignalStrength : rawSignalStrengths) {

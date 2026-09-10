@@ -22,8 +22,8 @@ android {
         applicationId = "pw.dotto.netmanager"
         minSdk = 30
         targetSdk = 37
-        versionCode = 12
-        versionName = "0.1.6"
+        versionCode = 13
+        versionName = "0.2.0"
     }
 
     signingConfigs {
@@ -74,7 +74,7 @@ kotlin {
 dependencies {
     implementation("com.google.android.gms:play-services-wearable:20.0.1")
 
-    val composeBom = platform("androidx.compose:compose-bom:2026.08.00")
+    val composeBom = platform("androidx.compose:compose-bom:2026.09.00")
 
     implementation(composeBom)
     implementation("androidx.activity:activity-compose:1.13.0")

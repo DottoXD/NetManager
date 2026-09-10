@@ -12,7 +12,7 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.CellData;
  * to.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.2.0
  */
 public class SIMData {
     private final String operator;
@@ -23,6 +23,7 @@ public class SIMData {
     private CellData primaryCell;
     private float activeBw = 0;
     private final ArrayList<CellData> activeCells = new ArrayList<>();
+    private final ArrayList<CellData> likelyCells = new ArrayList<>();
     private final ArrayList<CellData> neighborCells = new ArrayList<>();
 
     public SIMData(String operator, String network, int networkGen, String homePlmn, String networkPlmn) {
@@ -82,6 +83,11 @@ public class SIMData {
             activeCells.add(cellData);
     }
 
+    public void addLikelyCell(CellData cellData) {
+        if (!likelyCells.contains(cellData))
+            likelyCells.add(cellData);
+    }
+
     public void addNeighborCell(CellData cellData) {
         if (!neighborCells.contains(cellData))
             neighborCells.add(cellData);
@@ -92,6 +98,11 @@ public class SIMData {
             activeCells.remove(cellData);
     }
 
+    public void removeLikelyCell(CellData cellData) {
+        if (likelyCells.contains(cellData))
+            likelyCells.remove(cellData);
+    }
+
     public void removeNeighborCell(CellData cellData) {
         if (neighborCells.contains(cellData))
             neighborCells.remove(cellData);
@@ -99,6 +110,10 @@ public class SIMData {
 
     public void clearActiveCells() {
         activeCells.clear();
+    }
+
+    public void clearLikelyCells() {
+        likelyCells.clear();
     }
 
     public void clearNeighborCells() {
@@ -112,6 +127,10 @@ public class SIMData {
     public void setActiveCells(CellData[] activeCells) {
         clearActiveCells();
         Collections.addAll(this.activeCells, activeCells);
+    }
+
+    public CellData[] getLikelyCells() {
+        return likelyCells.toArray(new CellData[0]);
     }
 
     public CellData[] getNeighborCells() {

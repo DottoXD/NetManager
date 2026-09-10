@@ -1,0 +1,1 @@
+- Gli utenti ora possono visualizzare quali celle potrebbero essere attive sui telefoni Xiaomi che non restituiscono una lista completa di celle attive.
