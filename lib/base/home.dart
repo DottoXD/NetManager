@@ -90,6 +90,8 @@ class _HomeState extends State<Home> {
   final ValueNotifier<VoidCallback?> _planNotifier = ValueNotifier(null);
   final ValueNotifier<bool> _scheduleActionNotifier = ValueNotifier(false);
 
+  final ValueNotifier<bool> _isPipActiveNotifier = ValueNotifier(false);
+
   @override
   void initState() {
     super.initState();
@@ -99,6 +101,12 @@ class _HomeState extends State<Home> {
     widget.platform.setMethodCallHandler((call) {
       if (call.method == "restartTimer") {
         _platformSignalNotifier.value++;
+      }
+
+      if (call.method == "onPipChanged") {
+        _isPipActiveNotifier.value = call.arguments as bool;
+
+        updatePage(0);
       }
 
       return Future.value();
@@ -194,6 +202,8 @@ class _HomeState extends State<Home> {
     _planNotifier.dispose();
     _scheduleActionNotifier.dispose();
 
+    _isPipActiveNotifier.dispose();
+
     super.dispose();
   }
 
@@ -240,8 +250,13 @@ class _HomeState extends State<Home> {
           _logsNotifier,
           _currentSimSlotNotifier,
           _speedtestRunningNotifier,
+          _isPipActiveNotifier,
         ),
-        bottomNavigationBar: NavBar(updatePage, _currentPage),
+        bottomNavigationBar: NavBar(
+          updatePage,
+          _currentPage,
+          _isPipActiveNotifier,
+        ),
         body: LazyIndexedStack(
           index: _currentPage,
           children: [
@@ -258,6 +273,7 @@ class _HomeState extends State<Home> {
               _homeGraphsRetentionTimeNotifier,
               _likelyCellsNotifier,
               _currentSimSlotNotifier,
+              _isPipActiveNotifier,
               onUpdateButtonPressed: (callback) {
                 _homeUpdateNotifier.value = callback;
               },
@@ -328,79 +344,86 @@ class _HomeState extends State<Home> {
             ),
           ],
         ),
-        floatingActionButton: Container(
-          margin: const EdgeInsets.only(bottom: 4.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              if (_currentPage == 0) ...[
-                ValueListenableBuilder(
-                  valueListenable: _screenshotNotifier,
-                  builder: (context, callback, _) =>
-                      ScreenshotButton(onPressed: callback),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    ValueListenableBuilder(
-                      valueListenable: _homeDataGraphsNotifier,
-                      builder: (context, graphsEnabled, _) {
-                        if (!graphsEnabled) return const SizedBox.shrink();
+        floatingActionButton: ValueListenableBuilder(
+          valueListenable: _isPipActiveNotifier,
+          builder: (context, isPipActive, _) {
+            if (isPipActive) return const SizedBox.shrink();
 
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 4),
-                          child: Transform.translate(
-                            offset: const Offset(0, 2),
-                            child: ValueListenableBuilder(
-                              valueListenable: _graphsNotifier,
-                              builder: (context, callback, _) =>
-                                  GraphsButton(onPressed: callback),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+            return Container(
+              margin: const EdgeInsets.only(bottom: 4.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (_currentPage == 0) ...[
                     ValueListenableBuilder(
-                      valueListenable: _homeUpdateNotifier,
+                      valueListenable: _screenshotNotifier,
                       builder: (context, callback, _) =>
-                          UpdateButton(onPressed: callback),
+                          ScreenshotButton(onPressed: callback),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        ValueListenableBuilder(
+                          valueListenable: _homeDataGraphsNotifier,
+                          builder: (context, graphsEnabled, _) {
+                            if (!graphsEnabled) return const SizedBox.shrink();
+
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 4),
+                              child: Transform.translate(
+                                offset: const Offset(0, 2),
+                                child: ValueListenableBuilder(
+                                  valueListenable: _graphsNotifier,
+                                  builder: (context, callback, _) =>
+                                      GraphsButton(onPressed: callback),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        ValueListenableBuilder(
+                          valueListenable: _homeUpdateNotifier,
+                          builder: (context, callback, _) =>
+                              UpdateButton(onPressed: callback),
+                        ),
+                      ],
+                    ),
+                  ] else if (_currentPage == 1) ...[
+                    ValueListenableBuilder(
+                      valueListenable: _recordNotifier,
+                      builder: (context, callback, _) => RecordButton(
+                        onPressed: callback,
+                        recordingActionNotifier: _recordingActionNotifier,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    ValueListenableBuilder(
+                      valueListenable: _mapPositionNotifier,
+                      builder: (context, callback, _) =>
+                          PositionButton(onPressed: callback),
+                    ),
+                  ] else if (_currentPage == 2) ...[
+                    ValueListenableBuilder(
+                      valueListenable: _planNotifier,
+                      builder: (context, callback, _) => ScheduleButton(
+                        onPressed: callback,
+                        scheduleActionNotifier: _scheduleActionNotifier,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    ValueListenableBuilder(
+                      valueListenable: _historyNotifier,
+                      builder: (context, callback, _) =>
+                          HistoryButton(onPressed: callback),
                     ),
                   ],
-                ),
-              ] else if (_currentPage == 1) ...[
-                ValueListenableBuilder(
-                  valueListenable: _recordNotifier,
-                  builder: (context, callback, _) => RecordButton(
-                    onPressed: callback,
-                    recordingActionNotifier: _recordingActionNotifier,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                ValueListenableBuilder(
-                  valueListenable: _mapPositionNotifier,
-                  builder: (context, callback, _) =>
-                      PositionButton(onPressed: callback),
-                ),
-              ] else if (_currentPage == 2) ...[
-                ValueListenableBuilder(
-                  valueListenable: _planNotifier,
-                  builder: (context, callback, _) => ScheduleButton(
-                    onPressed: callback,
-                    scheduleActionNotifier: _scheduleActionNotifier,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                ValueListenableBuilder(
-                  valueListenable: _historyNotifier,
-                  builder: (context, callback, _) =>
-                      HistoryButton(onPressed: callback),
-                ),
-              ],
-            ],
-          ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

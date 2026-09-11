@@ -1,1 +1,3 @@
 - Gli utenti ora possono visualizzare quali celle potrebbero essere attive sui telefoni Xiaomi che non restituiscono una lista completa di celle attive.
+- Aggiunta la modalità picture in picture (PIP) per i dati radio in home page.
+- Risolti i problemi al postprocessing della bandwidth e del segnale sui dispositivi Qualcomm.

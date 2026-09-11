@@ -1,1 +1,3 @@
 - Users can now choose to see cells which might be active on Xiaomi phones that won't return a full list of active cells.
+- Added a "PIP mode" feature for home page data.
+- Fixed extra bandwidth & signal postprocessing on Qualcomm devices.

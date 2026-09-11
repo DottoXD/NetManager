@@ -32,7 +32,8 @@ public class LikelyCellsPostprocessor implements Postprocessor {
 
         DeviceData deviceData = DeviceData.getInstance(null);
 
-        if (deviceData.getManufacturer().equals("xiaomi") && deviceData.getModem().equals("qcom")) {
+        if ((deviceData.getManufacturer().equals("xiaomi") || deviceData.getManufacturer().equals("redmi")
+                || deviceData.getManufacturer().equals("poco")) && deviceData.getModem().equals("qcom")) {
             // get bw, with 4g qcom xiaomis return all lte bws
             List<Integer> rawBandwidths = netManagerCore.getCellBandwidths(simId);
 
@@ -103,6 +104,7 @@ public class LikelyCellsPostprocessor implements Postprocessor {
                 }
 
                 if (bestCandidate != null) {
+                    bestCandidate.setBandwidth(targetBw);
                     data.addLikelyCell(bestCandidate);
 
                     int matchedEarfcn = bestCandidate.getChannelNumber();

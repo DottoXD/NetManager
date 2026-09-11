@@ -21,7 +21,8 @@ class TopBar extends StatefulWidget implements PreferredSizeWidget {
     this.platformSignalNotifier,
     this.logsNotifier,
     this.currentSimSlotNotifier,
-    this.speedtestRunningNotifier, {
+    this.speedtestRunningNotifier,
+    this.isPipActiveNotifier, {
     super.key,
   });
 
@@ -31,6 +32,7 @@ class TopBar extends StatefulWidget implements PreferredSizeWidget {
   final ValueNotifier<bool> logsNotifier;
   final ValueNotifier<int> currentSimSlotNotifier;
   final ValueNotifier<bool> speedtestRunningNotifier;
+  final ValueNotifier<bool> isPipActiveNotifier;
 
   @override
   State<TopBar> createState() => _TopBarState();
@@ -46,6 +48,7 @@ class _TopBarState extends State<TopBar> {
   late ValueNotifier<bool> logsNotifier;
   late ValueNotifier<int> currentSimSlotNotifier;
   late ValueNotifier<bool> speedtestRunningNotifier;
+  late ValueNotifier<bool> isPipActiveNotifier;
 
   late Timer _timer;
   String _carrier = "Unknown";
@@ -64,6 +67,7 @@ class _TopBarState extends State<TopBar> {
     logsNotifier = widget.logsNotifier;
     currentSimSlotNotifier = widget.currentSimSlotNotifier;
     speedtestRunningNotifier = widget.speedtestRunningNotifier;
+    isPipActiveNotifier = widget.isPipActiveNotifier;
 
     platformSignalNotifier.addListener(_restartTimer);
     speedtestRunningNotifier.addListener(_onSpeedtestRunningChanged);
@@ -101,6 +105,11 @@ class _TopBarState extends State<TopBar> {
   }
 
   Future<void> update() async {
+    if (isPipActiveNotifier.value) {
+      await _configure();
+      return;
+    }
+
     try {
       _carrier =
           (await platform.invokeMethod<String>("getCarrier")) ?? "Unknown";
@@ -234,6 +243,21 @@ class _TopBarState extends State<TopBar> {
     }
   }
 
+  Future<void> _enterPip(AppLocalizations appLocalizations) async {
+    try {
+      await platform.invokeMethod("enterPip");
+    } catch (e) {
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return ErrorDialog(e: "${appLocalizations.topBar}: $e");
+          },
+        );
+      }
+    }
+  }
+
   List<InfoMenuOption> _resolveMenuOptions(DeviceData? deviceData) {
     final List<InfoMenuOption> options = [
       const InfoMenuOption(
@@ -297,67 +321,109 @@ class _TopBarState extends State<TopBar> {
   Widget build(BuildContext context) {
     AppLocalizations appLocalizations = AppLocalizations.of(context)!;
 
-    String titleText;
-    if (_isLoading) {
-      titleText = appLocalizations.topBarLoading;
-    } else {
-      String displayCarrier =
-          (_carrier == "Unknown" ||
-              _carrier.trim().isEmpty ||
-              _carrier == "NetManager")
-          ? appLocalizations.unknown
-          : _carrier;
+    return ValueListenableBuilder(
+      valueListenable: isPipActiveNotifier,
+      builder: (context, isPipActive, _) {
+        if (isPipActive) return const SizedBox.shrink();
 
-      if (_isEmergency) {
-        String genString = _gen > 0 ? "${_gen}G " : "";
+        String titleText;
+        if (_isLoading) {
+          titleText = appLocalizations.topBarLoading;
+        } else {
+          String displayCarrier =
+              (_carrier == "Unknown" ||
+                  _carrier.trim().isEmpty ||
+                  _carrier == "NetManager")
+              ? appLocalizations.unknown
+              : _carrier;
 
-        if (displayCarrier == appLocalizations.unknown && _plmn != "00000") {
-          displayCarrier = _plmn;
+          if (_isEmergency) {
+            String genString = _gen > 0 ? "${_gen}G " : "";
+
+            if (displayCarrier == appLocalizations.unknown &&
+                _plmn != "00000") {
+              displayCarrier = _plmn;
+            }
+
+            titleText =
+                "$displayCarrier $genString(${appLocalizations.onlyEmergency})";
+          } else if (_gen > 0 &&
+              _carrier != "Unknown" &&
+              _carrier.trim().isNotEmpty) {
+            String extraData = _plmn;
+            titleText = "$displayCarrier ${_gen}G ($extraData)";
+          } else {
+            titleText = appLocalizations.noService;
+          }
         }
 
-        titleText = "$displayCarrier $genString(Emergency only)";
-      } else if (_gen > 0 &&
-          _carrier != "Unknown" &&
-          _carrier.trim().isNotEmpty) {
-        String extraData = _plmn;
-        titleText = "$displayCarrier ${_gen}G ($extraData)";
-      } else {
-        titleText = appLocalizations.noService;
-      }
-    }
+        return AppBar(
+          title: Text(titleText),
+          actions: [
+            IconButton(
+              onPressed: () => _openInfo(appLocalizations),
+              icon: const Icon(Icons.info_outlined),
+              tooltip: appLocalizations.radioInfoSettings,
+            ),
+            if (_simCount > 1)
+              ValueListenableBuilder(
+                valueListenable: speedtestRunningNotifier,
+                builder: (context, isTestRunning, _) {
+                  return IconButton(
+                    onPressed: isTestRunning ? null : _switchSim,
+                    icon: const Icon(Icons.sim_card_outlined),
+                    tooltip: appLocalizations.switchSim,
+                  );
+                },
+              ),
+            ValueListenableBuilder(
+              valueListenable: logsNotifier,
+              builder: (context, showLogs, _) {
+                if (showLogs) {
+                  return PopupMenuButton(
+                    icon: const Icon(Icons.more_vert),
+                    onSelected: (value) {
+                      if (value == "logs") {
+                        _openLogs(appLocalizations);
+                      } else if (value == "pip") {
+                        _enterPip(appLocalizations);
+                      }
+                    },
+                    itemBuilder: (BuildContext context) => [
+                      PopupMenuItem(
+                        value: "logs",
+                        child: Row(
+                          children: [
+                            const Icon(Icons.my_library_books_outlined),
+                            const SizedBox(width: 12),
+                            Text(appLocalizations.eventLogs),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: "pip",
+                        child: Row(
+                          children: [
+                            const Icon(Icons.picture_in_picture_alt_outlined),
+                            const SizedBox(width: 12),
+                            Text(appLocalizations.pictureInPicture),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                }
 
-    return AppBar(
-      title: Text(titleText),
-      actions: [
-        IconButton(
-          onPressed: () => _openInfo(appLocalizations),
-          icon: const Icon(Icons.info_outlined),
-          tooltip: appLocalizations.radioInfoSettings,
-        ),
-        if (_simCount > 1)
-          ValueListenableBuilder(
-            valueListenable: speedtestRunningNotifier,
-            builder: (context, isTestRunning, _) {
-              return IconButton(
-                onPressed: isTestRunning ? null : _switchSim,
-                icon: const Icon(Icons.sim_card_outlined),
-                tooltip: appLocalizations.switchSim,
-              );
-            },
-          ),
-        ValueListenableBuilder(
-          valueListenable: logsNotifier,
-          builder: (context, showLogs, _) {
-            if (!showLogs) return const SizedBox.shrink();
-
-            return IconButton(
-              onPressed: () => _openLogs(appLocalizations),
-              icon: const Icon(Icons.my_library_books_outlined),
-              tooltip: appLocalizations.eventLogs,
-            );
-          },
-        ),
-      ],
+                return IconButton(
+                  onPressed: () => _enterPip(appLocalizations),
+                  icon: const Icon(Icons.picture_in_picture_alt_outlined),
+                  tooltip: appLocalizations.pictureInPicture,
+                );
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 

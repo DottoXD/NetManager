@@ -7,7 +7,7 @@ import android.content.Context;
  * implemented in the Play flavor of NetManager.
  *
  * @author DottoXD
- * @version 0.0.5
+ * @version 0.2.0
  */
 public interface WearIntegration {
     void onCreate(Context context);
@@ -17,4 +17,6 @@ public interface WearIntegration {
     void onPause();
 
     void onDestroy();
+
+    void isWearConnected(WearConnectionCallback callback);
 }

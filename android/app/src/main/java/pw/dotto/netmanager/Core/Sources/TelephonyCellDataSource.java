@@ -1,7 +1,5 @@
 package pw.dotto.netmanager.Core.Sources;
 
-import static pw.dotto.netmanager.Core.Mobile.Extractors.Cells.NrExtractor.getMaximumNrMhz;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
@@ -19,10 +17,8 @@ import android.telephony.CellInfoNr;
 import android.telephony.CellInfoTdscdma;
 import android.telephony.CellInfoWcdma;
 import android.telephony.CellSignalStrength;
-import android.telephony.CellSignalStrengthNr;
 import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
-import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 
 import androidx.annotation.NonNull;
@@ -30,13 +26,11 @@ import androidx.annotation.NonNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -282,11 +276,6 @@ public class TelephonyCellDataSource implements CellDataSource {
             if (cellData.getBand() == -1)
                 cellData.setBand(cellData.getBasicCellData().getBand());
         }
-
-        filterImpossibleBands(context, data, telephony, simSlotState, cellBandwidths);
-        assignBandwidths(data, cellBandwidths);
-        fixNrSignal(context, data, telephony, simSlotState);
-        computeActiveBandwidth(data);
 
         return data;
     }
@@ -547,260 +536,6 @@ public class TelephonyCellDataSource implements CellDataSource {
         }
 
         return cellBandwidths;
-    }
-
-    @SuppressLint("MissingPermission")
-    private void filterImpossibleBands(Context context, SIMData data, TelephonyManager telephony, SIMSlotState slot,
-            List<Integer> cellBandwidths) {
-        if (data.getPrimaryCell() == null)
-            return;
-
-        switch (data.getNetworkGen()) {
-            case 2: // 2G cannot use multiple bands at the same time
-                for (CellData cellData : data.getActiveCells())
-                    if (cellData != data.getPrimaryCell()) {
-                        data.removeActiveCell(cellData);
-                        data.addNeighborCell(cellData);
-                    }
-                break;
-
-            case 3:
-                if (data.getPrimaryCell() instanceof CdmaCellData || data.getPrimaryCell() instanceof TdscdmaCellData) {
-                    for (CellData cellData : data.getActiveCells())
-                        if (cellData != data.getPrimaryCell())
-                            data.removeActiveCell(cellData);
-                } else if (data.getPrimaryCell() instanceof WcdmaCellData) {
-                    for (CellData cellData : data.getActiveCells())
-                        if (!(cellData instanceof WcdmaCellData))
-                            data.removeActiveCell(cellData);
-                }
-                break;
-
-            case 4:
-                if (cellBandwidths.isEmpty())
-                    break; // might as well be the wrong amount of cell bandwidths
-
-                boolean isNsa = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
-                        ? getNsaStatus(slot, telephony)
-                        : getNsaStatusFromServiceState(telephony);
-
-                if (!isNsa)
-                    for (CellData cellData : data.getActiveCells())
-                        if (cellData instanceof NrCellData)
-                            data.removeActiveCell(cellData);
-
-                boolean clearActiveCells; // possibly port this to 5G SA in future
-
-                if (Build.VERSION.SDK_INT == Build.VERSION_CODES.R) {
-                    clearActiveCells = !(SubscriptionManager.getActiveDataSubscriptionId() == telephony
-                            .getSubscriptionId());
-                } else {
-                    int status = getDataStatus(context, slot, telephony);
-
-                    clearActiveCells = switch (status) {
-                        case TelephonyManager.DATA_DISCONNECTED,
-                                TelephonyManager.DATA_DISCONNECTING, TelephonyManager.DATA_SUSPENDED,
-                                TelephonyManager.DATA_UNKNOWN ->
-                            true;
-                        default -> false;
-                    };
-                }
-
-                if (clearActiveCells) {
-                    DebugLogger.add(data.getActiveCells().length + " active cells have been cleared for SIM "
-                            + data.getOperator() + "!");
-                    data.clearActiveCells(); // (idle sim = no CA)
-                }
-                break;
-        }
-    }
-
-    private void assignBandwidths(SIMData data, List<Integer> cellBandwidths) {
-        CellData[] activeCells = data.getActiveCells();
-        if (activeCells == null || activeCells.length == 0)
-            return;
-
-        Arrays.sort(activeCells, (a, b) -> {
-            if (a == null && b == null)
-                return 0;
-            if (a == null)
-                return 1;
-            if (b == null)
-                return -1;
-
-            boolean invalidA = a.getBandwidth() <= 0 || a.getBandwidth() == CELL_INFO_UNAVAILABLE;
-            boolean invalidB = b.getBandwidth() <= 0 || b.getBandwidth() == CELL_INFO_UNAVAILABLE;
-
-            if (invalidA != invalidB)
-                return Boolean.compare(invalidA, invalidB);
-
-            if (invalidA) {
-                boolean isNrA = a instanceof NrCellData;
-                boolean isNrB = b instanceof NrCellData;
-                if (isNrA != isNrB)
-                    return Boolean.compare(isNrA, isNrB);
-
-                int freqA = (a.getBasicCellData() != null) ? a.getBasicCellData().getFrequency() : -1;
-                int freqB = (b.getBasicCellData() != null) ? b.getBasicCellData().getFrequency() : -1;
-
-                return Integer.compare(freqB, freqA);
-            }
-
-            return 0;
-        });
-
-        data.setActiveCells(activeCells);
-
-        List<Integer> availableBandwidths = new ArrayList<>(cellBandwidths);
-        for (CellData cell : activeCells) {
-            if (cell == null)
-                continue;
-
-            int bw = cell.getBandwidth();
-            if (bw > 0 && bw != CELL_INFO_UNAVAILABLE)
-                availableBandwidths.remove(Integer.valueOf(bw));
-        }
-
-        availableBandwidths.sort(Collections.reverseOrder());
-
-        for (CellData cell : data.getActiveCells()) {
-            if (cell == null)
-                continue;
-
-            int bw = cell.getBandwidth();
-            if (bw > 0 && bw != CELL_INFO_UNAVAILABLE)
-                continue;
-
-            if (cell instanceof NrCellData) {
-                int freq = (cell.getBasicCellData() != null) ? cell.getBasicCellData().getFrequency() : -1;
-                int maxBw = getMaximumNrMhz(freq);
-                Optional<Integer> possibleBw = availableBandwidths.stream().filter(b -> b <= maxBw).findFirst();
-                if (possibleBw.isPresent()) {
-                    int nrBw = possibleBw.get();
-                    cell.setBandwidth(nrBw);
-                    availableBandwidths.remove(Integer.valueOf(nrBw));
-                }
-            } else if (cell instanceof LteCellData) {
-                Optional<Integer> possibleBw = availableBandwidths.stream().filter(b -> b <= 20).findFirst();
-
-                if (possibleBw.isPresent()) {
-                    int lteBw = possibleBw.get();
-                    cell.setBandwidth(lteBw);
-                    availableBandwidths.remove(Integer.valueOf(lteBw));
-                }
-            }
-        }
-    }
-
-    private void fixNrSignal(Context context, SIMData data, TelephonyManager telephony, SIMSlotState simSlotState) {
-        if (data.getPrimaryCell() == null || !(data.getPrimaryCell() instanceof LteCellData))
-            return;
-
-        List<NrCellData> nrCells = new ArrayList<>();
-        for (CellData cellData : data.getActiveCells()) {
-            if (cellData instanceof NrCellData) {
-                NrCellData nrCellData = (NrCellData) cellData;
-                if (nrCellData.getProcessedSignal() == CELL_INFO_UNAVAILABLE
-                        || nrCellData.getRawSignal() == CELL_INFO_UNAVAILABLE
-                        || nrCellData.getSignalNoise() == CELL_INFO_UNAVAILABLE
-                        || nrCellData.getSignalQuality() == CELL_INFO_UNAVAILABLE) {
-                    nrCells.add(nrCellData);
-                }
-            }
-        }
-
-        if (nrCells.isEmpty())
-            return;
-
-        nrCells.sort((a, b) -> {
-            int freqA = (a != null && a.getBasicCellData() != null) ? a.getBasicCellData().getFrequency() : -1;
-            int freqB = (b != null && b.getBasicCellData() != null) ? b.getBasicCellData().getFrequency() : -1;
-            return Integer.compare(freqB, freqA);
-        });
-
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
-            return;
-
-        CellSignalStrength[] rawSignalStrengths = getSignalStrengths(context, simSlotState, telephony);
-
-        if (rawSignalStrengths == null)
-            return;
-
-        DebugLogger
-                .add("Raw signal strengths for SIM " + simSlotState.simId + ": " + Arrays.toString(rawSignalStrengths));
-
-        List<CellSignalStrengthNr> signalStrengths = new ArrayList<>();
-        for (CellSignalStrength cellSignalStrength : rawSignalStrengths) {
-            if (cellSignalStrength instanceof CellSignalStrengthNr) {
-                signalStrengths.add((CellSignalStrengthNr) cellSignalStrength);
-            }
-        }
-
-        if (signalStrengths.isEmpty())
-            return;
-
-        signalStrengths.sort(Comparator.comparingInt(CellSignalStrengthNr::getSsRsrp));
-
-        int limit = Math.min(nrCells.size(), signalStrengths.size());
-        for (int i = 0; i < limit; i++) {
-            NrCellData nrCell = nrCells.get(i);
-            CellSignalStrengthNr ssNr = signalStrengths.get(i);
-
-            if (nrCell == null || ssNr == null)
-                continue;
-
-            if (nrCell.getProcessedSignal() == CELL_INFO_UNAVAILABLE && ssNr.getSsRsrp() != CELL_INFO_UNAVAILABLE)
-                nrCell.setProcessedSignal(ssNr.getSsRsrp());
-
-            if (nrCell.getRawSignal() == CELL_INFO_UNAVAILABLE && ssNr.getCsiRsrp() != CELL_INFO_UNAVAILABLE)
-                nrCell.setRawSignal(ssNr.getCsiRsrp());
-
-            if (nrCell.getSignalNoise() == CELL_INFO_UNAVAILABLE) {
-                if (ssNr.getSsSinr() != CELL_INFO_UNAVAILABLE) {
-                    nrCell.setSignalNoise(ssNr.getSsSinr());
-                } else if (ssNr.getCsiSinr() != CELL_INFO_UNAVAILABLE) {
-                    nrCell.setSignalNoise(ssNr.getCsiSinr());
-                    nrCell.setSignalNoiseString("CSI SINR");
-                }
-            }
-
-            if (nrCell.getSignalQuality() == CELL_INFO_UNAVAILABLE) {
-                if (ssNr.getSsRsrq() != CELL_INFO_UNAVAILABLE) {
-                    nrCell.setSignalQuality(ssNr.getSsRsrq());
-                } else if (ssNr.getCsiRsrq() != CELL_INFO_UNAVAILABLE) {
-                    nrCell.setSignalQuality(ssNr.getCsiRsrq());
-                    nrCell.setSignalQualityString("CSI RSRQ");
-                }
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && nrCell.getChannelQuality() == CELL_INFO_UNAVAILABLE) {
-                List<Integer> cqiReport = ssNr.getCsiCqiReport();
-                if (cqiReport != null && !cqiReport.isEmpty()) {
-                    nrCell.setChannelQuality(cqiReport.get(0));
-                }
-            }
-
-            if (nrCell.getTimingAdvance() == CELL_INFO_UNAVAILABLE) {
-                nrCell.setTimingAdvance(Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
-                        ? ssNr.getTimingAdvanceMicros()
-                        : CELL_INFO_UNAVAILABLE);
-            }
-        }
-    }
-
-    private void computeActiveBandwidth(SIMData data) {
-        if (data.getPrimaryCell() == null)
-            return;
-
-        if (!(data.getPrimaryCell().getBandwidth() < 0
-                || data.getPrimaryCell().getBandwidth() == CELL_INFO_UNAVAILABLE))
-            data.setActiveBw(data.getPrimaryCell().getBandwidth());
-
-        for (CellData cellData : data.getActiveCells()) {
-            if (!(cellData.getBandwidth() < 0 || cellData.getBandwidth() == CELL_INFO_UNAVAILABLE)
-                    && !data.getPrimaryCell().equals(cellData))
-                data.setActiveBw(data.getActiveBw() + cellData.getBandwidth());
-        }
     }
 
     @SuppressLint("MissingPermission")

@@ -5,6 +5,7 @@ import 'package:netmanager/components/base/body/home/widgets/cell_section.dart';
 import 'package:netmanager/components/base/body/home/widgets/empty_state.dart';
 import 'package:netmanager/components/base/body/home/widgets/loading_state.dart';
 import 'package:netmanager/components/base/body/home/widgets/network_data.dart';
+import 'package:netmanager/components/base/body/home/widgets/pip_cell_row.dart';
 import 'package:netmanager/components/base/body/home/widgets/primary_cell_card.dart';
 import 'package:netmanager/components/modals/graphs_modal.dart';
 import 'package:netmanager/database/cell_database.dart';
@@ -36,7 +37,8 @@ class HomeBody extends StatefulWidget {
     this.homeDataGraphsNotifier,
     this.homeGraphsRetentionTimeNotifier,
     this.likelyCellsNotifier,
-    this.currentSimSlotNotifier, {
+    this.currentSimSlotNotifier,
+    this.isPipActiveNotifier, {
     super.key,
     this.onUpdateButtonPressed,
     this.onScreenshotButtonPressed,
@@ -56,6 +58,7 @@ class HomeBody extends StatefulWidget {
   final ValueNotifier<int> homeGraphsRetentionTimeNotifier;
   final ValueNotifier<bool> likelyCellsNotifier;
   final ValueNotifier<int> currentSimSlotNotifier;
+  final ValueNotifier<bool> isPipActiveNotifier;
 
   final ValueSetter<VoidCallback>? onUpdateButtonPressed;
   final ValueSetter<VoidCallback>? onScreenshotButtonPressed;
@@ -173,7 +176,7 @@ class _HomeBodyState extends State<HomeBody> {
         return;
       }
 
-      final SIMData? simData;
+      SIMData? simData;
 
       try {
         simData = await compute<String, SIMData?>(parseSimData, jsonStr);
@@ -188,6 +191,29 @@ class _HomeBodyState extends State<HomeBody> {
       }
 
       if (simData == null) return;
+
+      if (widget.likelyCellsNotifier.value) {
+        simData.neighborCells.removeWhere(
+          (neighbor) => simData!.likelyCells.any(
+            (likely) =>
+                likely == neighbor ||
+                (likely.cellIdentifier == neighbor.cellIdentifier &&
+                    likely.channelNumber == neighbor.channelNumber &&
+                    likely.stationIdentity == neighbor.stationIdentity),
+          ),
+        );
+
+        double likelyBw = 0;
+        for (final cell in simData.likelyCells) {
+          if (isValidInt(cell.bandwidth) && cell.bandwidth > 0) {
+            likelyBw += cell.bandwidth;
+          }
+        }
+
+        if (likelyBw > 0) {
+          simData = simData.copyWith(activeBw: simData.activeBw + likelyBw);
+        }
+      }
 
       _plmn = simData.networkPlmn;
       _factor = conversionFactor(simData.primaryCell);
@@ -333,153 +359,246 @@ class _HomeBodyState extends State<HomeBody> {
 
   @override
   Widget build(BuildContext context) {
-    final widgetsHeight =
-        MediaQuery.of(context).size.height -
-        kToolbarHeight -
-        kBottomNavigationBarHeight -
-        MediaQuery.of(context).padding.top;
+    return ValueListenableBuilder(
+      valueListenable: widget.isPipActiveNotifier,
+      builder: (context, isPipActive, _) {
+        final widgetsHeight =
+            MediaQuery.of(context).size.height -
+            kToolbarHeight -
+            kBottomNavigationBarHeight -
+            MediaQuery.of(context).padding.top;
 
-    if (!homeLoadedNotifier.value) {
-      return LoadingState(minHeight: widgetsHeight);
-    }
+        if (!homeLoadedNotifier.value) {
+          return LoadingState(minHeight: widgetsHeight);
+        }
 
-    if (_simCount == 0) {
-      return EmptyState(
-        minHeight: widgetsHeight,
-        icon: Icons.sim_card_alert_outlined,
-        message: _appLocalizations.homeNoSim,
-      );
-    }
+        if (_simCount == 0) {
+          return EmptyState(
+            minHeight: widgetsHeight,
+            icon: Icons.sim_card_alert_outlined,
+            message: _appLocalizations.homeNoSim,
+          );
+        }
 
-    if (homeLoadedNotifier.value &&
-        _pageLoaded &&
-        (_plmn.isEmpty || _plmn == "00000")) {
-      return EmptyState(
-        minHeight: widgetsHeight,
-        icon: Icons.airplanemode_on_outlined,
-        message: _appLocalizations.homeAirplane,
-      );
-    }
+        if (homeLoadedNotifier.value &&
+            _pageLoaded &&
+            (_plmn.isEmpty || _plmn == "00000")) {
+          return EmptyState(
+            minHeight: widgetsHeight,
+            icon: Icons.airplanemode_on_outlined,
+            message: _appLocalizations.homeAirplane,
+          );
+        }
 
-    return SingleChildScrollView(
-      controller: controller,
-      scrollDirection: Axis.vertical,
-      child: Column(
-        children: <Widget>[
-          Column(
-            children: [
-              Row(
+        if (isPipActive) {
+          final primaryCell = _simData?.primaryCell;
+          final activeCells = _simData?.activeCells ?? [];
+          final likelyCells =
+              (widget.likelyCellsNotifier.value
+                  ? _simData?.likelyCells
+                  : null) ??
+              [];
+          final allCells = [...activeCells, ...likelyCells];
+
+          final ThemeData theme = Theme.of(context);
+
+          return Scaffold(
+            backgroundColor: theme.colorScheme.surface,
+            body: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(4.0),
+                child: allCells.isEmpty
+                    ? Center(
+                        child: Text(
+                          _appLocalizations.homeNoData,
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      )
+                    : LayoutBuilder(
+                        builder: (context, constraints) {
+                          if (allCells.length <= 3) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: allCells
+                                  .map(
+                                    (cell) => Expanded(
+                                      child: PipCellRow(
+                                        cell: cell,
+                                        isPrimary:
+                                            isValidString(
+                                              cell.cellIdentifier,
+                                            ) &&
+                                            primaryCell != null &&
+                                            cell.cellIdentifier ==
+                                                primaryCell.cellIdentifier &&
+                                            cell.channelNumber ==
+                                                primaryCell.channelNumber &&
+                                            cell.stationIdentity ==
+                                                primaryCell.stationIdentity,
+                                        isLikely: likelyCells.contains(cell),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                            );
+                          }
+
+                          return ListView.builder(
+                            itemCount: allCells.length,
+                            itemBuilder: (context, index) => PipCellRow(
+                              cell: allCells[index],
+                              isPrimary:
+                                  isValidString(
+                                    allCells[index].cellIdentifier,
+                                  ) &&
+                                  primaryCell != null &&
+                                  allCells[index].cellIdentifier ==
+                                      primaryCell.cellIdentifier &&
+                                  allCells[index].channelNumber ==
+                                      primaryCell.channelNumber &&
+                                  allCells[index].stationIdentity ==
+                                      primaryCell.stationIdentity,
+                              isLikely: likelyCells.contains(allCells[index]),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ),
+          );
+        }
+
+        return SingleChildScrollView(
+          controller: controller,
+          scrollDirection: Axis.vertical,
+          child: Column(
+            children: <Widget>[
+              Column(
                 children: [
-                  Expanded(
-                    child: ValueListenableBuilder(
-                      valueListenable: _isUpdatingNotifier,
-                      builder: (context, isUpdating, child) {
-                        return isUpdating
-                            ? const LinearProgressIndicator()
-                            : const SizedBox(height: 4);
-                      },
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ValueListenableBuilder(
+                          valueListenable: _isUpdatingNotifier,
+                          builder: (context, isUpdating, child) {
+                            return isUpdating
+                                ? const LinearProgressIndicator()
+                                : const SizedBox(height: 4);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  RepaintBoundary(
+                    key: _captureKey,
+                    child: Material(
+                      color: Theme.of(context).colorScheme.surface,
+                      child: Column(
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.all(10.0),
+                            child: Column(
+                              children: [
+                                if (_simData != null) ...[
+                                  PrimaryCellCard(
+                                    cell: _simData!.primaryCell,
+                                    altCellView: _altCellViewNotifier,
+                                    factor: _factor,
+                                    onToggle: () {
+                                      HapticService().triggerHaptic(
+                                        HapticType.selection,
+                                        context,
+                                      );
+
+                                      _altCellViewNotifier.value =
+                                          !_altCellViewNotifier.value;
+                                    },
+                                    cardWidth: cardWidth,
+                                    cardHeight: cardHeight,
+                                  ),
+                                  NetworkData(
+                                    simData: _simData!,
+                                    cardWidth: cardWidth,
+                                    cardHeight: cardHeight,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          if (_simData != null &&
+                              _simData!.activeCells.isNotEmpty)
+                            CellSection(
+                              title: _appLocalizations.homeActiveCells,
+                              cells: _simData!.activeCells,
+                              isActive: true,
+                              descriptions:
+                                  widget.externalDatabasesNotifier.value
+                                  ? _cellDescriptions
+                                  : {},
+                              guessedCids:
+                                  widget.externalDatabasesNotifier.value
+                                  ? _guessedCids
+                                  : {},
+                            ),
+                          if (_simData != null &&
+                              _simData!.likelyCells.isNotEmpty)
+                            ValueListenableBuilder(
+                              valueListenable: widget.likelyCellsNotifier,
+                              builder: (context, showLikelyCells, _) {
+                                return showLikelyCells
+                                    ? CellSection(
+                                        title:
+                                            _appLocalizations.homeLikelyCells,
+                                        cells: _simData!.likelyCells,
+                                        isActive: true,
+                                        descriptions: const {},
+                                        guessedCids: const {},
+                                      )
+                                    : const SizedBox.shrink();
+                              },
+                            ),
+                        ],
+                      ),
                     ),
+                  ),
+                  if (_simData != null &&
+                      _simData!.neighborCells.isNotEmpty) ...[
+                    CellSection(
+                      title: _appLocalizations.homeNeighborCells,
+                      cells: _simData!.neighborCells,
+                      isActive: false,
+                      descriptions: widget.externalDatabasesNotifier.value
+                          ? _cellDescriptions
+                          : {},
+                      guessedCids: const {},
+                    ),
+                  ],
+                  ValueListenableBuilder(
+                    valueListenable: debugNotifier,
+                    builder: (context, isDebugOn, child) {
+                      return isDebugOn && _debug.isNotEmpty && _debug != "null"
+                          ? Container(
+                              margin: const EdgeInsets.only(
+                                top: 10,
+                                left: 20,
+                                right: 20,
+                                bottom: 20,
+                              ),
+                              child: Text(
+                                "${_appLocalizations.debug}: $_debug",
+                              ),
+                            )
+                          : const SizedBox.shrink();
+                    },
                   ),
                 ],
               ),
-              RepaintBoundary(
-                key: _captureKey,
-                child: Material(
-                  color: Theme.of(context).colorScheme.surface,
-                  child: Column(
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.all(10.0),
-                        child: Column(
-                          children: [
-                            if (_simData != null) ...[
-                              PrimaryCellCard(
-                                cell: _simData!.primaryCell,
-                                altCellView: _altCellViewNotifier,
-                                factor: _factor,
-                                onToggle: () {
-                                  HapticService().triggerHaptic(
-                                    HapticType.selection,
-                                    context,
-                                  );
-
-                                  _altCellViewNotifier.value =
-                                      !_altCellViewNotifier.value;
-                                },
-                                cardWidth: cardWidth,
-                                cardHeight: cardHeight,
-                              ),
-                              NetworkData(
-                                simData: _simData!,
-                                cardWidth: cardWidth,
-                                cardHeight: cardHeight,
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      if (_simData != null && _simData!.activeCells.isNotEmpty)
-                        CellSection(
-                          title: _appLocalizations.homeActiveCells,
-                          cells: _simData!.activeCells,
-                          isActive: true,
-                          descriptions: widget.externalDatabasesNotifier.value
-                              ? _cellDescriptions
-                              : {},
-                          guessedCids: widget.externalDatabasesNotifier.value
-                              ? _guessedCids
-                              : {},
-                        ),
-                      if (_simData != null && _simData!.likelyCells.isNotEmpty)
-                        ValueListenableBuilder(
-                          valueListenable: widget.likelyCellsNotifier,
-                          builder: (context, showLikelyCells, _) {
-                            return showLikelyCells
-                                ? CellSection(
-                                    title: _appLocalizations.homeLikelyCells,
-                                    cells: _simData!.likelyCells,
-                                    isActive: true,
-                                    descriptions: const {},
-                                    guessedCids: const {},
-                                  )
-                                : const SizedBox.shrink();
-                          },
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-              if (_simData != null && _simData!.neighborCells.isNotEmpty) ...[
-                CellSection(
-                  title: _appLocalizations.homeNeighborCells,
-                  cells: _simData!.neighborCells,
-                  isActive: false,
-                  descriptions: widget.externalDatabasesNotifier.value
-                      ? _cellDescriptions
-                      : {},
-                  guessedCids: const {},
-                ),
-              ],
-              ValueListenableBuilder(
-                valueListenable: debugNotifier,
-                builder: (context, isDebugOn, child) {
-                  return isDebugOn && _debug.isNotEmpty && _debug != "null"
-                      ? Container(
-                          margin: const EdgeInsets.only(
-                            top: 10,
-                            left: 20,
-                            right: 20,
-                            bottom: 20,
-                          ),
-                          child: Text("${_appLocalizations.debug}: $_debug"),
-                        )
-                      : const SizedBox.shrink();
-                },
-              ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 

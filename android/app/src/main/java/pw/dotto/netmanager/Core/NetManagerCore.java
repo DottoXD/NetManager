@@ -188,6 +188,8 @@ public class NetManagerCore {
             DebugLogger.add("Successfully executed " + postprocessor.getClass().getSimpleName() + ".");
         }
 
+        computeDataBandwidth(processed);
+
         emitEventsIfChanged(simSlotState, processed);
         simStateCache.updateSimData(simSlotState.simId, processed);
 
@@ -372,6 +374,21 @@ public class NetManagerCore {
         return slot == null ? List.of() : TelephonyCellDataSource.readCellBandwidths(slot.telephony, slot, appContext);
     }
 
+    private void computeDataBandwidth(SIMData data) {
+        if (data == null || data.getPrimaryCell() == null)
+            return;
+
+        if (!(data.getPrimaryCell().getBandwidth() < 0
+                || data.getPrimaryCell().getBandwidth() == TelephonyCellDataSource.CELL_INFO_UNAVAILABLE))
+            data.setActiveBw(data.getPrimaryCell().getBandwidth());
+
+        for (CellData cellData : data.getActiveCells()) {
+            if (!(cellData.getBandwidth() < 0 || cellData.getBandwidth() == TelephonyCellDataSource.CELL_INFO_UNAVAILABLE)
+                    && !data.getPrimaryCell().equals(cellData))
+                data.setActiveBw(data.getActiveBw() + cellData.getBandwidth());
+        }
+    }
+
     /*
      * public SIMData fetchLive(TelephonyManager telephony) {
      * if (telephony == null)
@@ -422,6 +439,10 @@ public class NetManagerCore {
 
     public int getSimCount() {
         return subscriptionTracker.getSimCount();
+    }
+
+    public Context getAppContext() {
+        return appContext;
     }
 
     public void dispose() {

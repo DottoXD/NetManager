@@ -1,11 +1,13 @@
 package pw.dotto.netmanager;
 
+import android.app.PictureInPictureParams;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
+import android.util.Rational;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -39,7 +41,7 @@ import pw.dotto.netmanager.WearOS.WearHandler;
  * This class also manages communications with WearOS devices.
  *
  * @author DottoXD
- * @version 0.1.6
+ * @version 0.2.0
  */
 public class MainActivity extends FlutterActivity {
   private static final String CHANNEL = "pw.dotto.netmanager/bridge";
@@ -51,6 +53,7 @@ public class MainActivity extends FlutterActivity {
   private MethodChannel chn;
   private SharedPreferences sharedPreferences;
   private Client activeSpeedtestClient = null;
+  private boolean pipEnabled = false;
 
   /**
    * This method is used to force NetManager Core to only get data for existing
@@ -487,6 +490,19 @@ public class MainActivity extends FlutterActivity {
               }
               break;
 
+            case "enterPip":
+              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                PictureInPictureParams params = new PictureInPictureParams.Builder()
+                    .setAspectRatio(new Rational(16, 9))
+                    .build();
+                pipEnabled = true;
+                enterPictureInPictureMode(params);
+                result.success(true);
+              } else {
+                result.error("PIP_UNSUPPORTED", "Device doesn't support PIP mode.", null);
+              }
+              break;
+
             default:
               result.notImplemented();
               break;
@@ -495,6 +511,16 @@ public class MainActivity extends FlutterActivity {
           break;
       }
     });
+  }
+
+  @Override
+  public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode) {
+    super.onPictureInPictureModeChanged(isInPictureInPictureMode);
+
+    if (chn != null) {
+      pipEnabled = isInPictureInPictureMode;
+      chn.invokeMethod("onPipChanged", isInPictureInPictureMode);
+    }
   }
 
   @Override
@@ -581,11 +607,14 @@ public class MainActivity extends FlutterActivity {
 
   @Override
   public void onPause() {
-    if (core != null) {
-      core.dispose();
-    }
-
     super.onPause();
+
+    wearHandler.isWearConnected(isConnected -> {
+      if (core != null && !pipEnabled && !isConnected) {
+        core.dispose();
+      }
+    });
+
     wearHandler.onPause();
   }
 

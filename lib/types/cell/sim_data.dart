@@ -26,6 +26,32 @@ class SIMData {
     required this.neighborCells,
   });
 
+  SIMData copyWith({
+    String? operator,
+    String? network,
+    int? networkGen,
+    String? homePlmn,
+    String? networkPlmn,
+    CellData? primaryCell,
+    double? activeBw,
+    List<CellData>? activeCells,
+    List<CellData>? likelyCells,
+    List<CellData>? neighborCells,
+  }) {
+    return SIMData(
+      operator: operator ?? this.operator,
+      network: network ?? this.network,
+      networkGen: networkGen ?? this.networkGen,
+      homePlmn: homePlmn ?? this.homePlmn,
+      networkPlmn: networkPlmn ?? this.networkPlmn,
+      primaryCell: primaryCell ?? this.primaryCell,
+      activeBw: activeBw ?? this.activeBw,
+      activeCells: activeCells ?? this.activeCells,
+      likelyCells: likelyCells ?? this.likelyCells,
+      neighborCells: neighborCells ?? this.neighborCells,
+    );
+  }
+
   factory SIMData.fromJson(Map<String, dynamic> json) {
     return SIMData(
       operator: json["operator"],

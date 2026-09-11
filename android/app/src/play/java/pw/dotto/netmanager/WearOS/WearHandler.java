@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 
@@ -21,7 +20,6 @@ import java.util.ArrayList;
 
 import pw.dotto.netmanager.Core.Manager;
 import pw.dotto.netmanager.Core.Mobile.CellSnapshot;
-import pw.dotto.netmanager.MainActivity;
 import pw.dotto.netmanager.Utils.DebugLogger;
 
 /**
@@ -29,7 +27,7 @@ import pw.dotto.netmanager.Utils.DebugLogger;
  * WearOS bridge for NetManager.
  *
  * @author DottoXD
- * @version 0.1.5
+ * @version 0.2.0
  */
 public class WearHandler implements WearIntegration, MessageClient.OnMessageReceivedListener {
     private Context context;
@@ -78,6 +76,17 @@ public class WearHandler implements WearIntegration, MessageClient.OnMessageRece
             wearManager = null;
         }
         this.context = null;
+    }
+
+    public void isWearConnected(WearConnectionCallback callback) {
+        Wearable.getNodeClient(context)
+                .getConnectedNodes()
+                .addOnSuccessListener(nodes -> {
+                    callback.onResult(nodes != null && !nodes.isEmpty());
+                })
+                .addOnFailureListener(e -> {
+                    callback.onResult(false);
+                });
     }
 
     /**
