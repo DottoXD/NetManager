@@ -1,5 +1,4 @@
 import 'package:material_ui/material_ui.dart';
-import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/cell_utils.dart';
 import 'package:netmanager/types/cell/cell_data.dart';
 
@@ -17,7 +16,6 @@ class PipCellRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppLocalizations appLocalizations = AppLocalizations.of(context)!;
     final ThemeData theme = Theme.of(context);
 
     final bandPrefix = cell.channelNumberString == "NR-ARFCN" ? "N" : "B";

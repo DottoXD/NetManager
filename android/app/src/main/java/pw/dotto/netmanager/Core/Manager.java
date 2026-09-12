@@ -1,6 +1,7 @@
 package pw.dotto.netmanager.Core;
 
 import android.content.Context;
+import android.telephony.CellSignalStrength;
 import android.telephony.TelephonyManager;
 
 import java.util.List;
@@ -127,6 +128,15 @@ public class Manager {
 
     public SimReceiverManager getSimReceiverManager() {
         return core.getSubscriptionTracker().getSimReceiverManager();
+    }
+
+    public List<Integer> getCellBandwidths(int simId) {
+        return core.getCellBandwidths(simId);
+    }
+
+    public CellSignalStrength[] getCellSignalStrengths(int simId) {
+        SIMSlotState slot = core.getSlot(simId);
+        return slot != null ? TelephonyCellDataSource.getSignalStrengths(context, slot, slot.telephony) : null;
     }
 
     public void updateInterval(int intervalSeconds) {

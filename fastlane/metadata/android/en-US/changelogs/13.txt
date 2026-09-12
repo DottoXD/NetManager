@@ -2,3 +2,4 @@
 - Added a "PIP mode" feature for home page data.
 - Fixed extra bandwidth & signal postprocessing on Qualcomm devices.
 - Added Shizuku support for gathering extra cell data.
+- Users can now send debug reports from the settings screen.

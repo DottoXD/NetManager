@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:netmanager/components/dialogs/about.dart';
 import 'package:netmanager/components/dialogs/database_manager.dart';
 import 'package:netmanager/components/dialogs/debug_log.dart';
+import 'package:netmanager/components/dialogs/debug_report.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/dialogs/language.dart';
 import 'package:netmanager/components/dialogs/position_precision.dart';
@@ -603,6 +604,32 @@ class _SettingsBodyState extends State<SettingsBody>
                 updateData();
               },
             ),
+          ),
+          ListTile(
+            title: Text(_appLocalizations.settingsDebugReportTitle),
+            subtitle: Text(_appLocalizations.settingsDebugReportDescription),
+            enabled: _analytics,
+            trailing: _analytics
+                ? IconButton(
+                    icon: const Icon(Icons.send_outlined),
+                    tooltip: _appLocalizations.openDialog,
+                    onPressed: () async {
+                      await HapticService().triggerHaptic(
+                        HapticType.selection,
+                        context,
+                      );
+
+                      if (context.mounted) {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return DebugReportDialog(platform: platform);
+                          },
+                        );
+                      }
+                    },
+                  )
+                : const SizedBox.shrink(),
           ),
           ListTile(
             title: Text(_appLocalizations.settingsUpdatesTitle),

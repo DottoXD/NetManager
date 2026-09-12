@@ -2,3 +2,4 @@
 - Aggiunta la modalità picture in picture (PIP) per i dati radio in home page.
 - Risolti i problemi al postprocessing della bandwidth e del segnale sui dispositivi Qualcomm.
 - Aggiunto il supporto a Shizuku per l'ottenimento di dati radio extra.
+- Gli utenti possono ora inviare segnalazioni di debug dalls schermata delle impostazioni

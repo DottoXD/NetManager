@@ -82,6 +82,7 @@
   "pictureInPicture": "Picture in picture",
   "unknown": "Unknown",
   "close": "Close",
+  "send": "Send",
   "eventLogsSaved": "Event logs saved at: {path}",
   "@eventLogsSaved": {
     "description": "An events logs got saved.",
@@ -252,6 +253,8 @@
   "settingsLanguageDescription": "Change to another supported language. Requires a restart for full effect.",
   "settingsAnalyticsTitle": "Analytics",
   "settingsAnalyticsDescription": "Share anonymous insights to help me improve NetManager.",
+  "settingsDebugReportTitle": "Send a debug report",
+  "settingsDebugReportDescription": "Sends a debug report with cell data and postprocessing info to the developer. You must have analytics enabled to send one; if you don't, you shall restart the app after enabling them.",
   "settingsUpdatesTitle": "Check for updates",
   "settingsUpdatesDescription": "Let NetManager automatically look for updates when the app is opened.",
   "settingsAdvancedModeTitle": "Advanced mode",
@@ -368,5 +371,8 @@
   "cellSearch": "Search by Cell ID or name",
   "cellNoneFound": "No cells found.",
   "mapFiltersOverlayTitle": "Display the map overlay",
-  "mapFiltersOverlayDescription": "Show useful information on top of the map."
+  "mapFiltersOverlayDescription": "Show useful information on top of the map.",
+  "debugReportInstructions": "Include an optional note describing the issue you experienced.",
+  "debugReportHint": "Incorrect bandwidth reported",
+  "debugReportError": "Failed to send a report."
 }

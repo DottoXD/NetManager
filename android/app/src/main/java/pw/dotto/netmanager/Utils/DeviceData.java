@@ -3,6 +3,8 @@ package pw.dotto.netmanager.Utils;
 import android.content.SharedPreferences;
 import android.os.Build;
 
+import androidx.annotation.NonNull;
+
 import com.google.gson.Gson;
 
 /**
@@ -29,9 +31,10 @@ public class DeviceData {
     public static synchronized DeviceData getInstance(SharedPreferences prefs) {
         if (instance == null) {
             instance = new DeviceData(Build.MANUFACTURER, Build.HARDWARE, Build.MODEL);
-            DebugLogger.add("DeviceData: " + instance.manufacturer + ", " + instance.modem + ", " + instance.model + ".");
+            DebugLogger
+                    .add("DeviceData: " + instance.manufacturer + ", " + instance.modem + ", " + instance.model + ".");
 
-            if(prefs != null)
+            if (prefs != null)
                 instance.save(prefs);
         }
 
@@ -60,5 +63,15 @@ public class DeviceData {
 
     public String getModel() {
         return model;
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return "DeviceData{" +
+                "manufacturer='" + manufacturer + '\'' +
+                ", modem='" + modem + '\'' +
+                ", model='" + model + '\'' +
+                '}';
     }
 }

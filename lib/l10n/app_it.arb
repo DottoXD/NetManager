@@ -82,6 +82,7 @@
   "pictureInPicture": "Picture in picture",
   "unknown": "Sconosciuta",
   "close": "Chiudi",
+  "send": "Invia",
   "eventLogsSaved": "Log degli eventi salvato a: {path}",
   "@eventLogsSaved": {
     "description": "An events logs got saved.",
@@ -252,6 +253,8 @@
   "settingsLanguageDescription": "Cambia a un'altra lingua supportata. Richiede un riavvio per la corretta applicazione.",
   "settingsAnalyticsTitle": "Dati analitici",
   "settingsAnalyticsDescription": "Condividi dati analitici anonimi per aiutarmi a migliorare NetManager.",
+  "settingsDebugReportTitle": "Invia una segnalazione di debug",
+  "settingsDebugReportDescription": "Invia una segnalazione con i dati delle celle e le informazioni sul postprocessing allo sviluppatore. Devi avere i dati analitici abilitati per inviare una segnalazione; se non li hai, abilitali e successivamente riavvia l'app.",
   "settingsUpdatesTitle": "Controlla aggiornamenti",
   "settingsUpdatesDescription": "Lascia che NetManager controlli automaticamente la disponibilità di aggiornamenti quando l'app viene avviata.",
   "settingsAdvancedModeTitle": "Modalità avanzata",
@@ -260,7 +263,7 @@
   "settingsPositionDescription": "La precisione della posizione determina la precisione del servizio di registrazione nella mappa.",
   "settingsLikelyCellsTitle": "Mostra le celle probabilmente attive (Sperimentale)",
   "settingsLikelyCellsDescription": "Mostra le celle che probabilmente (ma non sicuramente) sono attive come 'probabilmente attive' e non come vicine nella schermata home. Questa funzione a volte potrebbe fornire dati errati, specialmente sulle configurazioni dual SIM.",
-  "settingsCountLikelyActiveTitle": "Counta le celle probabilmente attive come attive",
+  "settingsCountLikelyActiveTitle": "Conta le celle probabilmente attive come attive",
   "settingsCountLikelyActiveDescription": "Conta e mostra le celle rilevate come probabilmente attive come pienamente attive. Questa funzione è sconsigliata sulle configurazioni dual SIM.",
   "settingsStartupMonitoringTitle": "Inizializza all'avvio",
   "settingsStartupMonitoringDescription": "Avvia il servizio di tracking delle celle all'avvio del tuo dispositivo.",
@@ -368,5 +371,8 @@
   "cellSearch": "Cerca per ID cella o nome",
   "cellNoneFound": "Nessuna cella trovata.",
   "mapFiltersOverlayTitle": "Mostra l'overlay della mappa",
-  "mapFiltersOverlayDescription": "Visualizza alcune informazioni utili sulla mappa."
+  "mapFiltersOverlayDescription": "Visualizza alcune informazioni utili sulla mappa.",
+  "debugReportInstructions": "Includi una nota opzionale che descriva il problema che hai riscontrato.",
+  "debugReportHint": "Larghezza di banda errata riportata",
+  "debugReportError": "Impossibile inviare una segnalazione."
 }

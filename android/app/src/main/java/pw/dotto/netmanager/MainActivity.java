@@ -1,5 +1,7 @@
 package pw.dotto.netmanager;
 
+import static pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
+
 import android.app.PictureInPictureParams;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -12,7 +14,10 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import com.google.gson.Gson;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
@@ -20,6 +25,7 @@ import io.flutter.plugin.common.MethodChannel;
 import pw.dotto.netmanager.Core.Events.EventManager;
 import pw.dotto.netmanager.Core.Events.NetManagerEvent;
 import pw.dotto.netmanager.Core.Manager;
+import pw.dotto.netmanager.Core.Mobile.CellDatas.CellData;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
 import pw.dotto.netmanager.Core.Mobile.SimReceiverManager;
 import pw.dotto.netmanager.Core.Processors.DevicePatches;
@@ -524,8 +530,51 @@ public class MainActivity extends FlutterActivity {
               result.success(null);
               core.setAdvancedMode(advancedMode);
 
-              if (advancedMode == true && !Permissions.checkShizuku())
+              if (advancedMode && !Permissions.checkShizuku())
                 Permissions.requestShizuku(SHIZUKU_REQ_CODE);
+              break;
+
+            case "getDebugReport":
+              try {
+                Map<String, Object> debugMap = new HashMap<>();
+
+                if (core != null) {
+                  SIMData unredactedData = core.getSimNetworkData(selectedSim);
+
+                  if (unredactedData != null) {
+                    for (CellData cell : unredactedData.getActiveCells()) {
+                      cell.setCellIdentifier(String.valueOf(CELL_INFO_UNAVAILABLE));
+                      cell.setAreaCode(CELL_INFO_UNAVAILABLE);
+                    }
+
+                    if (unredactedData.getPrimaryCell() != null) {
+                      unredactedData.getPrimaryCell().setCellIdentifier(String.valueOf(CELL_INFO_UNAVAILABLE));
+                      unredactedData.getPrimaryCell().setAreaCode(CELL_INFO_UNAVAILABLE);
+                    }
+
+                    debugMap.put("simData", unredactedData);
+                  }
+
+                  debugMap.put("operator", core.getSimOperator(selectedSim));
+                  debugMap.put("carrier", core.getSimCarrier(selectedSim));
+                  debugMap.put("gen", core.getSimNetworkGen(selectedSim));
+                  debugMap.put("plmn", core.getPlmn(selectedSim));
+                  debugMap.put("simCount", core.getSimCount());
+                  debugMap.put("nsaStatus", core.getNsaStatus(selectedSim));
+                  debugMap.put("bandwidths", core.getCellBandwidths(selectedSim));
+                  debugMap.put("signalStrengths", core.getCellSignalStrengths(selectedSim));
+                }
+
+                debugMap.put("advancedMode", advancedMode);
+                debugMap.put("logs", DebugLogger.getLogs());
+                debugMap.put("deviceData", DeviceData.getInstance(null).toString());
+                debugMap.put("androidVersion", Build.VERSION.RELEASE);
+                debugMap.put("sdkInt", Build.VERSION.SDK_INT);
+
+                result.success(gson.toJson(debugMap));
+              } catch (Exception e) {
+                result.error("DEBUG_FETCH_FAILED", e.getMessage(), e.getStackTrace());
+              }
               break;
 
             default:
