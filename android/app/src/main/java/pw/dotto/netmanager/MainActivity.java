@@ -45,6 +45,7 @@ import pw.dotto.netmanager.WearOS.WearHandler;
  */
 public class MainActivity extends FlutterActivity {
   private static final String CHANNEL = "pw.dotto.netmanager/bridge";
+  private static final int SHIZUKU_REQ_CODE = 23;
 
   private Manager core = null;
   private int selectedSim = 0;
@@ -54,6 +55,7 @@ public class MainActivity extends FlutterActivity {
   private SharedPreferences sharedPreferences;
   private Client activeSpeedtestClient = null;
   private boolean pipEnabled = false;
+  private boolean advancedMode = false;
 
   /**
    * This method is used to force NetManager Core to only get data for existing
@@ -81,8 +83,13 @@ public class MainActivity extends FlutterActivity {
     super.configureFlutterEngine(flutterEngine);
     Gson gson = new Gson();
 
-    if (sharedPreferences == null)
+    if (sharedPreferences == null) {
       sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
+      advancedMode = sharedPreferences.getBoolean("advancedMode", false);
+
+      if (advancedMode == true && !Permissions.checkShizuku())
+        Permissions.requestShizuku(SHIZUKU_REQ_CODE);
+    }
 
     chn = new MethodChannel(
         flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL);
@@ -306,7 +313,7 @@ public class MainActivity extends FlutterActivity {
           }
 
           if (core == null) {
-            core = new Manager(this);
+            core = new Manager(this, advancedMode);
 
             try {
               int updateInterval = ((Long) sharedPreferences.getLong("flutter.updateInterval", 3)).intValue();
@@ -503,6 +510,24 @@ public class MainActivity extends FlutterActivity {
               }
               break;
 
+            case "checkShizuku":
+              result.success(Permissions.checkShizuku());
+              break;
+
+            case "requestShizuku":
+              Permissions.requestShizuku(SHIZUKU_REQ_CODE);
+              result.success(null);
+              break;
+
+            case "toggleAdvancedMode":
+              advancedMode = !advancedMode;
+              result.success(null);
+              core.setAdvancedMode(advancedMode);
+
+              if (advancedMode == true && !Permissions.checkShizuku())
+                Permissions.requestShizuku(SHIZUKU_REQ_CODE);
+              break;
+
             default:
               result.notImplemented();
               break;
@@ -529,14 +554,19 @@ public class MainActivity extends FlutterActivity {
 
     DevicePatches.registerAll();
 
-    if (sharedPreferences == null)
+    if (sharedPreferences == null) {
       sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
+      advancedMode = sharedPreferences.getBoolean("advancedMode", false);
+
+      if (advancedMode == true && !Permissions.checkShizuku())
+        Permissions.requestShizuku(SHIZUKU_REQ_CODE);
+    }
 
     DeviceData.getInstance(sharedPreferences);
 
     if (Permissions.check(this, Permissions.READ_PHONE_STATE)) {
       if (core == null) {
-        core = new Manager(this);
+        core = new Manager(this, advancedMode);
 
         try {
           int updateInterval = ((Long) sharedPreferences.getLong("flutter.updateInterval", 3)).intValue();
@@ -593,7 +623,7 @@ public class MainActivity extends FlutterActivity {
     wearHandler.onResume();
 
     if (core == null && Permissions.check(this, Permissions.READ_PHONE_STATE)) {
-      core = new Manager(this);
+      core = new Manager(this, advancedMode);
     }
 
     try {

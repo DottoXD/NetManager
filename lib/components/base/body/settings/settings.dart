@@ -43,7 +43,8 @@ class SettingsBody extends StatefulWidget {
     this.bearingLineNotifier,
     this.homeDataGraphsNotifier,
     this.homeGraphsRetentionTimeNotifier,
-    this.likelyCellsNotifier, {
+    this.likelyCellsNotifier,
+    this.countLikelyAsActive, {
     super.key,
   });
 
@@ -74,6 +75,7 @@ class SettingsBody extends StatefulWidget {
   final ValueNotifier<bool> homeDataGraphsNotifier;
   final ValueNotifier<int> homeGraphsRetentionTimeNotifier;
   final ValueNotifier<bool> likelyCellsNotifier;
+  final ValueNotifier<bool> countLikelyAsActive;
 
   @override
   State<SettingsBody> createState() => _SettingsBodyState();
@@ -108,6 +110,7 @@ class _SettingsBodyState extends State<SettingsBody>
   late ValueNotifier<bool> homeDataGraphsNotifier;
   late ValueNotifier<int> homeGraphsRetentionTimeNotifier;
   late ValueNotifier<bool> likelyCellsNotifier;
+  late ValueNotifier<bool> countLikelyAsActive;
 
   late TextEditingController _mapTilesTemplateController;
   late TextEditingController _speedtestInstanceController;
@@ -128,6 +131,7 @@ class _SettingsBodyState extends State<SettingsBody>
   bool _backgroundService = false;
   bool _analytics = false;
   bool _checkUpdates = false;
+  bool _advancedMode = false;
   bool _logEvents = false;
   bool _metricSystem = true;
   String _mapTilesTemplate = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
@@ -138,6 +142,7 @@ class _SettingsBodyState extends State<SettingsBody>
   bool _homeDataGraphs = true;
   int _homeGraphsRetentionTime = 30;
   bool _likelyCells = false;
+  bool _countLikelyAsActive = false;
   int _positionPrecision = 3;
   int _speedMeasurementUnit = 1;
   int _speedtestBackend = 1;
@@ -197,6 +202,7 @@ class _SettingsBodyState extends State<SettingsBody>
     homeDataGraphsNotifier = widget.homeDataGraphsNotifier;
     homeGraphsRetentionTimeNotifier = widget.homeGraphsRetentionTimeNotifier;
     likelyCellsNotifier = widget.likelyCellsNotifier;
+    countLikelyAsActive = widget.countLikelyAsActive;
 
     updateData();
     _positionPrecisionSelection = positionPrecisions[_positionPrecision];
@@ -254,6 +260,8 @@ class _SettingsBodyState extends State<SettingsBody>
       _analytics = sharedPreferences.getBool("analytics") ?? _analytics;
       _checkUpdates =
           sharedPreferences.getBool("checkUpdates") ?? _checkUpdates;
+      _advancedMode =
+          sharedPreferences.getBool("advancedMode") ?? _advancedMode;
       _logEvents = sharedPreferences.getBool("logEvents") ?? _logEvents;
       _metricSystem =
           sharedPreferences.getBool("metricSystem") ?? _metricSystem;
@@ -271,6 +279,9 @@ class _SettingsBodyState extends State<SettingsBody>
       _homeDataGraphs =
           sharedPreferences.getBool("homeDataGraphs") ?? _homeDataGraphs;
       _likelyCells = sharedPreferences.getBool("likelyCells") ?? _likelyCells;
+      _countLikelyAsActive =
+          sharedPreferences.getBool("countLikelyAsActive") ??
+          _countLikelyAsActive;
       _homeGraphsRetentionTime =
           sharedPreferences.getInt("homeGraphsRetentionTime") ??
           _homeGraphsRetentionTime;
@@ -614,6 +625,24 @@ class _SettingsBodyState extends State<SettingsBody>
             color: Theme.of(context).colorScheme.outlineVariant,
           ),
           ListTile(
+            title: Text(_appLocalizations.settingsAdvancedModeTitle),
+            subtitle: Text(_appLocalizations.settingsAdvancedModeDescription),
+            trailing: Switch(
+              value: _advancedMode,
+              onChanged: (bool value) async {
+                await HapticService().triggerHaptic(
+                  HapticType.selection,
+                  context,
+                );
+
+                await platform.invokeMethod("toggleAdvancedMode");
+
+                setBool("advancedMode", value);
+                updateData();
+              },
+            ),
+          ),
+          ListTile(
             title: Text(
               "${_appLocalizations.settingsPositionTitle} (${positionPrecisions[_positionPrecision]})",
             ),
@@ -666,6 +695,27 @@ class _SettingsBodyState extends State<SettingsBody>
               },
             ),
           ),
+          if (_likelyCells) ...[
+            ListTile(
+              title: Text(_appLocalizations.settingsCountLikelyActiveTitle),
+              subtitle: Text(
+                _appLocalizations.settingsCountLikelyActiveDescription,
+              ),
+              trailing: Switch(
+                value: _countLikelyAsActive,
+                onChanged: (bool value) async {
+                  await HapticService().triggerHaptic(
+                    HapticType.selection,
+                    context,
+                  );
+
+                  setBool("countLikelyAsActive", value);
+                  countLikelyAsActive.value = value;
+                  updateData();
+                },
+              ),
+            ),
+          ],
           ListTile(
             title: Text(_appLocalizations.settingsStartupMonitoringTitle),
             subtitle: Text(

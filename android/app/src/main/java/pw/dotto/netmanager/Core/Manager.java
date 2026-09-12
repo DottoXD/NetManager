@@ -19,7 +19,7 @@ import pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource;
  * rewriting substantial (and working) parts of the codebase.
  *
  * @author DottoXD
- * @version 0.1.1
+ * @version 0.2.0
  */
 public class Manager {
     private final Context context;
@@ -30,10 +30,22 @@ public class Manager {
         this(context, NetManagerCore.UI_CONSUMER_ID, NetManagerCore.DEFAULT_INTERVAL_SECONDS);
     }
 
+    public Manager(Context context, boolean advancedMode) {
+        this(context, NetManagerCore.UI_CONSUMER_ID, NetManagerCore.DEFAULT_INTERVAL_SECONDS, advancedMode);
+    }
+
     public Manager(Context context, String consumerId, int intervalSeconds) {
         this.context = context.getApplicationContext();
         this.consumerId = consumerId;
         this.core = NetManagerCore.getInstance(this.context);
+        this.core.attach(consumerId, intervalSeconds);
+    }
+
+    public Manager(Context context, String consumerId, int intervalSeconds, boolean advancedMode) {
+        this.context = context.getApplicationContext();
+        this.consumerId = consumerId;
+        this.core = NetManagerCore.getInstance(this.context);
+        this.core.setAdvancedMode(advancedMode);
         this.core.attach(consumerId, intervalSeconds);
     }
 
@@ -119,6 +131,10 @@ public class Manager {
 
     public void updateInterval(int intervalSeconds) {
         core.attach(consumerId, intervalSeconds);
+    }
+
+    public void setAdvancedMode(boolean advancedMode) {
+        core.setAdvancedMode(advancedMode);
     }
 
     public void dispose() {

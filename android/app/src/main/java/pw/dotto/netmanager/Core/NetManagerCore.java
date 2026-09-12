@@ -77,6 +77,8 @@ public class NetManagerCore {
 
     public static final String UI_CONSUMER_ID = "ui";
 
+    private boolean advancedMode = false;
+
     private NetManagerCore(Context context) {
         this.appContext = context.getApplicationContext();
         this.subscriptionTracker = new SubscriptionTracker(appContext);
@@ -93,10 +95,8 @@ public class NetManagerCore {
         this.subscriptionTracker.setOnSlotRemovedListener(simId -> {
             simStateCache.clear(simId);
             lastEventValues.keySet().removeIf(key -> key.startsWith(simId + ":"));
-            if (sourceSelector.select() instanceof TelephonyCellDataSource) {
-                TelephonyCellDataSource telephonyCellDataSource = (TelephonyCellDataSource) sourceSelector.select();
-                telephonyCellDataSource.clearSlotState(simId);
-            }
+            TelephonyCellDataSource telephonyCellDataSource = sourceSelector.getTelephonySource();
+            telephonyCellDataSource.clearSlotState(simId);
         });
 
         DebugLogger.add("Created a new NetManagerCore instance!");
@@ -383,7 +383,8 @@ public class NetManagerCore {
             data.setActiveBw(data.getPrimaryCell().getBandwidth());
 
         for (CellData cellData : data.getActiveCells()) {
-            if (!(cellData.getBandwidth() < 0 || cellData.getBandwidth() == TelephonyCellDataSource.CELL_INFO_UNAVAILABLE)
+            if (!(cellData.getBandwidth() < 0
+                    || cellData.getBandwidth() == TelephonyCellDataSource.CELL_INFO_UNAVAILABLE)
                     && !data.getPrimaryCell().equals(cellData))
                 data.setActiveBw(data.getActiveBw() + cellData.getBandwidth());
         }
@@ -439,6 +440,14 @@ public class NetManagerCore {
 
     public int getSimCount() {
         return subscriptionTracker.getSimCount();
+    }
+
+    public boolean getAdvancedMode() {
+        return advancedMode;
+    }
+
+    public void setAdvancedMode(boolean advancedMode) {
+        this.advancedMode = advancedMode;
     }
 
     public Context getAppContext() {

@@ -11,12 +11,14 @@ import androidx.core.app.ActivityCompat;
 
 import java.util.ArrayList;
 
+import rikka.shizuku.Shizuku;
+
 /**
  * NetManager's Permissions class is a component used to check and request
  * permissions.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.2.0
  */
 public class Permissions {
         private static final int REQ_FOREGROUND = 1;
@@ -130,6 +132,16 @@ public class Permissions {
                                                         REQ_BACKGROUND);
                                 }
                         }
+                }
+        }
+
+        public static boolean checkShizuku() {
+                return Shizuku.pingBinder() && Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED;
+        }
+
+        public static void requestShizuku(int requestCode) {
+                if (Shizuku.pingBinder() && Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
+                        Shizuku.requestPermission(requestCode);
                 }
         }
 }

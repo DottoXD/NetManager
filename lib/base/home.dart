@@ -80,6 +80,7 @@ class _HomeState extends State<Home> {
   final ValueNotifier<int> _homeGraphsRetentionTimeNotifier = ValueNotifier(30);
 
   final ValueNotifier<bool> _likelyCellsNotifier = ValueNotifier(false);
+  final ValueNotifier<bool> _countLikelyAsActive = ValueNotifier(false);
 
   final ValueNotifier<int> _currentSimSlotNotifier = ValueNotifier(0);
   final ValueNotifier<bool> _speedtestRunningNotifier = ValueNotifier(false);
@@ -141,6 +142,8 @@ class _HomeState extends State<Home> {
         widget.sharedPreferences.getInt("homeGraphsRetentionTime") ?? 30;
     _likelyCellsNotifier.value =
         widget.sharedPreferences.getBool("likelyCells") ?? false;
+    _countLikelyAsActive.value =
+        widget.sharedPreferences.getBool("countLikelyAsActive") ?? false;
 
     try {
       widget.platform.invokeMethod<bool>("requestPermissions", {
@@ -193,6 +196,7 @@ class _HomeState extends State<Home> {
     _homeDataGraphsNotifier.dispose();
     _homeGraphsRetentionTimeNotifier.dispose();
     _likelyCellsNotifier.dispose();
+    _countLikelyAsActive.dispose();
     _currentSimSlotNotifier.dispose();
     _speedtestRunningNotifier.dispose();
 
@@ -272,6 +276,7 @@ class _HomeState extends State<Home> {
               _homeDataGraphsNotifier,
               _homeGraphsRetentionTimeNotifier,
               _likelyCellsNotifier,
+              _countLikelyAsActive,
               _currentSimSlotNotifier,
               _isPipActiveNotifier,
               onUpdateButtonPressed: (callback) {
@@ -341,6 +346,7 @@ class _HomeState extends State<Home> {
               _homeDataGraphsNotifier,
               _homeGraphsRetentionTimeNotifier,
               _likelyCellsNotifier,
+              _countLikelyAsActive,
             ),
           ],
         ),

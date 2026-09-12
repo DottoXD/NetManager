@@ -37,6 +37,7 @@ class HomeBody extends StatefulWidget {
     this.homeDataGraphsNotifier,
     this.homeGraphsRetentionTimeNotifier,
     this.likelyCellsNotifier,
+    this.countLikelyAsActive,
     this.currentSimSlotNotifier,
     this.isPipActiveNotifier, {
     super.key,
@@ -57,6 +58,7 @@ class HomeBody extends StatefulWidget {
   final ValueNotifier<bool> homeDataGraphsNotifier;
   final ValueNotifier<int> homeGraphsRetentionTimeNotifier;
   final ValueNotifier<bool> likelyCellsNotifier;
+  final ValueNotifier<bool> countLikelyAsActive;
   final ValueNotifier<int> currentSimSlotNotifier;
   final ValueNotifier<bool> isPipActiveNotifier;
 
@@ -212,6 +214,11 @@ class _HomeBodyState extends State<HomeBody> {
 
         if (likelyBw > 0) {
           simData = simData.copyWith(activeBw: simData.activeBw + likelyBw);
+        }
+
+        if (widget.countLikelyAsActive.value) {
+          simData.activeCells.addAll(simData.likelyCells);
+          simData.likelyCells.clear();
         }
       }
 

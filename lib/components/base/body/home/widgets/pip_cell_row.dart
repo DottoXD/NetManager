@@ -44,6 +44,9 @@ class PipCellRow extends StatelessWidget {
         ? theme.colorScheme.primary
         : (isLikely ? theme.colorScheme.outline : theme.colorScheme.secondary);
 
+    int? cellId = int.tryParse(cell.cellIdentifier);
+    int factor = conversionFactor(cell);
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 2.0),
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
@@ -69,7 +72,7 @@ class PipCellRow extends StatelessWidget {
                     ),
                     TextSpan(
                       text:
-                          "${isValidString(cell.cellIdentifier) ? cell.cellIdentifier : appLocalizations.unknownCell}"
+                          "${isValidString(cell.cellIdentifier) && cellId != null ? "${cellId / factor}/${cellId % factor}" : ""}"
                           "${isValidInt(cell.bandwidth) && cell.bandwidth > 0 ? " (${cell.bandwidth}MHz)" : ""}",
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontSize: 11,
