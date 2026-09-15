@@ -5,3 +5,6 @@
 - Gli utenti possono ora inviare segnalazioni di debug dalls schermata delle impostazioni
 - Risolti alcuni bug.
 - Possibili correzioni ai dati delle celle su Pixel 11 con il postprocessore delle celle probabili.
+- Miglioramenti alla UI.
+- Corretto il rilevamento della modalità aereo.
+- Il sistema di conversione delle registrazioni è stato aggiornato.

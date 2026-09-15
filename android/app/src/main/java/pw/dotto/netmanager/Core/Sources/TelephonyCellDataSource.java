@@ -537,6 +537,34 @@ public class TelephonyCellDataSource implements CellDataSource {
     }
 
     @SuppressLint("MissingPermission")
+    public static boolean isAirplaneMode(Context context, TelephonyManager telephony, SIMSlotState simSlotState) {
+        if (telephony == null || (context != null && !Permissions.check(context, Permissions.READ_PHONE_STATE)))
+            return false;
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                    && NetManagerCore.getInstance(context).isForegroundActive()) {
+                ServiceState state = telephony.getServiceState();
+                if (state == null)
+                    return false;
+
+                if (state.getState() == ServiceState.STATE_POWER_OFF)
+                    return true;
+            } else {
+                int state = simSlotState.serviceStateListener != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                        ? simSlotState.serviceStateListener.getState()
+                        : simSlotState.legacyPhoneStateListener.getState();
+
+                if (state == ServiceState.STATE_POWER_OFF)
+                    return true;
+            }
+        } catch (Exception ignored) {
+        }
+
+        return false;
+    }
+
+    @SuppressLint("MissingPermission")
     public static String getSimCarrier(Context context, TelephonyManager telephony, SIMSlotState simSlotState) {
         if (telephony == null || (context != null && !Permissions.check(context, Permissions.READ_PHONE_STATE)))
             return "NetManager";

@@ -64,24 +64,31 @@ class CellListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     AppLocalizations appLocalizations = AppLocalizations.of(context)!;
 
-    String cellContent = createCellContent(context, cell).replaceAll(
+    String rawContent = createCellContent(context, cell).replaceAll(
       "%node%",
       (nodeVal != 0
           ? "${strongGuess ? appLocalizations.likely : appLocalizations.possibly} ${(nodeVal / factor).floor()}/${nodeVal % factor}"
           : appLocalizations.unknownCell),
     );
 
-    if (cellContent.contains(appLocalizations.unknownCell) &&
-        cellContent.contains(appLocalizations.unknownBandwidth)) {
-      List<String> lines = cellContent.split('\n');
+    List<String> rawLines = [];
+    if (description != null && description!.trim().isNotEmpty) {
+      rawLines.add("$description.");
+    }
+    rawLines.addAll(rawContent.split("\n"));
+
+    List<String> lines = rawLines
+        .where((line) => line.trim().isNotEmpty)
+        .toList();
+
+    if (rawContent.contains(appLocalizations.unknownCell) &&
+        rawContent.contains(appLocalizations.unknownBandwidth)) {
       if (lines.isNotEmpty) {
-        cellContent = lines.skip(1).join('\n');
+        lines.removeAt(0);
       }
     }
 
-    if (description != null && description!.isNotEmpty) {
-      cellContent = "$description.\n$cellContent";
-    }
+    String cellContent = lines.join("\n");
 
     List<IconData> icons = [
       Icons.signal_cellular_0_bar_outlined,
@@ -90,6 +97,21 @@ class CellListItem extends StatelessWidget {
       Icons.auto_awesome_rounded,
       Icons.question_mark,
     ];
+
+    IconData? alternativeIcon;
+    if (!showSignalIcon) {
+      switch (cell.channelNumberString) {
+        case "NR-ARFCN":
+          alternativeIcon = Icons.five_g_outlined;
+          break;
+        case "EARFCN":
+          alternativeIcon = Icons.four_g_mobiledata_outlined;
+          break;
+        case "UARFCN":
+          alternativeIcon = Icons.three_g_mobiledata_outlined;
+          break;
+      }
+    }
 
     return Column(
       children: [
@@ -108,7 +130,13 @@ class CellListItem extends StatelessWidget {
                   color: Theme.of(context).colorScheme.onPrimaryContainer
                       .withValues(alpha: 0.85),
                 )
-              : null,
+              : (alternativeIcon == null
+                    ? null
+                    : Icon(
+                        alternativeIcon,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer
+                            .withValues(alpha: 0.85),
+                      )),
         ),
         if (showDivider)
           Container(

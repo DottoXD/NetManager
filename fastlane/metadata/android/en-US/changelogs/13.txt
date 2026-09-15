@@ -5,3 +5,6 @@
 - Users can now send debug reports from the settings screen.
 - Various bug fixes.
 - Experimental cell data fixes for Pixel 11 thru the likely cells postprocessor.
+- UI improvements.
+- Proper airplane mode detection.
+- The recording conversion system has been updated.

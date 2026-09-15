@@ -1,6 +1,9 @@
 import 'package:material_ui/material_ui.dart';
-import 'package:netmanager/types/recording/recorded_data.dart';
+import 'package:netmanager/types/cell/cell_data.dart';
+import 'package:netmanager/types/cell/sim_data.dart';
 import 'package:netmanager/types/recording/record.dart';
+import 'package:netmanager/types/recording/recorded_data.dart';
+import 'package:netmanager/utils/cell_utils.dart';
 import 'package:netmanager/utils/format_utils.dart';
 import 'package:netmanager/utils/signal_color.dart';
 
@@ -44,6 +47,16 @@ String _xmlEscape(String value) {
       .replaceAll('"', "&quot;");
 }
 
+String _cleanInt(int? val) {
+  if (val == null || !isValidInt(val)) return "";
+  return val.toString();
+}
+
+String _cleanStr(String? val) {
+  if (val == null || !isValidString(val)) return "";
+  return val;
+}
+
 String recordedDataToKml(RecordedData data) {
   final StringBuffer buffer = StringBuffer();
 
@@ -80,17 +93,108 @@ String recordedDataToKml(RecordedData data) {
 
   for (final Record record in data.records) {
     final String styleId = styleIdByColor[_kmlColorForRecord(record)]!;
+    final SIMData? sim = record.simData;
+    final CellData? cell = sim?.primaryCell;
+
+    final StringBuffer desc = StringBuffer();
+    desc.write("<b>Time:</b> ${record.dateTime.toIso8601String()}<br/>");
+    desc.write("<b>Usable:</b> ${record.usable ? "Yes" : "No"}<br/>");
+    desc.write("<b>Technology:</b> ${_genLabel(record.networkGen)}<br/>");
+
+    final String op = _cleanStr(sim?.operator ?? data.operator);
+    if (op.isNotEmpty) desc.write("<b>Operator:</b> ${_xmlEscape(op)}<br/>");
+
+    final String net = _cleanStr(sim?.network ?? data.network);
+    if (net.isNotEmpty) desc.write("<b>Network:</b> ${_xmlEscape(net)}<br/>");
+
+    if (sim != null) {
+      if (isValidString(sim.homePlmn)) {
+        desc.write("<b>Home PLMN:</b> ${_xmlEscape(sim.homePlmn)}<br/>");
+      }
+      if (isValidString(sim.networkPlmn)) {
+        desc.write("<b>Network PLMN:</b> ${_xmlEscape(sim.networkPlmn)}<br/>");
+      }
+      if (sim.activeBw > 0) {
+        desc.write("<b>Active BW:</b> ${sim.activeBw}MHz<br/>");
+      }
+    }
+
+    if (cell != null &&
+        isValidString(cell.processedSignalString) &&
+        isValidInt(cell.processedSignal)) {
+      desc.write(
+        "<b>${_xmlEscape(cell.processedSignalString)}:</b> ${cell.processedSignal}dBm<br/>",
+      );
+    } else if (isValidInt(record.processedSignal)) {
+      desc.write("<b>Signal:</b> ${record.processedSignal}dBm<br/>");
+    }
+
+    if (cell != null) {
+      if (isValidString(cell.cellIdentifierString) &&
+          isValidString(cell.cellIdentifier)) {
+        desc.write(
+          "<b>${_xmlEscape(cell.cellIdentifierString)}:</b> ${_xmlEscape(cell.cellIdentifier)}<br/>",
+        );
+      }
+      if (isValidString(cell.rawSignalString) && isValidInt(cell.rawSignal)) {
+        desc.write(
+          "<b>${_xmlEscape(cell.rawSignalString)}:</b> ${cell.rawSignal}dBm<br/>",
+        );
+      }
+      if (isValidString(cell.signalQualityString) &&
+          isValidInt(cell.signalQuality)) {
+        desc.write(
+          "<b>${_xmlEscape(cell.signalQualityString)}:</b> ${cell.signalQuality}dB<br/>",
+        );
+      }
+      if (isValidString(cell.signalNoiseString) &&
+          isValidInt(cell.signalNoise)) {
+        desc.write(
+          "<b>${_xmlEscape(cell.signalNoiseString)}:</b> ${cell.signalNoise}dB<br/>",
+        );
+      }
+      if (isValidString(cell.channelQualityString) &&
+          isValidInt(cell.channelQuality)) {
+        desc.write(
+          "<b>${_xmlEscape(cell.channelQualityString)}:</b> ${cell.channelQuality}<br/>",
+        );
+      }
+      if (isValidString(cell.areaCodeString) && isValidInt(cell.areaCode)) {
+        desc.write(
+          "<b>${_xmlEscape(cell.areaCodeString)}:</b> ${cell.areaCode}<br/>",
+        );
+      }
+      if (isValidString(cell.channelNumberString) &&
+          isValidInt(cell.channelNumber)) {
+        desc.write(
+          "<b>${_xmlEscape(cell.channelNumberString)}:</b> ${cell.channelNumber}<br/>",
+        );
+      }
+      if (isValidString(cell.stationIdentityString) &&
+          isValidInt(cell.stationIdentity)) {
+        desc.write(
+          "<b>${_xmlEscape(cell.stationIdentityString)}:</b> ${cell.stationIdentity}<br/>",
+        );
+      }
+      if (isValidString(cell.timingAdvanceString) &&
+          isValidInt(cell.timingAdvance)) {
+        desc.write(
+          "<b>${_xmlEscape(cell.timingAdvanceString)}:</b> ${cell.timingAdvance}<br/>",
+        );
+      }
+      if (isValidString(cell.bandwidthString) && isValidInt(cell.bandwidth)) {
+        desc.write(
+          "<b>${_xmlEscape(cell.bandwidthString)}:</b> ${cell.bandwidth}MHz<br/>",
+        );
+      }
+      if (isValidString(cell.bandString) && isValidInt(cell.band)) {
+        desc.write("<b>${_xmlEscape(cell.bandString)}:</b> ${cell.band}<br/>");
+      }
+    }
 
     buffer.writeln("<Placemark>");
     buffer.writeln("<name>${_xmlEscape(_genLabel(record.networkGen))}</name>");
-    buffer.writeln(
-      "<description><![CDATA["
-      "Signal: ${record.processedSignal} dBm<br/>"
-      "Technology: ${_genLabel(record.networkGen)}<br/>"
-      "Usable: ${record.usable}<br/>"
-      "Time: ${record.dateTime.toIso8601String()}"
-      "]]></description>",
-    );
+    buffer.writeln("<description><![CDATA[${desc.toString()}]]></description>");
     buffer.writeln("<styleUrl>#$styleId</styleUrl>");
     buffer.writeln(
       "<Point><coordinates>${record.lon},${record.lat},0</coordinates></Point>",
@@ -125,28 +229,63 @@ String recordedDataToCsv(RecordedData data) {
   const separator = ",";
   final StringBuffer buffer = StringBuffer();
 
-  buffer.writeln(
-    ["Name", "Latitude", "Longitude", "Description"].join(separator),
-  );
+  final List<String> headers = [
+    "Timestamp",
+    "Latitude",
+    "Longitude",
+    "Usable",
+    "Operator",
+    "Network",
+    "Generation",
+    "Home PLMN",
+    "Network PLMN",
+    "Total BW",
+    "Cell ID",
+    "Raw Signal",
+    "Processed Signal",
+    "Signal Quality",
+    "Signal Noise",
+    "Channel Quality",
+    "Area Code",
+    "Channel Number",
+    "Station Identity",
+    "Timing Advance",
+    "Bandwidth",
+    "Band",
+  ];
+
+  buffer.writeln(encodeRow(headers, separator));
 
   for (final Record record in data.records) {
-    final String name =
-        "${_genLabel(record.networkGen)} - "
-        "${record.dateTime.toIso8601String()}";
+    final SIMData? sim = record.simData;
+    final CellData? cell = sim?.primaryCell;
 
-    final String description =
-        "${data.operator} / ${data.network} | "
-        "Signal: ${record.processedSignal} dBm | "
-        "Usable: ${record.usable ? "Yes" : "No"}";
+    final List<String> row = [
+      record.dateTime.toIso8601String(),
+      record.lat.toString(),
+      record.lon.toString(),
+      record.usable ? "Yes" : "No",
+      _cleanStr(sim?.operator ?? data.operator),
+      _cleanStr(sim?.network ?? data.network),
+      _cleanInt(record.networkGen),
+      _cleanStr(sim?.homePlmn),
+      _cleanStr(sim?.networkPlmn),
+      (sim != null && sim.activeBw > 0) ? sim.activeBw.toString() : "",
+      _cleanStr(cell?.cellIdentifier),
+      _cleanInt(cell?.rawSignal),
+      _cleanInt(record.processedSignal),
+      _cleanInt(cell?.signalQuality),
+      _cleanInt(cell?.signalNoise),
+      _cleanInt(cell?.channelQuality),
+      _cleanInt(cell?.areaCode),
+      _cleanInt(cell?.channelNumber),
+      _cleanInt(cell?.stationIdentity),
+      _cleanInt(cell?.timingAdvance),
+      _cleanInt(cell?.bandwidth),
+      _cleanInt(cell?.band),
+    ];
 
-    buffer.writeln(
-      encodeRow([
-        name,
-        record.lat.toString(),
-        record.lon.toString(),
-        description,
-      ], separator),
-    );
+    buffer.writeln(encodeRow(row, separator));
   }
 
   return buffer.toString();

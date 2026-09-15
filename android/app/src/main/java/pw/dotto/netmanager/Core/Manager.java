@@ -102,6 +102,11 @@ public class Manager {
         return slot != null && TelephonyCellDataSource.isEmergencyOnly(context, slot.telephony, slot);
     }
 
+    public boolean isAirplaneMode(int simId) {
+        SIMSlotState slot = core.getSlot(simId);
+        return slot != null && TelephonyCellDataSource.isAirplaneMode(context, slot.telephony, slot);
+    }
+
     public String getFullHeaderString() {
         return core.getFullHeaderString();
     }

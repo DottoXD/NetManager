@@ -70,7 +70,7 @@ class PipCellRow extends StatelessWidget {
                     ),
                     TextSpan(
                       text:
-                          "${isValidString(cell.cellIdentifier) && cellId != null ? "${cellId / factor}/${cellId % factor}" : ""}"
+                          "${isValidString(cell.cellIdentifier) && cellId != null ? "${cellId ~/ factor}/${cellId % factor}" : ""}"
                           "${isValidInt(cell.bandwidth) && cell.bandwidth > 0 ? " (${cell.bandwidth}MHz)" : ""}",
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontSize: 11,

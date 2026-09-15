@@ -139,6 +139,13 @@ public class Manager {
     public String buildContent() {
         StringBuilder contentText = new StringBuilder();
 
+        boolean airplaneMode = context.getManager().isAirplaneMode(0);
+        if (airplaneMode) {
+            contentText.append("Airplane mode detected.");
+
+            return contentText.toString();
+        }
+
         int size = 0;
         for (int i = 0; i < 2; i++) {
             SIMData simData = context.getManager().getSimNetworkData(i);

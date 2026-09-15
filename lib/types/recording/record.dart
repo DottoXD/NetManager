@@ -27,10 +27,14 @@ class Record {
   factory Record.fromJson(Map<String, dynamic> json) {
     return Record(
       usable: json["usable"] ?? true,
-      dateTime: DateTime.tryParse(json["dateTime"] ?? "") ?? DateTime.now(),
+      dateTime:
+          DateTime.tryParse(json["dateTime"]?.toString() ?? "") ??
+          DateTime.now(),
       lat: (json["lat"] as num?)?.toDouble() ?? 0.0,
       lon: (json["lon"] as num?)?.toDouble() ?? 0.0,
-      simData: json["simData"] != null
+      simData:
+          json["simData"] is Map<String, dynamic> &&
+              (json["simData"] as Map).isNotEmpty
           ? SIMData.fromJson(json["simData"])
           : null,
       legacySignal: json["processedSignal"],

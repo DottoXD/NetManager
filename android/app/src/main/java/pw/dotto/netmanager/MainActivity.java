@@ -364,6 +364,10 @@ public class MainActivity extends FlutterActivity {
               result.success(core.getEmergencyStatus(selectedSim));
               break;
 
+            case "isAirplaneMode":
+              result.success(core.isAirplaneMode(selectedSim));
+              break;
+
             case "getPlmn":
               String plmn = core.getPlmn(selectedSim);
               result.success(plmn);

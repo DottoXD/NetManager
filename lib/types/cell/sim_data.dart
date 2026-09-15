@@ -54,23 +54,23 @@ class SIMData {
 
   factory SIMData.fromJson(Map<String, dynamic> json) {
     return SIMData(
-      operator: json["operator"],
-      network: json["network"],
-      networkGen: json["networkGen"],
-      homePlmn: json["homePlmn"],
-      networkPlmn: json["networkPlmn"],
+      operator: json["operator"] ?? "",
+      network: json["network"] ?? "",
+      networkGen: json["networkGen"] ?? -1,
+      homePlmn: json["homePlmn"] ?? "",
+      networkPlmn: json["networkPlmn"] ?? "",
       primaryCell: json["primaryCell"] is Map<String, dynamic>
           ? CellData.fromJson(json["primaryCell"])
           : _emptyCellData(),
       activeBw: (json["activeBw"] as num?)?.toDouble() ?? 0.0,
       activeCells: (json["activeCells"] as List<dynamic>? ?? [])
-          .map((e) => CellData.fromJson(e))
+          .map((e) => CellData.fromJson(e as Map<String, dynamic>))
           .toList(),
       likelyCells: (json["likelyCells"] as List<dynamic>? ?? [])
-          .map((e) => CellData.fromJson(e))
+          .map((e) => CellData.fromJson(e as Map<String, dynamic>))
           .toList(),
       neighborCells: (json["neighborCells"] as List<dynamic>? ?? [])
-          .map((e) => CellData.fromJson(e))
+          .map((e) => CellData.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
   }

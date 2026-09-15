@@ -98,6 +98,7 @@ class _HomeBodyState extends State<HomeBody> {
   String _debug = "";
   String _plmn = "";
   bool _pageLoaded = false;
+  bool _isAirplane = false;
 
   SIMData? _simData;
   int _factor = 1;
@@ -168,9 +169,12 @@ class _HomeBodyState extends State<HomeBody> {
     try {
       _simCount = await platform.invokeMethod("getSimCount") ?? 0;
       final jsonStr = await platform.invokeMethod("getNetworkData") ?? "";
+      final isAirplaneMode =
+          await platform.invokeMethod<bool>("isAirplaneMode") ?? false;
 
-      if (jsonStr == null || jsonStr.isEmpty) {
+      if (jsonStr == null || jsonStr.isEmpty || isAirplaneMode) {
         setState(() {
+          _isAirplane = isAirplaneMode;
           _debug = _appLocalizations.homeNoData;
           _simData = null;
         });
@@ -186,6 +190,7 @@ class _HomeBodyState extends State<HomeBody> {
         if (!mounted) return;
 
         setState(() {
+          _isAirplane = isAirplaneMode;
           _debug = "$jsonStr\n${_appLocalizations.error}: $e";
         });
 
@@ -361,6 +366,7 @@ class _HomeBodyState extends State<HomeBody> {
 
       setState(() {
         _simData = simData;
+        _isAirplane = isAirplaneMode;
         _debug = jsonStr;
         _cellDescriptions;
       });
@@ -406,9 +412,7 @@ class _HomeBodyState extends State<HomeBody> {
           );
         }
 
-        if (homeLoadedNotifier.value &&
-            _pageLoaded &&
-            (_plmn.isEmpty || _plmn == "00000")) {
+        if (homeLoadedNotifier.value && _pageLoaded && _isAirplane) {
           return EmptyState(
             minHeight: widgetsHeight,
             icon: Icons.airplanemode_on_outlined,
