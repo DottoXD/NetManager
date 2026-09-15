@@ -3,3 +3,5 @@
 - Risolti i problemi al postprocessing della bandwidth e del segnale sui dispositivi Qualcomm.
 - Aggiunto il supporto a Shizuku per l'ottenimento di dati radio extra.
 - Gli utenti possono ora inviare segnalazioni di debug dalls schermata delle impostazioni
+- Risolti alcuni bug.
+- Possibili correzioni ai dati delle celle su Pixel 11 con il postprocessore delle celle probabili.

@@ -9,6 +9,8 @@
 -keep class pw.dotto.netmanager.Core.Processors.Preprocessors.** { *; }
 -keep class pw.dotto.netmanager.Core.Processors.Postprocessors.** { *; }
 
+-keep class pw.dotto.netmanager.Core.Sources.Shizuku.** { *; }
+
 -dontwarn pw.dotto.netmanager.Core.Listeners.**
 
 -keepattributes Signature, *Annotation*, Exceptions, InnerClasses, EnclosingMethod

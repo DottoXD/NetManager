@@ -80,7 +80,9 @@ class _HomeState extends State<Home> {
   final ValueNotifier<int> _homeGraphsRetentionTimeNotifier = ValueNotifier(30);
 
   final ValueNotifier<bool> _likelyCellsNotifier = ValueNotifier(false);
-  final ValueNotifier<bool> _countLikelyAsActive = ValueNotifier(false);
+  final ValueNotifier<bool> _countLikelyAsActiveNotifier = ValueNotifier(false);
+
+  final ValueNotifier<bool> _advancedModeNotifier = ValueNotifier(false);
 
   final ValueNotifier<int> _currentSimSlotNotifier = ValueNotifier(0);
   final ValueNotifier<bool> _speedtestRunningNotifier = ValueNotifier(false);
@@ -142,8 +144,10 @@ class _HomeState extends State<Home> {
         widget.sharedPreferences.getInt("homeGraphsRetentionTime") ?? 30;
     _likelyCellsNotifier.value =
         widget.sharedPreferences.getBool("likelyCells") ?? false;
-    _countLikelyAsActive.value =
+    _countLikelyAsActiveNotifier.value =
         widget.sharedPreferences.getBool("countLikelyAsActive") ?? false;
+    _advancedModeNotifier.value =
+        widget.sharedPreferences.getBool("advancedMode") ?? false;
 
     try {
       widget.platform.invokeMethod<bool>("requestPermissions", {
@@ -196,7 +200,8 @@ class _HomeState extends State<Home> {
     _homeDataGraphsNotifier.dispose();
     _homeGraphsRetentionTimeNotifier.dispose();
     _likelyCellsNotifier.dispose();
-    _countLikelyAsActive.dispose();
+    _countLikelyAsActiveNotifier.dispose();
+    _advancedModeNotifier.dispose();
     _currentSimSlotNotifier.dispose();
     _speedtestRunningNotifier.dispose();
 
@@ -255,6 +260,7 @@ class _HomeState extends State<Home> {
           _currentSimSlotNotifier,
           _speedtestRunningNotifier,
           _isPipActiveNotifier,
+          _advancedModeNotifier,
         ),
         bottomNavigationBar: NavBar(
           updatePage,
@@ -276,7 +282,7 @@ class _HomeState extends State<Home> {
               _homeDataGraphsNotifier,
               _homeGraphsRetentionTimeNotifier,
               _likelyCellsNotifier,
-              _countLikelyAsActive,
+              _countLikelyAsActiveNotifier,
               _currentSimSlotNotifier,
               _isPipActiveNotifier,
               onUpdateButtonPressed: (callback) {
@@ -346,7 +352,8 @@ class _HomeState extends State<Home> {
               _homeDataGraphsNotifier,
               _homeGraphsRetentionTimeNotifier,
               _likelyCellsNotifier,
-              _countLikelyAsActive,
+              _countLikelyAsActiveNotifier,
+              _advancedModeNotifier,
             ),
           ],
         ),

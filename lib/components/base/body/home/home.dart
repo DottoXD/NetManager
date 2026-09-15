@@ -37,7 +37,7 @@ class HomeBody extends StatefulWidget {
     this.homeDataGraphsNotifier,
     this.homeGraphsRetentionTimeNotifier,
     this.likelyCellsNotifier,
-    this.countLikelyAsActive,
+    this.countLikelyAsActiveNotifier,
     this.currentSimSlotNotifier,
     this.isPipActiveNotifier, {
     super.key,
@@ -58,7 +58,7 @@ class HomeBody extends StatefulWidget {
   final ValueNotifier<bool> homeDataGraphsNotifier;
   final ValueNotifier<int> homeGraphsRetentionTimeNotifier;
   final ValueNotifier<bool> likelyCellsNotifier;
-  final ValueNotifier<bool> countLikelyAsActive;
+  final ValueNotifier<bool> countLikelyAsActiveNotifier;
   final ValueNotifier<int> currentSimSlotNotifier;
   final ValueNotifier<bool> isPipActiveNotifier;
 
@@ -216,7 +216,7 @@ class _HomeBodyState extends State<HomeBody> {
           simData = simData.copyWith(activeBw: simData.activeBw + likelyBw);
         }
 
-        if (widget.countLikelyAsActive.value) {
+        if (widget.countLikelyAsActiveNotifier.value) {
           simData.activeCells.addAll(simData.likelyCells);
           simData.likelyCells.clear();
         }
@@ -229,12 +229,31 @@ class _HomeBodyState extends State<HomeBody> {
       if (simData.activeCells.isEmpty && node != null) {
         simData.activeCells.add(simData.primaryCell);
       }
+
       if (!isValidString(simData.primaryCell.cellIdentifier)) {
         simData.activeCells.clear();
       }
-      simData.activeCells.sort(
-        (a, b) => (b.isRegistered ? 1 : 0).compareTo(a.isRegistered ? 1 : 0),
-      );
+
+      simData.activeCells.sort((a, b) {
+        int regSort = (b.isRegistered ? 1 : 0).compareTo(
+          a.isRegistered ? 1 : 0,
+        );
+
+        if (regSort == 0 &&
+            widget.likelyCellsNotifier.value &&
+            widget.countLikelyAsActiveNotifier.value) {
+          bool aIsNr = a.channelNumberString == "NR-ARFCN";
+          bool bIsNr = b.channelNumberString == "NR-ARFCN";
+
+          if (aIsNr && !bIsNr) {
+            return 1;
+          } else if (!aIsNr && bIsNr) {
+            return -1;
+          }
+        }
+
+        return regSort;
+      });
 
       final Set<int> cidsToSearch = {};
 

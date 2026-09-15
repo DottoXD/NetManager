@@ -104,6 +104,10 @@ android {
         }
     }
 
+    buildFeatures {
+        aidl = true
+    }
+
     flavorDimensions += "distribution"
 
     productFlavors {

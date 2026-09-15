@@ -12,13 +12,15 @@ import androidx.annotation.NonNull;
 import java.lang.reflect.Field;
 
 import pw.dotto.netmanager.Core.Mobile.CellDatas.GsmCellData;
+import pw.dotto.netmanager.Core.Sources.Shizuku.ShizukuReflectionBridge;
+import pw.dotto.netmanager.Utils.Permissions;
 
 /**
  * NetManager's GsmExtractor is a component which creates a GsmCellData object
  * based on the provided cell info.
  *
  * @author DottoXD
- * @version 0.1.6
+ * @version 0.2.0
  */
 public class GsmExtractor {
     private static final String REFLECTION_RSSI = "mSignalStrength";
@@ -27,7 +29,7 @@ public class GsmExtractor {
     @NonNull
     public static GsmCellData get(CellInfoGsm baseCell) {
         CellIdentityGsm identityGsm = baseCell.getCellIdentity();
-        
+
         CellSignalStrengthGsm signalGsm = baseCell.getCellSignalStrength();
         GsmCellData gsmCellData = new GsmCellData(
                 String.valueOf(identityGsm.getCid()),
@@ -56,13 +58,22 @@ public class GsmExtractor {
     }
 
     public static int getReflectedField(CellSignalStrengthGsm cellSignalStrengthGsm, String fieldName) {
+        int result;
+
         try {
             Field field = CellSignalStrengthGsm.class.getDeclaredField(fieldName);
             field.setAccessible(true);
 
-            return (int) field.get(cellSignalStrengthGsm);
+            result = (int) field.get(cellSignalStrengthGsm);
         } catch (Exception ignored) {
-            return CELL_INFO_UNAVAILABLE;
+            result = CELL_INFO_UNAVAILABLE;
         }
+
+        if (result == CELL_INFO_UNAVAILABLE && Permissions.checkShizuku()) {
+            result = ShizukuReflectionBridge.getHiddenIntField(
+                    cellSignalStrengthGsm, CellSignalStrengthGsm.class.getName(), fieldName);
+        }
+
+        return result;
     }
 }

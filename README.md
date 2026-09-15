@@ -80,7 +80,7 @@ Comparison based on publicly documented features as of August 2026.
 | Multi-source data aggregation | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
 | Advanced Android API data postprocessing | ✔️ | ✔️ | - (Does not use Telephony APIs, no need of postprocessing)| ✔️ | ✔️ |
 | Event/cell logging | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
-| Shizuku (shell) support for extra data/features | - (Planned) | ❌ | ❌ | ❌ | ❌ |
+| Shizuku (shell) support for extra data/features | ✔️ | ❌ | ❌ | ❌ | ❌ |
 | Advanced diag (root) data | - (Planned) | ❌ | ✔️ | ❌ | ❌ |
 | Open source | ✔️ | ❗ (Only NetMonster Core) | ❌ | ❌ | ❌ |
 | Fully free | ✔️ | ❗ (Ads) | ❌ | ✔️ | ❗ (Ads) |

@@ -3,3 +3,5 @@
 - Fixed extra bandwidth & signal postprocessing on Qualcomm devices.
 - Added Shizuku support for gathering extra cell data.
 - Users can now send debug reports from the settings screen.
+- Various bug fixes.
+- Experimental cell data fixes for Pixel 11 thru the likely cells postprocessor.

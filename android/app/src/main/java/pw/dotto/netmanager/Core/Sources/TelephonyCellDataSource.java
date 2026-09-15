@@ -244,8 +244,6 @@ public class TelephonyCellDataSource implements CellDataSource {
             }
         }
 
-        List<Integer> cellBandwidths = readCellBandwidths(telephony, simSlotState, context);
-
         String rawPlmn = data.getNetworkPlmn();
         int mcc = 0;
         try {

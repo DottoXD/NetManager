@@ -1,5 +1,7 @@
 package pw.dotto.netmanager.Core.Notifications;
 
+import static pw.dotto.netmanager.MainActivity.PACKAGE_NAME;
+
 import android.app.Notification;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -21,7 +23,7 @@ import pw.dotto.netmanager.Utils.DebugLogger;
  * This component shuts down the notification service.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.2.0
  */
 public class Service extends android.app.Service {
     private pw.dotto.netmanager.Core.Manager manager;
@@ -88,9 +90,9 @@ public class Service extends android.app.Service {
                     NetManagerCore.DEFAULT_INTERVAL_SECONDS);
             manager.updateInterval((int) seconds);
         } catch (ClassCastException e) {
-            Log.e("pw.dotto.netmanager", "Broken SharedPreferences.", e);
+            Log.e(PACKAGE_NAME, "Broken SharedPreferences.", e);
         } catch (Exception e) {
-            Log.w("pw.dotto.netmanager", e.getMessage() == null ? "No info." : e.getMessage());
+            Log.w(PACKAGE_NAME, e.getMessage() == null ? "No info." : e.getMessage());
         }
 
         if (notificationRunnable == null) {

@@ -2,6 +2,8 @@ package pw.dotto.netmanager.Core.Mobile;
 
 import static android.content.Context.MODE_PRIVATE;
 
+import static pw.dotto.netmanager.MainActivity.PACKAGE_NAME;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
@@ -29,7 +31,7 @@ import pw.dotto.netmanager.Utils.DebugLogger;
  * PhysicalChannelDumper...
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.2.0
  */
 public class PhysicalChannelDumper {
     private static final int LISTEN_PHYSICAL_CHANNEL_CONFIGURATION = 0x00100000;
@@ -99,9 +101,9 @@ public class PhysicalChannelDumper {
                         long seconds = sharedPreferences.getLong("flutter.backgroundUpdateInterval", 3);
                         millis = seconds * 1000;
                     } catch (ClassCastException e) {
-                        Log.e("pw.dotto.netmanager", "Broken SharedPreferences.", e);
+                        Log.e(PACKAGE_NAME, "Broken SharedPreferences.", e);
                     } catch (Exception e) {
-                        Log.w("pw.dotto.netmanager", e.getMessage() == null ? "No info." : e.getMessage());
+                        Log.w(PACKAGE_NAME, e.getMessage() == null ? "No info." : e.getMessage());
                     }
                     handler.postDelayed(this, millis);
                 }

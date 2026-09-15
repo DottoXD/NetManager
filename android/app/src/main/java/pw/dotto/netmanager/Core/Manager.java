@@ -139,6 +139,11 @@ public class Manager {
         return slot != null ? TelephonyCellDataSource.getSignalStrengths(context, slot, slot.telephony) : null;
     }
 
+    public int getSubscriptionId(int simId) {
+        SIMSlotState slot = core.getSlot(simId);
+        return slot == null ? -1 : slot.subscriptionId;
+    }
+
     public void updateInterval(int intervalSeconds) {
         core.attach(consumerId, intervalSeconds);
     }

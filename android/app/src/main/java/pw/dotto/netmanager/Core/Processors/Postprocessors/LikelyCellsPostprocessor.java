@@ -4,6 +4,7 @@ import static pw.dotto.netmanager.Core.Mobile.Extractors.Cells.LteExtractor.MAXI
 import static pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -17,13 +18,16 @@ import pw.dotto.netmanager.Utils.DeviceData;
  * NetManager's LikelyCellsPostprocessor is a cell data postprocessor
  * which flags neighboring cells that are likely to be active cells as likely
  * active cells.
- * This postprocessor is run on all devices, but its implementation is likely to
- * change between OEMs and different modems.
+ * * This postprocessor is run on all manually supported devices: its
+ * implementation shall change between OEMs and different modems.
  *
  * @author DottoXD
  * @version 0.2.0
  */
 public class LikelyCellsPostprocessor implements Postprocessor {
+
+    private static final int DECENT_SIGNAL_THRESHOLD = -115;
+
     @Override
     public SIMData process(SIMData data, int simId, NetManagerCore netManagerCore) {
         if (data == null || data.getNeighborCells() == null || data.getActiveCells() == null
@@ -32,9 +36,12 @@ public class LikelyCellsPostprocessor implements Postprocessor {
 
         DeviceData deviceData = DeviceData.getInstance(null);
 
-        if ((deviceData.getManufacturer().equals("xiaomi") || deviceData.getManufacturer().equals("redmi")
-                || deviceData.getManufacturer().equals("poco")) && deviceData.getModem().equals("qcom")) {
-            // get bw, with 4g qcom xiaomis return all lte bws
+        boolean isQcomXiaomi = (deviceData.getManufacturer().equals("xiaomi")
+                || deviceData.getManufacturer().equals("redmi")
+                || deviceData.getManufacturer().equals("poco")) && deviceData.getModem().equals("qcom");
+        boolean isMtkPixel = deviceData.getManufacturer().equals("google") && deviceData.getModem().equals("malibu");
+
+        if (isQcomXiaomi || isMtkPixel) {
             List<Integer> rawBandwidths = netManagerCore.getCellBandwidths(simId);
 
             if (rawBandwidths == null || rawBandwidths.size() <= 1) {
@@ -43,10 +50,7 @@ public class LikelyCellsPostprocessor implements Postprocessor {
 
             List<Integer> targetBandwidths = new ArrayList<>();
             for (Integer bw : rawBandwidths) {
-                if (bw == null)
-                    continue;
-
-                if (bw <= MAXIMUM_LTE_MHZ) {
+                if (bw != null && bw <= MAXIMUM_LTE_MHZ) {
                     targetBandwidths.add(bw);
                 }
             }
@@ -55,7 +59,10 @@ public class LikelyCellsPostprocessor implements Postprocessor {
                 return data;
             }
 
+            targetBandwidths.sort(Collections.reverseOrder());
+
             Set<Integer> activeEarfcnSet = new HashSet<>();
+
             for (CellData activeCell : data.getActiveCells()) {
                 activeEarfcnSet.add(activeCell.getChannelNumber());
 
@@ -85,21 +92,37 @@ public class LikelyCellsPostprocessor implements Postprocessor {
                 candidates.add(neighbor);
             }
 
+            candidates.sort((c1, c2) -> {
+                int sig1 = getEffectiveSignal(c1);
+                int sig2 = getEffectiveSignal(c2);
+
+                boolean c1IsDecent = sig1 != CELL_INFO_UNAVAILABLE && sig1 >= DECENT_SIGNAL_THRESHOLD;
+                boolean c2IsDecent = sig2 != CELL_INFO_UNAVAILABLE && sig2 >= DECENT_SIGNAL_THRESHOLD;
+
+                if (c1IsDecent != c2IsDecent) {
+                    return c1IsDecent ? -1 : 1;
+                }
+
+                int freq1 = c1.getBasicCellData() != null ? c1.getBasicCellData().getFrequency() : 0;
+                int freq2 = c2.getBasicCellData() != null ? c2.getBasicCellData().getFrequency() : 0;
+
+                if (freq1 != freq2) {
+                    return Integer.compare(freq2, freq1);
+                }
+
+                return Integer.compare(sig2, sig1);
+            });
+
             for (Integer targetBw : targetBandwidths) {
                 CellData bestCandidate = null;
-                int bestSignal = Integer.MIN_VALUE;
 
                 for (CellData candidate : candidates) {
                     boolean bwMatches = candidate.getBandwidth() == CELL_INFO_UNAVAILABLE
                             || candidate.getBandwidth() == targetBw;
 
                     if (bwMatches) {
-                        int currentSignal = getEffectiveSignal(candidate);
-
-                        if (currentSignal != CELL_INFO_UNAVAILABLE && currentSignal > bestSignal) {
-                            bestSignal = currentSignal;
-                            bestCandidate = candidate;
-                        }
+                        bestCandidate = candidate;
+                        break;
                     }
                 }
 

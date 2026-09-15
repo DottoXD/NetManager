@@ -13,6 +13,8 @@ import androidx.annotation.NonNull;
 import java.lang.reflect.Field;
 
 import pw.dotto.netmanager.Core.Mobile.CellDatas.LteCellData;
+import pw.dotto.netmanager.Core.Sources.Shizuku.ShizukuReflectionBridge;
+import pw.dotto.netmanager.Utils.Permissions;
 
 /**
  * NetManager's LteExtractor is a component which creates a LteCellData object
@@ -88,14 +90,23 @@ public class LteExtractor {
     }
 
     public static int getReflectedField(CellSignalStrengthLte cellSignalStrengthLte, String fieldName) {
+        int result;
+
         try {
             Field field = CellSignalStrengthLte.class.getDeclaredField(fieldName);
             field.setAccessible(true);
 
-            return (int) field.get(cellSignalStrengthLte);
+            result = (int) field.get(cellSignalStrengthLte);
         } catch (Exception ignored) {
-            return CELL_INFO_UNAVAILABLE;
+            result = CELL_INFO_UNAVAILABLE;
         }
+
+        if (result == CELL_INFO_UNAVAILABLE && Permissions.checkShizuku()) {
+            result = ShizukuReflectionBridge.getHiddenIntField(
+                    cellSignalStrengthLte, CellSignalStrengthLte.class.getName(), fieldName);
+        }
+
+        return result;
     }
 
     private static void processBandwidth(LteCellData lteCellData, CellIdentityLte cellIdentityLte) {

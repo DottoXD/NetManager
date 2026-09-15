@@ -14,13 +14,15 @@ import androidx.annotation.RequiresApi;
 import java.lang.reflect.Field;
 
 import pw.dotto.netmanager.Core.Mobile.CellDatas.NrCellData;
+import pw.dotto.netmanager.Core.Sources.Shizuku.ShizukuReflectionBridge;
+import pw.dotto.netmanager.Utils.Permissions;
 
 /**
  * NetManager's NrExtractor is a component which creates a NrCellData object
  * based on the provided cell info.
  *
  * @author DottoXD
- * @version 0.1.6
+ * @version 0.2.0
  */
 public class NrExtractor {
     private static final String REFLECTION_TA = "mTimingAdvance";
@@ -100,14 +102,23 @@ public class NrExtractor {
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
     public static int getReflectedSignalStrength(CellSignalStrengthNr cellSignalStrengthNr, String fieldName) {
+        int result;
+
         try {
             Field field = CellSignalStrengthNr.class.getDeclaredField(fieldName);
             field.setAccessible(true);
 
-            return (int) field.get(cellSignalStrengthNr);
+            result = (int) field.get(cellSignalStrengthNr);
         } catch (Exception ignored) {
-            return CELL_INFO_UNAVAILABLE;
+            result = CELL_INFO_UNAVAILABLE;
         }
+
+        if (result == CELL_INFO_UNAVAILABLE && Permissions.checkShizuku()) {
+            result = ShizukuReflectionBridge.getHiddenIntField(
+                    cellSignalStrengthNr, CellSignalStrengthNr.class.getName(), fieldName);
+        }
+
+        return result;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.Q)

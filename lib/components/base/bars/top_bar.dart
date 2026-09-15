@@ -22,7 +22,8 @@ class TopBar extends StatefulWidget implements PreferredSizeWidget {
     this.logsNotifier,
     this.currentSimSlotNotifier,
     this.speedtestRunningNotifier,
-    this.isPipActiveNotifier, {
+    this.isPipActiveNotifier,
+    this.advancedModeNotifier, {
     super.key,
   });
 
@@ -33,6 +34,7 @@ class TopBar extends StatefulWidget implements PreferredSizeWidget {
   final ValueNotifier<int> currentSimSlotNotifier;
   final ValueNotifier<bool> speedtestRunningNotifier;
   final ValueNotifier<bool> isPipActiveNotifier;
+  final ValueNotifier<bool> advancedModeNotifier;
 
   @override
   State<TopBar> createState() => _TopBarState();
@@ -49,6 +51,7 @@ class _TopBarState extends State<TopBar> {
   late ValueNotifier<int> currentSimSlotNotifier;
   late ValueNotifier<bool> speedtestRunningNotifier;
   late ValueNotifier<bool> isPipActiveNotifier;
+  late ValueNotifier<bool> advancedModeNotifier;
 
   late Timer _timer;
   String _carrier = "Unknown";
@@ -68,6 +71,7 @@ class _TopBarState extends State<TopBar> {
     currentSimSlotNotifier = widget.currentSimSlotNotifier;
     speedtestRunningNotifier = widget.speedtestRunningNotifier;
     isPipActiveNotifier = widget.isPipActiveNotifier;
+    advancedModeNotifier = widget.advancedModeNotifier;
 
     platformSignalNotifier.addListener(_restartTimer);
     speedtestRunningNotifier.addListener(_onSpeedtestRunningChanged);
@@ -243,6 +247,37 @@ class _TopBarState extends State<TopBar> {
     }
   }
 
+  Future<void> _openAdvancedMode(AppLocalizations appLocalizations) async {
+    try {
+      final isShizuku = await platform.invokeMethod("checkShizuku") ?? false;
+      final isDiag = false;
+
+      if (isDiag) {
+        return;
+      }
+
+      if (isShizuku) {
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return ErrorDialog(e: appLocalizations.advancedMenuUnavailable);
+            },
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return ErrorDialog(e: "${appLocalizations.topBar}: $e");
+          },
+        );
+      }
+    }
+  }
+
   Future<void> _enterPip(AppLocalizations appLocalizations) async {
     try {
       await platform.invokeMethod("enterPip");
@@ -376,20 +411,36 @@ class _TopBarState extends State<TopBar> {
                   );
                 },
               ),
-            ValueListenableBuilder(
-              valueListenable: logsNotifier,
-              builder: (context, showLogs, _) {
-                if (showLogs) {
-                  return PopupMenuButton(
-                    icon: const Icon(Icons.more_vert),
-                    onSelected: (value) {
-                      if (value == "logs") {
-                        _openLogs(appLocalizations);
-                      } else if (value == "pip") {
-                        _enterPip(appLocalizations);
-                      }
-                    },
-                    itemBuilder: (BuildContext context) => [
+            ListenableBuilder(
+              listenable: Listenable.merge([
+                logsNotifier,
+                advancedModeNotifier,
+              ]),
+              builder: (context, _) {
+                final showLogs = logsNotifier.value;
+                final showAdvanced = advancedModeNotifier.value;
+
+                if (!showLogs && !showAdvanced) {
+                  return IconButton(
+                    onPressed: () => _enterPip(appLocalizations),
+                    icon: const Icon(Icons.picture_in_picture_alt_outlined),
+                    tooltip: appLocalizations.pictureInPicture,
+                  );
+                }
+
+                return PopupMenuButton(
+                  icon: const Icon(Icons.more_vert_outlined),
+                  onSelected: (value) {
+                    if (value == "logs") {
+                      _openLogs(appLocalizations);
+                    } else if (value == "advanced") {
+                      _openAdvancedMode(appLocalizations);
+                    } else if (value == "pip") {
+                      _enterPip(appLocalizations);
+                    }
+                  },
+                  itemBuilder: (BuildContext context) => [
+                    if (showLogs)
                       PopupMenuItem(
                         value: "logs",
                         child: Row(
@@ -400,24 +451,28 @@ class _TopBarState extends State<TopBar> {
                           ],
                         ),
                       ),
+                    if (showAdvanced)
                       PopupMenuItem(
-                        value: "pip",
+                        value: "advanced",
                         child: Row(
                           children: [
-                            const Icon(Icons.picture_in_picture_alt_outlined),
+                            const Icon(Icons.tune_outlined),
                             const SizedBox(width: 12),
-                            Text(appLocalizations.pictureInPicture),
+                            Text(appLocalizations.settingsAdvancedModeTitle),
                           ],
                         ),
                       ),
-                    ],
-                  );
-                }
-
-                return IconButton(
-                  onPressed: () => _enterPip(appLocalizations),
-                  icon: const Icon(Icons.picture_in_picture_alt_outlined),
-                  tooltip: appLocalizations.pictureInPicture,
+                    PopupMenuItem(
+                      value: "pip",
+                      child: Row(
+                        children: [
+                          const Icon(Icons.picture_in_picture_alt_outlined),
+                          const SizedBox(width: 12),
+                          Text(appLocalizations.pictureInPicture),
+                        ],
+                      ),
+                    ),
+                  ],
                 );
               },
             ),

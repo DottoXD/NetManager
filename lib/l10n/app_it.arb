@@ -374,5 +374,6 @@
   "mapFiltersOverlayDescription": "Visualizza alcune informazioni utili sulla mappa.",
   "debugReportInstructions": "Includi una nota opzionale che descriva il problema che hai riscontrato.",
   "debugReportHint": "Larghezza di banda errata riportata",
-  "debugReportError": "Impossibile inviare una segnalazione."
+  "debugReportError": "Impossibile inviare una segnalazione.",
+  "advancedMenuUnavailable": "Il menù della modalità avanzata, al momento, non è disponibile."
 }

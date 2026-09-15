@@ -6,7 +6,7 @@ version: 0.2.0+13
 
 environment:
   sdk: 3.13.3
-  flutter: 3.47.3
+  flutter: 3.47.4
 
 dependencies:
   flutter:
@@ -17,15 +17,15 @@ dependencies:
   url_launcher: 6.3.2
   flutter_map: 8.3.2
   latlong2: 0.10.1
-  sentry_flutter: 9.29.0
+  sentry_flutter: 9.30.0
   http: 1.6.0
   intl: 0.20.3
   path_provider: 2.1.6
   file_selector: 1.1.0
-  sqflite: 2.4.3
+  sqflite: 2.4.4
   flutter_localizations:
     sdk: flutter
-  material_ui: 1.1.1
+  material_ui: 1.2.0
 
 dev_dependencies:
   flutter_test:

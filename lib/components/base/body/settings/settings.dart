@@ -45,7 +45,8 @@ class SettingsBody extends StatefulWidget {
     this.homeDataGraphsNotifier,
     this.homeGraphsRetentionTimeNotifier,
     this.likelyCellsNotifier,
-    this.countLikelyAsActive, {
+    this.countLikelyAsActiveNotifier,
+    this.advancedModeNotifier, {
     super.key,
   });
 
@@ -76,7 +77,8 @@ class SettingsBody extends StatefulWidget {
   final ValueNotifier<bool> homeDataGraphsNotifier;
   final ValueNotifier<int> homeGraphsRetentionTimeNotifier;
   final ValueNotifier<bool> likelyCellsNotifier;
-  final ValueNotifier<bool> countLikelyAsActive;
+  final ValueNotifier<bool> countLikelyAsActiveNotifier;
+  final ValueNotifier<bool> advancedModeNotifier;
 
   @override
   State<SettingsBody> createState() => _SettingsBodyState();
@@ -111,7 +113,8 @@ class _SettingsBodyState extends State<SettingsBody>
   late ValueNotifier<bool> homeDataGraphsNotifier;
   late ValueNotifier<int> homeGraphsRetentionTimeNotifier;
   late ValueNotifier<bool> likelyCellsNotifier;
-  late ValueNotifier<bool> countLikelyAsActive;
+  late ValueNotifier<bool> countLikelyAsActiveNotifier;
+  late ValueNotifier<bool> advancedModeNotifier;
 
   late TextEditingController _mapTilesTemplateController;
   late TextEditingController _speedtestInstanceController;
@@ -203,7 +206,8 @@ class _SettingsBodyState extends State<SettingsBody>
     homeDataGraphsNotifier = widget.homeDataGraphsNotifier;
     homeGraphsRetentionTimeNotifier = widget.homeGraphsRetentionTimeNotifier;
     likelyCellsNotifier = widget.likelyCellsNotifier;
-    countLikelyAsActive = widget.countLikelyAsActive;
+    countLikelyAsActiveNotifier = widget.countLikelyAsActiveNotifier;
+    advancedModeNotifier = widget.advancedModeNotifier;
 
     updateData();
     _positionPrecisionSelection = positionPrecisions[_positionPrecision];
@@ -665,6 +669,7 @@ class _SettingsBodyState extends State<SettingsBody>
                 await platform.invokeMethod("toggleAdvancedMode");
 
                 setBool("advancedMode", value);
+                advancedModeNotifier.value = value;
                 updateData();
               },
             ),
@@ -737,7 +742,7 @@ class _SettingsBodyState extends State<SettingsBody>
                   );
 
                   setBool("countLikelyAsActive", value);
-                  countLikelyAsActive.value = value;
+                  countLikelyAsActiveNotifier.value = value;
                   updateData();
                 },
               ),

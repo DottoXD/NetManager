@@ -52,6 +52,7 @@ import pw.dotto.netmanager.WearOS.WearHandler;
 public class MainActivity extends FlutterActivity {
   private static final String CHANNEL = "pw.dotto.netmanager/bridge";
   private static final int SHIZUKU_REQ_CODE = 23;
+  public static String PACKAGE_NAME;
 
   private Manager core = null;
   private int selectedSim = 0;
@@ -91,7 +92,7 @@ public class MainActivity extends FlutterActivity {
 
     if (sharedPreferences == null) {
       sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
-      advancedMode = sharedPreferences.getBoolean("advancedMode", false);
+      advancedMode = sharedPreferences.getBoolean("flutter.advancedMode", false);
 
       if (advancedMode == true && !Permissions.checkShizuku())
         Permissions.requestShizuku(SHIZUKU_REQ_CODE);
@@ -601,13 +602,14 @@ public class MainActivity extends FlutterActivity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
+    PACKAGE_NAME = getPackageName();
     DevicePatches.registerAll();
 
     if (sharedPreferences == null) {
       sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
-      advancedMode = sharedPreferences.getBoolean("advancedMode", false);
+      advancedMode = sharedPreferences.getBoolean("flutter.advancedMode", false);
 
-      if (advancedMode == true && !Permissions.checkShizuku())
+      if (advancedMode && !Permissions.checkShizuku())
         Permissions.requestShizuku(SHIZUKU_REQ_CODE);
     }
 
