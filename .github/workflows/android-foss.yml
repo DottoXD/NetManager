@@ -88,7 +88,7 @@ jobs:
           cp build/app/outputs/flutter-apk/*.apk artifacts/
           mv artifacts/app-armeabi-v7a-foss-release.apk artifacts/NetManager-FOSS-v7a.apk
           mv artifacts/app-arm64-v8a-foss-release.apk artifacts/NetManager-FOSS-arm64.apk
-          mv artifacts/app-universal-foss-release.apk artifacts/NetManager-FOSS-Universal.apk
+          mv artifacts/app-foss-release.apk artifacts/NetManager-FOSS.apk
 
       - name: 📤 Upload
         uses: actions/upload-artifact@v7.0.1

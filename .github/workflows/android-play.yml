@@ -91,7 +91,7 @@ jobs:
           cp build/wear/outputs/apk/release/*.apk artifacts/
           mv artifacts/app-armeabi-v7a-play-release.apk artifacts/NetManager-Play-v7a.apk
           mv artifacts/app-arm64-v8a-play-release.apk artifacts/NetManager-Play-arm64.apk
-          mv artifacts/app-universal-play-release.apk artifacts/NetManager-Play-Universal.apk
+          mv artifacts/app-play-release.apk artifacts/NetManager-Play.apk
           mv artifacts/wear-release.apk artifacts/NetManager-WearOS.apk
 
       - name: 📤 Upload
