@@ -37,12 +37,14 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+    }
 
-        if(isReleaseBuild) {
-            ndk {
-                abiFilters.clear()
-                abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a"))
-            }
+    splits {
+        abi {
+            isEnable = isReleaseBuild
+            reset()
+            include("armeabi-v7a", "arm64-v8a")
+            isUniversalApk = true
         }
     }
 
@@ -118,6 +120,21 @@ android {
         }
         create("play") {
             dimension = "distribution"
+        }
+    }
+}
+
+val abiCodes = mapOf("armeabi-v7a" to 1, "arm64-v8a" to 2, "x86_64" to 3)
+
+androidComponents {
+    onVariants { variant ->
+        val baseVersionCode = variant.outputs.first().versionCode.get()
+        variant.outputs.forEach { output ->
+            val abiFilter = output.filters.find { it.filterType.name == "ABI" }?.identifier
+            val abiVersionCode = abiCodes[abiFilter]
+            if (abiVersionCode != null) {
+                output.versionCode.set(baseVersionCode * 10 + abiVersionCode)
+            }
         }
     }
 }

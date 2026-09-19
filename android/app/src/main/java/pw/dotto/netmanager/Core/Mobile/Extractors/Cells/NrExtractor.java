@@ -1,6 +1,6 @@
 package pw.dotto.netmanager.Core.Mobile.Extractors.Cells;
 
-import static pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
+import static pw.dotto.netmanager.Core.Sources.Telephony.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
 
 import android.os.Build;
 import android.telephony.CellIdentityNr;
@@ -22,7 +22,7 @@ import pw.dotto.netmanager.Utils.Permissions;
  * based on the provided cell info.
  *
  * @author DottoXD
- * @version 0.2.0
+ * @version 0.2.1
  */
 public class NrExtractor {
     private static final String REFLECTION_TA = "mTimingAdvance";

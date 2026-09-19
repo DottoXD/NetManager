@@ -37,7 +37,7 @@ import pw.dotto.netmanager.Core.Processors.Postprocessors.Postprocessor;
 import pw.dotto.netmanager.Core.Processors.Preprocessors.Preprocessor;
 import pw.dotto.netmanager.Core.Sources.CellDataSource;
 import pw.dotto.netmanager.Core.Sources.DataSourceSelector;
-import pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource;
+import pw.dotto.netmanager.Core.Sources.Telephony.TelephonyCellDataSource;
 import pw.dotto.netmanager.Utils.DebugLogger;
 import pw.dotto.netmanager.Utils.DeviceData;
 import pw.dotto.netmanager.Utils.Mobile;
@@ -50,7 +50,7 @@ import pw.dotto.netmanager.Utils.Permissions;
  * data sources and pretty much everything else related to mobile cell data.
  *
  * @author DottoXD
- * @version 0.2.0
+ * @version 0.2.1
  */
 public class NetManagerCore {
     private static volatile NetManagerCore instance;

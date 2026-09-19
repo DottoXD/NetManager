@@ -37,7 +37,7 @@ NetManager also allows you to open the main Android field testing menus (Android
 
 Full dual SIM support is also included, allowing seamless, concurrent data monitoring for multiple SIM cards on the same device.
 
-NetManager also includes various data preprocessing/postprocessing algorithms that filter out bad data exposed by Android's Telephony API, gather extra data from additional APIs and merge all pieces of information from all data sources into a single SIM data object.
+NetManager also includes various advanced data preprocessing/postprocessing algorithms that filter out bad data exposed by Android's Telephony API, gather extra data from additional APIs and merge all pieces of information from all data sources into a single SIM data object.
 
 All major data sources, such as the event log or the map trip logs, are fully exportable in text files.
 

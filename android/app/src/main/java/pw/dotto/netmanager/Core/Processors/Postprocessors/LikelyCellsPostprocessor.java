@@ -1,7 +1,7 @@
 package pw.dotto.netmanager.Core.Processors.Postprocessors;
 
 import static pw.dotto.netmanager.Core.Mobile.Extractors.Cells.LteExtractor.MAXIMUM_LTE_MHZ;
-import static pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
+import static pw.dotto.netmanager.Core.Sources.Telephony.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,7 +22,7 @@ import pw.dotto.netmanager.Utils.DeviceData;
  * implementation shall change between OEMs and different modems.
  *
  * @author DottoXD
- * @version 0.2.0
+ * @version 0.2.1
  */
 public class LikelyCellsPostprocessor implements Postprocessor {
 
@@ -39,9 +39,15 @@ public class LikelyCellsPostprocessor implements Postprocessor {
         boolean isQcomXiaomi = (deviceData.getManufacturer().equals("xiaomi")
                 || deviceData.getManufacturer().equals("redmi")
                 || deviceData.getManufacturer().equals("poco")) && deviceData.getModem().equals("qcom");
-        boolean isMtkPixel = deviceData.getManufacturer().equals("google") && deviceData.getModem().equals("malibu");
 
-        if (isQcomXiaomi || isMtkPixel) {
+        boolean isMtkPixel = (deviceData.getManufacturer().equals("google") && deviceData.getModem().equals("cubs"))
+                || (deviceData.getManufacturer().equals("google") && deviceData.getModem().equals("grizzly"))
+                || (deviceData.getManufacturer().equals("google") && deviceData.getModem().equals("kodiak"))
+                || deviceData.getManufacturer().equals("google") && deviceData.getModem().equals("yogi");
+
+        boolean isGenericMtk = deviceData.getModem().startsWith("mt");
+
+        if (isQcomXiaomi || isMtkPixel || isGenericMtk) {
             List<Integer> rawBandwidths = netManagerCore.getCellBandwidths(simId);
 
             if (rawBandwidths == null || rawBandwidths.size() <= 1) {

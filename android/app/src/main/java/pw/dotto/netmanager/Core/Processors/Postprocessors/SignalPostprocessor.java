@@ -1,6 +1,6 @@
 package pw.dotto.netmanager.Core.Processors.Postprocessors;
 
-import static pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
+import static pw.dotto.netmanager.Core.Sources.Telephony.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
 
 import android.content.Context;
 import android.os.Build;
@@ -19,7 +19,7 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.LteCellData;
 import pw.dotto.netmanager.Core.Mobile.CellDatas.NrCellData;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
 import pw.dotto.netmanager.Core.NetManagerCore;
-import pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource;
+import pw.dotto.netmanager.Core.Sources.Telephony.TelephonyCellDataSource;
 import pw.dotto.netmanager.Utils.DebugLogger;
 
 /**
@@ -30,7 +30,7 @@ import pw.dotto.netmanager.Utils.DebugLogger;
  * cells, but it might sometimes make mistakes.
  *
  * @author DottoXD
- * @version 0.2.0
+ * @version 0.2.1
  */
 public class SignalPostprocessor implements Postprocessor {
     @Override

@@ -2,7 +2,7 @@ package pw.dotto.netmanager.Core.Sources;
 
 import pw.dotto.netmanager.Core.Sources.Diag.DiagCellDataSource;
 import pw.dotto.netmanager.Core.Sources.Shizuku.ShizukuCellDataSource;
-import pw.dotto.netmanager.Utils.DebugLogger;
+import pw.dotto.netmanager.Core.Sources.Telephony.TelephonyCellDataSource;
 
 /**
  * NetManager's DataSourceSelector is a core NetManager component which decides
@@ -10,7 +10,7 @@ import pw.dotto.netmanager.Utils.DebugLogger;
  * available data sources.
  *
  * @author DottoXD
- * @version 0.2.0
+ * @version 0.2.1
  */
 public class DataSourceSelector {
     private final TelephonyCellDataSource telephonySource;

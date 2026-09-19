@@ -1,6 +1,6 @@
 package pw.dotto.netmanager.Core.Sources.Shizuku;
 
-import static pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
+import static pw.dotto.netmanager.Core.Sources.Telephony.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -13,7 +13,7 @@ import java.lang.reflect.Field;
  * possibly gather extra cell data on modern Android versions.
  *
  * @author DottoXD
- * @version 0.2.0
+ * @version 0.2.1
  */
 public class ReflectionUserService extends IReflectionUserService.Stub {
 

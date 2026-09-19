@@ -1,6 +1,6 @@
 package pw.dotto.netmanager.Core.Sources.Shizuku;
 
-import static pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
+import static pw.dotto.netmanager.Core.Sources.Telephony.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
 
 import android.content.Context;
 import android.os.IBinder;
@@ -25,7 +25,7 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.CellData;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
 import pw.dotto.netmanager.Core.NetManagerCore;
 import pw.dotto.netmanager.Core.Sources.CellDataSource;
-import pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource;
+import pw.dotto.netmanager.Core.Sources.Telephony.TelephonyCellDataSource;
 import pw.dotto.netmanager.Utils.DebugLogger;
 import pw.dotto.netmanager.Utils.Permissions;
 import rikka.shizuku.Shizuku;
@@ -41,7 +41,7 @@ import rikka.shizuku.SystemServiceHelper;
  * This component shall be considered a testing feature.
  *
  * @author DottoXD
- * @version 0.2.0
+ * @version 0.2.1
  */
 public class ShizukuCellDataSource implements CellDataSource {
     private static final int TRANSACTION_dump = 0x5f444d50;

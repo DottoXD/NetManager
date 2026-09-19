@@ -1,6 +1,6 @@
 package pw.dotto.netmanager.Core.Processors.Postprocessors;
 
-import static pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
+import static pw.dotto.netmanager.Core.Sources.Telephony.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -16,7 +16,7 @@ import pw.dotto.netmanager.Core.NetManagerCore;
  * which removes duplicate active cells & neighbor cells.
  *
  * @author DottoXD
- * @version 0.1.6
+ * @version 0.2.1
  */
 public class DuplicateCellsPostprocessor implements Postprocessor {
     @Override
@@ -27,7 +27,7 @@ public class DuplicateCellsPostprocessor implements Postprocessor {
         Set<String> seenIdentifiers = new HashSet<>();
         Set<Integer> seenChannelNumbers = new HashSet<>();
         List<CellData> activeDuplicates = new ArrayList<>();
-        List<CellData> neighborDuplicates = new java.util.ArrayList<>();
+        List<CellData> neighborDuplicates = new ArrayList<>();
 
         for (CellData cell : data.getActiveCells()) {
             if (cell == null)

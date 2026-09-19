@@ -11,7 +11,7 @@ import pw.dotto.netmanager.Core.Events.EventManager;
 import pw.dotto.netmanager.Core.Mobile.CellSnapshot;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
 import pw.dotto.netmanager.Core.Mobile.SimReceiverManager;
-import pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource;
+import pw.dotto.netmanager.Core.Sources.Telephony.TelephonyCellDataSource;
 
 /**
  * NetManager's Manager is a facade class that bridges data from NetManagerCore
@@ -20,7 +20,7 @@ import pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource;
  * rewriting substantial (and working) parts of the codebase.
  *
  * @author DottoXD
- * @version 0.2.0
+ * @version 0.2.1
  */
 public class Manager {
     private final Context context;

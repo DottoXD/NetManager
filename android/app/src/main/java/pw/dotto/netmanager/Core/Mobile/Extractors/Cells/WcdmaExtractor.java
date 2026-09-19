@@ -1,6 +1,6 @@
 package pw.dotto.netmanager.Core.Mobile.Extractors.Cells;
 
-import static pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
+import static pw.dotto.netmanager.Core.Sources.Telephony.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
 
 import android.os.Build;
 import android.telephony.CellIdentityWcdma;
@@ -16,7 +16,7 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.WcdmaCellData;
  * object based on the provided cell info.
  *
  * @author DottoXD
- * @version 0.1.6
+ * @version 0.2.1
  */
 public class WcdmaExtractor {
     @NonNull

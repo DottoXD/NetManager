@@ -1,0 +1,4 @@
+- Gli speed test eseguiti durante i drive test ora vengono mostrati nella mappa quando viene aperto il rispettivo record.
+- Il postprocessore delle celle probabili è stato corretto sulla serie di Pixel 11 series e aggiunto su tutti i dispositivi con modem Mediatek.
+- Aggiunto un sistema di caching delle celle.
+- Aggiornamenti delle dipendenze delle app.

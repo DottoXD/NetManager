@@ -1,0 +1,4 @@
+- Speed tests performed during drive tests are now shown in the map when opening their respective drive test record.
+- The likely cells postprocessor has been fixed on the Pixel 11 series and added to all Mediatek devices.
+- Added a simple cell caching system.
+- App dependencies updates.

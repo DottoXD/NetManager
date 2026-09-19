@@ -1,4 +1,4 @@
-package pw.dotto.netmanager.Core.Sources;
+package pw.dotto.netmanager.Core.Sources.Telephony;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -54,7 +54,9 @@ import pw.dotto.netmanager.Core.Mobile.Extractors.Cells.WcdmaExtractor;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
 import pw.dotto.netmanager.Core.NetManagerCore;
 import pw.dotto.netmanager.Core.Processors.Preprocessors.Preprocessor;
+import pw.dotto.netmanager.Core.Sources.CellDataSource;
 import pw.dotto.netmanager.Utils.DebugLogger;
+import pw.dotto.netmanager.Utils.DeviceData;
 import pw.dotto.netmanager.Utils.Permissions;
 
 /**
@@ -63,7 +65,7 @@ import pw.dotto.netmanager.Utils.Permissions;
  * API.
  *
  * @author DottoXD
- * @version 0.2.0
+ * @version 0.2.1
  */
 public class TelephonyCellDataSource implements CellDataSource {
     public static final int CELL_INFO_UNAVAILABLE = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
@@ -85,6 +87,7 @@ public class TelephonyCellDataSource implements CellDataSource {
 
     private static final int MODEM_REFRESH_INTERVAL_SECONDS = 10;
     private final Map<Integer, Date> lastModemUpdateBySlot = new ConcurrentHashMap<>();
+    private final CellInfoCache cellInfoCache = new CellInfoCache();
 
     private final List<Preprocessor> preprocessors;
 
@@ -120,17 +123,20 @@ public class TelephonyCellDataSource implements CellDataSource {
         try {
             Date lastUpdate = lastModemUpdateBySlot.get(simId);
             boolean shouldUpdate = lastUpdate == null
-                    || lastUpdate.toInstant().plusSeconds(MODEM_REFRESH_INTERVAL_SECONDS)
+                    || lastUpdate.toInstant()
+                            .plusSeconds((MODEM_REFRESH_INTERVAL_SECONDS
+                                    / (DeviceData.getInstance(null).getModem().startsWith("mt") ? 2 : 1)))
                             .isBefore(new Date().toInstant());
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && shouldUpdate) {
-                telephony.requestCellInfoUpdate(cellInfoExecutor,
-                        new TelephonyManager.CellInfoCallback() {
-                            @Override
-                            public void onCellInfo(@NonNull List<CellInfo> cellInfo) {
-                                lastModemUpdateBySlot.put(simId, new Date());
-                            }
-                        });
+                lastModemUpdateBySlot.put(simId, new Date());
+
+                telephony.requestCellInfoUpdate(cellInfoExecutor, new TelephonyManager.CellInfoCallback() {
+                    @Override
+                    public void onCellInfo(@NonNull List<CellInfo> cellInfo) {
+                        cellInfoCache.put(simId, cellInfo);
+                    }
+                });
             }
         } catch (Exception e) {
             DebugLogger.add(
@@ -143,6 +149,7 @@ public class TelephonyCellDataSource implements CellDataSource {
             cellInfo.addAll(rawCells);
         }
 
+        // move this to preprocessors
         List<CellInfo> additionalCells = null;
         if (simSlotState != null) {
             if (simSlotState.cellInfoListener != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -150,6 +157,17 @@ public class TelephonyCellDataSource implements CellDataSource {
             } else if (simSlotState.legacyPhoneStateListener != null) {
                 additionalCells = simSlotState.legacyPhoneStateListener.getLatestCellInfo();
             }
+        }
+
+        List<CellInfo> cachedCells = cellInfoCache.getValidCells(simId);
+        if (!cachedCells.isEmpty()) {
+            if (additionalCells == null) {
+                additionalCells = new ArrayList<>();
+            } else {
+                additionalCells = new ArrayList<>(additionalCells);
+            }
+
+            additionalCells.addAll(cachedCells);
         }
 
         if (additionalCells != null && !additionalCells.isEmpty()) {
@@ -436,11 +454,9 @@ public class TelephonyCellDataSource implements CellDataSource {
                     ((CellInfoGsm) baseCell).getCellIdentity().getMnc(),
                     simOperator);
 
-            if (!mccMnc.contains(UNKNOWN_MCCMNC)) {
-                if (mccMnc.equals(simOperator) || simOperator.equals("00000"))
-                    data.addNeighborCell(gsmCellData);
-            } else
+            if (isAllowedOperator(mccMnc, simOperator)) {
                 data.addNeighborCell(gsmCellData);
+            }
         } else if (baseCell instanceof CellInfoCdma) {
             data.addNeighborCell(CdmaExtractor.get((CellInfoCdma) baseCell));
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && baseCell instanceof CellInfoTdscdma) {
@@ -448,11 +464,9 @@ public class TelephonyCellDataSource implements CellDataSource {
             String mccMnc = ((CellInfoTdscdma) baseCell).getCellIdentity().getMccString()
                     + ((CellInfoTdscdma) baseCell).getCellIdentity().getMncString();
 
-            if (!mccMnc.contains("null")) {
-                if (mccMnc.equals(simOperator) || simOperator.equals("00000"))
-                    data.addNeighborCell(tdscdmaCellData);
-            } else
+            if (isAllowedOperator(mccMnc, simOperator)) {
                 data.addNeighborCell(tdscdmaCellData);
+            }
         } else if (baseCell instanceof CellInfoWcdma) {
             WcdmaCellData wcdmaCellData = WcdmaExtractor.get((CellInfoWcdma) baseCell);
             String mccMnc = buildMccMnc(
@@ -460,11 +474,9 @@ public class TelephonyCellDataSource implements CellDataSource {
                     ((CellInfoWcdma) baseCell).getCellIdentity().getMnc(),
                     simOperator);
 
-            if (!mccMnc.contains(UNKNOWN_MCCMNC)) {
-                if (mccMnc.equals(simOperator) || simOperator.equals("00000"))
-                    data.addNeighborCell(wcdmaCellData);
-            } else
+            if (isAllowedOperator(mccMnc, simOperator)) {
                 data.addNeighborCell(wcdmaCellData);
+            }
         } else if (baseCell instanceof CellInfoLte) {
             LteCellData lteCellData = LteExtractor.get((CellInfoLte) baseCell);
             String mccMnc = buildMccMnc(
@@ -472,24 +484,21 @@ public class TelephonyCellDataSource implements CellDataSource {
                     ((CellInfoLte) baseCell).getCellIdentity().getMnc(),
                     simOperator);
 
-            if (!mccMnc.contains(UNKNOWN_MCCMNC)) {
-                if (mccMnc.equals(simOperator) || simOperator.equals("00000"))
-                    data.addNeighborCell(lteCellData);
-            } else
+            if (isAllowedOperator(mccMnc, simOperator)) {
                 data.addNeighborCell(lteCellData);
+            }
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && baseCell instanceof CellInfoNr) {
             NrCellData nrCellData = NrExtractor.get((CellInfoNr) baseCell);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 CellIdentityNr identity = (CellIdentityNr) baseCell.getCellIdentity();
                 String mccMnc = identity.getMccString() + identity.getMncString();
 
-                if (!mccMnc.contains("null")) {
-                    if (mccMnc.equals(simOperator) || simOperator.equals("00000"))
-                        data.addNeighborCell(nrCellData);
-                } else
+                if (isAllowedOperator(mccMnc, simOperator)) {
                     data.addNeighborCell(nrCellData);
-            } else
+                }
+            } else {
                 data.addNeighborCell(nrCellData);
+            }
         }
     }
 
@@ -930,6 +939,16 @@ public class TelephonyCellDataSource implements CellDataSource {
         String mncStr = String.format(Locale.ENGLISH, "%0" + mncLen + "d", mnc);
 
         return mccStr + mncStr;
+    }
+
+    private boolean isAllowedOperator(String cellMccMnc, String simOperator) {
+        if (cellMccMnc == null || cellMccMnc.contains(UNKNOWN_MCCMNC) || cellMccMnc.contains("null")) {
+            return true;
+        }
+        if (simOperator == null || simOperator.isEmpty() || "00000".equals(simOperator)) {
+            return true;
+        }
+        return cellMccMnc.equals(simOperator);
     }
 
     public void shutdown() {

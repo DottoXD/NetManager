@@ -2,12 +2,16 @@ package pw.dotto.netmanager.Core.Listeners;
 
 import android.Manifest;
 import android.os.Build;
+import android.telephony.NetworkRegistrationInfo;
 import android.telephony.ServiceState;
 import android.telephony.TelephonyCallback;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.RequiresPermission;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import pw.dotto.netmanager.Utils.Permissions;
 
@@ -21,7 +25,7 @@ import pw.dotto.netmanager.Utils.Permissions;
  * (sadly) return no bandwidth data.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.2.1
  */
 @RequiresApi(api = Build.VERSION_CODES.S)
 public class ServiceStateListener extends TelephonyCallback implements TelephonyCallback.ServiceStateListener {
@@ -30,6 +34,7 @@ public class ServiceStateListener extends TelephonyCallback implements Telephony
     private String updatedOperatorAlphaLong = "";
     private String operatorNumeric = "";
     private int state = ServiceState.STATE_IN_SERVICE;
+    private List<NetworkRegistrationInfo> networkRegistrationInfoList = new ArrayList<>();
     private boolean isEmergency = false;
 
     @RequiresPermission(allOf = { Manifest.permission.ACCESS_FINE_LOCATION,
@@ -43,6 +48,7 @@ public class ServiceStateListener extends TelephonyCallback implements Telephony
             updatedOperatorAlphaLong = serviceState.getOperatorAlphaLong();
             operatorNumeric = serviceState.getOperatorNumeric();
             state = serviceState.getState();
+            networkRegistrationInfoList = serviceState.getNetworkRegistrationInfoList();
 
             String s = serviceState.toString();
             isEmergency = s.contains("mIsEmergencyOnly=true") || s.contains("EmergOnly=true");
@@ -68,6 +74,10 @@ public class ServiceStateListener extends TelephonyCallback implements Telephony
 
     public int getState() {
         return state;
+    }
+
+    public List<NetworkRegistrationInfo> getNetworkRegistrationInfoList() {
+        return networkRegistrationInfoList;
     }
 
     public boolean getIsEmergency() {

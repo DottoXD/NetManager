@@ -1,6 +1,6 @@
 package pw.dotto.netmanager.Core.Processors.Postprocessors;
 
-import static pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
+import static pw.dotto.netmanager.Core.Sources.Telephony.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
 
 import pw.dotto.netmanager.Core.Mobile.CellDatas.CellData;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
@@ -11,7 +11,7 @@ import pw.dotto.netmanager.Core.NetManagerCore;
  * which removes obvious pieces of invalid data.
  *
  * @author DottoXD
- * @version 0.1.6
+ * @version 0.2.1
  */
 public class InvalidDataPostprocessor implements Postprocessor {
     @Override

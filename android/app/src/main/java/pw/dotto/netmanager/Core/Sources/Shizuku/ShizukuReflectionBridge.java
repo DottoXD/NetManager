@@ -1,6 +1,6 @@
 package pw.dotto.netmanager.Core.Sources.Shizuku;
 
-import static pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
+import static pw.dotto.netmanager.Core.Sources.Telephony.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
 import static pw.dotto.netmanager.MainActivity.PACKAGE_NAME;
 
 import android.content.ComponentName;
@@ -24,7 +24,7 @@ import rikka.shizuku.Shizuku;
  * through Shizuku for their desired fields.
  *
  * @author DottoXD
- * @version 0.2.0
+ * @version 0.2.1
  */
 public final class ShizukuReflectionBridge {
     private static final long BIND_TIMEOUT_MS = 1500;

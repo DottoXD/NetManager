@@ -1,7 +1,7 @@
 package pw.dotto.netmanager.Core.Processors.Postprocessors;
 
 import static pw.dotto.netmanager.Core.Mobile.Extractors.Cells.NrExtractor.getMaximumNrMhz;
-import static pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
+import static pw.dotto.netmanager.Core.Sources.Telephony.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,7 +23,7 @@ import pw.dotto.netmanager.Core.NetManagerCore;
  * cells, but it might sometimes make mistakes.
  *
  * @author DottoXD
- * @version 0.2.0
+ * @version 0.2.1
  */
 public class BandwidthsPostprocessor implements Postprocessor {
     @Override

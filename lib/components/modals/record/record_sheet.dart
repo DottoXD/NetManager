@@ -7,6 +7,7 @@ import 'package:netmanager/types/events/event_types.dart';
 import 'package:netmanager/types/recording/record.dart';
 import 'package:netmanager/types/events/netmanager_event.dart';
 import 'package:netmanager/types/events/mobile_netmanager_event.dart';
+import 'package:netmanager/types/speedtest/history_result.dart';
 import 'package:netmanager/utils/gen_color.dart';
 
 class RecordSheet extends StatelessWidget {
@@ -14,10 +15,12 @@ class RecordSheet extends StatelessWidget {
     super.key,
     required this.record,
     this.matchedEvents = const [],
+    this.matchedSpeedtests = const [],
   });
 
   final Record record;
   final List<NetmanagerEvent> matchedEvents;
+  final List<SpeedtestHistoryResult> matchedSpeedtests;
 
   @override
   Widget build(BuildContext context) {
@@ -151,6 +154,41 @@ class RecordSheet extends StatelessWidget {
                                     ),
                                   ],
                                 ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                    if (matchedSpeedtests.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: Text(
+                            appLocalizations.speedtest,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontSize: 18),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.all(10.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: matchedSpeedtests.map((speedtest) {
+                            return ListTile(
+                              dense: true,
+                              title: Text(
+                                "${appLocalizations.speedtest} (${formatter.format(speedtest.timestamp.toLocal())})",
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(fontSize: 16),
+                              ),
+                              subtitle: Text(
+                                "${speedtest.download.toStringAsFixed(1)}, ${speedtest.upload.toStringAsFixed(1)}",
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(fontSize: 14, height: 1.1),
                               ),
                             );
                           }).toList(),

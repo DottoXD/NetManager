@@ -15,15 +15,16 @@ import pw.dotto.netmanager.Core.Mobile.CellDatas.TdscdmaCellData;
 import pw.dotto.netmanager.Core.Mobile.CellDatas.WcdmaCellData;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
 import pw.dotto.netmanager.Core.NetManagerCore;
-import pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource;
+import pw.dotto.netmanager.Core.Sources.Telephony.TelephonyCellDataSource;
 import pw.dotto.netmanager.Utils.DebugLogger;
 
 /**
  * NetManager's ImpossibleCellsPostprocessor is a cell data postprocessor
- * which efficiently gets rid of cells which are absolutely impossible for the UE to be using.
+ * which efficiently gets rid of cells which are absolutely impossible for the
+ * UE to be using.
  *
  * @author DottoXD
- * @version 0.2.0
+ * @version 0.2.1
  */
 public class ImpossibleCellsPostprocessor implements Postprocessor {
     @Override
@@ -81,15 +82,17 @@ public class ImpossibleCellsPostprocessor implements Postprocessor {
                 boolean clearActiveCells;
 
                 if (Build.VERSION.SDK_INT == Build.VERSION_CODES.R) {
-                    clearActiveCells = !(SubscriptionManager.getActiveDataSubscriptionId() == telephony.getSubscriptionId());
+                    clearActiveCells = !(SubscriptionManager.getActiveDataSubscriptionId() == telephony
+                            .getSubscriptionId());
                 } else {
                     int status = TelephonyCellDataSource.getDataStatus(context, slot, telephony);
 
                     clearActiveCells = switch (status) {
                         case TelephonyManager.DATA_DISCONNECTED,
-                             TelephonyManager.DATA_DISCONNECTING,
-                             TelephonyManager.DATA_SUSPENDED,
-                             TelephonyManager.DATA_UNKNOWN -> true;
+                                TelephonyManager.DATA_DISCONNECTING,
+                                TelephonyManager.DATA_SUSPENDED,
+                                TelephonyManager.DATA_UNKNOWN ->
+                            true;
                         default -> false;
                     };
                 }

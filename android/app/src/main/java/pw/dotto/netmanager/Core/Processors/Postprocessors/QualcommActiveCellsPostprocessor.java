@@ -1,6 +1,6 @@
 package pw.dotto.netmanager.Core.Processors.Postprocessors;
 
-import static pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
+import static pw.dotto.netmanager.Core.Sources.Telephony.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +18,7 @@ import pw.dotto.netmanager.Core.NetManagerCore;
  * active cells list.
  *
  * @author DottoXD
- * @version 0.1.4
+ * @version 0.2.1
  */
 public class QualcommActiveCellsPostprocessor implements Postprocessor {
     @Override

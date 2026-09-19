@@ -12,6 +12,7 @@ import 'package:netmanager/components/modals/map_filters_modal.dart';
 import 'package:netmanager/components/modals/record/record_modal.dart';
 import 'package:netmanager/components/modals/record/record_sheet.dart';
 import 'package:netmanager/database/cell_database.dart';
+import 'package:netmanager/database/speedtest_database.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/types/database/cell_tower.dart';
 import 'package:netmanager/types/events/mobile_netmanager_event.dart';
@@ -22,7 +23,7 @@ import 'package:netmanager/components/base/body/map/widgets/map_overlay.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
 import 'package:netmanager/types/recording/recorded_data.dart';
 import 'package:netmanager/types/recording/record.dart';
-import 'package:netmanager/utils/event_utils.dart';
+import 'package:netmanager/utils/record_utils.dart';
 import 'package:netmanager/utils/simdata_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:latlong2/latlong.dart';
@@ -815,6 +816,14 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
                   final matchedEvents = await _fetchAndMatchEvents(record);
 
+                  final allSpeedtests = await SpeedtestDatabase.fetchHistory();
+                  final allRecords = _activeReplayData?.records ?? _liveRecords;
+                  final matchedSpeedtests = getSpeedtestsForRecord(
+                    currentRecord: record,
+                    sortedRecords: allRecords,
+                    speedtests: allSpeedtests,
+                  );
+
                   if (!context.mounted) return;
 
                   showModalBottomSheet(
@@ -830,6 +839,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                       return RecordSheet(
                         record: record,
                         matchedEvents: matchedEvents,
+                        matchedSpeedtests: matchedSpeedtests,
                       );
                     },
                   ).then((_) {

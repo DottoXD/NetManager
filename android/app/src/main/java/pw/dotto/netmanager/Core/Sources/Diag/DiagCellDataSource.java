@@ -5,7 +5,7 @@ import android.content.Context;
 import pw.dotto.netmanager.Core.Base.SIMSlotState;
 import pw.dotto.netmanager.Core.Mobile.SIMData;
 import pw.dotto.netmanager.Core.Sources.CellDataSource;
-import pw.dotto.netmanager.Core.Sources.TelephonyCellDataSource;
+import pw.dotto.netmanager.Core.Sources.Telephony.TelephonyCellDataSource;
 
 public class DiagCellDataSource implements CellDataSource {
     private final TelephonyCellDataSource baseSource;
