@@ -28,7 +28,7 @@ class LiveMap extends StatelessWidget {
   final VoidCallback onMapReady;
   final ValueChanged<bool> onMapLoading;
   final VoidCallback onClearSelection;
-  final Function(LatLng latLng) onTowerTap;
+  final Function(LatLng latLng, bool isCluster) onTowerTap;
   final ValueNotifier<CellTower?> connectedTowerNotifier;
   final ValueNotifier<TowerFilter> towerFilterNotifier;
   final bool showBearingLine;

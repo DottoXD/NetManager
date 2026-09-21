@@ -13,6 +13,7 @@ class ErrorDialog extends StatelessWidget {
     HapticService().triggerHaptic(HapticType.medium, context);
 
     return AlertDialog(
+      icon: const Icon(Icons.error_outlined),
       title: Text(appLocalizations.error),
       content: SizedBox(
         width: double.maxFinite,

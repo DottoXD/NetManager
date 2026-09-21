@@ -1,0 +1,5 @@
+- Fixed a race condition that sometimes occured when toggling PIP mode.
+- Cell towers in the map are now clustered whenever they're too near to each other.
+- The advanced mode dialog now gives the user more info about advanced mode's status.
+- The speed test feature has been improved.
+- Various dialogs across the app have been updated.

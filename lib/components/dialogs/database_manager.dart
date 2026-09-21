@@ -255,6 +255,7 @@ class DatabaseManagerDialog extends StatelessWidget {
     return StatefulBuilder(
       builder: (context, setDialogState) {
         return AlertDialog(
+          icon: const Icon(Icons.dataset_outlined),
           title: Text(appLocalizations.manageDatabases),
           content: SizedBox(
             width: double.maxFinite,

@@ -69,6 +69,7 @@ class _NewRecordingState extends State<NewRecording> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          icon: const Icon(Icons.emergency_recording_outlined),
           title: Text(appLocalizations.newRecording),
           content: SingleChildScrollView(
             child: Column(

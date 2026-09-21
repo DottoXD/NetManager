@@ -25,6 +25,7 @@ class DebugLogDialog extends StatelessWidget {
     if (debugLogsList.isEmpty) throw appLocalizations.noDebugLogs;
 
     return AlertDialog(
+      icon: const Icon(Icons.event_outlined),
       title: Text(appLocalizations.debugLogs),
       content: SizedBox(
         width: double.maxFinite,

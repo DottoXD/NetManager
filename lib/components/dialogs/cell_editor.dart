@@ -64,6 +64,7 @@ class _CellEditorDialogState extends State<CellEditorDialog> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return AlertDialog(
+              icon: const Icon(Icons.edit_outlined),
               title: Text("${appLocalizations.edit} #${cell["cid"]}"),
               content: SingleChildScrollView(
                 child: Column(
@@ -170,6 +171,7 @@ class _CellEditorDialogState extends State<CellEditorDialog> {
     final AppLocalizations appLocalizations = AppLocalizations.of(context)!;
 
     return AlertDialog(
+      icon: const Icon(Icons.edit_outlined),
       title: Text("${appLocalizations.editDatabase} ${widget.plmn}"),
       content: SizedBox(
         width: double.maxFinite,

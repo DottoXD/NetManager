@@ -128,12 +128,11 @@ val abiCodes = mapOf("armeabi-v7a" to 1, "arm64-v8a" to 2, "x86_64" to 3)
 
 androidComponents {
     onVariants { variant ->
-        val baseVersionCode = variant.outputs.first().versionCode.get()
         variant.outputs.forEach { output ->
             val abiFilter = output.filters.find { it.filterType.name == "ABI" }?.identifier
             val abiVersionCode = abiCodes[abiFilter]
             if (abiVersionCode != null) {
-                output.versionCode.set(baseVersionCode * 10 + abiVersionCode)
+                output.versionCode.set((flutter.versionCode * 10) + 5000 + abiVersionCode)
             }
         }
     }

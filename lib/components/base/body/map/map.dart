@@ -23,6 +23,7 @@ import 'package:netmanager/components/base/body/map/widgets/map_overlay.dart';
 import 'package:netmanager/types/cell/sim_data.dart';
 import 'package:netmanager/types/recording/recorded_data.dart';
 import 'package:netmanager/types/recording/record.dart';
+import 'package:netmanager/utils/map_utils.dart';
 import 'package:netmanager/utils/record_utils.dart';
 import 'package:netmanager/utils/simdata_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -711,7 +712,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
         cellsLimit = 700;
       }
 
-      final towers = await CellDatabase.fetchMapCellTowers(
+      final rawTowers = await CellDatabase.fetchMapCellTowers(
         _lastPlmn,
         minLat,
         maxLat,
@@ -719,6 +720,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
         maxLng,
         cellsLimit,
       );
+
+      final towers = clusterMapTowers(rawTowers, currentZoom);
 
       _cachedBounds = LatLngBounds(
         LatLng(minLat, minLng),
@@ -874,16 +877,23 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                   }
                 },
                 onClearSelection: () => setState(() => _selectedRecord = null),
-                onTowerTap: (LatLng towerLatLng) {
+                onTowerTap: (LatLng towerLatLng, bool isCluster) {
                   setState(() {
                     _follow = false;
                   });
 
-                  animatedUpdate(
-                    _mapController.camera.center,
-                    towerLatLng,
-                    const Duration(milliseconds: 500),
-                  );
+                  if (isCluster) {
+                    _mapController.move(
+                      towerLatLng,
+                      _mapController.camera.zoom + 1.5,
+                    );
+                  } else {
+                    animatedUpdate(
+                      _mapController.camera.center,
+                      towerLatLng,
+                      const Duration(milliseconds: 500),
+                    );
+                  }
                 },
                 connectedTowerNotifier: _connectedTowerNotifier,
                 towerFilterNotifier: _towerFilterNotifier,

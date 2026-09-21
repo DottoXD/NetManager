@@ -27,6 +27,7 @@ class EventLogDialog extends StatelessWidget {
     final outlineVariant = Theme.of(context).colorScheme.outlineVariant;
 
     return AlertDialog(
+      icon: const Icon(Icons.event_outlined),
       title: Text(appLocalizations.eventLogs),
       content: SizedBox(
         width: double.maxFinite,

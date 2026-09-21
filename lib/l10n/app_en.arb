@@ -375,5 +375,13 @@
   "debugReportInstructions": "Include an optional note describing the issue you experienced.",
   "debugReportHint": "Incorrect bandwidth reported",
   "debugReportError": "Failed to send a report.",
-  "advancedMenuUnavailable": "The advanced mode menu is currently unavailable."
+  "advancedMenuShizuku": "Shizuku",
+  "advancedMenuDiag": "Diag",
+  "advancedMenuUnavailable": "The advanced mode menu is currently unavailable.",
+  "advancedMenuEnabledWorking": "Enabled and working",
+  "advancedMenuPermissionDenied": "Permission denied",
+  "advancedMenuNotInstalledRunning": "Not installed or not running",
+  "advancedMenuUnknown": "Unknown status",
+  "advancedMenuOk": "Ok",
+  "advancedMenuNoBackends": "Advanced mode is enabled, but none of its execution backends are currently available."
 }

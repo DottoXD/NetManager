@@ -101,6 +101,7 @@ class _ScheduleSpeedtestDialogState extends State<ScheduleSpeedtestDialog> {
     final AppLocalizations appLocalizations = AppLocalizations.of(context)!;
 
     return AlertDialog(
+      icon: const Icon(Icons.timer_outlined),
       title: Text(appLocalizations.speedtestPlan),
       content: SingleChildScrollView(
         child: Column(

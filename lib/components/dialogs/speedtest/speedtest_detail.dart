@@ -47,6 +47,7 @@ class SpeedtestDetailDialog extends StatelessWidget {
     final appLocalizations = AppLocalizations.of(context)!;
 
     return AlertDialog(
+      icon: const Icon(Icons.speed_outlined),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28.0)),
       title: Text(
         DateFormat("dd/MM/yyyy HH:mm:ss").format(speedtestResult.timestamp),

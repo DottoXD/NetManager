@@ -21,6 +21,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,7 @@ import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
+import okhttp3.Protocol;
 import okhttp3.Response;
 import okio.BufferedSink;
 import pw.dotto.netmanager.Core.Manager;
@@ -54,26 +56,28 @@ import pw.dotto.netmanager.Utils.DeviceData;
  * test software solution.
  *
  * @author DottoXD
- * @version 0.1.6
+ * @version 0.2.2
  */
 public class Client {
     private String USER_AGENT = "NetManager-SpeedTest/Unknown";
 
     private static final int BUFFER_SIZE = 256 * 1024;
-    private static final int UPLOAD_CHUNK_SIZE = 1024 * 1024;
     private static final int UI_UPDATE_INTERVAL = 200;
 
-    private static final long BATCH_UPDATE_THRESHOLD = 64 * 1024;
+    private static final long BATCH_UPDATE_THRESHOLD = 1024 * 1024;
 
     private static final int LATENCY_MAX_MS = 5000;
     private static final int PHASE_MAX_MS = 20000;
     private static final int PHASE_MIN_MS = 4000;
     private static final int PING_COUNT = 5;
     private static final int PING_INTERVAL_MS = 50;
+    private static final int DOWNLOAD_GRACE_MS = 1500;
+    private static final int UPLOAD_GRACE_MS = 3000;
+    private static final int STREAM_START_DELAY_MS = 100;
 
-    private static final int STABILITY_WINDOW_MS = 3000;
-    private static final double STABILITY_THRESHOLD = 0.065;
-    private static final int STABILITY_MIN_SAMPLES = 10;
+    private static final int LIBRESPEED_DOWNLOAD_CHUNK_MB = 512;
+    private static final int UPLOAD_REQUEST_MB = 20;
+
     private static final int GLOBAL_PING_INTERVAL_MS = 500;
     private static final int OVERALL_TEST_TIMEOUT_MS = 90000;
 
@@ -83,7 +87,7 @@ public class Client {
 
     private final ExecutorService executor = Executors.newFixedThreadPool(streams + 2);
     private final ScheduledExecutorService watchdogExecutor = Executors.newSingleThreadScheduledExecutor();
-    private final ExecutorService dnsExecutor = Executors.newFixedThreadPool(2);
+    private final ExecutorService dnsExecutor = Executors.newFixedThreadPool(Math.min(streams, 4));
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private final AtomicLong globalPingsSent = new AtomicLong(0);
@@ -131,7 +135,8 @@ public class Client {
                         .connectTimeout(4, TimeUnit.SECONDS)
                         .readTimeout(8, TimeUnit.SECONDS)
                         .writeTimeout(8, TimeUnit.SECONDS)
-                        .retryOnConnectionFailure(true)
+                        .retryOnConnectionFailure(false)
+                        .protocols(Collections.singletonList(Protocol.HTTP_1_1))
                         .addInterceptor(chain -> {
                             Request original = chain.request();
                             Request withUA = original.newBuilder()
@@ -316,8 +321,6 @@ public class Client {
     private double measureDownload(String downloadUrl, MethodChannel channel) throws Exception {
         AtomicLong totalBytes = new AtomicLong(0);
         AtomicBoolean running = new AtomicBoolean(true);
-        long startTime = System.currentTimeMillis();
-
         List<Future<?>> futures = new ArrayList<>();
 
         try {
@@ -326,12 +329,7 @@ public class Client {
                     break;
                 try {
                     futures.add(executor.submit(() -> {
-                        String finalDownloadUrl = downloadUrl;
-
-                        if (downloadUrl.contains("garbage") || downloadUrl.contains("getSpeed")) {
-                            finalDownloadUrl += downloadUrl.contains("?") ? "&ckSize=100" : "?ckSize=100";
-                        }
-
+                        String finalDownloadUrl = buildDownloadUrl(downloadUrl);
                         Request request = new Request.Builder()
                                 .url(finalDownloadUrl)
                                 .addHeader("Accept-Encoding", "identity")
@@ -340,14 +338,20 @@ public class Client {
                         byte[] buf = new byte[BUFFER_SIZE];
 
                         while (running.get()) {
-                            if (finalDownloadUrl.contains("downloading"))
+                            if (isOpenSpeedTestDownload(downloadUrl)) {
                                 request = new Request.Builder()
-                                        .url(finalDownloadUrl + (downloadUrl.contains("?") ? "&n=" : "?n=")
+                                        .url(finalDownloadUrl + (finalDownloadUrl.contains("?") ? "&n=" : "?n=")
                                                 + System.nanoTime())
                                         .addHeader("Accept-Encoding", "identity")
                                         .build();
+                            }
 
                             try (Response response = httpClient.newCall(request).execute()) {
+                                if (!response.isSuccessful() || response.body() == null) {
+                                    throw new IOException(
+                                            "Download request failed with HTTP status code " + response.code() + ".");
+                                }
+
                                 InputStream is = response.body().byteStream();
 
                                 int read;
@@ -369,6 +373,7 @@ public class Client {
                                 try {
                                     Thread.sleep(100);
                                 } catch (InterruptedException e) {
+                                    Thread.currentThread().interrupt();
                                     return;
                                 }
                             }
@@ -377,9 +382,12 @@ public class Client {
                 } catch (RejectedExecutionException ignored) {
                     break;
                 }
+
+                if (i + 1 < streams)
+                    Thread.sleep(STREAM_START_DELAY_MS);
             }
 
-            return monitorProgress(channel, "DOWNLOAD", startTime, totalBytes, running);
+            return monitorProgress(channel, "DOWNLOAD", totalBytes, running, DOWNLOAD_GRACE_MS);
         } finally {
             running.set(false);
 
@@ -389,13 +397,63 @@ public class Client {
         }
     }
 
+    private String buildDownloadUrl(String downloadUrl) {
+        String lowerUrl = downloadUrl.toLowerCase();
+        if (lowerUrl.contains("garbage.php")) {
+            return downloadUrl + (downloadUrl.contains("?") ? "&ckSize=" : "?ckSize=")
+                    + LIBRESPEED_DOWNLOAD_CHUNK_MB;
+        }
+
+        if (lowerUrl.contains("getspeed")) {
+            return downloadUrl + (downloadUrl.contains("?") ? "&ckSize=" : "?ckSize=") + 100;
+        }
+
+        return downloadUrl;
+    }
+
+    private boolean isOpenSpeedTestDownload(String downloadUrl) {
+        return downloadUrl.toLowerCase().contains("downloading");
+    }
+
     private double measureUpload(String uploadUrl, MethodChannel channel) throws Exception {
         AtomicLong totalBytes = new AtomicLong(0);
         AtomicBoolean running = new AtomicBoolean(true);
-        long startTime = System.currentTimeMillis();
-
-        byte[] payload = new byte[UPLOAD_CHUNK_SIZE];
+        byte[] payload = new byte[1024 * 1024];
         new Random().nextBytes(payload);
+        final int requestSize = LIBRESPEED_UPLOAD_REQUEST_MB * 1024 * 1024;
+
+        RequestBody requestBody = new RequestBody() {
+            @Override
+            public MediaType contentType() {
+                return MediaType.parse("application/octet-stream");
+            }
+
+            @Override
+            public long contentLength() {
+                return requestSize;
+            }
+
+            @Override
+            public void writeTo(@NonNull BufferedSink sink) throws IOException {
+                long remaining = requestSize;
+                long tempBytes = 0;
+
+                while (remaining > 0) {
+                    int writeSize = (int) Math.min(payload.length, remaining);
+                    sink.write(payload, 0, writeSize);
+                    remaining -= writeSize;
+                    tempBytes += writeSize;
+
+                    if (tempBytes >= BATCH_UPDATE_THRESHOLD) {
+                        totalBytes.addAndGet(tempBytes);
+                        tempBytes = 0;
+                    }
+                }
+
+                if (tempBytes > 0)
+                    totalBytes.addAndGet(tempBytes);
+            }
+        };
 
         List<Future<?>> futures = new ArrayList<>();
 
@@ -405,50 +463,44 @@ public class Client {
                     break;
                 try {
                     futures.add(executor.submit(() -> {
-                        RequestBody requestBody = new RequestBody() {
-                            @Override
-                            public MediaType contentType() {
-                                return MediaType.parse("application/octet-stream");
+                        while (running.get()) {
+                            String finalUploadUrl = uploadUrl;
+                            if (!uploadUrl.toLowerCase().contains("upload.php")) {
+                                finalUploadUrl += (uploadUrl.contains("?") ? "&n=" : "?n=") + System.nanoTime();
                             }
 
-                            @Override
-                            public void writeTo(@NonNull BufferedSink sink) throws IOException {
-                                long tempBytes = 0;
+                            Request request = new Request.Builder()
+                                    .url(finalUploadUrl)
+                                    .header("Content-Encoding", "identity")
+                                    .post(requestBody)
+                                    .build();
 
+                            try (Response response = httpClient.newCall(request).execute()) {
+                                if (!response.isSuccessful()) {
+                                    throw new IOException(
+                                            "Upload request failed with HTTP status code " + response.code() + ".");
+                                }
+                            } catch (Exception ignored) {
+                                if (Thread.currentThread().isInterrupted())
+                                    return;
                                 try {
-                                    while (running.get()) {
-                                        sink.write(payload);
-                                        sink.flush();
-
-                                        tempBytes += payload.length;
-                                        if (tempBytes >= BATCH_UPDATE_THRESHOLD) {
-                                            totalBytes.addAndGet(tempBytes);
-                                            tempBytes = 0;
-                                        }
-                                    }
-                                } finally {
-                                    if (tempBytes > 0)
-                                        totalBytes.addAndGet(tempBytes);
+                                    Thread.sleep(100);
+                                } catch (InterruptedException e) {
+                                    Thread.currentThread().interrupt();
+                                    return;
                                 }
                             }
-                        };
-
-                        String finalUploadUrl = uploadUrl;
-                        if (!uploadUrl.contains("upload.php")) {
-                            finalUploadUrl += (uploadUrl.contains("?") ? "&n=" : "?n=") + System.nanoTime();
-                        }
-
-                        Request request = new Request.Builder().url(finalUploadUrl).post(requestBody).build();
-                        try (Response response = httpClient.newCall(request).execute()) {
-                        } catch (Exception ignored) {
                         }
                     }));
                 } catch (RejectedExecutionException ignored) {
                     break;
                 }
+
+                if (i + 1 < streams)
+                    Thread.sleep(STREAM_START_DELAY_MS);
             }
 
-            return monitorProgress(channel, "UPLOAD", startTime, totalBytes, running);
+            return monitorProgress(channel, "UPLOAD", totalBytes, running, UPLOAD_GRACE_MS);
         } finally {
             running.set(false);
 
@@ -458,49 +510,72 @@ public class Client {
         }
     }
 
-    private double monitorProgress(MethodChannel channel, String stage, long startTime, AtomicLong totalBytes,
-            AtomicBoolean running) throws Exception {
-        StabilityTracker stability = new StabilityTracker(STABILITY_WINDOW_MS, STABILITY_MIN_SAMPLES,
-                STABILITY_THRESHOLD);
-        long lastUpdate = 0;
-        long timeBonus = 0;
+    private double monitorProgress(MethodChannel channel, String stage, AtomicLong totalBytes,
+            AtomicBoolean running, long graceMs) throws Exception {
+        long testStartNs = System.nanoTime();
+        long measurementStartNs = testStartNs;
+        long baselineBytes = 0;
+        long lastUpdateNs = 0;
+        double timeBonusMs = 0.0;
+        boolean graceTimeDone = false;
 
-        while (true) {
-            Thread.sleep(50);
-            long now = System.currentTimeMillis();
-            long elapsedTime = now - startTime;
-            long calculatedElapsedTime = elapsedTime + timeBonus;
+        while (running.get()) {
+            long nowNs = System.nanoTime();
 
-            if (calculatedElapsedTime >= PHASE_MAX_MS && elapsedTime >= PHASE_MIN_MS) {
-                break;
-            }
+            if (!graceTimeDone && nowNs - testStartNs >= TimeUnit.MILLISECONDS.toNanos(graceMs)) {
+                long bytesAtGraceEnd = totalBytes.get();
 
-            if (now - lastUpdate > UI_UPDATE_INTERVAL) {
-                double timeSec = (now - startTime) / 1000.0;
-                if (timeSec > 0.1) {
-                    double speed = (totalBytes.get() * 8.0 / 1_000_000.0) / timeSec;
-                    stability.record(now, speed);
-
-                    if (stability.isStable()) {
-                        timeBonus += 750;
-                    }
-
-                    calculatedElapsedTime = elapsedTime + timeBonus;
-                    double progress = Math.min(1.0, (double) calculatedElapsedTime / PHASE_MAX_MS);
-
-                    if (elapsedTime < PHASE_MIN_MS && progress >= 1.0) {
-                        progress = 0.99;
-                    }
-
-                    updateUI(channel, stage, speed, progress);
+                if (bytesAtGraceEnd > 0) {
+                    baselineBytes = bytesAtGraceEnd;
+                    measurementStartNs = nowNs;
                 }
-                lastUpdate = now;
+
+                timeBonusMs = 0.0;
+                graceTimeDone = true;
+                lastUpdateNs = nowNs;
             }
+
+            if (!graceTimeDone) {
+                Thread.sleep(20);
+                continue;
+            }
+
+            long elapsedNs = nowNs - measurementStartNs;
+            long elapsedMs = TimeUnit.NANOSECONDS.toMillis(elapsedNs);
+
+            if (nowNs - lastUpdateNs >= TimeUnit.MILLISECONDS.toNanos(UI_UPDATE_INTERVAL)) {
+                long measuredBytes = Math.max(0L, totalBytes.get() - baselineBytes);
+                double timeSec = elapsedNs / 1_000_000_000.0;
+                double speed = timeSec > 0.0
+                        ? (measuredBytes * 8.0 / 1_000_000.0) / timeSec
+                        : 0.0;
+
+                double bytesPerSecond = timeSec > 0.0
+                        ? measuredBytes / timeSec
+                        : 0.0;
+                double bonus = Math.min(400.0, (5.0 * bytesPerSecond) / 100_000.0);
+                timeBonusMs += bonus;
+
+                double progress = Math.min(1.0, (elapsedMs + timeBonusMs) / PHASE_MAX_MS);
+                updateUI(channel, stage, speed, progress);
+                lastUpdateNs = nowNs;
+
+                if (elapsedMs >= PHASE_MIN_MS && elapsedMs + timeBonusMs >= PHASE_MAX_MS)
+                    break;
+            }
+
+            Thread.sleep(20);
         }
 
+        long finalEndBytes = totalBytes.get();
+        long finalEndNs = System.nanoTime();
         running.set(false);
-        double finalTime = (System.currentTimeMillis() - startTime) / 1000.0;
-        double finalSpeed = (totalBytes.get() * 8.0 / 1_000_000.0) / finalTime;
+
+        long finalElapsedNs = Math.max(1L, finalEndNs - measurementStartNs);
+        long finalBytes = Math.max(0L, finalEndBytes - baselineBytes);
+        double finalSeconds = finalElapsedNs / 1_000_000_000.0;
+        double finalSpeed = (finalBytes * 8.0 / 1_000_000.0) / finalSeconds;
+
         updateUI(channel, stage, finalSpeed, 1.0);
 
         return finalSpeed;

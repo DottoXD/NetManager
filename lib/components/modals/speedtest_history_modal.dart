@@ -374,6 +374,7 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
+                              icon: const Icon(Icons.delete_outline_outlined),
                               title: Text(
                                 appLocalizations.speedtestClearHistory,
                               ),

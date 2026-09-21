@@ -9,7 +9,7 @@ import 'package:netmanager/utils/gen_color.dart';
 class CellTowers extends StatelessWidget {
   final List<CellTower> cellTowers;
   final CellTower? connectedTower;
-  final Function(LatLng latLng) onTowerTap;
+  final Function(LatLng latLng, bool isCluster) onTowerTap;
 
   const CellTowers({
     super.key,
@@ -36,6 +36,13 @@ class CellTowers extends StatelessWidget {
                 context,
               );
 
+              final bool isCluster = tower.cells.isEmpty;
+
+              if (isCluster) {
+                onTowerTap(tower.getLatLng(), true);
+                return;
+              }
+
               if (context.mounted) {
                 showModalBottomSheet(
                   context: context,
@@ -54,7 +61,7 @@ class CellTowers extends StatelessWidget {
                 );
               }
 
-              onTowerTap(tower.getLatLng());
+              onTowerTap(tower.getLatLng(), false);
             },
             child: Container(
               decoration: BoxDecoration(
@@ -74,7 +81,9 @@ class CellTowers extends StatelessWidget {
                     : null,
               ),
               child: Icon(
-                Icons.cell_tower_outlined,
+                tower.cells.isEmpty
+                    ? Icons.zoom_in_map_outlined
+                    : Icons.cell_tower_outlined,
                 size: 18,
                 color: Theme.of(context).colorScheme.secondary,
               ),

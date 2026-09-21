@@ -40,6 +40,7 @@ import pw.dotto.netmanager.Utils.Permissions;
 import pw.dotto.netmanager.Utils.DebugLogger;
 import pw.dotto.netmanager.Utils.PowerUtils;
 import pw.dotto.netmanager.WearOS.WearHandler;
+import rikka.shizuku.Shizuku;
 
 /**
  * NetManager's MainActivity class is the core component which coordinates
@@ -47,7 +48,7 @@ import pw.dotto.netmanager.WearOS.WearHandler;
  * This class also manages communications with WearOS devices.
  *
  * @author DottoXD
- * @version 0.2.1
+ * @version 0.2.2
  */
 public class MainActivity extends FlutterActivity {
   private static final String CHANNEL = "pw.dotto.netmanager/bridge";
@@ -522,7 +523,17 @@ public class MainActivity extends FlutterActivity {
               break;
 
             case "checkShizuku":
-              result.success(Permissions.checkShizuku());
+              int status = 0;
+
+              if (!Permissions.checkShizuku()) {
+                status = 2;
+              }
+
+              if (!Shizuku.pingBinder()) {
+                status = 1;
+              }
+
+              result.success(status);
               break;
 
             case "requestShizuku":
@@ -532,11 +543,11 @@ public class MainActivity extends FlutterActivity {
 
             case "toggleAdvancedMode":
               advancedMode = !advancedMode;
-              result.success(null);
               core.setAdvancedMode(advancedMode);
 
               if (advancedMode && !Permissions.checkShizuku())
                 Permissions.requestShizuku(SHIZUKU_REQ_CODE);
+              result.success(null);
               break;
 
             case "getDebugReport":

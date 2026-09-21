@@ -60,6 +60,7 @@ class ConvertRecording extends StatelessWidget {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
+              icon: const Icon(Icons.repeat_outlined),
               title: Text(appLocalizations.exportFormatTitle),
               content: Text(appLocalizations.exportFormatDescription),
               actions: [

@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+import 'package:netmanager/components/dialogs/advanced_mode_status.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/dialogs/event_log.dart';
 import 'package:netmanager/components/modals/info_modal.dart';
@@ -249,8 +250,24 @@ class _TopBarState extends State<TopBar> {
 
   Future<void> _openAdvancedMode(AppLocalizations appLocalizations) async {
     try {
-      final isShizuku = await platform.invokeMethod("checkShizuku") ?? false;
-      final isDiag = false;
+      int shizukuStatus = await platform.invokeMethod("checkShizuku") ?? 3;
+      int diagStatus = 3;
+
+      final isShizuku = shizukuStatus == 0;
+      final isDiag = diagStatus == 0;
+
+      if (!isShizuku && !isDiag && mounted) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AdvancedModeStatusDialog(
+              shizukuStatus: shizukuStatus,
+              diagStatus: diagStatus,
+            );
+          },
+        );
+        return;
+      }
 
       if (isDiag) {
         return;
@@ -264,6 +281,8 @@ class _TopBarState extends State<TopBar> {
               return ErrorDialog(e: appLocalizations.advancedMenuUnavailable);
             },
           );
+
+          return;
         }
       }
     } catch (e) {
@@ -280,7 +299,24 @@ class _TopBarState extends State<TopBar> {
 
   Future<void> _enterPip(AppLocalizations appLocalizations) async {
     try {
-      await platform.invokeMethod("enterPip");
+      isPipActiveNotifier.value = true;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        try {
+          await platform.invokeMethod("enterPip");
+        } catch (e) {
+          isPipActiveNotifier.value = false;
+
+          if (mounted) {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return ErrorDialog(e: "${appLocalizations.topBar}: $e");
+              },
+            );
+          }
+        }
+      });
     } catch (e) {
       if (mounted) {
         showDialog(

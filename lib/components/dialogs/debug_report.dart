@@ -86,6 +86,7 @@ class _DebugReportDialogState extends State<DebugReportDialog> {
     final appLocalizations = AppLocalizations.of(context)!;
 
     return AlertDialog(
+      icon: const Icon(Icons.report_outlined),
       title: Text(appLocalizations.settingsDebugReportTitle),
       content: SingleChildScrollView(
         child: Column(

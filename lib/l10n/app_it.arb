@@ -375,5 +375,13 @@
   "debugReportInstructions": "Includi una nota opzionale che descriva il problema che hai riscontrato.",
   "debugReportHint": "Larghezza di banda errata riportata",
   "debugReportError": "Impossibile inviare una segnalazione.",
-  "advancedMenuUnavailable": "Il menù della modalità avanzata, al momento, non è disponibile."
+  "advancedMenuShizuku": "Shizuku",
+  "advancedMenuDiag": "Diag",
+  "advancedMenuUnavailable": "Il menù della modalità avanzata, al momento, non è disponibile.",
+  "advancedMenuEnabledWorking": "Abilitato e funzionante",
+  "advancedMenuPermissionDenied": "Permessi non forniti",
+  "advancedMenuNotInstalledRunning": "Non installata o non in esecuzione",
+  "advancedMenuUnknown": "Stato sconosciuto",
+  "advancedMenuOk": "Ok",
+  "advancedMenuNoBackends": "La modalità avanzata è abilitata, ma nessuno dei suoi backends sono disponibili."
 }

@@ -1,0 +1,5 @@
+- Risolta una race condition che a volte si verificava abilitando la modalità PIP (picture in picture).
+- I siti mobili ora vengono raggruppati quando si trovano troppo vicini nella mappa.
+- La finestra della modalità avanzata ora fornisce informazioni aggiuntive riguardo allo stato della modalità avanzata.
+- La funzionalità di speed test è stata migliorata.
+- Svariate finestre di dialogo nell'app sono state aggiornate.
