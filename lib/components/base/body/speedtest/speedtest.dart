@@ -112,7 +112,9 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
           final double currentLoss =
               (call.arguments["packetLoss"] as num?)?.toDouble() ??
               currentMetrics.packetLoss;
-          final TestStage nextStage = TestStage.values.byName(newStageStr);
+
+          final TestStage nextStage =
+              TestStage.values.asNameMap()[newStageStr] ?? currentMetrics.stage;
           double nextScale = currentMetrics.maxSpeedScale;
 
           if (currentMetrics.stage == TestStage.DOWNLOAD &&
@@ -427,9 +429,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
         return;
       }
 
-      if (!baseUrl.startsWith("http://")) {
-        baseUrl = "https://$baseUrl";
-      }
+      if (!baseUrl.startsWith("http://")) baseUrl = "https://$baseUrl";
 
       final ostServer = {
         "name": "OpenSpeedTest",
@@ -467,6 +467,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     String primaryUrl = "${_getSpeedtestServer()}/server-list.json";
     String fallbackUrl = "${_getSpeedtestServer()}/backend-servers/servers.php";
 
+    bool success = false;
     try {
       final response = await http
           .get(Uri.parse(primaryUrl))
@@ -474,23 +475,23 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
 
       if (response.statusCode == 200) {
         _updateServers(response.body);
-      } else {
-        throw Exception("");
+
+        success = true;
       }
-    } catch (e) {
+    } catch (_) {}
+
+    if (!success) {
       try {
-        final response = await http
+        final fallbackResponse = await http
             .get(Uri.parse(fallbackUrl))
             .timeout(const Duration(milliseconds: 2000));
-
-        if (response.statusCode == 200) {
-          _updateServers(response.body);
+        if (fallbackResponse.statusCode == 200) {
+          _updateServers(fallbackResponse.body);
         } else {
           throw Exception(_appLocalizations.speedtestServerUnreachable);
         }
-      } catch (e) {
+      } catch (_) {
         _fetchServersRetries++;
-
         Future.delayed(const Duration(milliseconds: 2000)).then((val) {
           if (mounted) {
             if (_fetchServersRetries >= 3) {
@@ -511,7 +512,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
       final List<dynamic> data = json.decode(body);
 
       if (data.isNotEmpty) {
-        if (!widget.testRunningNotifier.value) {
+        if (!widget.testRunningNotifier.value && mounted) {
           setState(() {
             _servers = data;
             _selectedServerNotifier.value = _servers[0];
@@ -549,14 +550,13 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                     };
                   }
                 } catch (_) {}
+                return null;
               })
               .toList();
 
           final chunkResults = await Future.wait(chunkFutureServers);
           for (final result in chunkResults) {
-            if (result != null) {
-              validResults.add(result);
-            }
+            if (result != null) validResults.add(result);
           }
         }
 
@@ -580,11 +580,9 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
             _servers = sortedServers;
 
             if (!widget.testRunningNotifier.value) {
-              if (_servers.isNotEmpty) {
-                _selectedServerNotifier.value = _servers[0];
-              } else {
-                _selectedServerNotifier.value = null;
-              }
+              _selectedServerNotifier.value = _servers.isNotEmpty
+                  ? _servers[0]
+                  : null;
             }
 
             _serversLoadingNotifier.value = false;
@@ -628,9 +626,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
       if (server == null) return;
 
       String serverName;
-      String pingUrl;
-      String dlUrl;
-      String ulUrl;
+      String pingUrl, dlUrl, ulUrl;
 
       if (server["isCustom"] == true) {
         serverName = server["name"]?.toString() ?? "Custom";
@@ -701,10 +697,6 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     if (!baseUrl.endsWith("/")) baseUrl += "/";
     if (baseUrl.startsWith("//")) baseUrl = "https:$baseUrl";
 
-    String pingUrl = server["pingURL"] ?? "";
-    String dlUrl = server["dlURL"] ?? "";
-    String ulUrl = server["ulURL"] ?? "";
-
     String resolveUrl(String path) {
       if (path.startsWith("//")) path = "https:$path";
       if (path.startsWith("http://") || path.startsWith("https://")) {
@@ -716,9 +708,9 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     }
 
     platform.invokeMethod("startTest", {
-      "pingUrl": resolveUrl(pingUrl),
-      "downloadUrl": resolveUrl(dlUrl),
-      "uploadUrl": resolveUrl(ulUrl),
+      "pingUrl": resolveUrl(server["pingURL"] ?? ""),
+      "downloadUrl": resolveUrl(server["dlURL"] ?? ""),
+      "uploadUrl": resolveUrl(server["ulURL"] ?? ""),
     });
   }
 
@@ -1029,9 +1021,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
             ValueListenableBuilder(
               valueListenable: widget.speedtestBackendNotifier,
               builder: (context, backend, child) {
-                if (backend == 0) {
-                  return const SizedBox.shrink();
-                }
+                if (backend == 0) return const SizedBox.shrink();
 
                 String bannerText = "";
                 if (backend == 1) {
@@ -1039,10 +1029,8 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
                       .speedtestInstanceUrlNotifier
                       .value
                       .trim();
-                  final bool isDefaultServer =
-                      urlValue.isEmpty || urlValue == defaultSpeedtestServer;
 
-                  if (isDefaultServer) {
+                  if (urlValue.isEmpty || urlValue == defaultSpeedtestServer) {
                     bannerText = _appLocalizations.speedtestLibrespeed;
                   } else {
                     return const SizedBox.shrink();

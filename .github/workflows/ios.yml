@@ -1,0 +1,63 @@
+name: 🔨 Build & Release NetManager .IPA
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*.*.*' ]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-ios:
+    runs-on: macos-latest
+    if: contains(github.event.head_commit.message, '+ios')
+    steps:
+      - name: 📁 Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: 📋 Cache Flutter
+        uses: actions/cache@v6.1.0
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: ${{ runner.os }}-pub-
+
+      - name: 🦋 Setup Flutter
+        uses: subosito/flutter-action@v2.23.0
+        with:
+          channel: stable
+          flutter-version: 3.47.5
+
+      - name: ⌚ Timestamps
+        run: |
+          echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
+
+      - name: 🪛 Dependencies
+        run: |
+          export PUB_CACHE=$(pwd)/.pub-cache
+          flutter config --no-analytics
+          flutter pub get
+      
+      - name: ✅ Tests
+        run: flutter test --coverage
+
+      - name: 📝 Define GIT_COMMIT
+        run: echo "GIT_COMMIT=$(git rev-parse --short=7 HEAD)" >> $GITHUB_ENV
+
+      - name: 🍏 Build iOS IPA
+        run: |
+          export PUB_CACHE=$(pwd)/.pub-cache
+          flutter build ipa --release --no-codesign --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN_IOS }} --dart-define=flutter.flutter_map.unblockOSM="${{ secrets.UNBLOCK_OSM }}" --dart-define=GIT_COMMIT=$GIT_COMMIT
+
+      - name: 📤 Upload IPA
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: ios-ipa
+          path: build/ios/ipa/*.ipa
+          retention-days: 3

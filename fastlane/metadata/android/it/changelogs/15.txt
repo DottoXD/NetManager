@@ -3,3 +3,4 @@
 - La finestra della modalità avanzata ora fornisce informazioni aggiuntive riguardo allo stato della modalità avanzata.
 - La funzionalità di speed test è stata migliorata.
 - Svariate finestre di dialogo nell'app sono state aggiornate.
+- La schermata di speed test è stata leggermente ottimizzata.

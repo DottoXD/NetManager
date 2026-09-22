@@ -3,32 +3,22 @@ import 'package:intl/intl.dart';
 import 'package:netmanager/types/speedtest/history_result.dart';
 import 'package:netmanager/utils/speed_methods.dart';
 
-class SpeedtestShareCard extends StatelessWidget {
-  const SpeedtestShareCard({
-    super.key,
-    required this.speedtestResult,
-    required this.unitIndex,
+class _MainCardStat extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  const _MainCardStat({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
   });
 
-  final SpeedtestHistoryResult speedtestResult;
-  final int unitIndex;
-
-  static const _darkInvertFilter = ColorFilter.matrix(<double>[
-    -1, 0, 0, 0, 255, // red
-    0, -1, 0, 0, 255, // green
-    0, 0, -1, 0, 255, // blue
-    0, 0, 0, 1, 0,
-  ]);
-
-  Widget _mainStat(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
@@ -59,15 +49,22 @@ class SpeedtestShareCard extends StatelessWidget {
       ],
     );
   }
+}
 
-  Widget _extraStat(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
+class _ExtraCardStat extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _ExtraCardStat({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -88,14 +85,17 @@ class SpeedtestShareCard extends StatelessWidget {
       ],
     );
   }
+}
 
-  Widget _infoLine(
-    BuildContext context, {
-    required IconData icon,
-    required String text,
-  }) {
+class _InfoLine extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _InfoLine({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     return Row(
       children: [
         Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
@@ -113,6 +113,24 @@ class SpeedtestShareCard extends StatelessWidget {
       ],
     );
   }
+}
+
+class SpeedtestShareCard extends StatelessWidget {
+  const SpeedtestShareCard({
+    super.key,
+    required this.speedtestResult,
+    required this.unitIndex,
+  });
+
+  final SpeedtestHistoryResult speedtestResult;
+  final int unitIndex;
+
+  static const _darkInvertFilter = ColorFilter.matrix(<double>[
+    -1, 0, 0, 0, 255, // red
+    0, -1, 0, 0, 255, // green
+    0, 0, -1, 0, 255, // blue
+    0, 0, 0, 1, 0,
+  ]);
 
   @override
   Widget build(BuildContext context) {
@@ -155,8 +173,7 @@ class SpeedtestShareCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: _mainStat(
-                    context,
+                  child: _MainCardStat(
                     icon: Icons.south_outlined,
                     label: "DOWNLOAD",
                     value:
@@ -165,8 +182,7 @@ class SpeedtestShareCard extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  child: _mainStat(
-                    context,
+                  child: _MainCardStat(
                     icon: Icons.north_outlined,
                     label: "UPLOAD",
                     value:
@@ -182,20 +198,17 @@ class SpeedtestShareCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _extraStat(
-                  context,
+                _ExtraCardStat(
                   icon: Icons.podcasts_outlined,
                   label: "PING",
                   value: "${speedtestResult.ping}ms",
                 ),
-                _extraStat(
-                  context,
+                _ExtraCardStat(
                   icon: Icons.graphic_eq_outlined,
                   label: "JITTER",
                   value: "${speedtestResult.jitter}ms",
                 ),
-                _extraStat(
-                  context,
+                _ExtraCardStat(
                   icon: Icons.signal_cellular_alt_outlined,
                   label: "LOSS",
                   value: "${speedtestResult.packetLoss.toStringAsFixed(1)}%",
@@ -205,16 +218,14 @@ class SpeedtestShareCard extends StatelessWidget {
             const SizedBox(height: 16),
             Divider(height: 1, color: theme.colorScheme.outlineVariant),
             const SizedBox(height: 12),
-            _infoLine(
-              context,
+            _InfoLine(
               icon: Icons.sim_card_outlined,
               text:
                   "${speedtestResult.carrier} ${speedtestResult.plmn.isNotEmpty && speedtestResult.plmn != "00000" ? "(${speedtestResult.plmn}) " : ""}- ${speedtestResult.getNetworkGenLabel()}",
             ),
             if (speedtestResult.serverName != null) ...[
               const SizedBox(height: 4),
-              _infoLine(
-                context,
+              _InfoLine(
                 icon: Icons.dns_outlined,
                 text: speedtestResult.serverName!,
               ),
@@ -222,8 +233,7 @@ class SpeedtestShareCard extends StatelessWidget {
             if (speedtestResult.deviceModel != null &&
                 speedtestResult.deviceModel!.isNotEmpty) ...[
               const SizedBox(height: 4),
-              _infoLine(
-                context,
+              _InfoLine(
                 icon: Icons.phone_android_outlined,
                 text: speedtestResult.deviceModel!,
               ),

@@ -42,93 +42,98 @@ class HeroGauge extends StatelessWidget {
       gaugePercentage = (currentSpeed / maxSpeedScale).clamp(0.0, 1.0);
     }
 
-    return Center(
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          SizedBox(
-            width: size,
-            height: size,
-            child: CircularProgressIndicator(
-              value: 1.0,
-              strokeWidth: 8,
-              color: Theme.of(context).colorScheme.outlineVariant,
-            ),
-          ),
-          SizedBox(
-            width: size,
-            height: size,
-            child: TweenAnimationBuilder<double>(
-              tween: Tween<double>(
-                begin: 0,
-                end: isFinished ? 0 : gaugePercentage,
+    return RepaintBoundary(
+      child: Center(
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            SizedBox(
+              width: size,
+              height: size,
+              child: CircularProgressIndicator(
+                value: 1.0,
+                strokeWidth: 8,
+                color: Theme.of(context).colorScheme.outlineVariant,
               ),
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOutCubic,
-              builder: (context, value, child) {
-                final baseColor = stage == TestStage.LATENCY
-                    ? Theme.of(context).colorScheme.secondary
-                    : (stage == TestStage.UPLOAD
-                          ? Theme.of(context).colorScheme.tertiary
-                          : Theme.of(context).colorScheme.primary);
+            ),
+            SizedBox(
+              width: size,
+              height: size,
+              child: TweenAnimationBuilder<double>(
+                tween: Tween<double>(
+                  begin: 0,
+                  end: isFinished ? 0 : gaugePercentage,
+                ),
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, child) {
+                  final baseColor = stage == TestStage.LATENCY
+                      ? Theme.of(context).colorScheme.secondary
+                      : (stage == TestStage.UPLOAD
+                            ? Theme.of(context).colorScheme.tertiary
+                            : Theme.of(context).colorScheme.primary);
 
-                return Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Positioned.fill(
-                      child: ImageFiltered(
-                        imageFilter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-                        child: Transform.translate(
-                          offset: const Offset(0, 4),
-                          child: CircularProgressIndicator(
-                            value: value,
-                            strokeWidth: 14,
-                            strokeCap: StrokeCap.square,
-                            color: baseColor.withValues(alpha: 0.25),
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Positioned.fill(
+                        child: ImageFiltered(
+                          imageFilter: ImageFilter.blur(
+                            sigmaX: 5.0,
+                            sigmaY: 5.0,
+                          ),
+                          child: Transform.translate(
+                            offset: const Offset(0, 4),
+                            child: CircularProgressIndicator(
+                              value: value,
+                              strokeWidth: 14,
+                              strokeCap: StrokeCap.square,
+                              color: baseColor.withValues(alpha: 0.25),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    Positioned.fill(
-                      child: CircularProgressIndicator(
-                        value: value,
-                        strokeWidth: 12,
-                        strokeCap: StrokeCap.round,
-                        color: baseColor,
+                      Positioned.fill(
+                        child: CircularProgressIndicator(
+                          value: value,
+                          strokeWidth: 12,
+                          strokeCap: StrokeCap.round,
+                          color: baseColor,
+                        ),
                       ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-          if (stage == TestStage.DOWNLOAD || stage == TestStage.UPLOAD)
-            Positioned(
-              bottom: size * 0.12,
-              child: Text(
-                "0 — ${formatSpeed(maxSpeedScale, unitIndex)} ${getUnitString(unitIndex)}",
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                  fontSize: (size * 0.045).clamp(10.0, 12.0),
-                ),
+                    ],
+                  );
+                },
               ),
             ),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 500),
-            child: isFinished
-                ? SummaryView(
-                    downloadResult: downloadResult,
-                    uploadResult: uploadResult,
-                    unitIndex: unitIndex,
-                  )
-                : LiveView(
-                    stage: stage,
-                    ping: ping,
-                    currentSpeed: currentSpeed,
-                    unitIndex: unitIndex,
+            if (stage == TestStage.DOWNLOAD || stage == TestStage.UPLOAD)
+              Positioned(
+                bottom: size * 0.12,
+                child: Text(
+                  "0 — ${formatSpeed(maxSpeedScale, unitIndex)} ${getUnitString(unitIndex)}",
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                    fontSize: (size * 0.045).clamp(10.0, 12.0),
                   ),
-          ),
-        ],
+                ),
+              ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              child: isFinished
+                  ? SummaryView(
+                      downloadResult: downloadResult,
+                      uploadResult: uploadResult,
+                      unitIndex: unitIndex,
+                    )
+                  : LiveView(
+                      stage: stage,
+                      ping: ping,
+                      currentSpeed: currentSpeed,
+                      unitIndex: unitIndex,
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }

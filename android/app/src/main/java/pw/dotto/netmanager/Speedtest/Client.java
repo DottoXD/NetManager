@@ -62,17 +62,17 @@ public class Client {
     private String USER_AGENT = "NetManager-SpeedTest/Unknown";
 
     private static final int BUFFER_SIZE = 256 * 1024;
-    private static final int UI_UPDATE_INTERVAL = 200;
+    private static final int UI_UPDATE_INTERVAL = (Runtime.getRuntime().availableProcessors() > 6) ? 125 : 250;
 
     private static final long BATCH_UPDATE_THRESHOLD = 1024 * 1024;
 
     private static final int LATENCY_MAX_MS = 5000;
-    private static final int PHASE_MAX_MS = 20000;
-    private static final int PHASE_MIN_MS = 4000;
+    private static final int PHASE_MAX_MS = 30000;
+    private static final int PHASE_MIN_MS = 6000;
     private static final int PING_COUNT = 5;
     private static final int PING_INTERVAL_MS = 50;
-    private static final int DOWNLOAD_GRACE_MS = 1500;
-    private static final int UPLOAD_GRACE_MS = 3000;
+    private static final int DOWNLOAD_GRACE_MS = 1250;
+    private static final int UPLOAD_GRACE_MS = 1250;
     private static final int STREAM_START_DELAY_MS = 100;
 
     private static final int LIBRESPEED_DOWNLOAD_CHUNK_MB = 512;
@@ -180,7 +180,7 @@ public class Client {
                     });
                 }
 
-                Thread.sleep(1000);
+                Thread.sleep(500);
 
                 AtomicBoolean transitActive = new AtomicBoolean(true);
                 trackPacketLoss(pingUrl, transitActive);
@@ -188,7 +188,7 @@ public class Client {
                 updateUI(channel, "DOWNLOAD", 0, 0.0);
                 double dlSpeed = measureDownload(downloadUrl, channel);
 
-                Thread.sleep(1500);
+                Thread.sleep(500);
 
                 updateUI(channel, "UPLOAD", 0, 0.0);
                 double ulSpeed = measureUpload(uploadUrl, channel);
@@ -420,7 +420,7 @@ public class Client {
         AtomicBoolean running = new AtomicBoolean(true);
         byte[] payload = new byte[1024 * 1024];
         new Random().nextBytes(payload);
-        final int requestSize = LIBRESPEED_UPLOAD_REQUEST_MB * 1024 * 1024;
+        final int requestSize = UPLOAD_REQUEST_MB * 1024 * 1024;
 
         RequestBody requestBody = new RequestBody() {
             @Override
@@ -553,7 +553,7 @@ public class Client {
                 double bytesPerSecond = timeSec > 0.0
                         ? measuredBytes / timeSec
                         : 0.0;
-                double bonus = Math.min(400.0, (5.0 * bytesPerSecond) / 100_000.0);
+                double bonus = Math.min(300.0, (5.0 * bytesPerSecond) / 100_000.0);
                 timeBonusMs += bonus;
 
                 double progress = Math.min(1.0, (elapsedMs + timeBonusMs) / PHASE_MAX_MS);

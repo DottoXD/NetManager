@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:material_ui/material_ui.dart';
 import 'package:netmanager/components/base/body/speedtest/widgets/results_column.dart';
 import 'package:netmanager/components/base/body/speedtest/speedtest.dart';
@@ -43,128 +41,106 @@ class SpeedResults extends StatelessWidget {
 
     const topRadius = BorderRadius.vertical(top: Radius.circular(24));
 
-    return Stack(
-      children: [
-        Container(
-          padding: const EdgeInsets.fromLTRB(30.0, 24.0, 24.0, 24.0),
-          decoration: BoxDecoration(
-            borderRadius: topRadius,
-            color: Color.alphaBlend(
-              Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
-              Theme.of(context).colorScheme.surface,
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (!isCompact) ...[
-                Row(
-                  children: [
-                    ResultsColumn(
-                      label: "DOWNLOAD",
-                      value: downloadResult,
-                      icon: Icons.south_outlined,
-                      color: Theme.of(context).colorScheme.primary,
-                      unitIndex: unitIndex,
-                    ),
-                    ResultsColumn(
-                      label: "UPLOAD",
-                      value: uploadResult,
-                      icon: Icons.north_outlined,
-                      color: Theme.of(context).colorScheme.tertiary,
-                      unitIndex: unitIndex,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-              ],
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: FilledButton(
-                  onPressed: isRunning
-                      ? null
-                      : () async {
-                          await HapticService().triggerHaptic(
-                            HapticType.light,
-                            context,
-                          );
-
-                          startTest();
-                        },
-                  child: Text(
-                    isRunning
-                        ? appLocalizations.speedtestRunning
-                        : appLocalizations.speedtestStart,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (progress > 0)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 32,
-            child: ClipRRect(
+    return RepaintBoundary(
+      child: Stack(
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(30.0, 24.0, 24.0, 24.0),
+            decoration: BoxDecoration(
               borderRadius: topRadius,
-              child: TweenAnimationBuilder(
-                tween: Tween(begin: 0.0, end: progress.clamp(0.0, 1.0)),
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeInOutCubic,
-                builder: (context, animatedProgress, child) {
-                  return Stack(
+              color: Color.alphaBlend(
+                Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+                Theme.of(context).colorScheme.surface,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!isCompact) ...[
+                  Row(
                     children: [
-                      Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        child: ImageFiltered(
-                          imageFilter: ImageFilter.blur(
-                            sigmaX: 5.0,
-                            sigmaY: 5.0,
-                          ),
-                          child: Align(
-                            alignment: Alignment.topLeft,
-                            child: FractionallySizedBox(
-                              widthFactor: animatedProgress,
-                              child: AnimatedContainer(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(1.5),
-                                  color: progressColor,
-                                ),
-                                duration: const Duration(milliseconds: 200),
-                                height: 3.0,
-                                color: progressColor,
-                                alignment: Alignment.centerLeft,
-                              ),
-                            ),
-                          ),
-                        ),
+                      ResultsColumn(
+                        label: "DOWNLOAD",
+                        value: downloadResult,
+                        icon: Icons.south_outlined,
+                        color: Theme.of(context).colorScheme.primary,
+                        unitIndex: unitIndex,
                       ),
-                      Align(
-                        alignment: Alignment.topLeft,
-                        child: FractionallySizedBox(
-                          widthFactor: animatedProgress,
-                          child: AnimatedContainer(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(1.5),
-                              color: progressColor,
-                            ),
-                            duration: const Duration(milliseconds: 200),
-                            height: 3.0,
-                          ),
-                        ),
+                      ResultsColumn(
+                        label: "UPLOAD",
+                        value: uploadResult,
+                        icon: Icons.north_outlined,
+                        color: Theme.of(context).colorScheme.tertiary,
+                        unitIndex: unitIndex,
                       ),
                     ],
-                  );
-                },
-              ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: FilledButton(
+                    onPressed: isRunning
+                        ? null
+                        : () async {
+                            await HapticService().triggerHaptic(
+                              HapticType.light,
+                              context,
+                            );
+
+                            startTest();
+                          },
+                    child: Text(
+                      isRunning
+                          ? appLocalizations.speedtestRunning
+                          : appLocalizations.speedtestStart,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-      ],
+          if (progress > 0)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 32,
+              child: ClipRRect(
+                borderRadius: topRadius,
+                child: TweenAnimationBuilder(
+                  tween: Tween(begin: 0.0, end: progress.clamp(0.0, 1.0)),
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeInOutCubic,
+                  builder: (context, animatedProgress, child) {
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: FractionallySizedBox(
+                        widthFactor: animatedProgress,
+                        child: AnimatedContainer(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(1.5),
+                            color: progressColor,
+                            boxShadow: [
+                              BoxShadow(
+                                color: progressColor.withValues(alpha: 0.5),
+                                blurRadius: 5.0,
+                                spreadRadius: 1.0,
+                              ),
+                            ],
+                          ),
+                          duration: const Duration(milliseconds: 200),
+                          height: 3.0,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

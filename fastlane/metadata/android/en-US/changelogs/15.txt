@@ -3,3 +3,4 @@
 - The advanced mode dialog now gives the user more info about advanced mode's status.
 - The speed test feature has been improved.
 - Various dialogs across the app have been updated.
+- The speed test screen has been slightly optimised.
