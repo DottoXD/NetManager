@@ -25,7 +25,8 @@ class TopBar extends StatefulWidget implements PreferredSizeWidget {
     this.speedtestRunningNotifier,
     this.isPipActiveNotifier,
     this.advancedModeNotifier,
-    this.advancedModeToggleNotifier, {
+    this.advancedModeToggleNotifier,
+    this.onEnterPipRequested, {
     super.key,
   });
 
@@ -38,6 +39,8 @@ class TopBar extends StatefulWidget implements PreferredSizeWidget {
   final ValueNotifier<bool> isPipActiveNotifier;
   final ValueNotifier<bool> advancedModeNotifier;
   final ValueNotifier<bool> advancedModeToggleNotifier;
+
+  final VoidCallback? onEnterPipRequested;
 
   @override
   State<TopBar> createState() => _TopBarState();
@@ -310,9 +313,11 @@ class _TopBarState extends State<TopBar> {
 
   Future<void> _enterPip(AppLocalizations appLocalizations) async {
     try {
-      isPipActiveNotifier.value = true;
+      widget.onEnterPipRequested?.call();
 
       WidgetsBinding.instance.addPostFrameCallback((_) async {
+        isPipActiveNotifier.value = true;
+
         try {
           await platform.invokeMethod("enterPip");
         } catch (e) {

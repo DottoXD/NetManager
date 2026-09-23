@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/dialogs/record/convert_recording.dart';
@@ -30,11 +32,13 @@ class RecordModal extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            NewRecording(
-              platform: platform,
-              recordingActionNotifier: recordingActionNotifier,
-              onRecordingStarted: onRecordingStarted,
-            ),
+            if (!Platform.isIOS) ...[
+              NewRecording(
+                platform: platform,
+                recordingActionNotifier: recordingActionNotifier,
+                onRecordingStarted: onRecordingStarted,
+              ),
+            ],
             ReplayRecording(onDataLoaded: onDataLoaded),
             ConvertRecording(platform: platform),
           ],

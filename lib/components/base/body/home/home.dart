@@ -432,9 +432,8 @@ class _HomeBodyState extends State<HomeBody> {
 
           final ThemeData theme = Theme.of(context);
 
-          return Scaffold(
-            backgroundColor: theme.colorScheme.surface,
-            body: SafeArea(
+          return Material(
+            child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(4.0),
                 child: allCells.isEmpty

@@ -606,9 +606,9 @@ public class MainActivity extends FlutterActivity {
   @Override
   public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode) {
     super.onPictureInPictureModeChanged(isInPictureInPictureMode);
+    pipEnabled = isInPictureInPictureMode;
 
     if (chn != null) {
-      pipEnabled = isInPictureInPictureMode;
       chn.invokeMethod("onPipChanged", isInPictureInPictureMode);
     }
   }
@@ -705,8 +705,10 @@ public class MainActivity extends FlutterActivity {
   public void onPause() {
     super.onPause();
 
+    boolean inPip = isInPictureInPictureMode();
+
     wearHandler.isWearConnected(isConnected -> {
-      if (core != null && !pipEnabled && !isConnected) {
+      if (core != null && !pipEnabled && !inPip && !isConnected) {
         core.dispose();
       }
     });

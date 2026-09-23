@@ -7,6 +7,7 @@ List<CellTower> clusterMapTowers(
   double currentZoom,
 ) {
   final List<CellTower> processedList = [];
+  final List<int> clusterCounts = [];
   const Distance distance = Distance();
 
   final bool isZoomedOut = currentZoom < 13.0;
@@ -25,11 +26,22 @@ List<CellTower> clusterMapTowers(
 
       if (dist <= distanceThreshold) {
         if (isZoomedOut) {
+          final int currentCount = clusterCounts[i];
+          final int newCount = currentCount + 1;
+
+          final double newLat =
+              ((existingTower.latitude * currentCount) + tower.latitude) /
+              newCount;
+          final double newLon =
+              ((existingTower.longitude * currentCount) + tower.longitude) /
+              newCount;
+
           processedList[i] = CellTower(
-            latitude: existingTower.latitude,
-            longitude: existingTower.longitude,
+            latitude: newLat,
+            longitude: newLon,
             cells: [],
           );
+          clusterCounts[i] = newCount;
         } else {
           final combinedCells = List<DatabaseCell>.from(existingTower.cells)
             ..addAll(tower.cells);
@@ -39,8 +51,10 @@ List<CellTower> clusterMapTowers(
             longitude: existingTower.longitude,
             cells: combinedCells,
           );
+          clusterCounts[i]++;
         }
         isMerged = true;
+
         break;
       }
     }
@@ -50,9 +64,10 @@ List<CellTower> clusterMapTowers(
         CellTower(
           latitude: tower.latitude,
           longitude: tower.longitude,
-          cells: isZoomedOut ? [] : List<DatabaseCell>.from(tower.cells),
+          cells: List<DatabaseCell>.from(tower.cells),
         ),
       );
+      clusterCounts.add(1);
     }
   }
 

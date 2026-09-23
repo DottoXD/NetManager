@@ -260,6 +260,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                     animatedUpdate(
                       _mapController.camera.center,
                       LatLng(data.records.first.lat, data.records.first.lon),
+                      _mapController.camera.zoom,
+                      _mapController.camera.zoom,
                       const Duration(milliseconds: 500),
                     );
                   } else {
@@ -437,6 +439,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
           animatedUpdate(
             _mapController.camera.center,
             _currentLocation!,
+            _mapController.camera.zoom,
+            _mapController.camera.zoom,
             const Duration(milliseconds: 500),
           );
         }
@@ -548,12 +552,19 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
     }
   }
 
-  void animatedUpdate(LatLng from, LatLng to, Duration duration) {
+  void animatedUpdate(
+    LatLng from,
+    LatLng to,
+    double fromZoom,
+    double toZoom,
+    Duration duration,
+  ) {
     _animationController.stop();
     _animationController.duration = duration;
 
     final latTween = Tween(begin: from.latitude, end: to.latitude);
     final lngTween = Tween(begin: from.longitude, end: to.longitude);
+    final zoomTween = Tween(begin: fromZoom, end: toZoom);
 
     late VoidCallback listener;
 
@@ -564,7 +575,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
             latTween.evaluate(_animationController),
             lngTween.evaluate(_animationController),
           ),
-          _mapController.camera.zoom,
+          zoomTween.evaluate(_animationController),
         );
       }
     };
@@ -814,6 +825,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                   animatedUpdate(
                     _mapController.camera.center,
                     LatLng(record.lat, record.lon),
+                    _mapController.camera.zoom,
+                    _mapController.camera.zoom,
                     const Duration(milliseconds: 500),
                   );
 
@@ -883,14 +896,19 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
                   });
 
                   if (isCluster) {
-                    _mapController.move(
+                    animatedUpdate(
+                      _mapController.camera.center,
                       towerLatLng,
+                      _mapController.camera.zoom,
                       _mapController.camera.zoom + 1.5,
+                      const Duration(milliseconds: 500),
                     );
                   } else {
                     animatedUpdate(
                       _mapController.camera.center,
                       towerLatLng,
+                      _mapController.camera.zoom,
+                      _mapController.camera.zoom,
                       const Duration(milliseconds: 500),
                     );
                   }

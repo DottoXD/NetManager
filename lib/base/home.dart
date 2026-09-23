@@ -110,9 +110,15 @@ class _HomeState extends State<Home> {
       }
 
       if (call.method == "onPipChanged") {
-        _isPipActiveNotifier.value = call.arguments as bool;
+        final bool isPip = call.arguments as bool;
 
-        updatePage(0);
+        if (isPip) {
+          setState(() {
+            _currentPage = 0;
+          });
+        }
+
+        _isPipActiveNotifier.value = isPip;
       }
 
       return Future.value();
@@ -267,6 +273,7 @@ class _HomeState extends State<Home> {
           _isPipActiveNotifier,
           _advancedModeNotifier,
           _advancedModeToggleNotifier,
+          () => updatePage(0),
         ),
         bottomNavigationBar: NavBar(
           updatePage,
@@ -438,14 +445,16 @@ class _HomeState extends State<Home> {
                           PositionButton(onPressed: callback),
                     ),
                   ] else if (_currentPage == 2) ...[
-                    ValueListenableBuilder(
-                      valueListenable: _planNotifier,
-                      builder: (context, callback, _) => ScheduleButton(
-                        onPressed: callback,
-                        scheduleActionNotifier: _scheduleActionNotifier,
+                    if (!Platform.isIOS) ...[
+                      ValueListenableBuilder(
+                        valueListenable: _planNotifier,
+                        builder: (context, callback, _) => ScheduleButton(
+                          onPressed: callback,
+                          scheduleActionNotifier: _scheduleActionNotifier,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
+                      const SizedBox(height: 4),
+                    ],
                     ValueListenableBuilder(
                       valueListenable: _historyNotifier,
                       builder: (context, callback, _) =>
