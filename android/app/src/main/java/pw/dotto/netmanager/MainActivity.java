@@ -52,6 +52,7 @@ import rikka.shizuku.Shizuku;
  */
 public class MainActivity extends FlutterActivity {
   private static final String CHANNEL = "pw.dotto.netmanager/bridge";
+  private static final String SPEEDTEST_CHANNEL = "pw.dotto.netmanager/speedtest";
   private static final int SHIZUKU_REQ_CODE = 23;
   public static String PACKAGE_NAME;
 
@@ -60,6 +61,7 @@ public class MainActivity extends FlutterActivity {
   private final WearHandler wearHandler = new WearHandler();
 
   private MethodChannel chn;
+  private MethodChannel speedtestChn;
   private SharedPreferences sharedPreferences;
   private Client activeSpeedtestClient = null;
   private boolean pipEnabled = false;
@@ -101,6 +103,9 @@ public class MainActivity extends FlutterActivity {
 
     chn = new MethodChannel(
         flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL);
+
+    speedtestChn = new MethodChannel(
+            flutterEngine.getDartExecutor().getBinaryMessenger(), SPEEDTEST_CHANNEL);
 
     chn.setMethodCallHandler((call, result) -> {
       switch (call.method) {
@@ -254,8 +259,7 @@ public class MainActivity extends FlutterActivity {
           }
 
           activeSpeedtestClient = new Client();
-          activeSpeedtestClient.runSpeedTest(this, pingUrl, downloadUrl, uploadUrl,
-              new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL));
+          activeSpeedtestClient.runSpeedTest(this, pingUrl, downloadUrl, uploadUrl, speedtestChn);
           result.success(null);
           break;
 

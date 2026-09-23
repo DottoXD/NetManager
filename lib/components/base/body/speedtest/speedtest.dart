@@ -70,6 +70,10 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
   final ValueNotifier<bool> _canShareResultNotifier = ValueNotifier(false);
   late AppLocalizations _appLocalizations;
 
+  static const MethodChannel _speedTestChannel = MethodChannel(
+    "pw.dotto.netmanager/speedtest",
+  );
+
   List<dynamic> _servers = [];
   int _fetchServersRetries = 0;
   bool _dialogOpen = false;
@@ -100,7 +104,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     _fetchServers();
     _checkScheduleStatus();
 
-    platform.setMethodCallHandler((call) async {
+    _speedTestChannel.setMethodCallHandler((call) async {
       final currentMetrics = _metricsNotifier.value;
 
       switch (call.method) {
@@ -194,7 +198,7 @@ class _SpeedtestBodyState extends State<SpeedtestBody> {
     _serversLoadingNotifier.dispose();
     _lastResultNotifier.dispose();
     _serverUrlDebounce?.cancel();
-    platform.setMethodCallHandler(null);
+    _speedTestChannel.setMethodCallHandler(null);
     widget.speedtestInstanceUrlNotifier.removeListener(_onServerUrlChanged);
     widget.speedtestBackendNotifier.removeListener(_onServerUrlChanged);
     super.dispose();
