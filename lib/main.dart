@@ -39,6 +39,10 @@ void main() async {
       options.dsn = sentryDsn;
       options.sendDefaultPii = false;
       options.tracesSampleRate = 1;
+      options.beforeSend = (event, hint) {
+        event.user?.ipAddress = "0.0.0.0";
+        return event;
+      };
     }, appRunner: () => runApp(NetManager(prefs: sharedPreferences)));
   }
 }

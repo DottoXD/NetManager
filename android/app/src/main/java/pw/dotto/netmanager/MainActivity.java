@@ -95,7 +95,7 @@ public class MainActivity extends FlutterActivity {
       sharedPreferences = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
       advancedMode = sharedPreferences.getBoolean("flutter.advancedMode", false);
 
-      if (advancedMode == true && !Permissions.checkShizuku())
+      if (advancedMode && !Permissions.checkShizuku())
         Permissions.requestShizuku(SHIZUKU_REQ_CODE);
     }
 

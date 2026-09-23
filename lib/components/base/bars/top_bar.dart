@@ -24,7 +24,8 @@ class TopBar extends StatefulWidget implements PreferredSizeWidget {
     this.currentSimSlotNotifier,
     this.speedtestRunningNotifier,
     this.isPipActiveNotifier,
-    this.advancedModeNotifier, {
+    this.advancedModeNotifier,
+    this.advancedModeToggleNotifier, {
     super.key,
   });
 
@@ -36,6 +37,7 @@ class TopBar extends StatefulWidget implements PreferredSizeWidget {
   final ValueNotifier<bool> speedtestRunningNotifier;
   final ValueNotifier<bool> isPipActiveNotifier;
   final ValueNotifier<bool> advancedModeNotifier;
+  final ValueNotifier<bool> advancedModeToggleNotifier;
 
   @override
   State<TopBar> createState() => _TopBarState();
@@ -53,6 +55,7 @@ class _TopBarState extends State<TopBar> {
   late ValueNotifier<bool> speedtestRunningNotifier;
   late ValueNotifier<bool> isPipActiveNotifier;
   late ValueNotifier<bool> advancedModeNotifier;
+  late ValueNotifier<bool> advancedModeToggleNotifier;
 
   late Timer _timer;
   String _carrier = "Unknown";
@@ -73,6 +76,7 @@ class _TopBarState extends State<TopBar> {
     speedtestRunningNotifier = widget.speedtestRunningNotifier;
     isPipActiveNotifier = widget.isPipActiveNotifier;
     advancedModeNotifier = widget.advancedModeNotifier;
+    advancedModeToggleNotifier = widget.advancedModeToggleNotifier;
 
     platformSignalNotifier.addListener(_restartTimer);
     speedtestRunningNotifier.addListener(_onSpeedtestRunningChanged);
@@ -248,7 +252,12 @@ class _TopBarState extends State<TopBar> {
     }
   }
 
-  Future<void> _openAdvancedMode(AppLocalizations appLocalizations) async {
+  Future<void> _toggleAdvancedMode(AppLocalizations appLocalizations) async {
+    if (advancedModeToggleNotifier.value) {
+      advancedModeToggleNotifier.value = false;
+      return;
+    }
+
     try {
       int shizukuStatus = await platform.invokeMethod("checkShizuku") ?? 3;
       int diagStatus = 3;
@@ -285,6 +294,8 @@ class _TopBarState extends State<TopBar> {
           return;
         }
       }
+
+      advancedModeToggleNotifier.value = true;
     } catch (e) {
       if (mounted) {
         showDialog(
@@ -470,7 +481,7 @@ class _TopBarState extends State<TopBar> {
                     if (value == "logs") {
                       _openLogs(appLocalizations);
                     } else if (value == "advanced") {
-                      _openAdvancedMode(appLocalizations);
+                      _toggleAdvancedMode(appLocalizations);
                     } else if (value == "pip") {
                       _enterPip(appLocalizations);
                     }

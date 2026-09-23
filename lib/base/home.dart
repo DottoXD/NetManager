@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/base/stack.dart';
+//import 'package:netmanager/components/base/body/advanced/advanced_mode.dart';
 import 'package:netmanager/components/base/body/map/map.dart';
 import 'package:netmanager/components/base/body/settings/settings.dart';
 import 'package:netmanager/components/base/body/speedtest/speedtest.dart';
@@ -94,6 +95,8 @@ class _HomeState extends State<Home> {
   final ValueNotifier<bool> _scheduleActionNotifier = ValueNotifier(false);
 
   final ValueNotifier<bool> _isPipActiveNotifier = ValueNotifier(false);
+
+  final ValueNotifier<bool> _advancedModeToggleNotifier = ValueNotifier(false);
 
   @override
   void initState() {
@@ -213,6 +216,8 @@ class _HomeState extends State<Home> {
 
     _isPipActiveNotifier.dispose();
 
+    _advancedModeToggleNotifier.dispose();
+
     super.dispose();
   }
 
@@ -261,6 +266,7 @@ class _HomeState extends State<Home> {
           _speedtestRunningNotifier,
           _isPipActiveNotifier,
           _advancedModeNotifier,
+          _advancedModeToggleNotifier,
         ),
         bottomNavigationBar: NavBar(
           updatePage,
@@ -270,29 +276,41 @@ class _HomeState extends State<Home> {
         body: LazyIndexedStack(
           index: _currentPage,
           children: [
-            HomeBody(
-              _homeScrollController,
-              widget.platform,
-              widget.sharedPreferences,
-              _homeLoadedNotifier,
-              _platformSignalNotifier,
-              _debugNotifier,
-              _updateIntervalNotifier,
-              _externalDatabasesNotifier,
-              _homeDataGraphsNotifier,
-              _homeGraphsRetentionTimeNotifier,
-              _likelyCellsNotifier,
-              _countLikelyAsActiveNotifier,
-              _currentSimSlotNotifier,
-              _isPipActiveNotifier,
-              onUpdateButtonPressed: (callback) {
-                _homeUpdateNotifier.value = callback;
-              },
-              onScreenshotButtonPressed: (callback) {
-                _screenshotNotifier.value = callback;
-              },
-              onGraphsButtonPressed: (callback) {
-                _graphsNotifier.value = callback;
+            ValueListenableBuilder(
+              valueListenable: _advancedModeToggleNotifier,
+              builder: (context, isToggled, _) {
+                /*if (isToggled) {
+                  return AdvancedModeBody(
+                    platform: widget.platform,
+                    currentSimSlotNotifier: _currentSimSlotNotifier,
+                  );
+                }*/
+
+                return HomeBody(
+                  _homeScrollController,
+                  widget.platform,
+                  widget.sharedPreferences,
+                  _homeLoadedNotifier,
+                  _platformSignalNotifier,
+                  _debugNotifier,
+                  _updateIntervalNotifier,
+                  _externalDatabasesNotifier,
+                  _homeDataGraphsNotifier,
+                  _homeGraphsRetentionTimeNotifier,
+                  _likelyCellsNotifier,
+                  _countLikelyAsActiveNotifier,
+                  _currentSimSlotNotifier,
+                  _isPipActiveNotifier,
+                  onUpdateButtonPressed: (callback) {
+                    _homeUpdateNotifier.value = callback;
+                  },
+                  onScreenshotButtonPressed: (callback) {
+                    _screenshotNotifier.value = callback;
+                  },
+                  onGraphsButtonPressed: (callback) {
+                    _graphsNotifier.value = callback;
+                  },
+                );
               },
             ),
             MapBody(
@@ -354,6 +372,7 @@ class _HomeState extends State<Home> {
               _likelyCellsNotifier,
               _countLikelyAsActiveNotifier,
               _advancedModeNotifier,
+              _advancedModeToggleNotifier,
             ),
           ],
         ),

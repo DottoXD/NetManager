@@ -383,5 +383,5 @@
   "advancedMenuNotInstalledRunning": "Non installata o non in esecuzione",
   "advancedMenuUnknown": "Stato sconosciuto",
   "advancedMenuOk": "Ok",
-  "advancedMenuNoBackends": "La modalità avanzata è abilitata, ma nessuno dei suoi backends sono disponibili."
+  "advancedMenuNoBackends": "La modalità avanzata è abilitata, ma nessuno dei suoi backend è disponibile."
 }

@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 import java.io.FileInputStream
 
@@ -12,6 +13,12 @@ val keystorePropertiesFileExists = keystorePropertiesFile.exists()
 if (keystorePropertiesFileExists) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
+
+val flutterRootDir: File? = rootProject.projectDir.parentFile
+val pubspecFile = File(flutterRootDir, "pubspec.yaml")
+val pubspecText = if (pubspecFile.exists()) pubspecFile.readText() else ""
+val buildNumberMatch = Regex("""version:\s*[\d\.]+\+(\d+)""").find(pubspecText)
+val rawVersionCode = buildNumberMatch?.groupValues?.get(1)?.toIntOrNull() ?: 15
 
 val isReleaseBuild = gradle.startParameter.taskNames.any {
     it.contains("Release", ignoreCase = true)
@@ -35,7 +42,7 @@ android {
         applicationId = "pw.dotto.netmanager"
         minSdk = 24 //flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
+        versionCode = rawVersionCode
         versionName = flutter.versionName
     }
 
@@ -130,17 +137,16 @@ androidComponents {
     onVariants { variant ->
         variant.outputs.forEach { output ->
             val abiFilter = output.filters.find { it.filterType.name == "ABI" }?.identifier
-            val abiVersionCode = abiCodes[abiFilter]
-            if (abiVersionCode != null) {
-                output.versionCode.set((flutter.versionCode * 10) + 5000 + abiVersionCode)
-            }
+            val abiVersionCode = abiCodes[abiFilter] ?: 0
+
+            output.versionCode.set((rawVersionCode * 10) + 5000 + abiVersionCode)
         }
     }
 }
 
 kotlin {
     compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+        jvmTarget = JvmTarget.JVM_17
     }
 }
 

@@ -15,7 +15,6 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -39,13 +38,17 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import io.flutter.plugin.common.MethodChannel;
+import okhttp3.Dispatcher;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Protocol;
 import okhttp3.Response;
+import okio.Buffer;
 import okio.BufferedSink;
+import okio.BufferedSource;
+import okio.ByteString;
 import pw.dotto.netmanager.Core.Manager;
 import pw.dotto.netmanager.Utils.DeviceData;
 
@@ -83,11 +86,11 @@ public class Client {
 
     private OkHttpClient httpClient;
 
-    private final int streams = Math.max(2, Math.min(Runtime.getRuntime().availableProcessors(), 8));
+    private final int streams = Math.max(2, Math.min(Runtime.getRuntime().availableProcessors(), 4));
 
     private final ExecutorService executor = Executors.newFixedThreadPool(streams + 2);
     private final ScheduledExecutorService watchdogExecutor = Executors.newSingleThreadScheduledExecutor();
-    private final ExecutorService dnsExecutor = Executors.newFixedThreadPool(Math.min(streams, 4));
+    private final ExecutorService dnsExecutor = Executors.newFixedThreadPool(streams);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private final AtomicLong globalPingsSent = new AtomicLong(0);
@@ -114,7 +117,7 @@ public class Client {
         watchdogHolder[0] = watchdogExecutor.schedule(() -> {
             Future<?> testFuture = testFutureRef.get();
             if (testFuture != null && !testFuture.isDone()) {
-                testFuture.cancel(true);
+                testFuture.cancel(false);
                 reportError(channel, "Connection timed out.");
             }
         }, OVERALL_TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
@@ -131,7 +134,13 @@ public class Client {
                 updateUI(channel, "LATENCY", 0, 0.0);
 
                 Network mobileNetwork = getMobileNetwork(connectivityManager, callbackRef);
+
+                Dispatcher dispatcher = new Dispatcher();
+                dispatcher.setMaxRequests(64);
+                dispatcher.setMaxRequestsPerHost(32);
+
                 OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder()
+                        .dispatcher(dispatcher)
                         .connectTimeout(4, TimeUnit.SECONDS)
                         .readTimeout(8, TimeUnit.SECONDS)
                         .writeTimeout(8, TimeUnit.SECONDS)
@@ -335,8 +344,6 @@ public class Client {
                                 .addHeader("Accept-Encoding", "identity")
                                 .build();
 
-                        byte[] buf = new byte[BUFFER_SIZE];
-
                         while (running.get()) {
                             if (isOpenSpeedTestDownload(downloadUrl)) {
                                 request = new Request.Builder()
@@ -352,13 +359,14 @@ public class Client {
                                             "Download request failed with HTTP status code " + response.code() + ".");
                                 }
 
-                                InputStream is = response.body().byteStream();
-
-                                int read;
+                                BufferedSource source = response.body().source();
+                                Buffer okioBuffer = new Buffer();
+                                long read;
                                 long tempBytes = 0;
 
                                 try {
-                                    while (running.get() && (read = is.read(buf)) != -1) {
+                                    while (running.get() && (read = source.read(okioBuffer, BUFFER_SIZE)) != -1) {
+                                        okioBuffer.clear();
                                         tempBytes += read;
                                         if (tempBytes >= BATCH_UPDATE_THRESHOLD) {
                                             totalBytes.addAndGet(tempBytes);
@@ -392,7 +400,7 @@ public class Client {
             running.set(false);
 
             for (Future<?> f : futures) {
-                f.cancel(true);
+                f.cancel(false);
             }
         }
     }
@@ -420,6 +428,7 @@ public class Client {
         AtomicBoolean running = new AtomicBoolean(true);
         byte[] payload = new byte[1024 * 1024];
         new Random().nextBytes(payload);
+        final ByteString payloadString = ByteString.of(payload);
         final int requestSize = UPLOAD_REQUEST_MB * 1024 * 1024;
 
         RequestBody requestBody = new RequestBody() {
@@ -438,9 +447,14 @@ public class Client {
                 long remaining = requestSize;
                 long tempBytes = 0;
 
-                while (remaining > 0) {
-                    int writeSize = (int) Math.min(payload.length, remaining);
-                    sink.write(payload, 0, writeSize);
+                while (remaining > 0 && running.get()) {
+                    int writeSize = (int) Math.min(payloadString.size(), remaining);
+                    if (writeSize == payloadString.size()) {
+                        sink.write(payloadString);
+                    } else {
+                        sink.write(payloadString.substring(0, writeSize));
+                    }
+
                     remaining -= writeSize;
                     tempBytes += writeSize;
 
@@ -505,7 +519,7 @@ public class Client {
             running.set(false);
 
             for (Future<?> f : futures) {
-                f.cancel(true);
+                f.cancel(false);
             }
         }
     }
@@ -745,21 +759,10 @@ public class Client {
 
         new Thread(() -> {
             try {
-                if (!executor.awaitTermination(2, TimeUnit.SECONDS)) {
-                    executor.shutdownNow();
-                }
-
-                if (!watchdogExecutor.awaitTermination(2, TimeUnit.SECONDS)) {
-                    watchdogExecutor.shutdownNow();
-                }
-
-                if (!dnsExecutor.awaitTermination(2, TimeUnit.SECONDS)) {
-                    dnsExecutor.shutdownNow();
-                }
+                executor.awaitTermination(2, TimeUnit.SECONDS);
+                watchdogExecutor.awaitTermination(2, TimeUnit.SECONDS);
+                dnsExecutor.awaitTermination(2, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
-                executor.shutdownNow();
-                dnsExecutor.shutdownNow();
-                watchdogExecutor.shutdownNow();
                 Thread.currentThread().interrupt();
             }
         }).start();

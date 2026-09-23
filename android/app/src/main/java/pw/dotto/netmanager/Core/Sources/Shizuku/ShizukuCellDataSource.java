@@ -41,10 +41,10 @@ import rikka.shizuku.SystemServiceHelper;
  * This component shall be considered a testing feature.
  *
  * @author DottoXD
- * @version 0.2.1
+ * @version 0.2.2
  */
 public class ShizukuCellDataSource implements CellDataSource {
-    private static final int TRANSACTION_dump = 0x5f444d50;
+    private static final int TRANSACTION_DUMP = 0x5f444d50;
     private static final long DUMP_READ_TIMEOUT_MS = 1500;
     private static final String[] RELEVANT_MARKERS = {
             "mPhysicalChannelConfigs",
@@ -164,7 +164,7 @@ public class ShizukuCellDataSource implements CellDataSource {
             try {
                 data.writeFileDescriptor(writeSide.getFileDescriptor());
                 data.writeStringArray(new String[0]);
-                binder.transact(TRANSACTION_dump, data, reply, 0);
+                binder.transact(TRANSACTION_DUMP, data, reply, 0);
             } finally {
                 data.recycle();
                 reply.recycle();

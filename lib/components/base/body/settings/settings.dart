@@ -46,7 +46,8 @@ class SettingsBody extends StatefulWidget {
     this.homeGraphsRetentionTimeNotifier,
     this.likelyCellsNotifier,
     this.countLikelyAsActiveNotifier,
-    this.advancedModeNotifier, {
+    this.advancedModeNotifier,
+    this.advancedModeToggleNotifier, {
     super.key,
   });
 
@@ -79,6 +80,7 @@ class SettingsBody extends StatefulWidget {
   final ValueNotifier<bool> likelyCellsNotifier;
   final ValueNotifier<bool> countLikelyAsActiveNotifier;
   final ValueNotifier<bool> advancedModeNotifier;
+  final ValueNotifier<bool> advancedModeToggleNotifier;
 
   @override
   State<SettingsBody> createState() => _SettingsBodyState();
@@ -115,6 +117,7 @@ class _SettingsBodyState extends State<SettingsBody>
   late ValueNotifier<bool> likelyCellsNotifier;
   late ValueNotifier<bool> countLikelyAsActiveNotifier;
   late ValueNotifier<bool> advancedModeNotifier;
+  late ValueNotifier<bool> advancedModeToggleNotifier;
 
   late TextEditingController _mapTilesTemplateController;
   late TextEditingController _speedtestInstanceController;
@@ -208,6 +211,7 @@ class _SettingsBodyState extends State<SettingsBody>
     likelyCellsNotifier = widget.likelyCellsNotifier;
     countLikelyAsActiveNotifier = widget.countLikelyAsActiveNotifier;
     advancedModeNotifier = widget.advancedModeNotifier;
+    advancedModeToggleNotifier = widget.advancedModeToggleNotifier;
 
     updateData();
     _positionPrecisionSelection = positionPrecisions[_positionPrecision];
@@ -670,6 +674,11 @@ class _SettingsBodyState extends State<SettingsBody>
 
                 setBool("advancedMode", value);
                 advancedModeNotifier.value = value;
+
+                if (!_advancedMode) {
+                  advancedModeToggleNotifier.value = false;
+                }
+
                 updateData();
               },
             ),
