@@ -86,7 +86,7 @@ public class Client {
 
     private OkHttpClient httpClient;
 
-    private final int streams = Math.max(2, Math.min(Runtime.getRuntime().availableProcessors(), 4));
+    private final int streams = Math.max(4, Math.min(Runtime.getRuntime().availableProcessors() * 2, 12));
 
     private final ExecutorService executor = Executors.newFixedThreadPool(streams + 2);
     private final ScheduledExecutorService watchdogExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -145,7 +145,7 @@ public class Client {
                         .readTimeout(8, TimeUnit.SECONDS)
                         .writeTimeout(8, TimeUnit.SECONDS)
                         .retryOnConnectionFailure(false)
-                        .protocols(Collections.singletonList(Protocol.HTTP_1_1))
+                        .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
                         .addInterceptor(chain -> {
                             Request original = chain.request();
                             Request withUA = original.newBuilder()
@@ -334,7 +334,7 @@ public class Client {
 
         try {
             for (int i = 0; i < streams; i++) {
-                if (executor.isShutdown())
+                if (executor.isShutdown() || isCancelled.get())
                     break;
                 try {
                     futures.add(executor.submit(() -> {
@@ -344,7 +344,7 @@ public class Client {
                                 .addHeader("Accept-Encoding", "identity")
                                 .build();
 
-                        while (running.get()) {
+                        while (running.get() && !isCancelled.get() && !Thread.currentThread().isInterrupted()) {
                             if (isOpenSpeedTestDownload(downloadUrl)) {
                                 request = new Request.Builder()
                                         .url(finalDownloadUrl + (finalDownloadUrl.contains("?") ? "&n=" : "?n=")
@@ -365,7 +365,9 @@ public class Client {
                                 long tempBytes = 0;
 
                                 try {
-                                    while (running.get() && (read = source.read(okioBuffer, BUFFER_SIZE)) != -1) {
+                                    while (running.get() && !isCancelled.get()
+                                            && !Thread.currentThread().isInterrupted()
+                                            && (read = source.read(okioBuffer, BUFFER_SIZE)) != -1) {
                                         okioBuffer.clear();
                                         tempBytes += read;
                                         if (tempBytes >= BATCH_UPDATE_THRESHOLD) {
@@ -377,10 +379,14 @@ public class Client {
                                     if (tempBytes > 0)
                                         totalBytes.addAndGet(tempBytes);
                                 }
-                            } catch (Exception ignored) {
+                            } catch (Exception e) {
+                                if (isCancelled.get() || Thread.currentThread().isInterrupted()) {
+                                    return;
+                                }
+
                                 try {
                                     Thread.sleep(100);
-                                } catch (InterruptedException e) {
+                                } catch (InterruptedException ie) {
                                     Thread.currentThread().interrupt();
                                     return;
                                 }
@@ -400,7 +406,7 @@ public class Client {
             running.set(false);
 
             for (Future<?> f : futures) {
-                f.cancel(false);
+                f.cancel(true);
             }
         }
     }
@@ -447,7 +453,8 @@ public class Client {
                 long remaining = requestSize;
                 long tempBytes = 0;
 
-                while (remaining > 0 && running.get()) {
+                while (remaining > 0 && running.get() && !isCancelled.get()
+                        && !Thread.currentThread().isInterrupted()) {
                     int writeSize = (int) Math.min(payloadString.size(), remaining);
                     if (writeSize == payloadString.size()) {
                         sink.write(payloadString);
@@ -473,11 +480,11 @@ public class Client {
 
         try {
             for (int i = 0; i < streams; i++) {
-                if (executor.isShutdown())
+                if (executor.isShutdown() || isCancelled.get())
                     break;
                 try {
                     futures.add(executor.submit(() -> {
-                        while (running.get()) {
+                        while (running.get() && !isCancelled.get() && !Thread.currentThread().isInterrupted()) {
                             String finalUploadUrl = uploadUrl;
                             if (!uploadUrl.toLowerCase().contains("upload.php")) {
                                 finalUploadUrl += (uploadUrl.contains("?") ? "&n=" : "?n=") + System.nanoTime();
@@ -494,12 +501,12 @@ public class Client {
                                     throw new IOException(
                                             "Upload request failed with HTTP status code " + response.code() + ".");
                                 }
-                            } catch (Exception ignored) {
-                                if (Thread.currentThread().isInterrupted())
+                            } catch (Exception e) {
+                                if (isCancelled.get() || Thread.currentThread().isInterrupted())
                                     return;
                                 try {
                                     Thread.sleep(100);
-                                } catch (InterruptedException e) {
+                                } catch (InterruptedException ie) {
                                     Thread.currentThread().interrupt();
                                     return;
                                 }
@@ -519,7 +526,7 @@ public class Client {
             running.set(false);
 
             for (Future<?> f : futures) {
-                f.cancel(false);
+                f.cancel(true);
             }
         }
     }
@@ -600,7 +607,7 @@ public class Client {
             return;
         try {
             executor.execute(() -> {
-                while (isTrackerActive.get()) {
+                while (isTrackerActive.get() && !isCancelled.get() && !Thread.currentThread().isInterrupted()) {
                     Request request = new Request.Builder().url(pingUrl.contains("empty")
                             ? pingUrl + (pingUrl.contains("?") ? "&n=" : "?n=") + System.nanoTime()
                             : pingUrl).head().build();
@@ -751,11 +758,12 @@ public class Client {
     public void shutdown() {
         if (httpClient != null) {
             httpClient.dispatcher().cancelAll();
+            httpClient.connectionPool().evictAll();
         }
 
-        executor.shutdown();
-        watchdogExecutor.shutdown();
-        dnsExecutor.shutdown();
+        executor.shutdownNow();
+        watchdogExecutor.shutdownNow();
+        dnsExecutor.shutdownNow();
 
         new Thread(() -> {
             try {
