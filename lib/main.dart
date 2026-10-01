@@ -1,14 +1,14 @@
-import 'package:material_ui/material_ui.dart';
+import 'dart:io';
+
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:netmanager/base/perms.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 import 'package:netmanager/utils/screen_utils.dart';
-import 'package:netmanager/base/perms.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'dart:io';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -174,11 +174,13 @@ class _NetManagerState extends State<NetManager> {
             return MaterialApp(
               theme: ThemeData(
                 colorScheme: lightScheme,
+                scaffoldBackgroundColor: lightScheme.surface,
                 useMaterial3: material3Notifier.value,
                 pageTransitionsTheme: transitionTheme,
               ),
               darkTheme: ThemeData(
                 colorScheme: darkScheme,
+                scaffoldBackgroundColor: darkScheme.surface,
                 useMaterial3: material3Notifier.value,
                 pageTransitionsTheme: transitionTheme,
               ),

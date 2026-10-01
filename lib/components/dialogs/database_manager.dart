@@ -79,7 +79,7 @@ class DatabaseManagerDialog extends StatelessWidget {
       try {
         lines = file
             .openRead()
-            .transform(utf8.decoder)
+            .transform(const Utf8Decoder(allowMalformed: true))
             .transform(const LineSplitter());
       } catch (e) {
         if (context.mounted) {
@@ -100,10 +100,10 @@ class DatabaseManagerDialog extends StatelessWidget {
       final Set<String> localImportedPlmns = {};
 
       await for (final line in lines) {
-        if (line.trim().isEmpty || line.startsWith("#")) continue;
-        final parts = decodeRow(line, ";");
-
         try {
+          if (line.trim().isEmpty || line.startsWith("#")) continue;
+          final parts = decodeRow(line, ";");
+
           String currentPlmn = "";
           if (isClf) {
             if (parts.isNotEmpty && parts[0].length >= 5) {

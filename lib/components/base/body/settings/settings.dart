@@ -150,6 +150,7 @@ class _SettingsBodyState extends State<SettingsBody>
   int _homeGraphsRetentionTime = 30;
   bool _likelyCells = false;
   bool _countLikelyAsActive = false;
+  bool _cellMemory = true;
   int _positionPrecision = 3;
   int _speedMeasurementUnit = 1;
   int _speedtestBackend = 1;
@@ -291,6 +292,7 @@ class _SettingsBodyState extends State<SettingsBody>
       _countLikelyAsActive =
           sharedPreferences.getBool("countLikelyAsActive") ??
           _countLikelyAsActive;
+      _cellMemory = sharedPreferences.getBool("cellMemory") ?? _cellMemory;
       _homeGraphsRetentionTime =
           sharedPreferences.getInt("homeGraphsRetentionTime") ??
           _homeGraphsRetentionTime;
@@ -757,6 +759,22 @@ class _SettingsBodyState extends State<SettingsBody>
               ),
             ),
           ],
+          ListTile(
+            title: Text(_appLocalizations.settingsCellMemoryTitle),
+            subtitle: Text(_appLocalizations.settingsCellMemoryDescription),
+            trailing: Switch(
+              value: _cellMemory,
+              onChanged: (bool value) async {
+                await HapticService().triggerHaptic(
+                  HapticType.selection,
+                  context,
+                );
+
+                setBool("cellMemory", value);
+                updateData();
+              },
+            ),
+          ),
           ListTile(
             title: Text(_appLocalizations.settingsStartupMonitoringTitle),
             subtitle: Text(

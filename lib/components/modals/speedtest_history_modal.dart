@@ -125,7 +125,7 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
       final file = File(selectedFile.path);
       final Stream<String> linesStream = file
           .openRead()
-          .transform(utf8.decoder)
+          .transform(const Utf8Decoder(allowMalformed: true))
           .transform(const LineSplitter());
 
       final List<SpeedtestHistoryResult> parsed = [];
@@ -217,7 +217,7 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
             continue;
           }
 
-          await Future.delayed(const Duration(milliseconds: 250));
+          await Future.delayed(const Duration(milliseconds: 200));
         } else {
           try {
             if (mounted) {

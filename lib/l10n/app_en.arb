@@ -265,6 +265,8 @@
   "settingsLikelyCellsDescription": "Display cells that are likely (but not certain) to be active as 'likely active' instead of neighbouring in the home screen. Do note that this might sometimes return wrong data, especially on dual SIM setups.",
   "settingsCountLikelyActiveTitle": "Count likely active cells as real active cells",
   "settingsCountLikelyActiveDescription": "Count & display cells that are calculated to be likely active as fully active. This setting is unrecommended when running a dual SIM setup.",
+  "settingsCellMemoryTitle": "Cell memory",
+  "settingsCellMemoryDescription": "Automatically save the cells you connect to in a local database. This is useful to enrich active/neighbouring cell data. Disable this setting if you're running low on storage.",
   "settingsStartupMonitoringTitle": "Startup monitoring",
   "settingsStartupMonitoringDescription": "Start the monitoring service with your device. The map tracking service still needs to be manually started in the app.",
   "settingsBackgroundServiceTitle": "Background service",

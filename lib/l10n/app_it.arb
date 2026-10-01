@@ -265,6 +265,8 @@
   "settingsLikelyCellsDescription": "Mostra le celle che probabilmente (ma non sicuramente) sono attive come 'probabilmente attive' e non come vicine nella schermata home. Questa funzione a volte potrebbe fornire dati errati, specialmente sulle configurazioni dual SIM.",
   "settingsCountLikelyActiveTitle": "Conta le celle probabilmente attive come attive",
   "settingsCountLikelyActiveDescription": "Conta e mostra le celle rilevate come probabilmente attive come pienamente attive. Questa funzione è sconsigliata sulle configurazioni dual SIM.",
+  "settingsCellMemoryTitle": "Memorizza le celle",
+  "settingsCellMemoryDescription": "Salva automaticamente le celle a cui ti connetti in un database locale. Può essere utile per arricchire i dati delle celle vicine/attive. Disattiva questa impostazione se hai poco spazio libero.",
   "settingsStartupMonitoringTitle": "Inizializza all'avvio",
   "settingsStartupMonitoringDescription": "Avvia il servizio di tracking delle celle all'avvio del tuo dispositivo.",
   "settingsBackgroundServiceTitle": "Tracking in background",

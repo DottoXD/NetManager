@@ -9,7 +9,10 @@
 -keep class pw.dotto.netmanager.Core.Processors.Preprocessors.** { *; }
 -keep class pw.dotto.netmanager.Core.Processors.Postprocessors.** { *; }
 
+-keep class pw.dotto.netmanager.Core.Sources.Diag.** { *; }
 -keep class pw.dotto.netmanager.Core.Sources.Shizuku.** { *; }
+-keep class pw.dotto.netmanager.Core.Diag.** { *; }
+-keep class pw.dotto.netmanager.Core.Shizuku.** { *; }
 
 -dontwarn pw.dotto.netmanager.Core.Listeners.**
 

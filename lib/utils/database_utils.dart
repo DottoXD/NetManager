@@ -12,17 +12,17 @@ Future<String?> extractPlmnFromFirstLine(String path, bool isClf) async {
   try {
     lines = file
         .openRead()
-        .transform(utf8.decoder)
+        .transform(const Utf8Decoder(allowMalformed: true))
         .transform(const LineSplitter());
   } catch (e) {
     return null;
   }
 
   await for (final line in lines) {
-    if (line.trim().isEmpty || line.startsWith("#")) continue;
-    final parts = decodeRow(line, ";");
-
     try {
+      if (line.trim().isEmpty || line.startsWith("#")) continue;
+      final parts = decodeRow(line, ";");
+
       if (isClf) {
         if (parts.isNotEmpty && parts[0].length >= 5) {
           return parts[0];
