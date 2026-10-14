@@ -110,6 +110,10 @@ class CellListItem extends StatelessWidget {
         case "UARFCN":
           alternativeIcon = Icons.three_g_mobiledata_outlined;
           break;
+        case "ARFCN":
+          alternativeIcon =
+              Icons.e_mobiledata_outlined; // E is shown for gprs too...
+          break;
       }
     }
 

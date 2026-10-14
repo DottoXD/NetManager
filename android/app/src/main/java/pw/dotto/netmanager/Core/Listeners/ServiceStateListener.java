@@ -25,7 +25,7 @@ import pw.dotto.netmanager.Utils.Permissions;
  * (sadly) return no bandwidth data.
  *
  * @author DottoXD
- * @version 0.2.1
+ * @version 0.2.3
  */
 @RequiresApi(api = Build.VERSION_CODES.S)
 public class ServiceStateListener extends TelephonyCallback implements TelephonyCallback.ServiceStateListener {
@@ -36,11 +36,13 @@ public class ServiceStateListener extends TelephonyCallback implements Telephony
     private int state = ServiceState.STATE_IN_SERVICE;
     private List<NetworkRegistrationInfo> networkRegistrationInfoList = new ArrayList<>();
     private boolean isEmergency = false;
+    private ServiceState latestServiceState = null;
 
     @RequiresPermission(allOf = { Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION })
     @Override
     public void onServiceStateChanged(@NonNull ServiceState serviceState) {
+        latestServiceState = serviceState;
         updatedCellBandwidths = serviceState.getCellBandwidths();
 
         try {
@@ -82,5 +84,9 @@ public class ServiceStateListener extends TelephonyCallback implements Telephony
 
     public boolean getIsEmergency() {
         return isEmergency;
+    }
+
+    public ServiceState getLatestServiceState() {
+        return latestServiceState;
     }
 }

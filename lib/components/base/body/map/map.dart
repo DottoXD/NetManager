@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
@@ -483,7 +484,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
       final SIMData? simData;
 
       try {
-        simData = await compute<String, SIMData?>(parseSimData, jsonStr);
+        simData = await Isolate.run(() => parseSimData(jsonStr));
       } catch (e) {
         return;
       }

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/base/stack.dart';
-//import 'package:netmanager/components/base/body/advanced/advanced_mode.dart';
+import 'package:netmanager/components/base/body/advanced/advanced_mode.dart';
 import 'package:netmanager/components/base/body/map/map.dart';
 import 'package:netmanager/components/base/body/settings/settings.dart';
 import 'package:netmanager/components/base/body/speedtest/speedtest.dart';
@@ -97,6 +97,9 @@ class _HomeState extends State<Home> {
   final ValueNotifier<bool> _isPipActiveNotifier = ValueNotifier(false);
 
   final ValueNotifier<bool> _advancedModeToggleNotifier = ValueNotifier(false);
+  final ValueNotifier<VoidCallback?> _advancedUpdateNotifier = ValueNotifier(
+    null,
+  );
 
   @override
   void initState() {
@@ -223,6 +226,7 @@ class _HomeState extends State<Home> {
     _isPipActiveNotifier.dispose();
 
     _advancedModeToggleNotifier.dispose();
+    _advancedUpdateNotifier.dispose();
 
     super.dispose();
   }
@@ -286,12 +290,16 @@ class _HomeState extends State<Home> {
             ValueListenableBuilder(
               valueListenable: _advancedModeToggleNotifier,
               builder: (context, isToggled, _) {
-                /*if (isToggled) {
+                if (isToggled) {
                   return AdvancedModeBody(
-                    platform: widget.platform,
+                    mainPlatform: widget.platform,
                     currentSimSlotNotifier: _currentSimSlotNotifier,
+                    updateIntervalNotifier: _updateIntervalNotifier,
+                    onUpdateButtonPressed: (callback) {
+                      _advancedUpdateNotifier.value = callback;
+                    },
                   );
-                }*/
+                }
 
                 return HomeBody(
                   _homeScrollController,
@@ -396,39 +404,60 @@ class _HomeState extends State<Home> {
                 children: [
                   if (_currentPage == 0) ...[
                     ValueListenableBuilder(
-                      valueListenable: _screenshotNotifier,
-                      builder: (context, callback, _) =>
-                          ScreenshotButton(onPressed: callback),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        ValueListenableBuilder(
-                          valueListenable: _homeDataGraphsNotifier,
-                          builder: (context, graphsEnabled, _) {
-                            if (!graphsEnabled) return const SizedBox.shrink();
+                      valueListenable: _advancedModeToggleNotifier,
+                      builder: (context, isToggled, _) {
+                        if (isToggled) {
+                          return ValueListenableBuilder(
+                            valueListenable: _advancedUpdateNotifier,
+                            builder: (context, callback, _) =>
+                                UpdateButton(onPressed: callback),
+                          );
+                        }
 
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 4),
-                              child: Transform.translate(
-                                offset: const Offset(0, 2),
-                                child: ValueListenableBuilder(
-                                  valueListenable: _graphsNotifier,
-                                  builder: (context, callback, _) =>
-                                      GraphsButton(onPressed: callback),
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            ValueListenableBuilder(
+                              valueListenable: _screenshotNotifier,
+                              builder: (context, callback, _) =>
+                                  ScreenshotButton(onPressed: callback),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                ValueListenableBuilder(
+                                  valueListenable: _homeDataGraphsNotifier,
+                                  builder: (context, graphsEnabled, _) {
+                                    if (!graphsEnabled) {
+                                      return const SizedBox.shrink();
+                                    }
+
+                                    return Padding(
+                                      padding: const EdgeInsets.only(right: 4),
+                                      child: Transform.translate(
+                                        offset: const Offset(0, 2),
+                                        child: ValueListenableBuilder(
+                                          valueListenable: _graphsNotifier,
+                                          builder: (context, callback, _) =>
+                                              GraphsButton(onPressed: callback),
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                        ValueListenableBuilder(
-                          valueListenable: _homeUpdateNotifier,
-                          builder: (context, callback, _) =>
-                              UpdateButton(onPressed: callback),
-                        ),
-                      ],
+                                ValueListenableBuilder(
+                                  valueListenable: _homeUpdateNotifier,
+                                  builder: (context, callback, _) =>
+                                      UpdateButton(onPressed: callback),
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ] else if (_currentPage == 1) ...[
                     ValueListenableBuilder(

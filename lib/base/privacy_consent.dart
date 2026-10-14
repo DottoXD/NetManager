@@ -3,7 +3,7 @@ import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-const int privacyPolicyVersion = 2;
+const int privacyPolicyVersion = 3;
 
 class PrivacyConsentScreen extends StatefulWidget {
   final VoidCallback onAccept;

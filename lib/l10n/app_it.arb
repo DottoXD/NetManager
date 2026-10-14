@@ -385,5 +385,150 @@
   "advancedMenuNotInstalledRunning": "Non installata o non in esecuzione",
   "advancedMenuUnknown": "Stato sconosciuto",
   "advancedMenuOk": "Ok",
-  "advancedMenuNoBackends": "La modalità avanzata è abilitata, ma nessuno dei suoi backend è disponibile."
+  "advancedMenuNoBackends": "La modalità avanzata è abilitata, ma nessuno dei suoi backend è disponibile.",
+  "advancedModeRetry": "Riprova",
+  "advancedErrorTitle": "Errore durante l'acquisizione dei dati avanzati",
+  "advancedErrorShizuku": "Nessuna risposta dal client Shizuku.",
+  "advancedErrorPlatform": "Errore di piattaforma.",
+  "advancedErrorUnknown": "Errore sconosciuto.",
+  "advancedModeNoData": "Nessun dato avanzato disponibile.",
+  "advancedModeCarrierConfig": "Carrier Config",
+  "advancedModeImsStatus": "Stato IMS",
+  "advancedModeImsLogs": "Logs IMS",
+  "advancedModeLteServingCell": "Cella servente LTE",
+  "advancedModeDiagUtils": "Utilità",
+  "advancedModeSimLabel": "SIM {slot}",
+  "@advancedModeSimLabel": {
+    "description": "A SIM slot number.",
+    "placeholders": {
+      "slot": {
+        "type": "int"
+      }
+    }
+  },
+  "advancedModeAll": "TUTTI",
+  "advancedModeYes": "SI",
+  "advancedModeNo": "NO",
+  "advancedModeNRCapabilities": "Funzionalità 5G & NR",
+  "advancedModeVoice": "Chiamate vocali e IMS",
+  "advancedModeAggregation": "Aggregazione e messaggistica LTE",
+  "advancedModeNRAvailableTitle": "5G NR Disponibile",
+  "advancedModeNRAvailableSubtitle": "Supporto generale al 5G NR",
+  "advancedModeNsaTitle": "5G NSA (Non-Standalone)",
+  "advancedModeNsaSubtitle": "Supporta 5G connesso tramite anchor LTE",
+  "advancedModeSaTitle": "5G SA (Standalone)",
+  "advancedModeSaSubtitle": "Supporta 5G connesso a una core NR",
+  "advancedModeVolteTitle": "VoLTE (Voice over LTE)",
+  "advancedModeVolteSubtitle": "Chiamate vocali HD in 4G LTE",
+  "advancedModeVonrTitle": "VoNR (Voice over NR)",
+  "advancedModeVonrSubtitle": "Chiamate vocali HD in 5G NR",
+  "advancedModeWifiTitle": "Wi-Fi Calling (VoWiFi)",
+  "advancedModeWifiSubtitle": "Chiamate vocali tramite la rete Wi-Fi",
+  "advancedModeVilteTitle": "ViLTE (Video over LTE)",
+  "advancedModeVilteSubtitle": "Video chiamate via LTE",
+  "advancedModeCrossTitle": "Cross-SIM IMS Calling",
+  "advancedModeCrossSubtitle": "Usa una seconda SIM dati per le chiamate IMS",
+  "advancedModeEmergencyTitle": "Chiamate di emergenza via WFC",
+  "advancedModeEmergencySubtitle": "Chiamate di emergenza disponibili via Wi-Fi",
+  "advancedModeLteCaTitle": "LTE+ / Carrier Aggregation",
+  "advancedModeLteCaSubtitle": "LTE-Advanced carrier aggregation",
+  "advancedModeRcsTitle": "Messaggi RCS",
+  "advancedModeRcsSubtitle": "Rich Communication Services",
+  "advancedModeRcsSingleRegTitle": "RCS Single Registration",
+  "advancedModeRcsSingleRegSubtitle": "Registrazione SIP singola per MMTEL & RCS",
+  "advancedModeWfcWifiOnlyTitle": "WFC Wi-Fi preferito",
+  "advancedModeWfcWifiOnlySubtitle": "Wi-Fi calling preferito rispetto ai dati mobili",
+  "advancedModeWfcDefaultTitle": "WFC abilitato di default",
+  "advancedModeWfcDefaultSubtitle": "Abilitato di default dall'operatore",
+  "advancedModeImsStateTitle": "IMS {state}",
+  "@advancedModeImsStateTitle": {
+    "description": "A string with the IMS registration state.",
+    "placeholders": {
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "advancedModeImsActiveRatTitle": "Tecnologia radio: {rat}",
+  "@advancedModeImsActiveRatTitle": {
+    "description": "A string with the radio access technology IMS is registered on.",
+    "placeholders": {
+      "rat": {
+        "type": "String"
+      }
+    }
+  },
+  "advancedModeImsMmtel": "MMTEL (Multimedia Telephony)",
+  "advancedModeImsVoice": "Voice over IMS (VoLTE / VoNR)",
+  "advancedModeImsVideo": "Video over IMS (ViLTE)",
+  "advancedModeImsSms": "SMS over IMS",
+  "advancedModeImsEmergency": "Chiamate IMS di emergenza",
+  "advancedModeImsRcsTunnelTitle": "RCS & Network Tunneling",
+  "advancedModeImsRcsState": "RCS Service State",
+  "advancedModeImsEpdg": "Tunnel ePDG / IWLAN",
+  "advancedModeImsStateRegistered": "REGISTRATO",
+  "advancedModeImsStateRegistering": "IN REGISTRAZIONE",
+  "advancedModeImsStateUnregistered": "NON REGISTRATO",
+  "advancedModeImsValueAvailable": "Disponibile",
+  "advancedModeImsValueUnavailable": "Non disponibile",
+  "advancedModeImsValueRegistered": "Registrato",
+  "advancedModeImsValueUnregistered": "Non registrato",
+  "advancedModeImsValueConnected": "Connesso",
+  "advancedModeImsValueDisconnected": "Disconnesso",
+  "advancedModeImsValueSupported": "Supportato",
+  "advancedModeImsValueUnsupported": "Non supportato",
+  "advancedModeImsLogsSearch": "Cerca tra i log IMS...",
+  "advancedModeImsLogsEmpty": "Nessun log IMS trovato.",
+  "advancedModeDiagStopTitle": "Vuoi fermare NetManagerDiag?",
+  "advancedModeDiagStopDescription": "Questo non chiuderà solo la connessione a NetManagerDiag, ma richiederà la chiusura pulita dell'intero servizio. Ogni altra funzionalità avanzata che si affida a NetManagerDiag smetterà di funzionare fino a che il servizio non sarà avviato di nuovo.",
+  "advancedModeDiagStop": "Ferma",
+  "advancedModeDiagStopTooltip": "Ferma NetManagerDiag",
+  "advancedModeDiagCardTitle": "Info di NetManagerDiag",
+  "advancedModeDiagConnecting": "Connessione in corso...",
+  "advancedModeDiagDisconnecting": "Disconnesso",
+  "advancedModeDiagConnected": "Connessso.",
+  "advancedModeDiagConnectedVia": "Connesso ({vendor} + {transport}).",
+  "@advancedModeDiagConnectedVia": {
+    "description": "A string with the connection status with modem vendor and transport.",
+    "placeholders": {
+      "vendor": {
+        "type": "String"
+      },
+      "transport": {
+        "type": "String"
+      }
+    }
+  },
+  "advancedModeDiagError": "Errore durante la connessione a NetManagerDiag.",
+  "advancedModeDiagEventLog": "Log degli eventi",
+  "advancedModeDiagLogsSearch": "Cerca tra i log...",
+  "advancedModeDiagLogsEmpty": "Nessun log trovato.",
+  "advancedModeDiagLogsDisconnected": "La connessione a NetManagerDiag è stata chiusa con successo.",
+  "advancedModeDiagLogsUnknownError": "Errore sconosciuto.",
+  "advancedModeDiagLogStopFailed": "Impossibile fermare NetManagerDiag: {error}",
+  "@advancedModeDiagLogStopFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "advancedModeDiagLogStopped": "Daemon fermato.",
+  "advancedModeDiagLogStopUnconfirmed": "La richiesta di stop non ha ricevuto conferma.",
+  "advancedModeDiagConnecting": "Connessione a NetManagerDiag...",
+  "advancedModeDiagDisconnected": "Disconnesso da NetManagerDiag.",
+  "advancedModeLteServingTitle": "Cella primaria LTE",
+  "advancedModeLteCellInfoTitle": "LTE Info",
+  "advancedModeLteNoData": "Ancora nessun dato per {sim}. Il modem ha segnalato dei dati solo per {others}.",
+  "@advancedModeLteNoData": {
+    "placeholders": {
+      "sim": {
+        "type": "String"
+      },
+      "others": {
+        "type": "String"
+      }
+    }
+  },
+  "advancedModeLteWaiting": "In attesa di dati..."
 }

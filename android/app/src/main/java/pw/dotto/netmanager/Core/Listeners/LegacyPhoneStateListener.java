@@ -26,7 +26,7 @@ import pw.dotto.netmanager.Utils.DebugLogger;
  * TelephonyCallback.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.2.3
  */
 public class LegacyPhoneStateListener extends PhoneStateListener {
     private int dataState = -1;
@@ -38,6 +38,7 @@ public class LegacyPhoneStateListener extends PhoneStateListener {
     private String operatorNumeric = "";
     private int state = ServiceState.STATE_IN_SERVICE;
     private boolean isEmergency = false;
+    private ServiceState latestServiceState;
 
     public LegacyPhoneStateListener(int subscriptionId) {
         try {
@@ -58,6 +59,8 @@ public class LegacyPhoneStateListener extends PhoneStateListener {
             Manifest.permission.ACCESS_COARSE_LOCATION })
     @Override
     public void onServiceStateChanged(ServiceState serviceState) {
+        latestServiceState = serviceState;
+
         if (serviceState == null)
             return;
 
@@ -132,5 +135,9 @@ public class LegacyPhoneStateListener extends PhoneStateListener {
 
     public boolean getIsEmergency() {
         return isEmergency;
+    }
+
+    public ServiceState getLatestServiceState() {
+        return latestServiceState;
     }
 }

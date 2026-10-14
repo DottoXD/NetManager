@@ -26,7 +26,9 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
 
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"
+        tools:ignore="ScopedStorage" />
 
     <uses-permission android:name="android.permission.VIBRATE" />
 
@@ -34,7 +36,8 @@
         android:label="NetManager"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:enableOnBackInvokedCallback="true">
+        android:enableOnBackInvokedCallback="true"
+        tools:targetApi="33">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -113,12 +116,6 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <meta-data
-            android:name="com.google.android.gms.wearable.app"
-            android:resource="@xml/wearable_app_desc" />
-        <meta-data
-            android:name="com.google.android.wearable.standalone"
-            android:value="false" />
     </application>
     <queries>
         <package android:name="com.android.phone" />

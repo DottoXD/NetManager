@@ -11,7 +11,7 @@ import android.os.Build;
  * background service for cell monitoring should be started on boot.
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.2.3
  */
 public class BootReceiver extends BroadcastReceiver {
 
@@ -23,7 +23,7 @@ public class BootReceiver extends BroadcastReceiver {
      */
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (intent.getAction() == null)
+        if (intent.getAction() == null || !Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()))
             return;
 
         SharedPreferences sharedPreferences = context.getSharedPreferences("FlutterSharedPreferences",

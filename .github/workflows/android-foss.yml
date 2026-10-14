@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: 📁 Checkout
         uses: actions/checkout@v7.0.1
+        with:
+          submodules: true
 
       - name: 📋 Cache Flutter
         uses: actions/cache@v6.1.0
@@ -48,7 +50,7 @@ jobs:
         uses: subosito/flutter-action@v2.23.0
         with:
           channel: stable
-          flutter-version: 3.47.5
+          flutter-version: 3.47.7
 
       - name: ⌚ Timestamps
         run: |
@@ -77,7 +79,7 @@ jobs:
       - name: ⛏️ App APK (Android without proprietary libraries)
         run: |
           export PUB_CACHE=$(pwd)/.pub-cache
-          flutter build apk --release --flavor foss --extra-gen-snapshot-options=--strip --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN_FOSS }} --dart-define=flutter.flutter_map.unblockOSM="${{ secrets.UNBLOCK_OSM }}" --dart-define=GIT_COMMIT=$GIT_COMMIT --target-platform android-arm,android-arm64 --split-per-abi
+          flutter build apk --release --flavor foss --extra-gen-snapshot-options=--strip --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN_FOSS }} --dart-define=GIT_COMMIT=$GIT_COMMIT --target-platform android-arm,android-arm64 --split-per-abi
 
       - name: ✔️ Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v3

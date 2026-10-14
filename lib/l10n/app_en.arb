@@ -385,5 +385,150 @@
   "advancedMenuNotInstalledRunning": "Not installed or not running",
   "advancedMenuUnknown": "Unknown status",
   "advancedMenuOk": "Ok",
-  "advancedMenuNoBackends": "Advanced mode is enabled, but none of its execution backends are currently available."
+  "advancedMenuNoBackends": "Advanced mode is enabled, but none of its execution backends are currently available.",
+  "advancedModeRetry": "Retry",
+  "advancedErrorTitle": "Error fetching advanced data",
+  "advancedErrorShizuku": "No response from Shizuku client.",
+  "advancedErrorPlatform": "Platform error occurred.",
+  "advancedErrorUnknown": "Unknown error occurred.",
+  "advancedModeNoData": "No advanced data available",
+  "advancedModeCarrierConfig": "Carrier Config",
+  "advancedModeImsStatus": "IMS Status",
+  "advancedModeImsLogs": "IMS Logs",
+  "advancedModeLteServingCell": "LTE Serving Cell",
+  "advancedModeDiagUtils": "Diag Utils",
+  "advancedModeSimLabel": "SIM {slot}",
+  "@advancedModeSimLabel": {
+    "description": "A SIM slot number.",
+    "placeholders": {
+      "slot": {
+        "type": "int"
+      }
+    }
+  },
+  "advancedModeAll": "ALL",
+  "advancedModeYes": "YES",
+  "advancedModeNo": "NO",
+  "advancedModeNRCapabilities": "5G & NR Capabilities",
+  "advancedModeVoice": "Voice & IMS Calling",
+  "advancedModeAggregation": "Aggregation & Messaging",
+  "advancedModeNRAvailableTitle": "5G NR Available",
+  "advancedModeNRAvailableSubtitle": "Supports general 5G NR network support",
+  "advancedModeNsaTitle": "5G NSA (Non-Standalone)",
+  "advancedModeNsaSubtitle": "Supports 5G connected via LTE anchor",
+  "advancedModeSaTitle": "5G SA (Standalone)",
+  "advancedModeSaSubtitle": "Supports 5G with an NR core network",
+  "advancedModeVolteTitle": "VoLTE (Voice over LTE)",
+  "advancedModeVolteSubtitle": "HD voice calls over 4G LTE",
+  "advancedModeVonrTitle": "VoNR (Voice over NR)",
+  "advancedModeVonrSubtitle": "HD voice calls over 5G NR",
+  "advancedModeWifiTitle": "Wi-Fi Calling (VoWiFi)",
+  "advancedModeWifiSubtitle": "Voice calls over Wi-Fi network",
+  "advancedModeVilteTitle": "ViLTE (Video over LTE)",
+  "advancedModeVilteSubtitle": "Video calling over LTE",
+  "advancedModeCrossTitle": "Cross-SIM IMS Calling",
+  "advancedModeCrossSubtitle": "Use secondary data for IMS calls",
+  "advancedModeEmergencyTitle": "Emergency Calls over WFC",
+  "advancedModeEmergencySubtitle": "Emergency calls allowed over Wi-Fi",
+  "advancedModeLteCaTitle": "LTE+ / Carrier Aggregation",
+  "advancedModeLteCaSubtitle": "LTE-Advanced carrier aggregation",
+  "advancedModeRcsTitle": "RCS Messaging Supported",
+  "advancedModeRcsSubtitle": "Rich Communication Services",
+  "advancedModeRcsSingleRegTitle": "RCS Single Registration",
+  "advancedModeRcsSingleRegSubtitle": "Single SIP registration for MMTEL & RCS",
+  "advancedModeWfcWifiOnlyTitle": "WFC Wi-Fi Only Preference",
+  "advancedModeWfcWifiOnlySubtitle": "Wi-Fi calling preferred over cellular",
+  "advancedModeWfcDefaultTitle": "WFC Default Enabled",
+  "advancedModeWfcDefaultSubtitle": "WFC enabled by carrier default",
+  "advancedModeImsStateTitle": "IMS {state}",
+  "@advancedModeImsStateTitle": {
+    "description": "A string with the IMS registration state.",
+    "placeholders": {
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "advancedModeImsActiveRatTitle": "Active RAT: {rat}",
+  "@advancedModeImsActiveRatTitle": {
+    "description": "A string with the radio access technology IMS is registered on.",
+    "placeholders": {
+      "rat": {
+        "type": "String"
+      }
+    }
+  },
+  "advancedModeImsMmtel": "MMTEL (Multimedia Telephony)",
+  "advancedModeImsVoice": "Voice over IMS (VoLTE / VoNR)",
+  "advancedModeImsVideo": "Video over IMS (ViLTE)",
+  "advancedModeImsSms": "SMS over IMS",
+  "advancedModeImsEmergency": "Emergency IMS Calling",
+  "advancedModeImsRcsTunnelTitle": "RCS & Network Tunneling",
+  "advancedModeImsRcsState": "RCS Service State",
+  "advancedModeImsEpdg": "ePDG / IWLAN Tunnel",
+  "advancedModeImsStateRegistered": "REGISTERED",
+  "advancedModeImsStateRegistering": "REGISTERING",
+  "advancedModeImsStateUnregistered": "UNREGISTERED",
+  "advancedModeImsValueAvailable": "Available",
+  "advancedModeImsValueUnavailable": "Unavailable",
+  "advancedModeImsValueRegistered": "Registered",
+  "advancedModeImsValueUnregistered": "Unregistered",
+  "advancedModeImsValueConnected": "Connected",
+  "advancedModeImsValueDisconnected": "Disconnected",
+  "advancedModeImsValueSupported": "Supported",
+  "advancedModeImsValueUnsupported": "Unsupported",
+  "advancedModeImsLogsSearch": "Search IMS logs...",
+  "advancedModeImsLogsEmpty": "No IMS logs matching filters.",
+  "advancedModeDiagStopTitle": "Stop NetManagerDiag?",
+  "advancedModeDiagStopDescription": "This asks the background daemon to shut down gracefully, not just this page's connection to it. Any other advanced-mode feature relying on it will stop working until it's reconnected.",
+  "advancedModeDiagStop": "Stop",
+  "advancedModeDiagStopTooltip": "Stop NetManagerDiag",
+  "advancedModeDiagCardTitle": "NetManagerDiag Info",
+  "advancedModeDiagConnecting": "Connecting...",
+  "advancedModeDiagDisconnecting": "Disconnected",
+  "advancedModeDiagConnected": "Connected.",
+  "advancedModeDiagConnectedVia": "Connected ({vendor} + {transport}).",
+  "@advancedModeDiagConnectedVia": {
+    "description": "A string with the connection status with modem vendor and transport.",
+    "placeholders": {
+      "vendor": {
+        "type": "String"
+      },
+      "transport": {
+        "type": "String"
+      }
+    }
+  },
+  "advancedModeDiagError": "Error connecting to NetManagerDiag.",
+  "advancedModeDiagEventLog": "Event Log",
+  "advancedModeDiagLogsSearch": "Search in the event log...",
+  "advancedModeDiagLogsEmpty": "No log found.",
+  "advancedModeDiagLogsDisconnected": "NetManagerDiag connection closed.",
+  "advancedModeDiagLogsUnknownError": "Unknown error.",
+  "advancedModeDiagLogStopFailed": "Failed to stop: {error}",
+  "@advancedModeDiagLogStopFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "advancedModeDiagLogStopped": "Daemon stopped.",
+  "advancedModeDiagLogStopUnconfirmed": "Stop request did not confirm success.",
+  "advancedModeDiagConnecting": "Connecting to NetManagerDiag...",
+  "advancedModeDiagDisconnected": "Disconnected from NetManagerDiag.",
+  "advancedModeLteServingTitle": "LTE Primary Cell",
+  "advancedModeLteCellInfoTitle": "LTE Info",
+  "advancedModeLteNoData": "No data for {sim} yet. The modem has only reported data for {others}.",
+  "@advancedModeLteNoData": {
+    "placeholders": {
+      "sim": {
+        "type": "String"
+      },
+      "others": {
+        "type": "String"
+      }
+    }
+  },
+  "advancedModeLteWaiting": "Waiting for data..."
 }

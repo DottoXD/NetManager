@@ -2,7 +2,7 @@
 
 **Effective Date:** July 25, 2026
 
-**Last Updated:** August 24, 2026
+**Last Updated:** October 13, 2026
 
 **NetManager** is a free and open-source mobile network monitoring application built with privacy in mind. This policy explains how we handle your data.
 
@@ -29,8 +29,14 @@ We strictly follow data minimization principles:
 ### Update Checker
 
 * **Default Status:** Disabled by default (Opt-In).
-* **Data Processing:** If enabled in settings, the app queries the official [GitHub REST API](https://api.github.com/repos/DottoXD/NetManager/tags) to compare your current build commit hash against the latest tag release.
+* **Data Processing:** If manually enabled in settings, the app queries the official [GitHub REST API](https://api.github.com/repos/DottoXD/NetManager/tags) to compare your current build commit hash against the latest tag release.
 * **Network Logs:** Connecting to GitHub's API transmits your device's **IP address** to GitHub servers to process the request, subject to [GitHub's Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement). No personal telemetry or usage details are sent.
+
+### Speed test import feature
+* **Default Status:** User triggered.
+* **Data Processing:** If manually triggered by the user, the app sends network requests to [Speedtest.net's API](https://www.speedtest.net/api) to gather extra data about the speed tests you are importing.
+* **Network Logs:** Connecting to Speedtest's API transmits your device's **IP address** to Speedtest's servers to process the request, subject to [Ookla's Privacy Policy](https://www.ookla.com/privacy). No personal telemetry or usage details are sent.
+
 
 ## External Services & International Data Transfers
 
@@ -40,6 +46,7 @@ To display map tiles, execute speed tests, or perform update checks, NetManager 
 * **LibreSpeed:** On-demand network speed testing.
 * **OpenSpeedTest:** On-demand, user-hosted network speed testing.
 * **GitHub, Inc.:** Opt-in software update checks.
+* **Ookla, LLC:** On-demand speed test importing.
 
 ### Network Logs & IP Address Transmission
 

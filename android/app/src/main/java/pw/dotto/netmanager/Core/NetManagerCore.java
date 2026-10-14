@@ -50,7 +50,7 @@ import pw.dotto.netmanager.Utils.Permissions;
  * data sources and pretty much everything else related to mobile cell data.
  *
  * @author DottoXD
- * @version 0.2.1
+ * @version 0.2.3
  */
 public class NetManagerCore {
     private static volatile NetManagerCore instance;
@@ -394,15 +394,15 @@ public class NetManagerCore {
      * public SIMData fetchLive(TelephonyManager telephony) {
      * if (telephony == null)
      * return null;
-     * 
+     *
      * SIMSlotState tempSlot = new SIMSlotState(-1);
      * tempSlot.telephony = telephony;
-     * 
+     *
      * SIMData raw = sourceSelector.select()
      * .fetch(appContext, tempSlot);
      * if (raw == null)
      * return null;
-     * 
+     *
      * SIMData processed = raw;
      * for (Postprocessor postprocessor : postprocessors)
      * processed = postprocessor.process(processed, tempSlot.simId);

@@ -262,8 +262,13 @@ class _TopBarState extends State<TopBar> {
     }
 
     try {
-      int shizukuStatus = await platform.invokeMethod("checkShizuku") ?? 3;
-      int diagStatus = 3;
+      final results = await Future.wait([
+        platform.invokeMethod("checkShizuku"),
+        platform.invokeMethod("checkDiag"),
+      ]);
+
+      int shizukuStatus = (results[0] as int?) ?? 3;
+      int diagStatus = (results[1] as int?) ?? 3;
 
       final isShizuku = shizukuStatus == 0;
       final isDiag = diagStatus == 0;
@@ -279,23 +284,6 @@ class _TopBarState extends State<TopBar> {
           },
         );
         return;
-      }
-
-      if (isDiag) {
-        return;
-      }
-
-      if (isShizuku) {
-        if (mounted) {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return ErrorDialog(e: appLocalizations.advancedMenuUnavailable);
-            },
-          );
-
-          return;
-        }
       }
 
       advancedModeToggleNotifier.value = true;
@@ -314,14 +302,19 @@ class _TopBarState extends State<TopBar> {
   Future<void> _enterPip(AppLocalizations appLocalizations) async {
     try {
       widget.onEnterPipRequested?.call();
+      bool advancedModeToggled = advancedModeToggleNotifier.value;
 
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         isPipActiveNotifier.value = true;
+        advancedModeToggleNotifier.value = false;
 
         try {
           await platform.invokeMethod("enterPip");
         } catch (e) {
           isPipActiveNotifier.value = false;
+          if (advancedModeToggled) {
+            advancedModeToggleNotifier.value = true;
+          }
 
           if (mounted) {
             showDialog(

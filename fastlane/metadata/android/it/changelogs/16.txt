@@ -1,0 +1,7 @@
+- Svariati parametri della carrier config ora possono essere letti mediante la modalità avanzata.
+- Lo stato IMS delle varie SIM ora può essere controllato mediante la modalità avanzata.
+- I log IMS ora possono essere letti mediante la modalità avanzata.
+- Aggiunto il supporto client side alle funzionalità avanzate di NetManagerDiag (attualmente inaccessibile nelle build pubbliche).
+- Varie dipendenze sono state aggiornate.
+- La privacy policy è stata aggiornata.
+- Svariati bug/errori sono stati risolti.

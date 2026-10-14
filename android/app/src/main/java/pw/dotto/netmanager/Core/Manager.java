@@ -20,7 +20,7 @@ import pw.dotto.netmanager.Core.Sources.Telephony.TelephonyCellDataSource;
  * rewriting substantial (and working) parts of the codebase.
  *
  * @author DottoXD
- * @version 0.2.1
+ * @version 0.2.3
  */
 public class Manager {
     private final Context context;
@@ -147,6 +147,10 @@ public class Manager {
     public int getSubscriptionId(int simId) {
         SIMSlotState slot = core.getSlot(simId);
         return slot == null ? -1 : slot.subscriptionId;
+    }
+
+    public SIMSlotState getSimSlotState(int simId) {
+        return core.getSlot(simId);
     }
 
     public void updateInterval(int intervalSeconds) {

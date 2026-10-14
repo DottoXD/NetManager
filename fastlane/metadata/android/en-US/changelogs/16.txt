@@ -1,0 +1,7 @@
+- Various carrier configuration parameters now can be read through advanced mode.
+- Subscriptions' IMS statuses can now be checked through advanced mode.
+- IMS logs can now be read through advanced mode.
+- Added client-side support for NetManagerDiag advanced features (currently inaccessible in public builds).
+- Various runtime dependencies have been updated.
+- The privacy policy has been updated.
+- Various bugs/errors have been fixed.

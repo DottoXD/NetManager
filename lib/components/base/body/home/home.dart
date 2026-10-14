@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart';
+import 'dart:isolate';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/base/body/home/widgets/cell_section.dart';
@@ -185,7 +186,7 @@ class _HomeBodyState extends State<HomeBody> {
       SIMData? simData;
 
       try {
-        simData = await compute<String, SIMData?>(parseSimData, jsonStr);
+        simData = await Isolate.run(() => parseSimData(jsonStr));
       } catch (e) {
         if (!mounted) return;
 

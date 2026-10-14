@@ -14,7 +14,7 @@ import androidx.annotation.RequiresApi;
 import java.lang.reflect.Field;
 
 import pw.dotto.netmanager.Core.Mobile.CellDatas.NrCellData;
-import pw.dotto.netmanager.Core.Sources.Shizuku.ShizukuReflectionBridge;
+import pw.dotto.netmanager.Core.Shizuku.ShizukuReflectionBridge;
 import pw.dotto.netmanager.Utils.Permissions;
 
 /**
@@ -22,7 +22,7 @@ import pw.dotto.netmanager.Utils.Permissions;
  * based on the provided cell info.
  *
  * @author DottoXD
- * @version 0.2.1
+ * @version 0.2.3
  */
 public class NrExtractor {
     private static final String REFLECTION_TA = "mTimingAdvance";

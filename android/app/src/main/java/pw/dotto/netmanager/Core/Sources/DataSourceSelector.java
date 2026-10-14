@@ -1,6 +1,5 @@
 package pw.dotto.netmanager.Core.Sources;
 
-import pw.dotto.netmanager.Core.Sources.Diag.DiagCellDataSource;
 import pw.dotto.netmanager.Core.Sources.Shizuku.ShizukuCellDataSource;
 import pw.dotto.netmanager.Core.Sources.Telephony.TelephonyCellDataSource;
 
@@ -10,25 +9,18 @@ import pw.dotto.netmanager.Core.Sources.Telephony.TelephonyCellDataSource;
  * available data sources.
  *
  * @author DottoXD
- * @version 0.2.1
+ * @version 0.2.3
  */
 public class DataSourceSelector {
     private final TelephonyCellDataSource telephonySource;
     private final ShizukuCellDataSource shizukuSource;
-    private final DiagCellDataSource diagCellDataSource;
 
     public DataSourceSelector(TelephonyCellDataSource telephonySource) {
         this.telephonySource = telephonySource;
-
         this.shizukuSource = new ShizukuCellDataSource(telephonySource);
-        this.diagCellDataSource = new DiagCellDataSource(telephonySource);
     }
 
     public CellDataSource select() {
-        if (diagCellDataSource.isAvailable(null)) {
-            return diagCellDataSource;
-        }
-
         if (shizukuSource.isAvailable(null)) {
             return shizukuSource;
         }
