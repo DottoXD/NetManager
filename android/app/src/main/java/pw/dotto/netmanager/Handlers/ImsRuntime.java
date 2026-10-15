@@ -8,7 +8,6 @@ import android.os.Build;
 import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
 
-import androidx.annotation.RequiresApi;
 import androidx.annotation.RequiresPermission;
 
 import java.lang.ref.WeakReference;
@@ -25,6 +24,16 @@ import pw.dotto.netmanager.Core.NetManagerCore;
 import pw.dotto.netmanager.MainActivity;
 import pw.dotto.netmanager.Utils.DebugLogger;
 
+/**
+ * NetManager's ImsRuntime is an advanced mode, runtime component which fetches
+ * various pieces of IMS info eventually requested by other components across
+ * the app.
+ * This class performs reflection to gather extra data about network
+ * registration info.
+ *
+ * @author DottoXD
+ * @version 0.2.3
+ */
 public class ImsRuntime {
     private final WeakReference<MainActivity> activityReference;
 

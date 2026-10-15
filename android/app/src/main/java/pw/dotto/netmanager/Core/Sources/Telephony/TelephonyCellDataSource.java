@@ -65,7 +65,7 @@ import pw.dotto.netmanager.Utils.Permissions;
  * API.
  *
  * @author DottoXD
- * @version 0.2.1
+ * @version 0.2.3
  */
 public class TelephonyCellDataSource implements CellDataSource {
     public static final int CELL_INFO_UNAVAILABLE = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
@@ -87,7 +87,7 @@ public class TelephonyCellDataSource implements CellDataSource {
 
     private static final int MODEM_REFRESH_INTERVAL_SECONDS = 10;
     private final Map<Integer, Date> lastModemUpdateBySlot = new ConcurrentHashMap<>();
-    private final CellInfoCache cellInfoCache = new CellInfoCache();
+    private static final CellInfoCache cellInfoCache = new CellInfoCache();
 
     private final List<Preprocessor> preprocessors;
 
@@ -149,58 +149,9 @@ public class TelephonyCellDataSource implements CellDataSource {
             cellInfo.addAll(rawCells);
         }
 
-        // move this to preprocessors
-        List<CellInfo> additionalCells = null;
-        if (simSlotState != null) {
-            if (simSlotState.cellInfoListener != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                additionalCells = simSlotState.cellInfoListener.getLatestCellInfo();
-            } else if (simSlotState.legacyPhoneStateListener != null) {
-                additionalCells = simSlotState.legacyPhoneStateListener.getLatestCellInfo();
-            }
-        }
-
-        List<CellInfo> cachedCells = cellInfoCache.getValidCells(simId);
-        if (!cachedCells.isEmpty()) {
-            if (additionalCells == null) {
-                additionalCells = new ArrayList<>();
-            } else {
-                additionalCells = new ArrayList<>(additionalCells);
-            }
-
-            additionalCells.addAll(cachedCells);
-        }
-
-        if (additionalCells != null && !additionalCells.isEmpty()) {
-            if (cellInfo.isEmpty()) {
-                cellInfo.addAll(additionalCells);
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                Set<CellIdentity> existingIdentities = new HashSet<>();
-                for (CellInfo cell : cellInfo) {
-                    if (cell != null && cell.getCellIdentity() != null) {
-                        existingIdentities.add(cell.getCellIdentity());
-                    }
-                }
-
-                for (CellInfo additionalCell : additionalCells) {
-                    if (additionalCell != null) {
-                        CellIdentity identity = additionalCell.getCellIdentity();
-                        if (identity != null && !existingIdentities.contains(identity)) {
-                            cellInfo.add(additionalCell);
-                            existingIdentities.add(identity);
-                        }
-                    }
-                }
-            } else {
-                for (CellInfo additionalCell : additionalCells) {
-                    if (additionalCell != null && !cellInfo.contains(additionalCell)) {
-                        cellInfo.add(additionalCell);
-                    }
-                }
-            }
-        }
-
+        NetManagerCore netManagerCore = NetManagerCore.getInstance(context);
         for (Preprocessor preprocessor : preprocessors) {
-            cellInfo = preprocessor.process(cellInfo, simId);
+            cellInfo = preprocessor.process(cellInfo, simId, netManagerCore);
             DebugLogger.add("Successfully executed " + preprocessor.getClass().getSimpleName() + ".");
         }
 
@@ -949,6 +900,10 @@ public class TelephonyCellDataSource implements CellDataSource {
             return true;
         }
         return cellMccMnc.equals(simOperator);
+    }
+
+    public static CellInfoCache getCellInfoCache() {
+        return cellInfoCache;
     }
 
     public void shutdown() {

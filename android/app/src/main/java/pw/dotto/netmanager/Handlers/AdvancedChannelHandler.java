@@ -14,6 +14,14 @@ import pw.dotto.netmanager.Core.Shizuku.ShizukuClient;
 import pw.dotto.netmanager.MainActivity;
 import pw.dotto.netmanager.Utils.Permissions;
 
+/**
+ * NetManager's AdvancedChannelHandler is a channel handler for most advanced
+ * mode platform calls across NetManager.
+ * This class handles advanced mode cell data fetching from the Flutter side.
+ *
+ * @author DottoXD
+ * @version 0.2.3
+ */
 public class AdvancedChannelHandler implements MethodChannel.MethodCallHandler {
     private final WeakReference<MainActivity> activityReference;
 

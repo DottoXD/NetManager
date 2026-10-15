@@ -12,6 +12,14 @@ import pw.dotto.netmanager.Core.Diag.NetManagerDiagClient;
 import pw.dotto.netmanager.MainActivity;
 import pw.dotto.netmanager.Utils.DebugLogger;
 
+/**
+ * NetManager's DiagRuntime is an advanced mode, runtime component which fetches
+ * various pieces of modem data from NetManagerDiag, along with handling its
+ * lifetime and its presence in the app's release bundle.
+ *
+ * @author DottoXD
+ * @version 0.2.3
+ */
 public class DiagRuntime {
     private static final String DIAG_PROC_PATTERN = "[l]ibNetManagerDiag\\.so serve";
     private final WeakReference<MainActivity> activityReference;

@@ -115,6 +115,8 @@ class _HomeBodyState extends State<HomeBody> {
   final Map<String, ({int cid, String description, bool strongMatch})?>
   _guessCache = {};
 
+  static SIMData? _parseSimDataIsolate(String json) => parseSimData(json);
+
   @override
   void initState() {
     super.initState();
@@ -186,7 +188,8 @@ class _HomeBodyState extends State<HomeBody> {
       SIMData? simData;
 
       try {
-        simData = await Isolate.run(() => parseSimData(jsonStr));
+        final String json = jsonStr;
+        simData = await Isolate.run(() => _parseSimDataIsolate(json));
       } catch (e) {
         if (!mounted) return;
 

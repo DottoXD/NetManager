@@ -8,6 +8,15 @@ import io.flutter.plugin.common.EventChannel;
 import pw.dotto.netmanager.Core.Diag.NetManagerDiagClient;
 import pw.dotto.netmanager.MainActivity;
 
+/**
+ * NetManager's DiagEventStreamHandler is an event channel handler for
+ * diag-provided data in NetManager.
+ * This class handles all diag-provided data streams targeted to the Flutter
+ * side.
+ *
+ * @author DottoXD
+ * @version 0.2.3
+ */
 public class DiagEventStreamHandler implements EventChannel.StreamHandler {
     private final WeakReference<MainActivity> activityReference;
     private NetManagerDiagClient.Listener listener;

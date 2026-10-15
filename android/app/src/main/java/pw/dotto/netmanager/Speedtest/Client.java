@@ -20,7 +20,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +58,7 @@ import pw.dotto.netmanager.Utils.DeviceData;
  * test software solution.
  *
  * @author DottoXD
- * @version 0.2.2
+ * @version 0.2.3
  */
 public class Client {
     private String USER_AGENT = "NetManager-SpeedTest/Unknown";

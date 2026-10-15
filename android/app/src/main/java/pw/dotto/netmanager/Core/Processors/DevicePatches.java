@@ -9,13 +9,14 @@ import pw.dotto.netmanager.Core.Processors.Postprocessors.PixelDataPostprocessor
 import pw.dotto.netmanager.Core.Processors.Postprocessors.QualcommActiveCellsPostprocessor;
 import pw.dotto.netmanager.Core.Processors.Postprocessors.SamsungNrNsaPostprocessor;
 import pw.dotto.netmanager.Core.Processors.Postprocessors.SignalPostprocessor;
+import pw.dotto.netmanager.Core.Processors.Preprocessors.ExtraCellsPreprocessor;
 
 /**
  * NetManager's DevicePatches class is a core component which registers
  * preprocessors and postprocessors to the DevicePatchRegistry.
  *
  * @author DottoXD
- * @version 0.2.0
+ * @version 0.2.3
  */
 public class DevicePatches {
     private static volatile boolean registered = false;
@@ -31,12 +32,14 @@ public class DevicePatches {
         DevicePatchRegistry.registerPostprocessor("samsung", "qcom", SamsungNrNsaPostprocessor::new);
         DevicePatchRegistry.registerPostprocessor("*", "qcom", QualcommActiveCellsPostprocessor::new);
 
-        DevicePatchRegistry.registerPostprocessor("*", "*", DuplicateCellsPostprocessor::new);
         DevicePatchRegistry.registerPostprocessor("*", "*", InvalidDataPostprocessor::new);
         DevicePatchRegistry.registerPostprocessor("*", "*", LikelyCellsPostprocessor::new);
         DevicePatchRegistry.registerPostprocessor("*", "*", ImpossibleCellsPostprocessor::new);
         DevicePatchRegistry.registerPostprocessor("*", "*", BandwidthsPostprocessor::new);
         DevicePatchRegistry.registerPostprocessor("*", "*", SignalPostprocessor::new);
+        DevicePatchRegistry.registerPostprocessor("*", "*", DuplicateCellsPostprocessor::new);
+
+        DevicePatchRegistry.registerPreprocessor("*", "*", ExtraCellsPreprocessor::new);
 
         registered = true;
     }

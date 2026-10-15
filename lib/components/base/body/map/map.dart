@@ -132,6 +132,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
   bool get _metricSystem => widget.metricSystemNotifier.value;
   int get _updateInterval => widget.updateIntervalNotifier.value;
 
+  static SIMData? _parseSimDataIsolate(String json) => parseSimData(json);
+
   @override
   void initState() {
     super.initState();
@@ -484,7 +486,8 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
       final SIMData? simData;
 
       try {
-        simData = await Isolate.run(() => parseSimData(jsonStr));
+        final String json = jsonStr;
+        simData = await Isolate.run(() => _parseSimDataIsolate(json));
       } catch (e) {
         return;
       }

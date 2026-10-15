@@ -11,6 +11,15 @@ import io.flutter.plugin.common.MethodChannel;
 import pw.dotto.netmanager.Core.Diag.NetManagerDiagClient;
 import pw.dotto.netmanager.MainActivity;
 
+/**
+ * NetManager's DiagChannelHandler is a channel handler for most diag platform
+ * calls across NetManager.
+ * This class handles various things about NetManagerDiag, such as feature
+ * requests, connections and the daemon's status.
+ *
+ * @author DottoXD
+ * @version 0.2.3
+ */
 public class DiagChannelHandler implements MethodChannel.MethodCallHandler {
     private final WeakReference<MainActivity> activityReference;
 

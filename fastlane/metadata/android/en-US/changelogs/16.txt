@@ -4,4 +4,5 @@
 - Added client-side support for NetManagerDiag advanced features (currently inaccessible in public builds).
 - Various runtime dependencies have been updated.
 - The privacy policy has been updated.
+- Neighboring cells are now ordered by radio technology.
 - Various bugs/errors have been fixed.

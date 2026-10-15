@@ -4,6 +4,8 @@ import android.telephony.CellInfo;
 
 import java.util.List;
 
+import pw.dotto.netmanager.Core.NetManagerCore;
+
 /**
  * NetManager's Preprocessor interface is the template for a cell data
  * preprocessor.
@@ -11,8 +13,8 @@ import java.util.List;
  * mobile cells are fully processed.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.2.3
  */
 public interface Preprocessor {
-    List<CellInfo> process(List<CellInfo> rawCellInfo, int simId);
+    List<CellInfo> process(List<CellInfo> rawCellInfo, int simId, NetManagerCore netManagerCore);
 }

@@ -38,6 +38,15 @@ import pw.dotto.netmanager.Utils.Permissions;
 import pw.dotto.netmanager.Utils.PowerUtils;
 import rikka.shizuku.Shizuku;
 
+/**
+ * NetManager's MainChannelHandler is the main handler for most native platform
+ * calls across NetManager.
+ * This class handles permission utilities, speed tests, cell data fetching &
+ * more.
+ *
+ * @author DottoXD
+ * @version 0.2.3
+ */
 public class MainChannelHandler implements MethodChannel.MethodCallHandler {
     private final WeakReference<MainActivity> activityReference;
 

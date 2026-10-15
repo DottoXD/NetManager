@@ -31,7 +31,10 @@ import java.util.List;
 import java.lang.ref.WeakReference;
 
 /**
- * //todo
+ * NetManager's MainActivity is the main core entrypoint for the Android
+ * platform.
+ * This class handles platform channels registrations, PIP events, lifecycle
+ * events and coordination, along with managing various handlers.
  *
  * @author DottoXD
  * @version 0.2.3

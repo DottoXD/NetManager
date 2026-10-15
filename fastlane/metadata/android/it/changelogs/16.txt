@@ -4,4 +4,5 @@
 - Aggiunto il supporto client side alle funzionalità avanzate di NetManagerDiag (attualmente inaccessibile nelle build pubbliche).
 - Varie dipendenze sono state aggiornate.
 - La privacy policy è stata aggiornata.
+- Le celle vicine ora sono ordinate per tecnologia.
 - Svariati bug/errori sono stati risolti.
