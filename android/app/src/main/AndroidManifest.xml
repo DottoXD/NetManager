@@ -73,37 +73,37 @@
             android:enabled="true"
             android:exported="true"
             android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
-        <receiver android:name=".Core.Notifications.Receiver"
+        <receiver android:name=".core.notifications.Receiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="CLOSE_NOTIFICATION" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".Recording.Receiver"
+        <receiver android:name=".recording.Receiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="CLOSE_RECORDING_NOTIFICATION" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".Core.Startup.BootReceiver" android:exported="true" android:enabled="true">
+        <receiver android:name=".core.startup.BootReceiver" android:exported="true" android:enabled="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 
-        <service android:name=".Core.Startup.DelayedServiceStarter" android:foregroundServiceType="specialUse" android:exported="false" />
-        <service android:name=".Core.Notifications.Service" android:foregroundServiceType="phoneCall" android:exported="false" />
-        <service android:name=".Recording.Service" android:foregroundServiceType="location" android:exported="false" />
-        <service android:name=".Speedtest.Scheduler" android:foregroundServiceType="dataSync" android:exported="false" />
+        <service android:name=".core.startup.DelayedServiceStarter" android:foregroundServiceType="specialUse" android:exported="false" />
+        <service android:name=".core.notifications.Service" android:foregroundServiceType="phoneCall" android:exported="false" />
+        <service android:name=".recording.Service" android:foregroundServiceType="location" android:exported="false" />
+        <service android:name=".speedtest.Scheduler" android:foregroundServiceType="dataSync" android:exported="false" />
 
-        <receiver android:name=".Widgets.SIMWidgetProvider" android:exported="true">
+        <receiver android:name=".widgets.SIMWidgetProvider" android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="pw.dotto.netmanager.ACTION_REFRESH_DUALSIM" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_dualsim_info" />
         </receiver>
-        <receiver android:name=".Widgets.EventWidgetProvider" android:exported="true">
+        <receiver android:name=".widgets.EventWidgetProvider" android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="pw.dotto.netmanager.ACTION_REFRESH_TICKER" />
@@ -111,7 +111,7 @@
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_events_info" />
         </receiver>
 
-        <service android:name=".Widgets.EventWidgetService" android:permission="android.permission.BIND_REMOTEVIEWS" />
+        <service android:name=".widgets.EventWidgetService" android:permission="android.permission.BIND_REMOTEVIEWS" />
 
         <meta-data
             android:name="flutterEmbedding"

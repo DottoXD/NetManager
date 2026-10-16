@@ -11,21 +11,21 @@ import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodChannel;
-import pw.dotto.netmanager.Core.Manager;
-import pw.dotto.netmanager.Core.Mobile.SimReceiverManager;
-import pw.dotto.netmanager.Core.Processors.DevicePatches;
-import pw.dotto.netmanager.Fetchers.Location;
-import pw.dotto.netmanager.Fetchers.Sensors;
-import pw.dotto.netmanager.Handlers.AdvancedChannelHandler;
-import pw.dotto.netmanager.Handlers.DiagChannelHandler;
-import pw.dotto.netmanager.Handlers.DiagEventStreamHandler;
-import pw.dotto.netmanager.Handlers.DiagRuntime;
-import pw.dotto.netmanager.Handlers.ImsRuntime;
-import pw.dotto.netmanager.Handlers.MainChannelHandler;
-import pw.dotto.netmanager.Speedtest.Client;
-import pw.dotto.netmanager.Utils.DeviceData;
-import pw.dotto.netmanager.Utils.Permissions;
-import pw.dotto.netmanager.WearOS.WearHandler;
+import pw.dotto.netmanager.core.Manager;
+import pw.dotto.netmanager.core.mobile.SimReceiverManager;
+import pw.dotto.netmanager.core.processors.DevicePatches;
+import pw.dotto.netmanager.fetchers.Location;
+import pw.dotto.netmanager.fetchers.Sensors;
+import pw.dotto.netmanager.handlers.AdvancedChannelHandler;
+import pw.dotto.netmanager.handlers.DiagChannelHandler;
+import pw.dotto.netmanager.handlers.DiagEventStreamHandler;
+import pw.dotto.netmanager.handlers.DiagRuntime;
+import pw.dotto.netmanager.handlers.ImsRuntime;
+import pw.dotto.netmanager.handlers.MainChannelHandler;
+import pw.dotto.netmanager.speedtest.Client;
+import pw.dotto.netmanager.utils.DeviceData;
+import pw.dotto.netmanager.utils.Permissions;
+import pw.dotto.netmanager.wearos.WearHandler;
 
 import java.util.List;
 import java.lang.ref.WeakReference;
@@ -239,7 +239,7 @@ public class MainActivity extends FlutterActivity {
         if (sensors != null)
             sensors.destroy();
 
-        if (pw.dotto.netmanager.Recording.Service.getInstance() == null) {
+        if (pw.dotto.netmanager.recording.Service.getInstance() == null) {
             Location locationFetcher = Location.getInstance(this);
             if (locationFetcher != null)
                 locationFetcher.dispose();

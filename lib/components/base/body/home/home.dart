@@ -1,5 +1,4 @@
-import 'dart:isolate';
-
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/base/body/home/widgets/cell_section.dart';
@@ -115,8 +114,6 @@ class _HomeBodyState extends State<HomeBody> {
   final Map<String, ({int cid, String description, bool strongMatch})?>
   _guessCache = {};
 
-  static SIMData? _parseSimDataIsolate(String json) => parseSimData(json);
-
   @override
   void initState() {
     super.initState();
@@ -188,8 +185,7 @@ class _HomeBodyState extends State<HomeBody> {
       SIMData? simData;
 
       try {
-        final String json = jsonStr;
-        simData = await Isolate.run(() => _parseSimDataIsolate(json));
+        simData = await compute<String, SIMData?>(parseSimData, jsonStr);
       } catch (e) {
         if (!mounted) return;
 

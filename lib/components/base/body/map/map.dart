@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
@@ -131,8 +130,6 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
 
   bool get _metricSystem => widget.metricSystemNotifier.value;
   int get _updateInterval => widget.updateIntervalNotifier.value;
-
-  static SIMData? _parseSimDataIsolate(String json) => parseSimData(json);
 
   @override
   void initState() {
@@ -486,8 +483,7 @@ class _MapBodyState extends State<MapBody> with SingleTickerProviderStateMixin {
       final SIMData? simData;
 
       try {
-        final String json = jsonStr;
-        simData = await Isolate.run(() => _parseSimDataIsolate(json));
+        simData = await compute<String, SIMData?>(parseSimData, jsonStr);
       } catch (e) {
         return;
       }
