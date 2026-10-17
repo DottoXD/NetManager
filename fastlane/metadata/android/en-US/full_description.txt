@@ -10,7 +10,7 @@ Tracks real-time network changes, such as cell handoffs and frequency band adjus
 Optional background service records network events and trip data even when the app is closed, keeping you updated via an active status notification.
 Access hidden Android field testing menus (such as Samsung ServiceMode, MTK Engineer Mode, MIUI BandMode, and Huawei ProjectMenu) directly without dialer codes.
 Import speed tests from other apps (might require an account/connection to the respective app's services).
-Easily access your SIM's IMS info with NetManager's advanced mode through Shizuku.
+Easily read your SIM's carrier config, IMS info & logs with NetManager's advanced mode through Shizuku.
 
 <b>Compatibility</b>
 NetManager currently supports Android 7.0+ (API 24+).

@@ -39,6 +39,8 @@ Full dual SIM support is also included, allowing seamless, concurrent data monit
 
 NetManager also includes various advanced data preprocessing/postprocessing algorithms that filter out bad data exposed by Android's Telephony API, gather extra data from additional APIs and merge all pieces of information from all data sources into a single SIM data object.
 
+The app also allows the user to read various pieces of advanced info such as IMS logs, carrier configuration properties and their SIM's IMS status with [Shizuku](https://github.com/rikkaapps/shizuku).
+
 All major data sources, such as the event log or the map trip logs, are fully exportable in text files.
 
 ## Supported platforms
