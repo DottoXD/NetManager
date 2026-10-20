@@ -530,5 +530,23 @@
       }
     }
   },
-  "advancedModeLteWaiting": "Waiting for data..."
+  "advancedModeLteWaiting": "Waiting for data...",
+  "advancedModeDataBearers": "Data bearers",
+  "advancedModeBearersWaiting": "No bearers announced yet. Toggle mobile data or airplane mode to see them.",
+  "advancedModeBearerDefault": "Default bearer {id}",
+  "@advancedModeBearerDefault": {
+    "placeholders": { 
+      "id": { 
+        "type": "int" 
+      } 
+    }
+  },
+  "advancedModeBearerDedicated": "Dedicated bearer {id}",
+  "@advancedModeBearerDedicated": {
+    "placeholders": { 
+      "id": { 
+        "type": "int" 
+      } 
+    }
+  }
 }

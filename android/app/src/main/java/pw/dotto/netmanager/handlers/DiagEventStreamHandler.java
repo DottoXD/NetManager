@@ -52,6 +52,11 @@ public class DiagEventStreamHandler implements EventChannel.StreamHandler {
             }
 
             @Override
+            public void onLteBearer(NetManagerDiagClient.LteBearerEvent event) {
+                sendEvent(listenerActive, events, "lteBearer", event);
+            }
+
+            @Override
             public void onNrMeasurements(NetManagerDiagClient.NrMeasurementsEvent event) {
                 sendEvent(listenerActive, events, "nrMeasurements", event);
             }

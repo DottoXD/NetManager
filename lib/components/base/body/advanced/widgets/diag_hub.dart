@@ -42,7 +42,7 @@ class DiagHub {
     "pw.dotto.netmanager/diag/events",
   );
 
-  static const List<String> features = ["lte_serving_cell"];
+  static const List<String> features = ["lte_serving_cell", "lte_bearers"];
   static const int _maxLogEntries = 500;
   static const Duration _flushDelay = Duration(milliseconds: 150);
 
@@ -58,6 +58,8 @@ class DiagHub {
 
   final Map<int?, Map<String, dynamic>> _servingMeasBySlot = {};
   final Map<int?, Map<String, dynamic>> _cellInfoBySlot = {};
+
+  final Map<int?, Map<int, Map<String, dynamic>>> _bearersBySlot = {};
 
   int _refs = 0;
   StreamSubscription<dynamic>? _sub;
@@ -77,6 +79,13 @@ class DiagHub {
 
   Map<String, dynamic>? cellInfoFor(int slot) =>
       _cellInfoBySlot[slot] ?? _cellInfoBySlot[null];
+
+  List<Map<String, dynamic>> bearersFor(int slot) {
+    final merged = {...?_bearersBySlot[null], ...?_bearersBySlot[slot]};
+    final ids = merged.keys.toList()..sort();
+
+    return [for (final id in ids) merged[id]!];
+  }
 
   void acquire() {
     if (_refs++ == 0) _start();
@@ -149,6 +158,7 @@ class DiagHub {
     } on PlatformException catch (_) {}
     _servingMeasBySlot.clear();
     _cellInfoBySlot.clear();
+    _bearersBySlot.clear();
   }
 
   Future<void> reconnect() async {
@@ -204,6 +214,22 @@ class DiagHub {
         );
         _markDirty(data: true);
         break;
+      case "lteBearer":
+        connState.value = DiagConnState.connected;
+        final b = data as Map<String, dynamic>?;
+        if (b != null) {
+          final id = b["eps_bearer_id"] as int;
+          (_bearersBySlot[b["slot"] as int?] ??= {})[id] = b;
+          pushLog(
+            "BEARER",
+            "${b["dedicated"] == true ? "dedicated" : "default"} id=$id "
+                "qci=${b["qci"] ?? "-"} apn=${b["apn"] ?? "-"} "
+                "ambr=${fmtRate(b["apn_ambr_dl_kbps"])}/${fmtRate(b["apn_ambr_ul_kbps"])}",
+            slot: b["slot"] as int?,
+          );
+          _markDirty(data: true);
+        }
+        break;
       case "error":
         final err = data as String?;
         lastError.value = err;
@@ -217,6 +243,7 @@ class DiagHub {
         connState.value = DiagConnState.disconnected;
         _servingMeasBySlot.clear();
         _cellInfoBySlot.clear();
+        _bearersBySlot.clear();
         pushLog("DISCONNECT", "", code: DiagLogCode.disconnected);
         _markDirty(data: true);
         break;
@@ -244,6 +271,16 @@ class DiagHub {
     }
 
     _markDirty(logs: true);
+  }
+
+  static String fmtRate(dynamic kbps) {
+    if (kbps is! num) return "-";
+    if (kbps >= 1000000) return "${(kbps / 1000000).toStringAsFixed(2)} Gbps";
+    if (kbps >= 1000) {
+      return "${(kbps / 1000).toStringAsFixed(kbps % 1000 == 0 ? 0 : 1)} Mbps";
+    }
+
+    return "$kbps Kbps";
   }
 
   static String fmtNum(dynamic n) {

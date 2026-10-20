@@ -84,6 +84,8 @@ public class NetManagerDiagClient {
 
         void onNrMeasurements(NrMeasurementsEvent event);
 
+        void onLteBearer(LteBearerEvent event);
+
         void onError(String message);
 
         void onDisconnected();
@@ -122,6 +124,18 @@ public class NetManagerDiagClient {
         public Integer serving_ssb;
         public List<Double> serving_rsrp_dbm;
         public int num_cells;
+    }
+
+    public static class LteBearerEvent {
+        public String event;
+        public Integer slot;
+        public int eps_bearer_id;
+        public boolean dedicated;
+        public Integer qci;
+        public String apn;
+        public String pdn_type;
+        public Long apn_ambr_dl_kbps;
+        public Long apn_ambr_ul_kbps;
     }
 
     public static class NrMeasurementsEvent {
@@ -409,6 +423,10 @@ public class NetManagerDiagClient {
             case "lte_cell_info" -> {
                 LteCellInfoEvent ev = gson.fromJson(obj, LteCellInfoEvent.class);
                 notifyListeners(l -> l.onLteCellInfo(ev));
+            }
+            case "lte_bearer" -> {
+                LteBearerEvent ev = gson.fromJson(obj, LteBearerEvent.class);
+                notifyListeners(l -> l.onLteBearer(ev));
             }
             case "nr_measurements" -> {
                 NrMeasurementsEvent ev = gson.fromJson(obj, NrMeasurementsEvent.class);

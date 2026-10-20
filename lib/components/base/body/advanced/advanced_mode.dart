@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:netmanager/components/base/body/advanced/widgets/advanced_subpage.dart';
+import 'package:netmanager/components/base/body/advanced/widgets/bearers_page.dart';
 import 'package:netmanager/components/base/body/advanced/widgets/carrier_config_page.dart';
 import 'package:netmanager/components/base/body/advanced/widgets/diag_hub.dart';
 import 'package:netmanager/components/base/body/advanced/widgets/diag_page.dart';
@@ -15,7 +16,7 @@ import 'package:netmanager/components/base/body/advanced/widgets/lte_serving_cel
 import 'package:netmanager/components/base/body/advanced/widgets/page_dots.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 
-enum _PageType { carrier, imsStatus, imsLogs, lteServing, diagUtils }
+enum _PageType { carrier, imsStatus, imsLogs, lteServing, bearers, diagUtils }
 
 enum _ViewState { loading, error, empty, content }
 
@@ -122,6 +123,12 @@ class _AdvancedModeBodyState extends State<AdvancedModeBody>
       icon: Icons.cell_tower_outlined,
       builder: (_) =>
           LteServingCellPage(simSlotNotifier: widget.currentSimSlotNotifier),
+    ),
+    _PageType.bearers: AdvancedSubpage(
+      title: (appLocalizations) => appLocalizations.advancedModeDataBearers,
+      icon: Icons.swap_vert_outlined,
+      builder: (_) =>
+          BearersPage(simSlotNotifier: widget.currentSimSlotNotifier),
     ),
     _PageType.diagUtils: AdvancedSubpage(
       title: (appLocalizations) => appLocalizations.advancedModeDiagUtils,
@@ -375,6 +382,7 @@ class _AdvancedModeBodyState extends State<AdvancedModeBody>
 
     if (_diagOk) {
       pageTypes.add(_PageType.lteServing);
+      pageTypes.add(_PageType.bearers);
       pageTypes.add(_PageType.diagUtils);
     }
 

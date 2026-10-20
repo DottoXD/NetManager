@@ -97,6 +97,7 @@ public class Client {
 
     private final AtomicBoolean errorReported = new AtomicBoolean(false);
     private final AtomicBoolean isCancelled = new AtomicBoolean(false);
+    private final AtomicBoolean shutdownStarted = new AtomicBoolean(false);
 
     public void runSpeedTest(Context context, String pingUrl, String downloadUrl, String uploadUrl,
             MethodChannel channel) {
@@ -755,23 +756,37 @@ public class Client {
     }
 
     public void shutdown() {
-        if (httpClient != null) {
-            httpClient.dispatcher().cancelAll();
-            httpClient.connectionPool().evictAll();
+        if (!shutdownStarted.compareAndSet(false, true)) {
+            return;
         }
 
-        executor.shutdownNow();
-        watchdogExecutor.shutdownNow();
-        dnsExecutor.shutdownNow();
+        Runnable cleanup = () -> {
+            OkHttpClient client = httpClient;
 
-        new Thread(() -> {
-            try {
-                executor.awaitTermination(2, TimeUnit.SECONDS);
-                watchdogExecutor.awaitTermination(2, TimeUnit.SECONDS);
-                dnsExecutor.awaitTermination(2, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+            if (client != null) {
+                client.dispatcher().cancelAll();
+                client.connectionPool().evictAll();
             }
-        }).start();
+
+            executor.shutdownNow();
+            watchdogExecutor.shutdownNow();
+            dnsExecutor.shutdownNow();
+
+            new Thread(() -> {
+                try {
+                    executor.awaitTermination(2, TimeUnit.SECONDS);
+                    watchdogExecutor.awaitTermination(2, TimeUnit.SECONDS);
+                    dnsExecutor.awaitTermination(2, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }, "SpeedTest-Waiting").start();
+        };
+
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            new Thread(cleanup, "SpeedTest-Cleanup").start();
+        } else {
+            cleanup.run();
+        }
     }
 }

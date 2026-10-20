@@ -14,17 +14,26 @@ Built from scratch with Flutter, NetManager respects Material guidelines for use
 [![Built with Flutter](./.github/assets/flutter.svg)](https://flutter.dev)
 
 ## Downloads and builds
-Official stable and pre-release builds are available in the [Releases](https://github.com/DottoXD/NetManager/releases) tab on GitHub.
+[<img src="./.github/assets/get_it_on_github.png" alt="Get it on GitHub" height="80">](https://github.com/DottoXD/NetManager/releases)[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="80">](https://f-droid.org/packages/pw.dotto.netmanager.foss/)
+
+Official stable and pre-release builds are available in the [Releases](https://github.com/DottoXD/NetManager/releases) tab on GitHub & on [F-Droid](https://f-droid.org/packages/pw.dotto.netmanager.foss) with a few days of delay.
 
 Development builds are available at [GitHub Actions](https://github.com/DottoXD/NetManager/actions).
+
 NetManager will be released on other platforms & stores soon.
+
+All official builds are signed with the following certificate fingerprints:
+```
+SHA1: B4:A2:B8:97:C5:4B:45:4D:6C:CA:22:AC:8A:1C:AE:2C:63:51:4D:FE
+SHA256: 7A:EF:71:6F:2B:D8:F1:E1:B9:93:5C:E6:4D:59:66:B5:D3:06:0F:45:62:A8:89:CE:7A:DF:D8:AA:B1:23:50:F6
+```
 
 ## Features
 NetManager cleanly displays key network metrics across all cellular technologies up to 5G NR. 
 
-The app allows users to import custom cell databases (`.ntm` and `.clf` v3 formats) to enrich the information displayed across various screens.
+The app allows users to import custom cell databases (`.ntm` and `.clf` v3 formats) to enrich the information displayed across various screens. Users can also edit those imported cells at their preference (e.g. correcting a cell's position if it's incorrect in the database).
 
-A sleek map page powered by [OpenStreetMap](https://www.openstreetmap.org/) displays the user's location and maps nearby active cell towers from the current mobile network, if a database is imported; through this interface, users can also record radio signal strength, network usability and network info during trips (drive tests) and replay them later both inside the app or outside (e.g on Google Earth with the built in `.kml`/`.csv` conversion feature!).
+A sleek map page powered by [OpenStreetMap](https://www.openstreetmap.org/) displays the user's location and maps nearby active cell towers from the current mobile network, if a database is imported; through this interface, users can also record radio signal strength, network usability & diagnostics and network info during trips (drive tests) and replay them later both inside the app or outside (e.g on Google Earth with the built in `.kml`/`.csv` conversion feature!).
 The map backend is fully customisable, allowing users to switch if preferred.
 
 Additionally, NetManager includes a built-in network speed test utility with custom backend servers ([LibreSpeed](https://github.com/librespeed/speedtest), OpenSpeedTest and custom backends are supported). 
@@ -37,7 +46,7 @@ NetManager also allows you to open the main Android field testing menus (Android
 
 Full dual SIM support is also included, allowing seamless, concurrent data monitoring for multiple SIM cards on the same device.
 
-NetManager also includes various advanced data preprocessing/postprocessing algorithms that filter out bad data exposed by Android's Telephony API, gather extra data from additional APIs and merge all pieces of information from all data sources into a single SIM data object.
+NetManager also includes various advanced data preprocessing/postprocessing algorithms that filter out bad data exposed by Android's Telephony API, gather extra data from additional APIs and merge all pieces of information from all data sources into a single SIM data object. This allows the user to see nearly-perfect cell data on most devices, even the ones with the most inconsistent data.
 
 The app also allows the user to read various pieces of advanced info such as IMS logs, carrier configuration properties and their SIM's IMS status with [Shizuku](https://github.com/rikkaapps/shizuku).
 
@@ -55,7 +64,7 @@ Upcoming releases prior to version 1.0.0 plan to introduce support for Android a
 ## Data accuracy
 NetManager provides accurate and up-to-date data on a wide range of devices by filtering out invalid cell info returned by Android's Telephony service.
 
-Additional advanced workarounds are applied on certain devices to gather extra cell data or to remove invalid info seamlessly.
+Lots of additional advanced workarounds are applied on certain devices to gather extra cell data or to remove invalid info seamlessly.
 
 ## Analytics
 NetManager might collect anonymous analytic data (opt-in) such as crash dumps and error logs.
@@ -84,6 +93,7 @@ Comparison based on publicly documented features as of August 2026.
 | Event/cell logging | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
 | Shizuku (shell) support for extra data/features | ✔️ | ❌ | ❌ | ❌ | ❌ |
 | Advanced diag (root) data | - (Planned) | ❌ | ✔️ | ❌ | ❌ |
+| Band locking | - (Planned) | ❌ | ✔️ | ❌ | ❌ |
 | Open source | ✔️ | ❗ (Only NetMonster Core) | ❌ | ❌ | ❌ |
 | Fully free | ✔️ | ❗ (Ads) | ❌ | ✔️ | ❗ (Ads) |
 

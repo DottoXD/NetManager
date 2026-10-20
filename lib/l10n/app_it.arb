@@ -530,5 +530,23 @@
       }
     }
   },
-  "advancedModeLteWaiting": "In attesa di dati..."
+  "advancedModeLteWaiting": "In attesa di dati...",
+  "advancedModeDataBearers": "Bearer dati",
+  "advancedModeBearersWaiting": "Nessun bearer annunciato. Attiva e disattiva i dati mobili o la modalità aereo per visualizzarli.",
+  "advancedModeBearerDefault": "Bearer predefinito {id}",
+  "@advancedModeBearerDefault": {
+    "placeholders": { 
+      "id": { 
+        "type": "int" 
+      } 
+    }
+  },
+  "advancedModeBearerDedicated": "Bearer dedicato {id}",
+  "@advancedModeBearerDedicated": {
+    "placeholders": { 
+      "id": { 
+        "type": "int" 
+      } 
+    }
+  }
 }
