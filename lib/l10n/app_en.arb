@@ -259,6 +259,8 @@
   "settingsUpdatesDescription": "Let NetManager automatically look for updates when the app is opened.",
   "settingsAdvancedModeTitle": "Advanced mode",
   "settingsAdvancedModeDescription": "Advanced mode allows NetManager to merge Telephony cell data with advanced cell data sources, such as Shizuku and modem diag tools.",
+  "settingsToggleAdvancedModeAutomaticallyTitle": "Automatically toggle advanced mode",
+  "settingsToggleAdvancedModeAutomaticallyDescription": "Automatically toggles the advanced mode screen as soon as the app is opened.",
   "settingsPositionTitle": "Position precision",
   "settingsPositionDescription": "The precision of your position determines the precision of the map tracking service.",
   "settingsLikelyCellsTitle": "Show likely active cells (Experimental)",

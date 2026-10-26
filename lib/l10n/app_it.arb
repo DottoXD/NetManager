@@ -259,6 +259,8 @@
   "settingsUpdatesDescription": "Lascia che NetManager controlli automaticamente la disponibilità di aggiornamenti quando l'app viene avviata.",
   "settingsAdvancedModeTitle": "Modalità avanzata",
   "settingsAdvancedModeDescription": "La modalità avanzata consente a NetManager di unire i dati di Telephony a quelli di fonti di dati più avanzate, come Shizuku e gli strumenti di diag del modem.",
+  "settingsToggleAdvancedModeAutomaticallyTitle": "Attiva automaticamente la modailtà avanzata",
+  "settingsToggleAdvancedModeAutomaticallyDescription": "Attiva automaticamente la modalità avanzata appena l'app viene aperta.",
   "settingsPositionTitle": "Precisione della posizione",
   "settingsPositionDescription": "La precisione della posizione determina la precisione del servizio di registrazione nella mappa.",
   "settingsLikelyCellsTitle": "Mostra le celle probabilmente attive (Sperimentale)",

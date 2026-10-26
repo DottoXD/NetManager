@@ -26,6 +26,7 @@ class TopBar extends StatefulWidget implements PreferredSizeWidget {
     this.isPipActiveNotifier,
     this.advancedModeNotifier,
     this.advancedModeToggleNotifier,
+    this.toggleAdvancedModeAutomaticallyNotifier,
     this.onEnterPipRequested, {
     super.key,
   });
@@ -39,6 +40,7 @@ class TopBar extends StatefulWidget implements PreferredSizeWidget {
   final ValueNotifier<bool> isPipActiveNotifier;
   final ValueNotifier<bool> advancedModeNotifier;
   final ValueNotifier<bool> advancedModeToggleNotifier;
+  final ValueNotifier<bool> toggleAdvancedModeAutomaticallyNotifier;
 
   final VoidCallback? onEnterPipRequested;
 
@@ -59,6 +61,7 @@ class _TopBarState extends State<TopBar> {
   late ValueNotifier<bool> isPipActiveNotifier;
   late ValueNotifier<bool> advancedModeNotifier;
   late ValueNotifier<bool> advancedModeToggleNotifier;
+  late ValueNotifier<bool> toggleAdvancedModeAutomaticallyNotifier;
 
   late Timer _timer;
   String _carrier = "Unknown";
@@ -80,12 +83,18 @@ class _TopBarState extends State<TopBar> {
     isPipActiveNotifier = widget.isPipActiveNotifier;
     advancedModeNotifier = widget.advancedModeNotifier;
     advancedModeToggleNotifier = widget.advancedModeToggleNotifier;
+    toggleAdvancedModeAutomaticallyNotifier =
+        widget.toggleAdvancedModeAutomaticallyNotifier;
 
     platformSignalNotifier.addListener(_restartTimer);
     speedtestRunningNotifier.addListener(_onSpeedtestRunningChanged);
 
     _startTimer();
     _configure();
+
+    if (toggleAdvancedModeAutomaticallyNotifier.value) {
+      _toggleAdvancedMode(AppLocalizations.of(context)!);
+    }
   }
 
   @override

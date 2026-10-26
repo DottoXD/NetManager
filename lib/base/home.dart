@@ -100,6 +100,7 @@ class _HomeState extends State<Home> {
   final ValueNotifier<VoidCallback?> _advancedUpdateNotifier = ValueNotifier(
     null,
   );
+  final _toggleAdvancedModeAutomaticallyNotifier = ValueNotifier(false);
 
   @override
   void initState() {
@@ -227,6 +228,7 @@ class _HomeState extends State<Home> {
 
     _advancedModeToggleNotifier.dispose();
     _advancedUpdateNotifier.dispose();
+    _toggleAdvancedModeAutomaticallyNotifier.dispose();
 
     super.dispose();
   }
@@ -277,6 +279,7 @@ class _HomeState extends State<Home> {
           _isPipActiveNotifier,
           _advancedModeNotifier,
           _advancedModeToggleNotifier,
+          _toggleAdvancedModeAutomaticallyNotifier,
           () => updatePage(0),
         ),
         bottomNavigationBar: NavBar(
@@ -388,6 +391,7 @@ class _HomeState extends State<Home> {
               _countLikelyAsActiveNotifier,
               _advancedModeNotifier,
               _advancedModeToggleNotifier,
+              _toggleAdvancedModeAutomaticallyNotifier,
             ),
           ],
         ),

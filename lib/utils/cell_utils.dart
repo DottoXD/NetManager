@@ -158,7 +158,7 @@ String createCellContent(BuildContext context, CellData cell) {
   }
 
   cellContent += ".\n";
-  cellContent.replaceAll("\n.\n", "\n");
+  cellContent = cellContent.replaceAll("\n.\n", "\n");
 
   if (isValidInt(cell.processedSignal) &&
       isValidString(cell.processedSignalString)) {

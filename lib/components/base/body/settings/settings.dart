@@ -47,7 +47,8 @@ class SettingsBody extends StatefulWidget {
     this.likelyCellsNotifier,
     this.countLikelyAsActiveNotifier,
     this.advancedModeNotifier,
-    this.advancedModeToggleNotifier, {
+    this.advancedModeToggleNotifier,
+    this.toggleAdvancedModeAutomaticallyNotifier, {
     super.key,
   });
 
@@ -81,6 +82,7 @@ class SettingsBody extends StatefulWidget {
   final ValueNotifier<bool> countLikelyAsActiveNotifier;
   final ValueNotifier<bool> advancedModeNotifier;
   final ValueNotifier<bool> advancedModeToggleNotifier;
+  final ValueNotifier<bool> toggleAdvancedModeAutomaticallyNotifier;
 
   @override
   State<SettingsBody> createState() => _SettingsBodyState();
@@ -118,6 +120,7 @@ class _SettingsBodyState extends State<SettingsBody>
   late ValueNotifier<bool> countLikelyAsActiveNotifier;
   late ValueNotifier<bool> advancedModeNotifier;
   late ValueNotifier<bool> advancedModeToggleNotifier;
+  late ValueNotifier<bool> toggleAdvancedModeAutomaticallyNotifier;
 
   late TextEditingController _mapTilesTemplateController;
   late TextEditingController _speedtestInstanceController;
@@ -139,6 +142,7 @@ class _SettingsBodyState extends State<SettingsBody>
   bool _analytics = false;
   bool _checkUpdates = false;
   bool _advancedMode = false;
+  bool _toggleAdvancedModeAutomatically = false;
   bool _logEvents = false;
   bool _metricSystem = true;
   String _mapTilesTemplate = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
@@ -213,6 +217,8 @@ class _SettingsBodyState extends State<SettingsBody>
     countLikelyAsActiveNotifier = widget.countLikelyAsActiveNotifier;
     advancedModeNotifier = widget.advancedModeNotifier;
     advancedModeToggleNotifier = widget.advancedModeToggleNotifier;
+    toggleAdvancedModeAutomaticallyNotifier =
+        widget.toggleAdvancedModeAutomaticallyNotifier;
 
     updateData();
     _positionPrecisionSelection = positionPrecisions[_positionPrecision];
@@ -272,6 +278,9 @@ class _SettingsBodyState extends State<SettingsBody>
           sharedPreferences.getBool("checkUpdates") ?? _checkUpdates;
       _advancedMode =
           sharedPreferences.getBool("advancedMode") ?? _advancedMode;
+      _toggleAdvancedModeAutomatically =
+          sharedPreferences.getBool("toggleAdvancedModeAutomatically") ??
+          _toggleAdvancedModeAutomatically;
       _logEvents = sharedPreferences.getBool("logEvents") ?? _logEvents;
       _metricSystem =
           sharedPreferences.getBool("metricSystem") ?? _metricSystem;
@@ -685,6 +694,31 @@ class _SettingsBodyState extends State<SettingsBody>
               },
             ),
           ),
+          if (_advancedMode) ...[
+            ListTile(
+              title: Text(
+                _appLocalizations.settingsToggleAdvancedModeAutomaticallyTitle,
+              ),
+              subtitle: Text(
+                _appLocalizations
+                    .settingsToggleAdvancedModeAutomaticallyDescription,
+              ),
+              trailing: Switch(
+                value: _toggleAdvancedModeAutomatically,
+                onChanged: (bool value) async {
+                  await HapticService().triggerHaptic(
+                    HapticType.selection,
+                    context,
+                  );
+
+                  setBool("toggleAdvancedModeAutomatically", value);
+                  toggleAdvancedModeAutomaticallyNotifier.value = value;
+
+                  updateData();
+                },
+              ),
+            ),
+          ],
           ListTile(
             title: Text(
               "${_appLocalizations.settingsPositionTitle} (${positionPrecisions[_positionPrecision]})",

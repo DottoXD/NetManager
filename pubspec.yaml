@@ -5,8 +5,8 @@ publish_to: 'none'
 version: 0.2.3+16
 
 environment:
-  sdk: 3.13.5
-  flutter: 3.47.7
+  sdk: 3.13.7
+  flutter: 3.47.8
 
 dependencies:
   flutter:
@@ -22,10 +22,10 @@ dependencies:
   intl: 0.20.3
   path_provider: 2.1.6
   file_selector: 1.1.0
-  sqflite: 2.4.4
+  sqflite: 2.4.5
   flutter_localizations:
     sdk: flutter
-  material_ui: 1.7.0
+  material_ui: 1.8.0
 
 dev_dependencies:
   flutter_test:
