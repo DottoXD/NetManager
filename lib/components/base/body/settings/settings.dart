@@ -50,6 +50,7 @@ class SettingsBody extends StatefulWidget {
     this.advancedModeToggleNotifier,
     this.toggleAdvancedModeAutomaticallyNotifier, {
     super.key,
+    required this.onRequestPrivacyPolicyReview,
   });
 
   final ScrollController controller;
@@ -83,6 +84,8 @@ class SettingsBody extends StatefulWidget {
   final ValueNotifier<bool> advancedModeNotifier;
   final ValueNotifier<bool> advancedModeToggleNotifier;
   final ValueNotifier<bool> toggleAdvancedModeAutomaticallyNotifier;
+
+  final Future<bool> Function() onRequestPrivacyPolicyReview;
 
   @override
   State<SettingsBody> createState() => _SettingsBodyState();
@@ -619,6 +622,11 @@ class _SettingsBodyState extends State<SettingsBody>
                   context,
                 );
 
+                if (value && !await widget.onRequestPrivacyPolicyReview()) {
+                  updateData();
+                  return;
+                }
+
                 setBool("analytics", value);
                 updateData();
               },
@@ -793,7 +801,7 @@ class _SettingsBodyState extends State<SettingsBody>
               ),
             ),
           ],
-          ListTile(
+          /*ListTile(
             title: Text(_appLocalizations.settingsCellMemoryTitle),
             subtitle: Text(_appLocalizations.settingsCellMemoryDescription),
             trailing: Switch(
@@ -808,7 +816,7 @@ class _SettingsBodyState extends State<SettingsBody>
                 updateData();
               },
             ),
-          ),
+          ),*/
           ListTile(
             title: Text(_appLocalizations.settingsStartupMonitoringTitle),
             subtitle: Text(

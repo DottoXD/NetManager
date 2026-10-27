@@ -1,0 +1,5 @@
+- Fixed a possible speed test related crash.
+- The privacy policy review flow has been updated.
+- Fixed a crash that occured on Android versions <= 10 when opening the map.
+- Added GMS (Play services) location fetching in the Play flavour of the app.
+- Added a setting that allows the user to automatically have the advanced mode screen toggled when opening the app.

@@ -768,9 +768,9 @@ public class Client {
                 client.connectionPool().evictAll();
             }
 
-            executor.shutdownNow();
-            watchdogExecutor.shutdownNow();
-            dnsExecutor.shutdownNow();
+            executor.shutdown();
+            watchdogExecutor.shutdown();
+            dnsExecutor.shutdown();
 
             new Thread(() -> {
                 try {

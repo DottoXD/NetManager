@@ -1,0 +1,5 @@
+- Risolto un crash correlato alla funzionalità di speed test.
+- La schermata di visione della privacy policy è stata aggiornata.
+- Risolto un crash sulle versioni di Android <= 10 all'apertura della mappa.
+- Aggiunto il recupero della posizione via GMS (Play services) nel flavor "Play" dell'app.
+- Aggiunta un'impostazione che consente agli utenti di avere la schermata della modalità avanzata abilitata automaticamente all'apertura dell'app.

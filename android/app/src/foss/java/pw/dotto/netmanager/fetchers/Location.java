@@ -8,8 +8,11 @@ import android.content.SharedPreferences;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+
+import androidx.annotation.NonNull;
 
 import pw.dotto.netmanager.utils.Permissions;
 
@@ -18,7 +21,7 @@ import pw.dotto.netmanager.utils.Permissions;
  * component to display the user's position.
  *
  * @author DottoXD
- * @version 0.1.6
+ * @version 0.2.4
  */
 public class Location {
     private static final int UPDATES_INTERVAL = 3000;
@@ -30,7 +33,6 @@ public class Location {
     private android.location.Location lastLocation;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private long lastAccess;
 
     @SuppressLint("MissingPermission")
     private Location(Context context) {
@@ -75,7 +77,25 @@ public class Location {
             }
         }
 
-        locationListener = location -> lastLocation = location;
+        locationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(@NonNull android.location.Location location) {
+                lastLocation = location;
+            }
+
+            @Override
+            public void onProviderDisabled(@NonNull String provider) {
+            }
+
+            @Override
+            public void onProviderEnabled(@NonNull String provider) {
+            }
+
+            @Override
+            @Deprecated
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+            }
+        };
 
         locationManager.requestLocationUpdates(
                 provider,
@@ -83,9 +103,7 @@ public class Location {
                 minDistance,
                 locationListener);
 
-        if (locationManager != null) {
-            lastLocation = locationManager.getLastKnownLocation(provider);
-        }
+        lastLocation = locationManager.getLastKnownLocation(provider);
 
         updateAccess();
     }
@@ -94,8 +112,7 @@ public class Location {
         if (context == null)
             return null;
 
-        if (!Permissions.check(context,
-                Permissions.ACCESS_FINE_LOCATION | Permissions.ACCESS_BACKGROUND_LOCATION)) {
+        if (!Permissions.check(context, Permissions.ACCESS_FINE_LOCATION)) {
             if (instance != null) {
                 instance.dispose();
             }
@@ -124,12 +141,9 @@ public class Location {
      * Updates the latest access to location data.
      */
     public void updateAccess() {
-        lastAccess = System.currentTimeMillis();
         handler.removeCallbacks(selfDestruct);
         handler.postDelayed(selfDestruct, DESTROY_TIMEOUT);
     }
-
-    private final Runnable selfDestruct = this::dispose;
 
     /**
      * Disposes the Location object.
@@ -142,6 +156,7 @@ public class Location {
                 locationManager.removeUpdates(locationListener);
             } catch (Exception ignored) {
             }
+
             locationListener = null;
         }
 
@@ -149,4 +164,6 @@ public class Location {
             instance = null;
         }
     }
+
+    private final Runnable selfDestruct = this::dispose;
 }

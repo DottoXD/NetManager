@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/base/onboarding.dart';
-import 'package:netmanager/base/privacy_consent.dart';
+import 'package:netmanager/base/privacy_policy.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/utils/check_update.dart';
 import 'package:netmanager/utils/haptic_service.dart';
@@ -39,7 +39,6 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
   bool? hasPermissions;
   bool isRefreshing = false;
   bool _showOnboarding = true;
-  bool _hasAcceptedPrivacyPolicy = false;
 
   static const int _requiredPerms =
       Permissions.READ_PHONE_STATE |
@@ -51,15 +50,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    try {
-      _hasAcceptedPrivacyPolicy =
-          widget.sharedPreferences.getInt("privacyPolicyAcceptedVersion") ==
-          privacyPolicyVersion;
-    } catch (e) {}
-
-    if (_hasAcceptedPrivacyPolicy) {
-      _startPostPrivacyFlow();
-    }
+    _startPostPrivacyFlow();
   }
 
   void _startPostPrivacyFlow() {
@@ -70,6 +61,12 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
         await _requestPermissions();
       }
 
+      final bool hasReviewedPrivacyPolicy =
+          (widget.sharedPreferences.getInt("privacyPolicyAcceptedVersion") ??
+              0) >=
+          privacyPolicyVersion;
+      if (!hasReviewedPrivacyPolicy) return;
+
       if (widget.sharedPreferences.getBool("checkUpdates") != true) return;
       bool updateAvailable = await checkForUpdate();
 
@@ -79,18 +76,6 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
         });
       }
     });
-  }
-
-  Future<void> _acceptPrivacyPolicy() async {
-    await widget.sharedPreferences.setInt(
-      "privacyPolicyAcceptedVersion",
-      privacyPolicyVersion,
-    );
-
-    if (!mounted) return;
-
-    setState(() => _hasAcceptedPrivacyPolicy = true);
-    _startPostPrivacyFlow();
   }
 
   @override
@@ -131,10 +116,6 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     AppLocalizations appLocalizations = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-
-    if (!_hasAcceptedPrivacyPolicy) {
-      return PrivacyConsentScreen(onAccept: _acceptPrivacyPolicy);
-    }
 
     if (hasPermissions == null || isRefreshing == true) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -270,8 +251,7 @@ class _PermsState extends State<Perms> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (_hasAcceptedPrivacyPolicy &&
-        (hasPermissions == null || hasPermissions == false) &&
+    if ((hasPermissions == null || hasPermissions == false) &&
         state == AppLifecycleState.resumed) {
       setState(() => isRefreshing = true);
 

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+import 'package:netmanager/base/privacy_policy.dart';
 import 'package:netmanager/base/stack.dart';
 import 'package:netmanager/components/base/body/advanced/advanced_mode.dart';
 import 'package:netmanager/components/base/body/map/map.dart';
@@ -102,9 +103,17 @@ class _HomeState extends State<Home> {
   );
   final _toggleAdvancedModeAutomaticallyNotifier = ValueNotifier(false);
 
+  bool _privacyPolicyReviewed = false;
+  Future<bool>? _ongoingReviewRequest;
+
   @override
   void initState() {
     super.initState();
+
+    _privacyPolicyReviewed =
+        (widget.sharedPreferences.getInt("privacyPolicyAcceptedVersion") ??
+            0) >=
+        privacyPolicyVersion;
 
     _cleanOldExports();
 
@@ -161,6 +170,9 @@ class _HomeState extends State<Home> {
         widget.sharedPreferences.getBool("countLikelyAsActive") ?? false;
     _advancedModeNotifier.value =
         widget.sharedPreferences.getBool("advancedMode") ?? false;
+    _toggleAdvancedModeAutomaticallyNotifier.value =
+        widget.sharedPreferences.getBool("toggleAdvancedModeAutomatically") ??
+        false;
 
     try {
       widget.platform.invokeMethod<bool>("requestPermissions", {
@@ -173,6 +185,42 @@ class _HomeState extends State<Home> {
     } on PlatformException catch (e) {
       Sentry.captureException(e, stackTrace: e.stacktrace);
     }
+  }
+
+  Future<bool> _ensurePrivacyPolicyReviewed() {
+    if (_privacyPolicyReviewed) return Future.value(true);
+    return _ongoingReviewRequest ??= _showPrivacyPolicy();
+  }
+
+  Future<bool> _showPrivacyPolicy() async {
+    if (!mounted) {
+      _ongoingReviewRequest = null;
+      return false;
+    }
+
+    final reviewed = await Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (routeContext) => PrivacyConsentScreen(
+          onReviewed: () => Navigator.of(routeContext).pop(true),
+          onCancel: () => Navigator.of(routeContext).pop(false),
+        ),
+      ),
+    );
+
+    _ongoingReviewRequest = null;
+
+    if (reviewed == true) {
+      _privacyPolicyReviewed = true;
+      await widget.sharedPreferences.setInt(
+        "privacyPolicyAcceptedVersion",
+        privacyPolicyVersion,
+      );
+
+      return true;
+    }
+
+    return false;
   }
 
   Future<void> _cleanOldExports() async {
@@ -233,7 +281,7 @@ class _HomeState extends State<Home> {
     super.dispose();
   }
 
-  void updatePage(int page) {
+  Future<void> updatePage(int page) async {
     if (_currentPage == page) {
       if (page == 0 && _homeScrollController.hasClients) {
         _homeScrollController.animateTo(
@@ -252,6 +300,12 @@ class _HomeState extends State<Home> {
       return;
     }
 
+    if ((page == 1 || page == 2) && !_privacyPolicyReviewed) {
+      final granted = await _ensurePrivacyPolicyReviewed();
+      if (!granted || !mounted) return;
+    }
+
+    if (!mounted) return;
     setState(() {
       _currentPage = page;
     });
@@ -392,6 +446,7 @@ class _HomeState extends State<Home> {
               _advancedModeNotifier,
               _advancedModeToggleNotifier,
               _toggleAdvancedModeAutomaticallyNotifier,
+              onRequestPrivacyPolicyReview: _ensurePrivacyPolicyReviewed,
             ),
           ],
         ),
