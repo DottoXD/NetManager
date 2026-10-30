@@ -39,7 +39,8 @@ class HomeBody extends StatefulWidget {
     this.likelyCellsNotifier,
     this.countLikelyAsActiveNotifier,
     this.currentSimSlotNotifier,
-    this.isPipActiveNotifier, {
+    this.isPipActiveNotifier,
+    this.metricSystemNotifier, {
     super.key,
     this.onUpdateButtonPressed,
     this.onScreenshotButtonPressed,
@@ -61,6 +62,7 @@ class HomeBody extends StatefulWidget {
   final ValueNotifier<bool> countLikelyAsActiveNotifier;
   final ValueNotifier<int> currentSimSlotNotifier;
   final ValueNotifier<bool> isPipActiveNotifier;
+  final ValueNotifier<bool> metricSystemNotifier;
 
   final ValueSetter<VoidCallback>? onUpdateButtonPressed;
   final ValueSetter<VoidCallback>? onScreenshotButtonPressed;
@@ -547,10 +549,17 @@ class _HomeBodyState extends State<HomeBody> {
                                     cardWidth: cardWidth,
                                     cardHeight: cardHeight,
                                   ),
-                                  NetworkData(
-                                    simData: _simData!,
-                                    cardWidth: cardWidth,
-                                    cardHeight: cardHeight,
+                                  ValueListenableBuilder(
+                                    valueListenable:
+                                        widget.metricSystemNotifier,
+                                    builder: (context, metricSystem, child) {
+                                      return NetworkData(
+                                        simData: _simData!,
+                                        cardWidth: cardWidth,
+                                        cardHeight: cardHeight,
+                                        metricSystem: metricSystem,
+                                      );
+                                    },
                                   ),
                                 ],
                               ],

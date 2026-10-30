@@ -44,6 +44,9 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = rawVersionCode
         versionName = flutter.versionName
+
+        resourceConfigurations.clear()
+        resourceConfigurations.addAll(listOf("en", "it"))
     }
 
     splits {

@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
@@ -25,7 +26,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -47,10 +47,10 @@ import pw.dotto.netmanager.R;
  * coordinates all cell coverage recording actions.
  *
  * @author DottoXD
- * @version 0.1.6
+ * @version 0.2.4
  */
 public class Service extends android.app.Service {
-    private String USER_AGENT = "NetManager-DriveTest/Unknown";
+    private static final String USER_AGENT = "NetManager-DriveTest/Unknown";
     private static final int DEFAULT_RECORDING_INTERVAL_SECONDS = 10;
 
     private static Service instance = null;
@@ -70,6 +70,7 @@ public class Service extends android.app.Service {
     private boolean trackUsable = false;
     private String usabilityTestUrl = "";
 
+    private static final int DEFAULT_FOREGROUND_ID = 1;
     public static final String NOTIFICATION_CHANNEL = "netmanager-rec";
     private static final String DEFAULT_USABILITY_TEST_URL = "https://connectivitycheck.grapheneos.network/generate_204";
 
@@ -104,12 +105,73 @@ public class Service extends android.app.Service {
         super.onCreate();
         instance = this;
 
+        if (!enterForeground()) {
+            stopSelf();
+            return;
+        }
+
         try {
-            startForeground();
             core = new Manager(this, "recording", DEFAULT_RECORDING_INTERVAL_SECONDS);
             Location.getInstance(this);
         } catch (Exception e) {
             stopSelf();
+        }
+    }
+
+    private boolean enterForeground() {
+        NotificationManager notificationManager = getSystemService(NotificationManager.class);
+
+        if (notificationManager == null) {
+            return false;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel notificationChannel = notificationManager.getNotificationChannel(NOTIFICATION_CHANNEL);
+            if (notificationChannel == null) {
+                notificationChannel = new NotificationChannel(
+                        NOTIFICATION_CHANNEL,
+                        "NetManager Recording Service",
+                        NotificationManager.IMPORTANCE_MIN);
+                notificationChannel.enableVibration(false);
+                notificationManager.createNotificationChannel(notificationChannel);
+            }
+        }
+
+        int id = DEFAULT_FOREGROUND_ID;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try {
+                for (StatusBarNotification statusBarNotification : notificationManager.getActiveNotifications()) {
+                    if (NOTIFICATION_CHANNEL.equals(statusBarNotification.getNotification().getChannelId())) {
+                        id = statusBarNotification.getId();
+                        break;
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        selectedId = id;
+
+        Notification notification = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL)
+                .setContentTitle("NetManager Recording Service")
+                .setContentText("Initializing...")
+                .setSmallIcon(R.drawable.ic_launcher_monochrome)
+                .setSilent(true)
+                .setOngoing(true)
+                .build();
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(id, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
+            } else {
+                startForeground(id, notification);
+            }
+
+            return true;
+        } catch (SecurityException e) {
+            stopSelf();
+            return false;
         }
     }
 
@@ -123,7 +185,7 @@ public class Service extends android.app.Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent == null) {
+        if (intent == null || core == null) {
             stopSelf();
             return START_NOT_STICKY;
         }
@@ -209,6 +271,9 @@ public class Service extends android.app.Service {
     }
 
     private void record() {
+        if (core == null)
+            return;
+
         Location locationFetcher = Location.getInstance(this);
         if (locationFetcher == null) {
             return;
@@ -240,49 +305,6 @@ public class Service extends android.app.Service {
                     saveToFile(simSlot);
                 }
             }
-        }
-    }
-
-    private void startForeground() {
-        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        if (notificationManager == null)
-            return;
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel notificationChannel = notificationManager.getNotificationChannel(NOTIFICATION_CHANNEL);
-            if (notificationChannel == null) {
-                notificationChannel = new NotificationChannel(
-                        NOTIFICATION_CHANNEL,
-                        "NetManager Recording Service",
-                        NotificationManager.IMPORTANCE_MIN);
-
-                notificationChannel.enableVibration(false);
-                notificationManager.createNotificationChannel(notificationChannel);
-            }
-
-            for (StatusBarNotification notification : notificationManager.getActiveNotifications()) {
-                if (notification.getNotification().getChannelId().equals(NOTIFICATION_CHANNEL)) {
-                    selectedId = notification.getId();
-                    break;
-                }
-            }
-        }
-
-        if (selectedId < 0)
-            selectedId = new Random().nextInt(9) + 1;
-
-        Notification notification = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL)
-                .setContentTitle("NetManager Recording Service")
-                .setContentText("Initializing...")
-                .setSmallIcon(R.drawable.ic_launcher_monochrome)
-                .setSilent(true)
-                .setOngoing(true)
-                .build();
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(selectedId, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
-        } else {
-            startForeground(selectedId, notification);
         }
     }
 
@@ -346,8 +368,21 @@ public class Service extends android.app.Service {
     @Override
     public void onDestroy() {
         saveAllFiles();
-
         instance = null;
+
+        if (executorService != null) {
+            executorService.shutdown();
+
+            try {
+                if (!executorService.awaitTermination(2, TimeUnit.SECONDS)) {
+                    executorService.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                executorService.shutdownNow();
+            }
+
+            executorService = null;
+        }
 
         Location locationFetcher = Location.getInstance(this);
         if (locationFetcher != null) {
@@ -360,18 +395,7 @@ public class Service extends android.app.Service {
                 simReceiverManager.unregisterStateReceiver();
 
             core.dispose();
-        }
-
-        if (executorService != null) {
-            executorService.shutdown();
-
-            try {
-                if (!executorService.awaitTermination(2, TimeUnit.SECONDS)) {
-                    executorService.shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                executorService.shutdownNow();
-            }
+            core = null;
         }
 
         stopForeground(STOP_FOREGROUND_REMOVE);

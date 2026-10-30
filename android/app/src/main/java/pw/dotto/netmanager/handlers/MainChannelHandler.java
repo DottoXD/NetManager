@@ -3,8 +3,10 @@ package pw.dotto.netmanager.handlers;
 import static pw.dotto.netmanager.core.sources.telephony.TelephonyCellDataSource.CELL_INFO_UNAVAILABLE;
 
 import android.app.PictureInPictureParams;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.location.LocationManager;
 import android.os.Build;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
@@ -46,7 +48,7 @@ import rikka.shizuku.Shizuku;
  * more.
  *
  * @author DottoXD
- * @version 0.2.3
+ * @version 0.2.4
  */
 public class MainChannelHandler implements MethodChannel.MethodCallHandler {
     private final WeakReference<MainActivity> activityReference;
@@ -460,6 +462,21 @@ public class MainChannelHandler implements MethodChannel.MethodCallHandler {
         if (recordingInterval < 1 || recordingInterval > 300 || recordingName == null || recordingPath == null) {
             result.error("RECORDING_PARAMS", "Invalid recording params!", null);
             return;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            try {
+                LocationManager lm = (LocationManager) activity.getSystemService(Context.LOCATION_SERVICE);
+
+                if (lm != null && !lm.isLocationEnabled()) {
+                    result.error("BACKEND_RECORDING", "Location services are disabled. Enable them to start recording.",
+                            null);
+                    return;
+                }
+            } catch (Exception ignored) {
+                result.error("BACKEND_RECORDING", "Location services are disabled. Enable them to start recording.",
+                        null);
+            }
         }
 
         try {

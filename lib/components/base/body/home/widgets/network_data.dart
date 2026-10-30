@@ -6,12 +6,14 @@ class NetworkData extends StatelessWidget {
   final SIMData simData;
   final double cardWidth;
   final double cardHeight;
+  final bool metricSystem;
 
   const NetworkData({
     super.key,
     required this.simData,
     required this.cardWidth,
     required this.cardHeight,
+    required this.metricSystem,
   });
 
   @override
@@ -33,7 +35,13 @@ class NetworkData extends StatelessWidget {
 
       timingAdvanceDistance = simData.primaryCell.timingAdvance * factor;
     } else {
-      timingAdvanceDistance = simData.primaryCell.timingAdvance * 78; // 78.12
+      timingAdvanceDistance = (simData.primaryCell.timingAdvance * 78.12)
+          .toInt(); // 78.12
+    }
+
+    if (!metricSystem) {
+      timingAdvanceDistance = (timingAdvanceDistance * 3.281)
+          .toInt(); // m to ft
     }
 
     final List<String> elements = [
@@ -56,7 +64,7 @@ class NetworkData extends StatelessWidget {
       simData.primaryCell.timingAdvanceString,
       (timingAdvanceDistance <= 0
           ? simData.primaryCell.timingAdvance.toString()
-          : "${simData.primaryCell.timingAdvance} (${timingAdvanceDistance}m)"),
+          : "${simData.primaryCell.timingAdvance} ($timingAdvanceDistance${metricSystem ? "m" : "ft"})"),
       simData.primaryCell.bandwidthString,
       "${simData.activeBw}MHz",
       simData.primaryCell.bandString,

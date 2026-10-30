@@ -373,6 +373,7 @@ class _HomeState extends State<Home> {
                   _countLikelyAsActiveNotifier,
                   _currentSimSlotNotifier,
                   _isPipActiveNotifier,
+                  _metricSystemNotifier,
                   onUpdateButtonPressed: (callback) {
                     _homeUpdateNotifier.value = callback;
                   },

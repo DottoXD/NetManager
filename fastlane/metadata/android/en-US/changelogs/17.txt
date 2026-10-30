@@ -3,3 +3,5 @@
 - Fixed a crash that occured on Android versions <= 10 when opening the map.
 - Added GMS (Play services) location fetching in the Play flavour of the app.
 - Added a setting that allows the user to automatically have the advanced mode screen toggled when opening the app.
+- Timing advance in the home screen is now displayed in ft too when imperial system measurements are enabled.
+- Fixed a drive test related crash.

@@ -3,3 +3,5 @@
 - Risolto un crash sulle versioni di Android <= 10 all'apertura della mappa.
 - Aggiunto il recupero della posizione via GMS (Play services) nel flavor "Play" dell'app.
 - Aggiunta un'impostazione che consente agli utenti di avere la schermata della modalità avanzata abilitata automaticamente all'apertura dell'app.
+- La timing advance nella schermata home viene ora mostrata in ft quando le unità di misura del sistema imperiale sono abilitate.
+- Risolto un crash correlato alla funzionalità di drive test.
