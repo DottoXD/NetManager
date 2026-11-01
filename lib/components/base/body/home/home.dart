@@ -174,6 +174,8 @@ class _HomeBodyState extends State<HomeBody> {
       final isAirplaneMode =
           await platform.invokeMethod<bool>("isAirplaneMode") ?? false;
 
+      if (!mounted) return;
+
       if (jsonStr == null || jsonStr.isEmpty || isAirplaneMode) {
         setState(() {
           _isAirplane = isAirplaneMode;
@@ -199,7 +201,7 @@ class _HomeBodyState extends State<HomeBody> {
         return;
       }
 
-      if (simData == null) return;
+      if (simData == null || !mounted) return;
 
       if (widget.likelyCellsNotifier.value) {
         simData.neighborCells.removeWhere(
@@ -360,6 +362,8 @@ class _HomeBodyState extends State<HomeBody> {
         }
       }
 
+      if (!mounted) return;
+
       if (widget.homeDataGraphsNotifier.value) {
         _recordGraphData(simData.primaryCell);
       }
@@ -374,6 +378,8 @@ class _HomeBodyState extends State<HomeBody> {
       });
     } on PlatformException catch (e) {
       await Sentry.captureException(e, stackTrace: e.stacktrace);
+
+      if (!mounted) return;
       setState(() {
         _debug = "${_appLocalizations.platformException}: ${e.toString()}";
       });

@@ -18,12 +18,25 @@ android {
         version = release(37)
     }
 
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
     defaultConfig {
         applicationId = "pw.dotto.netmanager"
         minSdk = 30
         targetSdk = 37
-        versionCode = 17
-        versionName = "0.2.4"
+        versionCode = 18
+        versionName = "0.2.5"
+
+        resourceConfigurations.clear()
+        resourceConfigurations.addAll(listOf("en", "it"))
+    }
+
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
     }
 
     signingConfigs {
@@ -40,6 +53,9 @@ android {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
+            vcsInfo.include = false
+            isCrunchPngs = false
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -57,11 +73,6 @@ android {
 
     buildFeatures {
         compose = true
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 
