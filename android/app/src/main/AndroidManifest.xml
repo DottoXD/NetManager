@@ -99,14 +99,14 @@
         <receiver android:name=".widgets.SIMWidgetProvider" android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="pw.dotto.netmanager.ACTION_REFRESH_DUALSIM" />
+                <action android:name="${applicationId}.ACTION_REFRESH_DUALSIM" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_dualsim_info" />
         </receiver>
         <receiver android:name=".widgets.EventWidgetProvider" android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="pw.dotto.netmanager.ACTION_REFRESH_TICKER" />
+                <action android:name="${applicationId}.ACTION_REFRESH_TICKER" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_events_info" />
         </receiver>
@@ -117,6 +117,10 @@
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
+    <instrumentation
+        android:name=".core.shizuku.CarrierConfigInstrumentation"
+        android:targetPackage="${applicationId}"
+        android:functionalTest="false" />
     <queries>
         <package android:name="com.android.phone" />
         <package android:name="com.android.settings" />

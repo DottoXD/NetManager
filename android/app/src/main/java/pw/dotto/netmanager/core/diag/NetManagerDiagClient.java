@@ -42,13 +42,15 @@ import pw.dotto.netmanager.utils.DebugLogger;
  * and lets consumers interpret them.
  *
  * @author DottoXD
- * @version 0.2.3
+ * @version 0.2.5
  */
 public class NetManagerDiagClient {
     private static final String SOCKET_NAME = "NetManagerDiag";
     private static final String BINARY_NAME = "libNetManagerDiag.so";
     private static final int CONNECT_RETRIES = 50;
     private static final long CONNECT_RETRY_DELAY_MS = 100;
+
+    private static final int EXPECTED_PROTOCOL = 1;
 
     private static volatile NetManagerDiagClient instance;
 
@@ -66,6 +68,7 @@ public class NetManagerDiagClient {
     private volatile long connectStartMs;
     private volatile boolean loggedConnectedStatus;
     private volatile boolean loggedFirstEvent;
+    private volatile boolean loggedOutdated;
 
     private final Map<String, Set<String>> featuresByOwner = new HashMap<>();
     private String lastSentEnable;
@@ -98,6 +101,9 @@ public class NetManagerDiagClient {
         public List<String> supported;
         public List<String> active;
         public List<Integer> slots_seen;
+        public Integer protocol;
+        public String version;
+        public boolean outdated;
     }
 
     public static class LteServingMeasEvent {
@@ -200,6 +206,7 @@ public class NetManagerDiagClient {
             connectStartMs = SystemClock.elapsedRealtime();
             loggedConnectedStatus = false;
             loggedFirstEvent = false;
+            loggedOutdated = false;
 
             LocalSocket s = tryConnect();
             if (s == null) {
@@ -217,6 +224,7 @@ public class NetManagerDiagClient {
 
             if (s == null) {
                 DebugLogger.add("NetManagerDiag: could not connect after launching the daemon.");
+                notifyConnectFailed();
                 return;
             }
 
@@ -230,6 +238,7 @@ public class NetManagerDiagClient {
                     closeQuietly(s);
                     socket = null;
                     socketOut = null;
+                    notifyConnectFailed();
 
                     return;
                 }
@@ -387,6 +396,16 @@ public class NetManagerDiagClient {
             if (obj.has("status")) {
                 StatusMessage status = gson.fromJson(obj.get("status"), StatusMessage.class);
 
+                if (status != null) {
+                    status.outdated = status.protocol == null || status.protocol < EXPECTED_PROTOCOL;
+                    if (status.outdated && !loggedOutdated) {
+                        loggedOutdated = true;
+                        DebugLogger.add("NetManagerDiag: running daemon is out of date (protocol "
+                                + (status.protocol == null ? "N/A" : status.protocol) + ", expected "
+                                + EXPECTED_PROTOCOL + ").");
+                    }
+                }
+
                 lastStatus = status;
                 if (status != null && status.connected && !loggedConnectedStatus) {
                     loggedConnectedStatus = true;
@@ -531,6 +550,11 @@ public class NetManagerDiagClient {
         }
 
         connected.set(false);
+    }
+
+    private void notifyConnectFailed() {
+        notifyListeners(l -> l.onError("Could not start NetManagerDiag."));
+        notifyListeners(Listener::onDisconnected);
     }
 
     private void notifyListeners(java.util.function.Consumer<Listener> action) {

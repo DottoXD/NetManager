@@ -82,6 +82,7 @@ class _AdvancedModeBodyState extends State<AdvancedModeBody>
   bool _shizukuOk = false;
   bool _diagOk = false;
   bool _holdsDiagHub = false;
+  bool _carrierEditInProgress = false;
 
   String _carrierSig = "";
   String _imsSig = "";
@@ -102,11 +103,15 @@ class _AdvancedModeBodyState extends State<AdvancedModeBody>
   );
   final ValueNotifier<List<dynamic>> _logsNotifier = ValueNotifier(const []);
 
+  final ValueNotifier<bool> _snackBarVisibleNotifier = ValueNotifier(false);
+  int _activeSnackBars = 0;
+
   late final Map<_PageType, AdvancedSubpage> _descriptors = {
     _PageType.carrier: AdvancedSubpage(
       title: (appLocalizations) => appLocalizations.advancedModeCarrierConfig,
       icon: Icons.tune_outlined,
-      builder: (_) => CarrierConfigPage(data: _carrierNotifier),
+      builder: (_) =>
+          CarrierConfigPage(data: _carrierNotifier, onEdit: _setCarrierConfig),
     ),
     _PageType.imsStatus: AdvancedSubpage(
       title: (appLocalizations) => appLocalizations.advancedModeImsStatus,
@@ -248,6 +253,7 @@ class _AdvancedModeBodyState extends State<AdvancedModeBody>
     _viewStateNotifier.dispose();
     _errorInfoNotifier.dispose();
     _refreshingNotifier.dispose();
+    _snackBarVisibleNotifier.dispose();
     _currentPageNotifier.dispose();
     _pagesNotifier.dispose();
     _carrierNotifier.dispose();
@@ -292,7 +298,7 @@ class _AdvancedModeBodyState extends State<AdvancedModeBody>
     _data = parsed;
 
     final carrier = <String, dynamic>{
-      for (final k in CarrierConfigPage.dataKeys)
+      for (final k in CarrierConfigPage.allKeys)
         if (parsed.containsKey(k)) k: parsed[k],
     };
 
@@ -312,6 +318,54 @@ class _AdvancedModeBodyState extends State<AdvancedModeBody>
       _logsSig,
       (s) => _logsSig = s,
     );
+  }
+
+  void _showAdvancedSnackBar(SnackBar snackBar) {
+    final controller = ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    _activeSnackBars++;
+    _snackBarVisibleNotifier.value = true;
+
+    controller.closed.whenComplete(() {
+      if (_activeSnackBars > 0) _activeSnackBars--;
+      if (mounted) {
+        _snackBarVisibleNotifier.value = _activeSnackBars > 0;
+      }
+    });
+  }
+
+  Future<void> _setCarrierConfig(String feature, String value) async {
+    if (!mounted || !_shizukuOk || _carrierEditInProgress) return;
+    _carrierEditInProgress = true;
+    _refreshingNotifier.value = true;
+
+    try {
+      await _advancedChn.invokeMethod<String>("setCarrierConfig", {
+        "feature": feature,
+        "value": value,
+      });
+
+      if (!mounted) return;
+
+      _lastRaw = null;
+      _showAdvancedSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.advancedModeCarrierConfigUpdated,
+          ),
+        ),
+      );
+
+      await _fetchData();
+    } on PlatformException catch (e) {
+      if (!mounted) return;
+      _showAdvancedSnackBar(SnackBar(content: Text(e.message ?? e.code)));
+    } catch (e) {
+      if (!mounted) return;
+      _showAdvancedSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      _carrierEditInProgress = false;
+      if (mounted) _refreshingNotifier.value = false;
+    }
   }
 
   Future<void> _fetchData() async {
@@ -500,45 +554,50 @@ class _AdvancedModeBodyState extends State<AdvancedModeBody>
                 ),
               ),
               if (pages.length > 1)
-                Positioned(
-                  bottom: 20,
-                  child: RepaintBoundary(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest
-                            .withValues(alpha: 0.90),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color.from(
-                              alpha: 0.1,
-                              red: 0,
-                              green: 0,
-                              blue: 0,
+                ValueListenableBuilder(
+                  valueListenable: _snackBarVisibleNotifier,
+                  builder: (context, snackBarVisible, _) => AnimatedPositioned(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOutCubic,
+                    bottom: snackBarVisible ? 70 : 20,
+                    child: RepaintBoundary(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.90),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color.from(
+                                alpha: 0.1,
+                                red: 0,
+                                green: 0,
+                                blue: 0,
+                              ),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
                             ),
-                            blurRadius: 8,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: ValueListenableBuilder(
-                        valueListenable: _currentPageNotifier,
-                        builder: (context, index, _) => PageDots(
-                          count: pages.length,
-                          currentIndex: index.clamp(0, pages.length - 1),
-                          onDotTap: (page) {
-                            if (!_pageController.hasClients) return;
+                          ],
+                        ),
+                        child: ValueListenableBuilder(
+                          valueListenable: _currentPageNotifier,
+                          builder: (context, index, _) => PageDots(
+                            count: pages.length,
+                            currentIndex: index.clamp(0, pages.length - 1),
+                            onDotTap: (page) {
+                              if (!_pageController.hasClients) return;
 
-                            _pageController.animateToPage(
-                              page,
-                              duration: const Duration(milliseconds: 250),
-                              curve: Curves.easeInOut,
-                            );
-                          },
+                              _pageController.animateToPage(
+                                page,
+                                duration: const Duration(milliseconds: 250),
+                                curve: Curves.easeInOut,
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ),

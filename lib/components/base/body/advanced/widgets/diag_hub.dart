@@ -12,6 +12,7 @@ enum DiagLogCode {
   stopFailed,
   stopped,
   stopUnconfirmed,
+  startRequested,
 }
 
 class DiagLogEntry {
@@ -73,6 +74,8 @@ class DiagHub {
           .toList();
 
   bool get modemTagsSlots => slotsSeen.isNotEmpty;
+
+  bool get daemonOutdated => status.value?["outdated"] == true;
 
   Map<String, dynamic>? servingMeasFor(int slot) =>
       _servingMeasBySlot[slot] ?? _servingMeasBySlot[null];
@@ -163,6 +166,7 @@ class DiagHub {
 
   Future<void> reconnect() async {
     connState.value = DiagConnState.connecting;
+    lastError.value = null;
     await _connectAndRequest();
   }
 
@@ -186,7 +190,8 @@ class DiagHub {
         pushLog(
           "STATUS",
           "vendor=${s?["vendor"]} transport=${s?["transport"]} "
-              "supported=${s?["supported"]} active=${s?["active"]}",
+              "supported=${s?["supported"]} active=${s?["active"]} "
+              "protocol=${s?["protocol"] ?? 0} version=${s?["version"] ?? "-"}",
         );
         break;
       case "lteServingMeas":

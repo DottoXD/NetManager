@@ -1,12 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:netmanager/components/base/body/advanced/widgets/info_card.dart';
+import 'package:netmanager/components/dialogs/carrier_config_edit.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 
 class CarrierConfigPage extends StatelessWidget {
   final ValueListenable<Map<String, dynamic>> data;
+  final Future<void> Function(String feature, String value)? onEdit;
 
-  const CarrierConfigPage({super.key, required this.data});
+  const CarrierConfigPage({super.key, required this.data, this.onEdit});
 
   static const List<String> dataKeys = [
     "nrEnabled",
@@ -25,7 +27,81 @@ class CarrierConfigPage extends StatelessWidget {
     "wfcDefaultEnabled",
   ];
 
+  static const List<String> editableKeys = [
+    "canEditNr",
+    "canEditVolte",
+    "canEditVonr",
+    "canEditWfc",
+  ];
+
+  static const List<String> allKeys = [...dataKeys, ...editableKeys];
+
   static bool hasKeys(Map<String, dynamic> d) => dataKeys.any(d.containsKey);
+
+  Future<void> _edit(
+    BuildContext context, {
+    required String feature,
+    required String featureTitle,
+    required String currentValue,
+    required List<(String, String)> options,
+  }) async {
+    final selected = await CarrierConfigEditDialog.show(
+      context,
+      featureTitle: featureTitle,
+      currentValue: currentValue,
+      options: options,
+    );
+
+    if (selected != null && onEdit != null) {
+      await onEdit!(feature, selected);
+    }
+  }
+
+  Future<void> _editNr(BuildContext context, Map<String, dynamic> data) {
+    final appLocalizations = AppLocalizations.of(context)!;
+    final nsa = data["nsaSupported"] == true;
+    final sa = data["saSupported"] == true;
+    final current = nsa && sa
+        ? "nsa_sa"
+        : nsa
+        ? "nsa"
+        : sa
+        ? "sa"
+        : "off";
+
+    return _edit(
+      context,
+      feature: "nr",
+      featureTitle: appLocalizations.advancedModeCarrierNROptionTitle,
+      currentValue: current,
+      options: [
+        ("off", appLocalizations.advancedModeCarrierNROff),
+        ("nsa", appLocalizations.advancedModeCarrierNRNSA),
+        ("sa", appLocalizations.advancedModeCarrierNRSA),
+        ("nsa_sa", appLocalizations.advancedModeCarrierNRBoth),
+      ],
+    );
+  }
+
+  Future<void> _editToggle(
+    BuildContext context, {
+    required String feature,
+    required String featureTitle,
+    required bool enabled,
+  }) {
+    final appLocalizations = AppLocalizations.of(context)!;
+
+    return _edit(
+      context,
+      feature: feature,
+      featureTitle: featureTitle,
+      currentValue: enabled ? "true" : "false",
+      options: [
+        ("true", appLocalizations.advancedModeCarrierEnabled),
+        ("false", appLocalizations.advancedModeCarrierDisabled),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +109,7 @@ class CarrierConfigPage extends StatelessWidget {
 
     return ValueListenableBuilder(
       valueListenable: data,
-      builder: (context, d, _) {
+      builder: (context, dataKeys, _) {
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 64),
           children: [
@@ -45,17 +121,26 @@ class CarrierConfigPage extends StatelessWidget {
                   _ConfigRow(
                     title: appLocalizations.advancedModeNRAvailableTitle,
                     subtitle: appLocalizations.advancedModeNRAvailableSubtitle,
-                    enabled: d["nrEnabled"] == true,
+                    enabled: dataKeys["nrEnabled"] == true,
+                    onEdit: onEdit != null && dataKeys["canEditNr"] == true
+                        ? () => _editNr(context, dataKeys)
+                        : null,
                   ),
                   _ConfigRow(
                     title: appLocalizations.advancedModeNsaTitle,
                     subtitle: appLocalizations.advancedModeNsaSubtitle,
-                    enabled: d["nsaSupported"] == true,
+                    enabled: dataKeys["nsaSupported"] == true,
+                    onEdit: onEdit != null && dataKeys["canEditNr"] == true
+                        ? () => _editNr(context, dataKeys)
+                        : null,
                   ),
                   _ConfigRow(
                     title: appLocalizations.advancedModeSaTitle,
                     subtitle: appLocalizations.advancedModeSaSubtitle,
-                    enabled: d["saSupported"] == true,
+                    enabled: dataKeys["saSupported"] == true,
+                    onEdit: onEdit != null && dataKeys["canEditNr"] == true
+                        ? () => _editNr(context, dataKeys)
+                        : null,
                   ),
                 ],
               ),
@@ -69,32 +154,59 @@ class CarrierConfigPage extends StatelessWidget {
                   _ConfigRow(
                     title: appLocalizations.advancedModeVolteTitle,
                     subtitle: appLocalizations.advancedModeVolteSubtitle,
-                    enabled: d["volte"] == true,
+                    enabled: dataKeys["volte"] == true,
+                    onEdit: onEdit != null && dataKeys["canEditVolte"] == true
+                        ? () => _editToggle(
+                            context,
+                            feature: "volte",
+                            featureTitle:
+                                appLocalizations.advancedModeVolteTitle,
+                            enabled: dataKeys["volte"] == true,
+                          )
+                        : null,
                   ),
                   _ConfigRow(
                     title: appLocalizations.advancedModeVonrTitle,
                     subtitle: appLocalizations.advancedModeVonrSubtitle,
-                    enabled: d["vonr"] == true,
+                    enabled: dataKeys["vonr"] == true,
+                    onEdit: onEdit != null && dataKeys["canEditVonr"] == true
+                        ? () => _editToggle(
+                            context,
+                            feature: "vonr",
+                            featureTitle:
+                                appLocalizations.advancedModeVonrTitle,
+                            enabled: dataKeys["vonr"] == true,
+                          )
+                        : null,
                   ),
                   _ConfigRow(
                     title: appLocalizations.advancedModeWifiTitle,
                     subtitle: appLocalizations.advancedModeWifiSubtitle,
-                    enabled: d["wfc"] == true,
+                    enabled: dataKeys["wfc"] == true,
+                    onEdit: onEdit != null && dataKeys["canEditWfc"] == true
+                        ? () => _editToggle(
+                            context,
+                            feature: "wfc",
+                            featureTitle:
+                                appLocalizations.advancedModeWifiTitle,
+                            enabled: dataKeys["wfc"] == true,
+                          )
+                        : null,
                   ),
                   _ConfigRow(
                     title: appLocalizations.advancedModeVilteTitle,
                     subtitle: appLocalizations.advancedModeVilteSubtitle,
-                    enabled: d["vt"] == true,
+                    enabled: dataKeys["vt"] == true,
                   ),
                   _ConfigRow(
                     title: appLocalizations.advancedModeCrossTitle,
                     subtitle: appLocalizations.advancedModeCrossSubtitle,
-                    enabled: d["crossSimIms"] == true,
+                    enabled: dataKeys["crossSimIms"] == true,
                   ),
                   _ConfigRow(
                     title: appLocalizations.advancedModeEmergencyTitle,
                     subtitle: appLocalizations.advancedModeEmergencySubtitle,
-                    enabled: d["emergencyWfc"] == true,
+                    enabled: dataKeys["emergencyWfc"] == true,
                   ),
                 ],
               ),
@@ -108,27 +220,27 @@ class CarrierConfigPage extends StatelessWidget {
                   _ConfigRow(
                     title: appLocalizations.advancedModeLteCaTitle,
                     subtitle: appLocalizations.advancedModeLteCaSubtitle,
-                    enabled: d["lteCa"] == true,
+                    enabled: dataKeys["lteCa"] == true,
                   ),
                   _ConfigRow(
                     title: appLocalizations.advancedModeRcsTitle,
                     subtitle: appLocalizations.advancedModeRcsSubtitle,
-                    enabled: d["rcsSupported"] == true,
+                    enabled: dataKeys["rcsSupported"] == true,
                   ),
                   _ConfigRow(
                     title: appLocalizations.advancedModeRcsSingleRegTitle,
                     subtitle: appLocalizations.advancedModeRcsSingleRegSubtitle,
-                    enabled: d["rcsSingleReg"] == true,
+                    enabled: dataKeys["rcsSingleReg"] == true,
                   ),
                   _ConfigRow(
                     title: appLocalizations.advancedModeWfcWifiOnlyTitle,
                     subtitle: appLocalizations.advancedModeWfcWifiOnlySubtitle,
-                    enabled: d["wfcWifiOnly"] == true,
+                    enabled: dataKeys["wfcWifiOnly"] == true,
                   ),
                   _ConfigRow(
                     title: appLocalizations.advancedModeWfcDefaultTitle,
                     subtitle: appLocalizations.advancedModeWfcDefaultSubtitle,
-                    enabled: d["wfcDefaultEnabled"] == true,
+                    enabled: dataKeys["wfcDefaultEnabled"] == true,
                   ),
                 ],
               ),
@@ -144,11 +256,13 @@ class _ConfigRow extends StatelessWidget {
   final String title;
   final String subtitle;
   final bool enabled;
+  final VoidCallback? onEdit;
 
   const _ConfigRow({
     required this.title,
     required this.subtitle,
     required this.enabled,
+    this.onEdit,
   });
 
   @override
@@ -163,6 +277,33 @@ class _ConfigRow extends StatelessWidget {
     final chipFg = enabled
         ? theme.colorScheme.onPrimaryContainer
         : theme.colorScheme.onSurfaceVariant;
+
+    final chip = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+      decoration: BoxDecoration(
+        color: chipBg,
+        borderRadius: BorderRadius.circular(100),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            enabled
+                ? appLocalizations.advancedModeYes
+                : appLocalizations.advancedModeNo,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: chipFg,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+          if (onEdit != null) ...[
+            const SizedBox(width: 5),
+            Icon(Icons.edit_outlined, size: 12, color: chipFg),
+          ],
+        ],
+      ),
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -199,23 +340,24 @@ class _ConfigRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: chipBg,
-              borderRadius: BorderRadius.circular(100),
-            ),
-            child: Text(
-              enabled
-                  ? appLocalizations.advancedModeYes
-                  : appLocalizations.advancedModeNo,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: chipFg,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
+          if (onEdit == null)
+            chip
+          else
+            Tooltip(
+              message: "${appLocalizations.edit} $title",
+              child: Material(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(100),
+                child: InkWell(
+                  onTap: onEdit,
+                  borderRadius: BorderRadius.circular(100),
+                  splashColor: theme.colorScheme.primary.withValues(
+                    alpha: 0.10,
+                  ),
+                  child: chip,
+                ),
               ),
             ),
-          ),
         ],
       ),
     );

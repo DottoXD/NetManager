@@ -10,7 +10,24 @@ class DiagBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (state == DiagConnState.connected) return const SizedBox.shrink();
+    if (state == DiagConnState.connected) {
+      return ValueListenableBuilder<Map<String, dynamic>?>(
+        valueListenable: DiagHub.instance.status,
+        builder: (context, status, child) {
+          if (!DiagHub.instance.daemonOutdated) return const SizedBox.shrink();
+
+          final theme = Theme.of(context);
+
+          return _box(
+            theme,
+            AppLocalizations.of(context)!.advancedModeDiagOutdated,
+            Icons.warning_amber_outlined,
+            theme.colorScheme.tertiaryContainer,
+            theme.colorScheme.onTertiaryContainer,
+          );
+        },
+      );
+    }
 
     final theme = Theme.of(context);
     final appLocalizations = AppLocalizations.of(context)!;
@@ -43,6 +60,16 @@ class DiagBanner extends StatelessWidget {
         return const SizedBox.shrink();
     }
 
+    return _box(theme, label, icon, bg, fg);
+  }
+
+  Widget _box(
+    ThemeData theme,
+    String label,
+    IconData icon,
+    Color bg,
+    Color fg,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(

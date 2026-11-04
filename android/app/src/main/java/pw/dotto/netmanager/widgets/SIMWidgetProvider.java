@@ -23,10 +23,12 @@ import pw.dotto.netmanager.widgets.theme.ThemeEngine;
  * gets built.
  *
  * @author DottoXD
- * @version 0.1.1
+ * @version 0.2.5
  */
 public class SIMWidgetProvider extends AppWidgetProvider {
-    public static final String ACTION_REFRESH_DUALSIM = "pw.dotto.netmanager.ACTION_REFRESH_DUALSIM";
+    public static String getActionRefreshDualSim(Context context) {
+        return context.getPackageName() + ".ACTION_REFRESH_DUALSIM";
+    }
 
     @Override
     public void onUpdate(Context context, AppWidgetManager manager, int[] ids) {
@@ -78,7 +80,7 @@ public class SIMWidgetProvider extends AppWidgetProvider {
 
             core.dispose();
 
-            Intent refreshIntent = new Intent(context, SIMWidgetProvider.class).setAction(ACTION_REFRESH_DUALSIM);
+            Intent refreshIntent = new Intent(context, SIMWidgetProvider.class).setAction(getActionRefreshDualSim(context));
             views.setOnClickPendingIntent(R.id.btn_refresh_dualsim, PendingIntent.getBroadcast(context, 1,
                     refreshIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
 
@@ -114,7 +116,7 @@ public class SIMWidgetProvider extends AppWidgetProvider {
     public void onReceive(Context context, Intent intent) {
         super.onReceive(context, intent);
 
-        if (ACTION_REFRESH_DUALSIM.equals(intent.getAction())) {
+        if (getActionRefreshDualSim(context).equals(intent.getAction())) {
             AppWidgetManager wm = AppWidgetManager.getInstance(context);
             onUpdate(context, wm, wm.getAppWidgetIds(new ComponentName(context, SIMWidgetProvider.class)));
         }

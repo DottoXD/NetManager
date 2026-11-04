@@ -19,10 +19,12 @@ import pw.dotto.netmanager.widgets.theme.ThemeEngine;
  * This class handles the widget's behaviour.
  *
  * @author DottoXD
- * @version 0.1.0
+ * @version 0.2.5
  */
 public class EventWidgetProvider extends AppWidgetProvider {
-    public static final String ACTION_REFRESH_TICKER = "pw.dotto.netmanager.ACTION_REFRESH_TICKER";
+    public static String getActionRefreshTicker(Context context) {
+        return context.getPackageName() + ".ACTION_REFRESH_TICKER";
+    }
 
     @Override
     public void onUpdate(Context context, AppWidgetManager manager, int[] ids) {
@@ -35,7 +37,7 @@ public class EventWidgetProvider extends AppWidgetProvider {
             views.setRemoteAdapter(R.id.list_events, serviceIntent);
             views.setEmptyView(R.id.list_events, android.R.id.empty);
 
-            Intent refreshIntent = new Intent(context, EventWidgetProvider.class).setAction(ACTION_REFRESH_TICKER);
+            Intent refreshIntent = new Intent(context, EventWidgetProvider.class).setAction(getActionRefreshTicker(context));
             views.setOnClickPendingIntent(R.id.btn_refresh_events, PendingIntent.getBroadcast(context, 2, refreshIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
 
@@ -59,7 +61,7 @@ public class EventWidgetProvider extends AppWidgetProvider {
     public void onReceive(Context context, Intent intent) {
         super.onReceive(context, intent);
 
-        if (ACTION_REFRESH_TICKER.equals(intent.getAction())) {
+        if (getActionRefreshTicker(context).equals(intent.getAction())) {
             AppWidgetManager wm = AppWidgetManager.getInstance(context);
             int[] ids = wm.getAppWidgetIds(new ComponentName(context, EventWidgetProvider.class));
 

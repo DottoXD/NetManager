@@ -127,6 +127,13 @@ class _DiagUtilsPageState extends State<DiagUtilsPage> {
     }
   }
 
+  Future<void> _start() async {
+    await HapticService().triggerHaptic(HapticType.selection, context);
+
+    _hub.pushLog("STATUS", "", code: DiagLogCode.startRequested);
+    await _hub.reconnect();
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -216,12 +223,21 @@ class _DiagUtilsPageState extends State<DiagUtilsPage> {
       case DiagConnState.connected:
         final vendor = status?["vendor"] as String?;
         final transport = status?["transport"] as String?;
-        label = (vendor != null && transport != null)
+        final outdated = _hub.daemonOutdated;
+        label = outdated
+            ? appLocalizations.advancedModeDiagOutdated
+            : (vendor != null && transport != null)
             ? appLocalizations.advancedModeDiagConnectedVia(vendor, transport)
             : appLocalizations.advancedModeDiagConnected;
-        icon = Icons.check_circle_outlined;
-        bg = theme.colorScheme.primaryContainer;
-        fg = theme.colorScheme.onPrimaryContainer;
+        icon = outdated
+            ? Icons.warning_amber_outlined
+            : Icons.check_circle_outlined;
+        bg = outdated
+            ? theme.colorScheme.tertiaryContainer
+            : theme.colorScheme.primaryContainer;
+        fg = outdated
+            ? theme.colorScheme.onTertiaryContainer
+            : theme.colorScheme.onPrimaryContainer;
         break;
       case DiagConnState.disconnected:
         label = appLocalizations.advancedModeDiagDisconnecting;
@@ -242,28 +258,43 @@ class _DiagUtilsPageState extends State<DiagUtilsPage> {
         connState == DiagConnState.error;
     final stopping = _stopping.value;
 
+    final Widget? trailing;
+    if (stopping) {
+      trailing = IconButton(
+        tooltip: appLocalizations.advancedModeDiagStopTooltip,
+        icon: SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: theme.colorScheme.error,
+          ),
+        ),
+        onPressed: null,
+      );
+    } else if (canStop) {
+      trailing = IconButton(
+        tooltip: appLocalizations.advancedModeDiagStopTooltip,
+        icon: Icon(Icons.stop_circle_outlined, color: theme.colorScheme.error),
+        onPressed: _confirmStop,
+      );
+    } else if (connState == DiagConnState.disconnected) {
+      trailing = IconButton(
+        tooltip: appLocalizations.advancedModeDiagStartTooltip,
+        icon: Icon(
+          Icons.play_circle_outlined,
+          color: theme.colorScheme.primary,
+        ),
+        onPressed: _start,
+      );
+    } else {
+      trailing = null;
+    }
+
     return InfoCard(
       title: appLocalizations.advancedModeDiagCardTitle,
       icon: Icons.settings_phone_outlined,
-      trailing: canStop
-          ? IconButton(
-              tooltip: appLocalizations.advancedModeDiagStopTooltip,
-              icon: stopping
-                  ? SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: theme.colorScheme.error,
-                      ),
-                    )
-                  : Icon(
-                      Icons.stop_circle_outlined,
-                      color: theme.colorScheme.error,
-                    ),
-              onPressed: stopping ? null : _confirmStop,
-            )
-          : null,
+      trailing: trailing,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
@@ -443,6 +474,8 @@ class _LogEntry extends StatelessWidget {
         return appLocalizations.advancedModeDiagLogStopped;
       case DiagLogCode.stopUnconfirmed:
         return appLocalizations.advancedModeDiagLogStopUnconfirmed;
+      case DiagLogCode.startRequested:
+        return appLocalizations.advancedModeDiagLogStartRequested;
       case null:
         return entry.message;
     }
