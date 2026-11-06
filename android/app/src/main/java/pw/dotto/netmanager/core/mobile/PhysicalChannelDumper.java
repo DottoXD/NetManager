@@ -31,7 +31,7 @@ import pw.dotto.netmanager.utils.DebugLogger;
  * PhysicalChannelDumper...
  *
  * @author DottoXD
- * @version 0.2.0
+ * @version 0.2.5
  */
 public class PhysicalChannelDumper {
     private static final int LISTEN_PHYSICAL_CHANNEL_CONFIGURATION = 0x00100000;
@@ -43,7 +43,7 @@ public class PhysicalChannelDumper {
     private final Context context;
     private final SharedPreferences sharedPreferences;
 
-    private final List<String> physicalChannelData = new ArrayList<>();
+    private volatile String[] physicalChannelData = new String[0];
 
     public PhysicalChannelDumper(TelephonyManager telephonyManager, Context context) {
         this.telephonyManager = telephonyManager;
@@ -79,11 +79,7 @@ public class PhysicalChannelDumper {
                         List<?> configs = (List<?>) method.invoke(telephonyManager);
 
                         if (configs != null) {
-                            physicalChannelData.clear();
-                            for (Object obj : configs) {
-                                DebugLogger.add("Old PhysicalChannelDumper config: " + obj.toString());
-                                physicalChannelData.add(obj.toString());
-                            }
+                            updatePhysicalChannelData(configs, "Old");
                         }
                     } catch (Exception e) {
                         StringWriter sw = new StringWriter();
@@ -123,11 +119,7 @@ public class PhysicalChannelDumper {
                 DebugLogger.add("Received modern PhysicalChannelDumper update!");
 
                 if (configs != null) {
-                    physicalChannelData.clear();
-                    for (Object physicalChannelConfig : configs) {
-                        DebugLogger.add("Modern PhysicalChannelDumper config: " + physicalChannelConfig.toString());
-                        physicalChannelData.add(physicalChannelConfig.toString());
-                    }
+                    updatePhysicalChannelData(configs, "Modern");
                 }
             }
         };
@@ -148,8 +140,23 @@ public class PhysicalChannelDumper {
         }
     }
 
+    private void updatePhysicalChannelData(List<?> configs, String source) {
+        List<String> snapshot = new ArrayList<>(configs.size());
+
+        for (Object config : configs) {
+            if (config == null)
+                continue;
+
+            String value = config.toString();
+            DebugLogger.add(source + " PhysicalChannelDumper config: " + value + ".");
+            snapshot.add(value);
+        }
+
+        physicalChannelData = snapshot.toArray(new String[0]);
+    }
+
     public String[] getPhysicalChannelData() {
-        return physicalChannelData.toArray(new String[0]);
+        return physicalChannelData.clone();
     }
 
     /**

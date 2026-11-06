@@ -35,6 +35,7 @@ import pw.dotto.netmanager.core.mobile.SIMData;
 import pw.dotto.netmanager.core.processors.DevicePatchRegistry;
 import pw.dotto.netmanager.core.processors.postprocessors.Postprocessor;
 import pw.dotto.netmanager.core.processors.preprocessors.Preprocessor;
+import pw.dotto.netmanager.core.shizuku.TelephonyHiddenApiAccess;
 import pw.dotto.netmanager.core.sources.CellDataSource;
 import pw.dotto.netmanager.core.sources.DataSourceSelector;
 import pw.dotto.netmanager.core.sources.telephony.TelephonyCellDataSource;
@@ -50,7 +51,7 @@ import pw.dotto.netmanager.utils.Permissions;
  * data sources and pretty much everything else related to mobile cell data.
  *
  * @author DottoXD
- * @version 0.2.3
+ * @version 0.2.5
  */
 public class NetManagerCore {
     private static volatile NetManagerCore instance;
@@ -81,6 +82,9 @@ public class NetManagerCore {
 
     private NetManagerCore(Context context) {
         this.appContext = context.getApplicationContext();
+
+        TelephonyHiddenApiAccess.initializeIfAvailable();
+
         this.subscriptionTracker = new SubscriptionTracker(appContext);
 
         this.eventManager = EventManager.getInstance(appContext);
@@ -283,8 +287,14 @@ public class NetManagerCore {
 
         CellData primaryCell = simData.getPrimaryCell();
         int networkGen = simData.getNetworkGen();
-        if (networkGen == 4 && simData.getActiveCells().length > 0 && simData.getActiveCells()[0] instanceof NrCellData)
-            networkGen++;
+        if (networkGen == 4) {
+            for (CellData activeCell : simData.getActiveCells()) {
+                if (activeCell instanceof NrCellData) {
+                    networkGen = 5;
+                    break;
+                }
+            }
+        }
 
         return new CellSnapshot(simData.getNetwork(), primaryCell.getCellIdentifier(),
                 primaryCell.getBand() == -1 ? primaryCell.getBasicCellData().getBand() : primaryCell.getBand(),

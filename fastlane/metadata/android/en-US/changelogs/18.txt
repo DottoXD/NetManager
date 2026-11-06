@@ -1,1 +1,2 @@
 - Fixed an home screen crash.
+- The SIM data widget has been updated.

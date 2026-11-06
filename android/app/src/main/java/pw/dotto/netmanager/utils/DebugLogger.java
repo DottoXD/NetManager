@@ -11,7 +11,7 @@ import java.util.Locale;
  * debug data.
  *
  * @author DottoXD
- * @version 0.0.3
+ * @version 0.2.5
  */
 public class DebugLogger {
     private static final List<String> logs = new ArrayList<>();
@@ -22,7 +22,7 @@ public class DebugLogger {
      *
      * @param msg The debug log's message.
      */
-    public static void add(String msg) {
+    public static synchronized void add(String msg) {
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
         String timestamp = sdf.format(new Date());
         logs.add("[" + timestamp + "] - " + msg);
@@ -31,7 +31,7 @@ public class DebugLogger {
             logs.remove(0);
     }
 
-    public static String[] getLogs() {
+    public static synchronized String[] getLogs() {
         return logs.toArray(new String[0]);
     }
 }

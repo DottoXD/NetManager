@@ -497,7 +497,6 @@
   "advancedModeDiagStop": "Ferma",
   "advancedModeDiagStopTooltip": "Ferma NetManagerDiag",
   "advancedModeDiagCardTitle": "Info di NetManagerDiag",
-  "advancedModeDiagConnecting": "Connessione in corso...",
   "advancedModeDiagDisconnecting": "Disconnesso",
   "advancedModeDiagConnected": "Connessso.",
   "advancedModeDiagConnectedVia": "Connesso ({vendor} + {transport}).",

@@ -14,6 +14,7 @@ import pw.dotto.netmanager.core.Manager;
 import pw.dotto.netmanager.core.mobile.SIMData;
 import pw.dotto.netmanager.MainActivity;
 import pw.dotto.netmanager.R;
+import pw.dotto.netmanager.core.mobile.celldatas.NrCellData;
 import pw.dotto.netmanager.widgets.theme.ThemeEngine;
 
 /**
@@ -48,7 +49,7 @@ public class SIMWidgetProvider extends AppWidgetProvider {
 
                 if (data1 != null && data1.getPrimaryCell() != null) {
                     views.setTextViewText(R.id.txt_sim1_signal, data1.getPrimaryCell().getProcessedSignal() + "dBm");
-                    views.setTextViewText(R.id.txt_sim1_band, "B" + data1.getPrimaryCell().getBand());
+                    views.setTextViewText(R.id.txt_sim1_band, (data1.getPrimaryCell() instanceof NrCellData ? "N" : "B") + data1.getPrimaryCell().getBand());
                 }
 
                 populateChip(views, R.id.chip_sim1_tech, R.id.txt_sim1_tech, core, slot1);
@@ -70,7 +71,7 @@ public class SIMWidgetProvider extends AppWidgetProvider {
 
                 if (data2 != null && data2.getPrimaryCell() != null) {
                     views.setTextViewText(R.id.txt_sim2_signal, data2.getPrimaryCell().getProcessedSignal() + "dBm");
-                    views.setTextViewText(R.id.txt_sim2_band, "B" + data2.getPrimaryCell().getBand());
+                    views.setTextViewText(R.id.txt_sim2_band, (data2.getPrimaryCell() instanceof NrCellData ? "N" : "B") + data2.getPrimaryCell().getBand());
                 }
 
                 populateChip(views, R.id.chip_sim2_tech, R.id.txt_sim2_tech, core, slot2);

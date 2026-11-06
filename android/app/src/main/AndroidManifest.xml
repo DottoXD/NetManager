@@ -117,10 +117,6 @@
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
-    <instrumentation
-        android:name=".core.shizuku.CarrierConfigInstrumentation"
-        android:targetPackage="${applicationId}"
-        android:functionalTest="false" />
     <queries>
         <package android:name="com.android.phone" />
         <package android:name="com.android.settings" />

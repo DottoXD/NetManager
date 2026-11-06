@@ -1,1 +1,2 @@
 - Risolto un crash nella schermata home.
+- Il widget sui dati SIM è stato aggiornato.
