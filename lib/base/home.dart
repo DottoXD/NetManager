@@ -102,6 +102,7 @@ class _HomeState extends State<Home> {
     null,
   );
   final _toggleAdvancedModeAutomaticallyNotifier = ValueNotifier(false);
+  final _autoStartNetManagerDiagOnAdvancedModeNotifier = ValueNotifier(false);
 
   bool _privacyPolicyReviewed = false;
   Future<bool>? _ongoingReviewRequest;
@@ -172,6 +173,11 @@ class _HomeState extends State<Home> {
         widget.sharedPreferences.getBool("advancedMode") ?? false;
     _toggleAdvancedModeAutomaticallyNotifier.value =
         widget.sharedPreferences.getBool("toggleAdvancedModeAutomatically") ??
+        false;
+    _autoStartNetManagerDiagOnAdvancedModeNotifier.value =
+        widget.sharedPreferences.getBool(
+          "autoStartNetManagerDiagOnAdvancedMode",
+        ) ??
         false;
 
     try {
@@ -277,6 +283,7 @@ class _HomeState extends State<Home> {
     _advancedModeToggleNotifier.dispose();
     _advancedUpdateNotifier.dispose();
     _toggleAdvancedModeAutomaticallyNotifier.dispose();
+    _autoStartNetManagerDiagOnAdvancedModeNotifier.dispose();
 
     super.dispose();
   }
@@ -352,6 +359,8 @@ class _HomeState extends State<Home> {
                     mainPlatform: widget.platform,
                     currentSimSlotNotifier: _currentSimSlotNotifier,
                     updateIntervalNotifier: _updateIntervalNotifier,
+                    autoStartNetManagerDiagOnAdvancedModeNotifier:
+                        _autoStartNetManagerDiagOnAdvancedModeNotifier,
                     onUpdateButtonPressed: (callback) {
                       _advancedUpdateNotifier.value = callback;
                     },
@@ -447,6 +456,7 @@ class _HomeState extends State<Home> {
               _advancedModeNotifier,
               _advancedModeToggleNotifier,
               _toggleAdvancedModeAutomaticallyNotifier,
+              _autoStartNetManagerDiagOnAdvancedModeNotifier,
               onRequestPrivacyPolicyReview: _ensurePrivacyPolicyReviewed,
             ),
           ],

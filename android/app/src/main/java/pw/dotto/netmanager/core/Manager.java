@@ -7,6 +7,7 @@ import android.telephony.TelephonyManager;
 import java.util.List;
 
 import pw.dotto.netmanager.core.base.SIMSlotState;
+import pw.dotto.netmanager.core.base.CacheEntry;
 import pw.dotto.netmanager.core.events.EventManager;
 import pw.dotto.netmanager.core.mobile.CellSnapshot;
 import pw.dotto.netmanager.core.mobile.SIMData;
@@ -20,7 +21,7 @@ import pw.dotto.netmanager.core.sources.telephony.TelephonyCellDataSource;
  * rewriting substantial (and working) parts of the codebase.
  *
  * @author DottoXD
- * @version 0.2.3
+ * @version 0.2.5
  */
 public class Manager {
     private final Context context;
@@ -117,6 +118,11 @@ public class Manager {
 
     public CellSnapshot getCellSnapshot(int simId) {
         return core.getLatestSnapshot(simId);
+    }
+
+    public long getSimDataUpdatedAtMs(int simId) {
+        CacheEntry entry = core.getSimStateCache().getCacheEntry(simId);
+        return entry == null ? 0L : entry.timestampMillis;
     }
 
     public int getSimCount() {

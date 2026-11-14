@@ -1,2 +1,3 @@
 - Risolto un crash nella schermata home.
 - Il widget sui dati SIM è stato aggiornato.
+- Risolto un blocco dell'applicazione sui dispositivi con versioni moderne di Android.

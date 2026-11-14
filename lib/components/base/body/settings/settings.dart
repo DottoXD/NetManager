@@ -48,7 +48,8 @@ class SettingsBody extends StatefulWidget {
     this.countLikelyAsActiveNotifier,
     this.advancedModeNotifier,
     this.advancedModeToggleNotifier,
-    this.toggleAdvancedModeAutomaticallyNotifier, {
+    this.toggleAdvancedModeAutomaticallyNotifier,
+    this.autoStartNetManagerDiagOnAdvancedModeNotifier, {
     super.key,
     required this.onRequestPrivacyPolicyReview,
   });
@@ -84,6 +85,7 @@ class SettingsBody extends StatefulWidget {
   final ValueNotifier<bool> advancedModeNotifier;
   final ValueNotifier<bool> advancedModeToggleNotifier;
   final ValueNotifier<bool> toggleAdvancedModeAutomaticallyNotifier;
+  final ValueNotifier<bool> autoStartNetManagerDiagOnAdvancedModeNotifier;
 
   final Future<bool> Function() onRequestPrivacyPolicyReview;
 
@@ -124,6 +126,7 @@ class _SettingsBodyState extends State<SettingsBody>
   late ValueNotifier<bool> advancedModeNotifier;
   late ValueNotifier<bool> advancedModeToggleNotifier;
   late ValueNotifier<bool> toggleAdvancedModeAutomaticallyNotifier;
+  late ValueNotifier<bool> autoStartNetManagerDiagOnAdvancedMode;
 
   late TextEditingController _mapTilesTemplateController;
   late TextEditingController _speedtestInstanceController;
@@ -146,6 +149,7 @@ class _SettingsBodyState extends State<SettingsBody>
   bool _checkUpdates = false;
   bool _advancedMode = false;
   bool _toggleAdvancedModeAutomatically = false;
+  bool _autoStartNetManagerDiagOnAdvancedMode = false;
   bool _logEvents = false;
   bool _metricSystem = true;
   String _mapTilesTemplate = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
@@ -222,6 +226,8 @@ class _SettingsBodyState extends State<SettingsBody>
     advancedModeToggleNotifier = widget.advancedModeToggleNotifier;
     toggleAdvancedModeAutomaticallyNotifier =
         widget.toggleAdvancedModeAutomaticallyNotifier;
+    autoStartNetManagerDiagOnAdvancedMode =
+        widget.autoStartNetManagerDiagOnAdvancedModeNotifier;
 
     updateData();
     _positionPrecisionSelection = positionPrecisions[_positionPrecision];
@@ -284,6 +290,9 @@ class _SettingsBodyState extends State<SettingsBody>
       _toggleAdvancedModeAutomatically =
           sharedPreferences.getBool("toggleAdvancedModeAutomatically") ??
           _toggleAdvancedModeAutomatically;
+      _autoStartNetManagerDiagOnAdvancedMode =
+          sharedPreferences.getBool("autoStartNetManagerDiagOnAdvancedMode") ??
+          _autoStartNetManagerDiagOnAdvancedMode;
       _logEvents = sharedPreferences.getBool("logEvents") ?? _logEvents;
       _metricSystem =
           sharedPreferences.getBool("metricSystem") ?? _metricSystem;
@@ -721,6 +730,28 @@ class _SettingsBodyState extends State<SettingsBody>
 
                   setBool("toggleAdvancedModeAutomatically", value);
                   toggleAdvancedModeAutomaticallyNotifier.value = value;
+
+                  updateData();
+                },
+              ),
+            ),
+            ListTile(
+              title: Text(
+                _appLocalizations.settingsAutoStartNetManagerDiagTitle,
+              ),
+              subtitle: Text(
+                _appLocalizations.settingsAutoStartNetManagerDiagDescription,
+              ),
+              trailing: Switch(
+                value: _autoStartNetManagerDiagOnAdvancedMode,
+                onChanged: (bool value) async {
+                  await HapticService().triggerHaptic(
+                    HapticType.selection,
+                    context,
+                  );
+
+                  setBool("autoStartNetManagerDiagOnAdvancedMode", value);
+                  autoStartNetManagerDiagOnAdvancedMode.value = value;
 
                   updateData();
                 },

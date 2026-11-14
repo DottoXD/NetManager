@@ -76,7 +76,7 @@ All data is non-linkable to the user and is collected with the open source [Sent
 
 *Feature availability may vary by device, Android version, modem, carrier, and required permissions.*
 
-Comparison based on publicly documented features as of October 2026.
+Comparison based on publicly documented features as of November 2026.
 
 | Feature / App  | NetManager | NetMonster | Network Signal Guru | G-Mon Pro | Network Cell Info Lite |
 | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
@@ -93,7 +93,7 @@ Comparison based on publicly documented features as of October 2026.
 | Event/cell logging | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
 | Shizuku (shell) support for extra data/features | ✔️ | ✔️ | ❌ | ❌ | ❌ |
 | Advanced diag (root) data | - (Planned) | ❌ | ✔️ | ❌ | ❌ |
-| Band locking | - (Planned) | ❌ | ✔️ | ❌ | ❌ |
+| Band locking | - (Planned) | ✔️ | ✔️ | ❌ | ❌ |
 | Open source | ✔️ | ❗ (Only NetMonster Core) | ❌ | ❌ | ❌ |
 | Fully free | ✔️ | ❗ (Ads) | ❌ | ✔️ | ❗ (Ads) |
 

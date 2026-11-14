@@ -1,2 +1,3 @@
 - Fixed an home screen crash.
 - The SIM data widget has been updated.
+- Fixed an ANR issue on devices with modern Android versions.

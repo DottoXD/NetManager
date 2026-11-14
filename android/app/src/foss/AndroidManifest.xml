@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <instrumentation
-        android:name="${applicationId}.shizuku.CarrierConfigInstrumentation"
+        android:name="pw.dotto.netmanager.core.shizuku.CarrierConfigInstrumentation"
         android:targetPackage="${applicationId}"
         android:functionalTest="false" />
 </manifest>

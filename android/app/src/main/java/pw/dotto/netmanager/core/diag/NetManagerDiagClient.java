@@ -190,10 +190,21 @@ public class NetManagerDiagClient {
     }
 
     public void connect() {
+        connect(true);
+    }
+
+    public void connectIfRunning() {
+        connect(false);
+    }
+
+    public void connect(boolean launchIfMissing) {
         if (connected.get() || !starting.compareAndSet(false, true))
             return;
 
-        new Thread(this::connectBlocking, "NetManagerDiagConnect").start();
+        new Thread(
+                () -> connectBlocking(launchIfMissing),
+                "NetManagerDiagConnect"
+        ).start();
     }
 
     private void logEvent(String action) {
@@ -201,7 +212,7 @@ public class NetManagerDiagClient {
                 + action + "'.");
     }
 
-    private void connectBlocking() {
+    private void connectBlocking(boolean launchIfMissing) {
         try {
             connectStartMs = SystemClock.elapsedRealtime();
             loggedConnectedStatus = false;
@@ -210,9 +221,13 @@ public class NetManagerDiagClient {
 
             LocalSocket s = tryConnect();
             if (s == null) {
-                logEvent("NetManagerDiag daemon is not running, launching...");
-                launchDaemon();
-                logEvent("NetManagerDiag daemon has been launched!");
+                if(launchIfMissing) {
+                    logEvent("NetManagerDiag daemon is not running, launching...");
+                    launchDaemon();
+                    logEvent("NetManagerDiag daemon has been launched!");
+                } else {
+                    logEvent("Automatic startup is disabled; checking for an existing daemon...");
+                }
 
                 for (int i = 0; i < CONNECT_RETRIES && s == null; i++) {
                     sleepQuietly(CONNECT_RETRY_DELAY_MS);
@@ -223,8 +238,15 @@ public class NetManagerDiagClient {
             }
 
             if (s == null) {
-                DebugLogger.add("NetManagerDiag: could not connect after launching the daemon.");
-                notifyConnectFailed();
+                DebugLogger.add(launchIfMissing
+                        ? "NetManagerDiag: could not connect after launching the daemon."
+                        : "NetManagerDiag: no existing daemon was available to connect to.");
+
+                if (launchIfMissing)
+                    notifyConnectFailed();
+                else
+                    notifyListeners(Listener::onDisconnected);
+
                 return;
             }
 
@@ -479,8 +501,8 @@ public class NetManagerDiagClient {
 
         if (connected.get())
             sendEnableRequest();
-        else if (wanted)
-            connect();
+        /*else if (wanted)
+            connect();*/
     }
 
     private Set<String> mergedFeatures() {

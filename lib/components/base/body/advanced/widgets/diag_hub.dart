@@ -43,6 +43,8 @@ class DiagHub {
     "pw.dotto.netmanager/diag/events",
   );
 
+  late ValueNotifier<bool> _autoStartNetManagerDiagOnAdvancedModeNotifier;
+
   static const List<String> features = ["lte_serving_cell", "lte_bearers"];
   static const int _maxLogEntries = 500;
   static const Duration _flushDelay = Duration(milliseconds: 150);
@@ -90,7 +92,11 @@ class DiagHub {
     return [for (final id in ids) merged[id]!];
   }
 
-  void acquire() {
+  void acquire({
+    required ValueNotifier<bool> autoStartNetManagerDiagOnAdvancedModeNotifier,
+  }) {
+    _autoStartNetManagerDiagOnAdvancedModeNotifier =
+        autoStartNetManagerDiagOnAdvancedModeNotifier;
     if (_refs++ == 0) _start();
   }
 
@@ -130,12 +136,15 @@ class DiagHub {
       },
     );
 
-    await _connectAndRequest();
+    await _connectAndRequest(automatic: true);
   }
 
-  Future<void> _connectAndRequest() async {
+  Future<void> _connectAndRequest({required bool automatic}) async {
     try {
-      await _method.invokeMethod("connect");
+      await _method.invokeMethod("connect", {
+        "automatic": automatic,
+        "autostart": _autoStartNetManagerDiagOnAdvancedModeNotifier.value,
+      });
       await _method.invokeMethod("requestFeatures", {
         "features": features,
         "wanted": true,
@@ -167,7 +176,7 @@ class DiagHub {
   Future<void> reconnect() async {
     connState.value = DiagConnState.connecting;
     lastError.value = null;
-    await _connectAndRequest();
+    await _connectAndRequest(automatic: false);
   }
 
   void _onEvent(dynamic raw) {
