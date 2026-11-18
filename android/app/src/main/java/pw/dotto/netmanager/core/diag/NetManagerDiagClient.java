@@ -50,7 +50,7 @@ public class NetManagerDiagClient {
     private static final int CONNECT_RETRIES = 50;
     private static final long CONNECT_RETRY_DELAY_MS = 100;
 
-    private static final int EXPECTED_PROTOCOL = 1;
+    private static final int EXPECTED_PROTOCOL = 3;
 
     private static volatile NetManagerDiagClient instance;
 
@@ -89,6 +89,14 @@ public class NetManagerDiagClient {
 
         void onLteBearer(LteBearerEvent event);
 
+        void onUmtsCellInfo(UmtsCellInfoEvent event);
+
+        void onUmtsServingMeas(UmtsServingMeasEvent event);
+
+        void onGsmCellInfo(GsmCellInfoEvent event);
+
+        void onGsmServingMeas(GsmServingMeasEvent event);
+
         void onError(String message);
 
         void onDisconnected();
@@ -114,6 +122,7 @@ public class NetManagerDiagClient {
         public double rsrp_dbm;
         public double rsrq_db;
         public double rssi_dbm;
+        public Long age_ms;
     }
 
     public static class LteCellInfoEvent {
@@ -122,6 +131,8 @@ public class NetManagerDiagClient {
         public int earfcn;
         public int pci;
         public Double dl_bandwidth_mhz;
+        public Integer num_antennas;
+        public Long age_ms;
     }
 
     public static class NrLayerJson {
@@ -130,6 +141,49 @@ public class NetManagerDiagClient {
         public Integer serving_ssb;
         public List<Double> serving_rsrp_dbm;
         public int num_cells;
+    }
+
+    public static class UmtsCellInfoEvent {
+        public String event;
+        public Integer slot;
+        public long uarfcn_dl;
+        public long uarfcn_ul;
+        public int psc;
+        public long cell_id;
+        public int rnc;
+        public int lac;
+        public String mcc;
+        public String mnc;
+        public Long age_ms;
+    }
+
+    public static class UmtsServingMeasEvent {
+        public String event;
+        public Integer slot;
+        public int uarfcn;
+        public int psc;
+        public int rscp_dbm;
+        public int ecio_db;
+        public Long age_ms;
+    }
+
+    public static class GsmCellInfoEvent {
+        public String event;
+        public Integer slot;
+        public int arfcn;
+        public int bsic;
+        public int cell_id;
+        public int lac;
+        public String mcc;
+        public String mnc;
+        public Long age_ms;
+    }
+
+    public static class GsmServingMeasEvent {
+        public String event;
+        public Integer slot;
+        public double rssi_dbm;
+        public Long age_ms;
     }
 
     public static class LteBearerEvent {
@@ -142,12 +196,14 @@ public class NetManagerDiagClient {
         public String pdn_type;
         public Long apn_ambr_dl_kbps;
         public Long apn_ambr_ul_kbps;
+        public Long age_ms;
     }
 
     public static class NrMeasurementsEvent {
         public String event;
         public Integer slot;
         public List<NrLayerJson> layers;
+        public Long age_ms;
     }
 
     private NetManagerDiagClient(Context context) {
@@ -203,8 +259,7 @@ public class NetManagerDiagClient {
 
         new Thread(
                 () -> connectBlocking(launchIfMissing),
-                "NetManagerDiagConnect"
-        ).start();
+                "NetManagerDiagConnect").start();
     }
 
     private void logEvent(String action) {
@@ -221,7 +276,7 @@ public class NetManagerDiagClient {
 
             LocalSocket s = tryConnect();
             if (s == null) {
-                if(launchIfMissing) {
+                if (launchIfMissing) {
                     logEvent("NetManagerDiag daemon is not running, launching...");
                     launchDaemon();
                     logEvent("NetManagerDiag daemon has been launched!");
@@ -469,6 +524,22 @@ public class NetManagerDiagClient {
                 LteBearerEvent ev = gson.fromJson(obj, LteBearerEvent.class);
                 notifyListeners(l -> l.onLteBearer(ev));
             }
+            case "umts_cell_info" -> {
+                UmtsCellInfoEvent ev = gson.fromJson(obj, UmtsCellInfoEvent.class);
+                notifyListeners(l -> l.onUmtsCellInfo(ev));
+            }
+            case "umts_serving_meas" -> {
+                UmtsServingMeasEvent ev = gson.fromJson(obj, UmtsServingMeasEvent.class);
+                notifyListeners(l -> l.onUmtsServingMeas(ev));
+            }
+            case "gsm_cell_info" -> {
+                GsmCellInfoEvent ev = gson.fromJson(obj, GsmCellInfoEvent.class);
+                notifyListeners(l -> l.onGsmCellInfo(ev));
+            }
+            case "gsm_serving_meas" -> {
+                GsmServingMeasEvent ev = gson.fromJson(obj, GsmServingMeasEvent.class);
+                notifyListeners(l -> l.onGsmServingMeas(ev));
+            }
             case "nr_measurements" -> {
                 NrMeasurementsEvent ev = gson.fromJson(obj, NrMeasurementsEvent.class);
                 lastNrMeasurements = ev;
@@ -501,8 +572,10 @@ public class NetManagerDiagClient {
 
         if (connected.get())
             sendEnableRequest();
-        /*else if (wanted)
-            connect();*/
+        /*
+         * else if (wanted)
+         * connect();
+         */
     }
 
     private Set<String> mergedFeatures() {

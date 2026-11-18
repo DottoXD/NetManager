@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/database/cell_database.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 
@@ -136,20 +137,45 @@ class _CellEditorDialogState extends State<CellEditorDialog> {
                 ),
                 FilledButton.icon(
                   onPressed: () async {
-                    await CellDatabase.updateCell(
-                      id: cell["id"] as int,
-                      cid: int.tryParse(cidController.text) ?? cell["cid"],
-                      networkGen: networkGen,
-                      latitude:
-                          double.tryParse(latController.text) ??
-                          cell["latitude"],
-                      longitude:
-                          double.tryParse(lngController.text) ??
-                          cell["longitude"],
-                      description: descController.text,
-                      channelNumber: int.tryParse(channelController.text),
-                    );
-                    if (context.mounted) Navigator.of(context).pop(true);
+                    try {
+                      final int changed = await CellDatabase.updateCell(
+                        id: cell["id"] as int,
+                        cid: int.tryParse(cidController.text) ?? cell["cid"],
+                        networkGen: networkGen,
+                        latitude:
+                            double.tryParse(latController.text) ??
+                            cell["latitude"],
+                        longitude:
+                            double.tryParse(lngController.text) ??
+                            cell["longitude"],
+                        description: descController.text,
+                        channelNumber: int.tryParse(channelController.text),
+                      );
+
+                      if (!context.mounted) return;
+
+                      if (changed == 0) {
+                        await showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return ErrorDialog(
+                              e: appLocalizations.duplicateCellId,
+                            );
+                          },
+                        );
+                      } else {
+                        Navigator.of(context).pop(true);
+                      }
+                    } catch (e) {
+                      if (!context.mounted) return;
+
+                      await showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return ErrorDialog(e: e);
+                        },
+                      );
+                    }
                   },
                   icon: const Icon(Icons.edit_outlined),
                   label: Text(appLocalizations.close),

@@ -26,6 +26,10 @@ class _DiagUtilsPageState extends State<DiagUtilsPage> {
     "LTE MEAS",
     "CELL INFO",
     "BEARER",
+    "UMTS CELL",
+    "UMTS MEAS",
+    "GSM CELL",
+    "GSM MEAS",
     "ERROR",
     "DISCONNECT",
   ];
@@ -435,6 +439,10 @@ class _LogEntry extends StatelessWidget {
       case "LTE MEAS":
       case "CELL INFO":
       case "BEARER":
+      case "UMTS CELL":
+      case "UMTS MEAS":
+      case "GSM CELL":
+      case "GSM MEAS":
         return (
           theme.colorScheme.primaryContainer,
           theme.colorScheme.onPrimaryContainer,

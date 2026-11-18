@@ -18,23 +18,23 @@ class CellDatabase {
 
     return await openDatabase(
       dbPath,
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         await db.execute('''
-          CREATE TABLE cells (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            networkgen INTEGER,
-            plmn TEXT,
-            cid INTEGER,
-            latitude REAL,
-            longitude REAL,
-            description TEXT,
-            channelnumber INTEGER
-          )
-        ''');
+        CREATE TABLE cells (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          networkgen INTEGER,
+          plmn TEXT NOT NULL,
+          cid INTEGER NOT NULL,
+          latitude REAL,
+          longitude REAL,
+          description TEXT,
+          channelnumber INTEGER
+        )
+      ''');
 
         await db.execute(
-          "CREATE INDEX idx_cells_plmn_cid ON cells (plmn, cid)",
+          "CREATE UNIQUE INDEX idx_cells_plmn_cid_unique ON cells (plmn, cid)",
         );
 
         await db.execute(
@@ -50,6 +50,27 @@ class CellDatabase {
           await db.execute(
             "CREATE INDEX IF NOT EXISTS idx_cells_plmn_channelnumber ON cells (plmn, channelnumber)",
           );
+        }
+        if (oldVersion < 3) {
+          await db.execute(
+            "CREATE INDEX IF NOT EXISTS idx_cells_plmn_cid ON cells (plmn, cid)",
+          );
+
+          await db.execute('''
+          DELETE FROM cells
+          WHERE EXISTS (
+            SELECT 1 FROM cells AS earlier
+            WHERE earlier.plmn = cells.plmn
+              AND earlier.cid = cells.cid
+              AND earlier.id < cells.id
+          )
+        ''');
+
+          await db.execute(
+            "CREATE UNIQUE INDEX idx_cells_plmn_cid_unique ON cells (plmn, cid)",
+          );
+
+          await db.execute("DROP INDEX IF EXISTS idx_cells_plmn_cid");
         }
       },
     );
@@ -263,6 +284,7 @@ class CellDatabase {
       },
       where: "id = ?",
       whereArgs: [id],
+      conflictAlgorithm: ConflictAlgorithm.ignore,
     );
   }
 }

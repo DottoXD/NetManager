@@ -1,3 +1,6 @@
 - Fixed an home screen crash.
 - The SIM data widget has been updated.
 - Fixed an ANR issue on devices with modern Android versions.
+- Map tiles URLs are now validated to avoid errors/crashes.
+- Fixed a crash which occured when importing big cell databases.
+- Fixed a stability issue with drive tests recordings.

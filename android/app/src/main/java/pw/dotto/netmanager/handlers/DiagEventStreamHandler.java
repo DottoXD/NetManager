@@ -15,7 +15,7 @@ import pw.dotto.netmanager.MainActivity;
  * side.
  *
  * @author DottoXD
- * @version 0.2.3
+ * @version 0.2.5
  */
 public class DiagEventStreamHandler implements EventChannel.StreamHandler {
     private final WeakReference<MainActivity> activityReference;
@@ -54,6 +54,26 @@ public class DiagEventStreamHandler implements EventChannel.StreamHandler {
             @Override
             public void onLteBearer(NetManagerDiagClient.LteBearerEvent event) {
                 sendEvent(listenerActive, events, "lteBearer", event);
+            }
+
+            @Override
+            public void onUmtsCellInfo(NetManagerDiagClient.UmtsCellInfoEvent event) {
+                sendEvent(listenerActive, events, "umtsCellInfo", event);
+            }
+
+            @Override
+            public void onUmtsServingMeas(NetManagerDiagClient.UmtsServingMeasEvent event) {
+                sendEvent(listenerActive, events, "umtsServingMeas", event);
+            }
+
+            @Override
+            public void onGsmCellInfo(NetManagerDiagClient.GsmCellInfoEvent event) {
+                sendEvent(listenerActive, events, "gsmCellInfo", event);
+            }
+
+            @Override
+            public void onGsmServingMeas(NetManagerDiagClient.GsmServingMeasEvent event) {
+                sendEvent(listenerActive, events, "gsmServingMeas", event);
             }
 
             @Override

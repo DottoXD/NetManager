@@ -11,6 +11,7 @@ import 'package:netmanager/types/map/tower_filter.dart';
 import 'package:netmanager/types/recording/record.dart';
 import 'package:netmanager/types/recording/recorded_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:netmanager/utils/map_tile_template.dart';
 
 class LiveMap extends StatelessWidget {
   final MapController mapController;
@@ -32,9 +33,6 @@ class LiveMap extends StatelessWidget {
   final ValueNotifier<CellTower?> connectedTowerNotifier;
   final ValueNotifier<TowerFilter> towerFilterNotifier;
   final bool showBearingLine;
-
-  final String defaultMapTilesTemplate =
-      "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
   const LiveMap({
     super.key,
@@ -65,6 +63,12 @@ class LiveMap extends StatelessWidget {
       'GIT_COMMIT',
       defaultValue: 'development',
     );
+
+    final configuredTemplate = sharedPreferences.getString("mapTilesTemplate");
+    final tileTemplate =
+        configuredTemplate != null && isValidMapTileTemplate(configuredTemplate)
+        ? configuredTemplate.trim()
+        : defaultMapTileTemplate;
 
     final List<Record> visualPoints = [];
     if (activeReplayData != null) {
@@ -109,13 +113,11 @@ class LiveMap extends StatelessWidget {
       ),
       children: <Widget>[
         TileLayer(
-          urlTemplate:
-              sharedPreferences.getString("mapTilesTemplate") ??
-              defaultMapTilesTemplate,
+          urlTemplate: tileTemplate,
           tileBuilder: (context, tileWidget, tile) =>
               MapTileBuilder(tileWidget: tileWidget),
           userAgentPackageName:
-              "pw.dotto.netmanager ($gitCommit) ${sharedPreferences.getString("mapTilesTemplate") != defaultMapTilesTemplate ? "(Customised by user)" : ""}",
+              "pw.dotto.netmanager ($gitCommit) ${tileTemplate != defaultMapTileTemplate ? "(Customised by user)" : ""}",
         ),
         ValueListenableBuilder(
           valueListenable: connectedTowerNotifier,

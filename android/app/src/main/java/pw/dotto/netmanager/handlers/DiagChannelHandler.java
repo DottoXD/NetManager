@@ -18,7 +18,7 @@ import pw.dotto.netmanager.MainActivity;
  * requests, connections and the daemon's status.
  *
  * @author DottoXD
- * @version 0.2.3
+ * @version 0.2.5
  */
 public class DiagChannelHandler implements MethodChannel.MethodCallHandler {
     private final WeakReference<MainActivity> activityReference;
@@ -45,7 +45,14 @@ public class DiagChannelHandler implements MethodChannel.MethodCallHandler {
                 break;
 
             case "connect":
-                diagClient.connect();
+                Boolean automatic = call.argument("automatic");
+                Boolean autostart = call.argument("autostart");
+
+                if (Boolean.TRUE.equals(automatic) && !Boolean.TRUE.equals(autostart)) {
+                    diagClient.connectIfRunning();
+                } else {
+                    diagClient.connect();
+                }
                 result.success(null);
                 break;
 

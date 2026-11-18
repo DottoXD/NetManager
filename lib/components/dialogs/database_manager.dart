@@ -1,16 +1,12 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:file_selector/file_selector.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:netmanager/components/dialogs/cell_editor.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/database/cell_database.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
-import 'package:netmanager/utils/format_utils.dart';
+import 'package:netmanager/utils/cell_import_worker.dart';
 import 'package:netmanager/utils/database_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sqflite/sqflite.dart';
 
 class DatabaseManagerDialog extends StatelessWidget {
   final SharedPreferences sharedPreferences;
@@ -35,19 +31,21 @@ class DatabaseManagerDialog extends StatelessWidget {
     );
 
     final XFile? selectedFile = await openFile(acceptedTypeGroups: [typeGroup]);
-    if (selectedFile == null) return;
+    if (selectedFile == null || !context.mounted) return;
 
     final String extension = selectedFile.name.split(".").last.toLowerCase();
     final bool isClf = extension == "clf";
 
-    final String? firstLinePlmn = await extractPlmnFromFirstLine(
-      selectedFile.path,
-      isClf,
-    );
+    String? firstLinePlmn;
+    try {
+      firstLinePlmn = await extractPlmnFromFirstLine(selectedFile.path, isClf);
+    } catch (_) {
+      firstLinePlmn = null;
+    }
 
+    if (!context.mounted) return;
     if (firstLinePlmn == null || firstLinePlmn.trim().isEmpty) {
-      if (!context.mounted) return;
-      showDialog(
+      await showDialog(
         context: context,
         builder: (context) =>
             ErrorDialog(e: appLocalizations.noValidPlmnInDatabase),
@@ -55,177 +53,89 @@ class DatabaseManagerDialog extends StatelessWidget {
       return;
     }
 
-    if (!context.mounted) return;
+    final ValueNotifier<int> convertedCount = ValueNotifier(0);
+    Object? importError;
+    bool completed = false;
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        content: Row(
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(width: 20),
-            Expanded(child: Text(appLocalizations.convertingCells)),
-          ],
+      builder: (context) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          content: Row(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 20),
+              Expanded(
+                child: ValueListenableBuilder(
+                  valueListenable: convertedCount,
+                  builder: (context, count, child) => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(appLocalizations.convertingCells),
+                      const SizedBox(height: 4),
+                      Text(appLocalizations.convertedCellsCount(count)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
 
     try {
       final db = await CellDatabase.getDatabase();
-      final file = File(selectedFile.path);
+      final CellImportResult result = await importCellFile(
+        database: db,
+        path: selectedFile.path,
+        isClf: isClf,
+        onProgress: (count) => convertedCount.value = count,
+      );
 
-      final Stream<String> lines;
-
-      try {
-        lines = file
-            .openRead()
-            .transform(const Utf8Decoder(allowMalformed: true))
-            .transform(const LineSplitter());
-      } catch (e) {
-        if (context.mounted) {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return ErrorDialog(e: "${appLocalizations.importDatabase} $e");
-            },
-          );
-        }
-
-        return;
+      if (result.importedPlmns.isEmpty) {
+        throw FormatException(appLocalizations.noValidPlmnInDatabase);
       }
-
-      int operationsCounter = 0;
-      Batch batch = db.batch();
-
-      final Set<String> localImportedPlmns = {};
-
-      await for (final line in lines) {
-        try {
-          if (line.trim().isEmpty || line.startsWith("#")) continue;
-          final parts = decodeRow(line, ";");
-
-          String currentPlmn = "";
-          if (isClf) {
-            if (parts.isNotEmpty && parts[0].length >= 5) {
-              currentPlmn = parts[0];
-            } else {
-              continue;
-            }
-          } else {
-            if (parts.length >= 3) {
-              currentPlmn = "${parts[1]}${parts[2]}";
-            } else {
-              continue;
-            }
-          }
-
-          if (currentPlmn.trim().isEmpty) continue;
-          localImportedPlmns.add(currentPlmn);
-
-          int networkGen = -1;
-          int cid = -1;
-          double latitude = 0.0;
-          double longitude = 0.0;
-          String description = "";
-          int? channelNumber;
-
-          if (isClf) {
-            if (parts.length < 9) continue;
-
-            final sys = int.tryParse(parts[8]) ?? 0;
-            if (sys == 1) networkGen = 2;
-            if (sys == 3) networkGen = 3;
-            if (sys == 4) networkGen = 4;
-            if (sys == 5) networkGen = 5;
-
-            cid = int.parse(parts[1]);
-            latitude = double.parse(parts[4]);
-            longitude = double.parse(parts[5]);
-            description = parts[7].isNotEmpty
-                ? parts[7]
-                : (parts.length > 9 ? parts[9] : "");
-            channelNumber = null;
-          } else {
-            if (parts.length < 10) continue;
-
-            final String type = parts[0].toUpperCase();
-            if (type == "2G") {
-              networkGen = 2;
-            } else if (type == "3G") {
-              networkGen = 3;
-            } else if (type == "4G") {
-              networkGen = 4;
-            } else if (type == "5G") {
-              networkGen = 5;
-            }
-
-            latitude = double.parse(parts[7]);
-            longitude = double.parse(parts[8]);
-            description = parts[9];
-            channelNumber = parts.length > 10 ? int.tryParse(parts[10]) : null;
-
-            if (type == "4G") {
-              final int tempCi = int.parse(parts[3]);
-              final int eNb = int.parse(parts[5]);
-              cid = (eNb * 256) + tempCi;
-            } else {
-              cid = int.parse(parts[3]);
-            }
-          }
-
-          batch.insert("cells", {
-            "networkgen": networkGen,
-            "plmn": currentPlmn,
-            "cid": cid,
-            "latitude": latitude,
-            "longitude": longitude,
-            "description": description,
-            "channelnumber": channelNumber,
-          });
-
-          operationsCounter++;
-
-          if (operationsCounter % 5000 == 0) {
-            await batch.commit(noResult: true);
-            batch = db.batch();
-          }
-        } catch (_) {
-          continue;
-        }
-      }
-
-      await batch.commit(noResult: true);
 
       bool updated = false;
-      for (final foundPlmn in localImportedPlmns) {
+      for (final foundPlmn in result.importedPlmns) {
         final String destinationFileName = "$foundPlmn.$extension";
         if (!importedDatabases.contains(destinationFileName)) {
           importedDatabases.add(destinationFileName);
           updated = true;
         }
       }
-
       if (updated) {
         await sharedPreferences.setStringList(
           "importedDatabases",
           importedDatabases,
         );
-
-        setDialogState(() {});
-        onUpdate();
       }
+      completed = true;
     } catch (e) {
-      if (context.mounted) {
-        showDialog(
-          context: context,
-          builder: (context) =>
-              ErrorDialog(e: "${appLocalizations.databaseIndexing}: $e"),
-        );
-      }
+      importError = e;
     } finally {
       if (context.mounted) {
-        Navigator.of(context).pop();
+        Navigator.of(context, rootNavigator: true).pop();
       }
+
+      convertedCount.dispose();
+    }
+
+    if (!context.mounted) return;
+    if (importError != null) {
+      await showDialog(
+        context: context,
+        builder: (context) => ErrorDialog(
+          e: "${appLocalizations.databaseIndexing}: $importError",
+        ),
+      );
+    } else if (completed) {
+      setDialogState(() {});
+      onUpdate();
     }
   }
 

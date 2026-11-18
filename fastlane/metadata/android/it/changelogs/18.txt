@@ -1,3 +1,6 @@
 - Risolto un crash nella schermata home.
 - Il widget sui dati SIM è stato aggiornato.
 - Risolto un blocco dell'applicazione sui dispositivi con versioni moderne di Android.
+- Gli URLs dei tiles della mappa ora vengono validati per evitare errori/crash.
+- Risolto un crash correlato all'importazione di grandi database delle celle.
+- Risolto un problema di stabilità con le registrazioni dei drive test.

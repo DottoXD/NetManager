@@ -15,6 +15,7 @@ import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/components/base/body/settings/widgets/color_selection.dart';
 import 'package:netmanager/components/base/body/settings/widgets/event_selection.dart';
 import 'package:netmanager/utils/haptic_service.dart';
+import 'package:netmanager/utils/map_tile_template.dart';
 import 'package:netmanager/types/device/permissions.dart';
 import 'package:netmanager/types/events/event_types.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -1218,14 +1219,16 @@ class _SettingsBodyState extends State<SettingsBody>
               ],
               decoration: const InputDecoration(border: UnderlineInputBorder()),
               onChanged: (String value) async {
+                if (!isValidMapTileTemplate(value)) return;
+
+                setString("mapTilesTemplate", value.trim());
+                _mapTilesTemplate = value.trim();
+                mapTilesTemplateNotifier.value = value.trim();
+
                 await HapticService().triggerHaptic(
                   HapticType.selection,
                   context,
                 );
-
-                setString("mapTilesTemplate", value);
-                _mapTilesTemplate = value;
-                mapTilesTemplateNotifier.value = value;
               },
             ),
           ),
