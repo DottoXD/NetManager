@@ -1,0 +1,7 @@
+build/
+.docusaurus/
+node_modules/
+static/
+package-lock.json
+*.min.js
+*.mdx

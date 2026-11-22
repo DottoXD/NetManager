@@ -6,7 +6,7 @@ version: 0.2.4+17
 
 environment:
   sdk: 3.14.0
-  flutter: 3.50.0
+  flutter: 3.50.1
 
 dependencies:
   flutter:
@@ -21,11 +21,10 @@ dependencies:
   http: 1.6.0
   intl: 0.20.3
   path_provider: 2.1.6
-  file_selector: 1.1.0
   sqflite: 2.4.6
   flutter_localizations:
     sdk: flutter
-  material_ui: 1.11.0
+  material_ui: 1.11.1
 
 dev_dependencies:
   flutter_test:

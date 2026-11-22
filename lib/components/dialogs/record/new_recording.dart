@@ -1,8 +1,10 @@
-import 'package:file_selector/file_selector.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
+import 'package:netmanager/types/storage/storage_directory.dart';
 import 'package:netmanager/utils/haptic_service.dart';
+import 'package:netmanager/utils/storage_utils.dart';
 
 class NewRecording extends StatefulWidget {
   const NewRecording({
@@ -31,9 +33,10 @@ class _NewRecordingState extends State<NewRecording> {
       TextEditingController(
         text: "https://connectivitycheck.grapheneos.network/generate_204",
       );
-  late final ValueNotifier<String?> _directoryPathNotifier = ValueNotifier(
-    null,
-  );
+  late final ValueNotifier<StorageDirectory?> _directoryNotifier =
+      ValueNotifier(null);
+  late final ValueNotifier<int> _pendingRecordingNotifier = ValueNotifier(0);
+  late final ValueNotifier<bool> _recoveringNotifier = ValueNotifier(false);
   late final ValueNotifier<bool> _trackUsableNotifier = ValueNotifier(false);
   late final ValueNotifier<bool> _dualSimNotifier = ValueNotifier(false);
 
@@ -43,6 +46,7 @@ class _NewRecordingState extends State<NewRecording> {
   void initState() {
     super.initState();
     _loadSimCount();
+    _loadPendingRecordingCount();
   }
 
   @override
@@ -50,7 +54,9 @@ class _NewRecordingState extends State<NewRecording> {
     _nameController.dispose();
     _intervalController.dispose();
     _usabilityTestUrlController.dispose();
-    _directoryPathNotifier.dispose();
+    _directoryNotifier.dispose();
+    _pendingRecordingNotifier.dispose();
+    _recoveringNotifier.dispose();
     _trackUsableNotifier.dispose();
     _dualSimNotifier.dispose();
 
@@ -60,6 +66,46 @@ class _NewRecordingState extends State<NewRecording> {
   Future<void> _loadSimCount() async {
     final count = await widget.platform.invokeMethod<int>("getSimCount");
     if (mounted) setState(() => _simCount = count ?? 1);
+  }
+
+  Future<void> _loadPendingRecordingCount() async {
+    try {
+      final int count = await StorageUtils.getPendingRecordingCount();
+      if (mounted) _pendingRecordingNotifier.value = count;
+    } catch (_) {}
+  }
+
+  Future<void> _retryPendingRecordings() async {
+    if (_recoveringNotifier.value) return;
+    _recoveringNotifier.value = true;
+
+    try {
+      final result = await StorageUtils.retryPendingRecordings(
+        directoryUri: _directoryNotifier.value?.uri,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.recordingsExported(result.exported),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        await showDialog(
+          context: context,
+          builder: (context) => ErrorDialog(e: e),
+        );
+      }
+    } finally {
+      if (mounted) {
+        await _loadPendingRecordingCount();
+        if (mounted) _recoveringNotifier.value = false;
+      }
+    }
   }
 
   Future<void> _openSetupDialog() async {
@@ -149,32 +195,63 @@ class _NewRecordingState extends State<NewRecording> {
                   ),
                 ],
                 const SizedBox(height: 16),
-                ValueListenableBuilder<String?>(
-                  valueListenable: _directoryPathNotifier,
-                  builder: (context, path, _) {
+                ValueListenableBuilder<StorageDirectory?>(
+                  valueListenable: _directoryNotifier,
+                  builder: (context, directory, _) {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         OutlinedButton.icon(
                           onPressed: () async {
-                            final String? selectedPath =
-                                await getDirectoryPath();
-                            if (selectedPath != null) {
-                              _directoryPathNotifier.value = selectedPath;
+                            try {
+                              final StorageDirectory? selectedDirectory =
+                                  await StorageUtils.pickDirectory();
+
+                              if (selectedDirectory != null) {
+                                _directoryNotifier.value = selectedDirectory;
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                await showDialog(
+                                  context: context,
+                                  builder: (context) => ErrorDialog(e: e),
+                                );
+                              }
                             }
                           },
                           icon: const Icon(Icons.folder_open),
                           label: Text(appLocalizations.selectSaveLocation),
                         ),
-                        if (path != null)
+                        if (directory != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: Text(
-                              "${appLocalizations.selectedSaveLocation} ...${path.characters.takeLast(15)}",
+                              "${appLocalizations.selectedSaveLocation} ${directory.name}",
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ),
                       ],
+                    );
+                  },
+                ),
+                ValueListenableBuilder(
+                  valueListenable: _pendingRecordingNotifier,
+                  builder: (context, pending, _) {
+                    if (pending == 0) return const SizedBox.shrink();
+                    return ValueListenableBuilder<bool>(
+                      valueListenable: _recoveringNotifier,
+                      builder: (context, recovering, _) => Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: OutlinedButton.icon(
+                          onPressed: recovering
+                              ? null
+                              : _retryPendingRecordings,
+                          icon: const Icon(Icons.save_outlined),
+                          label: Text(
+                            appLocalizations.retryRecordingExports(pending),
+                          ),
+                        ),
+                      ),
                     );
                   },
                 ),
@@ -187,10 +264,10 @@ class _NewRecordingState extends State<NewRecording> {
               child: Text(appLocalizations.cancel),
             ),
             ValueListenableBuilder(
-              valueListenable: _directoryPathNotifier,
-              builder: (context, path, _) {
+              valueListenable: _directoryNotifier,
+              builder: (context, directory, _) {
                 return FilledButton.icon(
-                  onPressed: path == null
+                  onPressed: directory == null
                       ? null
                       : () async {
                           await HapticService().triggerHaptic(
@@ -219,14 +296,24 @@ class _NewRecordingState extends State<NewRecording> {
       300,
     );
 
-    await widget.platform.invokeMethod("startRecording", {
-      "name": _nameController.text,
-      "interval": interval,
-      "path": _directoryPathNotifier.value,
-      "dualSimMode": _dualSimNotifier.value,
-      "trackUsable": _trackUsableNotifier.value,
-      "usabilityTestUrl": _usabilityTestUrlController.text,
-    });
+    try {
+      await widget.platform.invokeMethod("startRecording", {
+        "name": _nameController.text,
+        "interval": interval,
+        "path": _directoryNotifier.value?.uri,
+        "dualSimMode": _dualSimNotifier.value,
+        "trackUsable": _trackUsableNotifier.value,
+        "usabilityTestUrl": _usabilityTestUrlController.text,
+      });
+    } catch (e) {
+      if (mounted) {
+        await showDialog(
+          context: context,
+          builder: (context) => ErrorDialog(e: e),
+        );
+      }
+      return;
+    }
 
     widget.recordingActionNotifier.value = true;
 

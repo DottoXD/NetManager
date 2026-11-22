@@ -13,10 +13,19 @@ import 'package:netmanager/components/base/body/advanced/widgets/diag_page.dart'
 import 'package:netmanager/components/base/body/advanced/widgets/ims_logs_page.dart';
 import 'package:netmanager/components/base/body/advanced/widgets/ims_status_page.dart';
 import 'package:netmanager/components/base/body/advanced/widgets/lte_serving_cell_page.dart';
+import 'package:netmanager/components/base/body/advanced/widgets/network_lock_page.dart';
 import 'package:netmanager/components/base/body/advanced/widgets/page_dots.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 
-enum _PageType { carrier, imsStatus, imsLogs, lteServing, bearers, diagUtils }
+enum _PageType {
+  networkLock,
+  carrier,
+  imsStatus,
+  imsLogs,
+  lteServing,
+  bearers,
+  diagUtils,
+}
 
 enum _ViewState { loading, error, empty, content }
 
@@ -48,6 +57,7 @@ class AdvancedModeBody extends StatefulWidget {
   final MethodChannel mainPlatform;
   final ValueNotifier<int> currentSimSlotNotifier;
   final ValueNotifier<int> updateIntervalNotifier;
+  final ValueNotifier<bool> autoStartNetManagerDiagOnAdvancedModeNotifier;
   final ValueSetter<VoidCallback>? onUpdateButtonPressed;
 
   const AdvancedModeBody({
@@ -55,6 +65,7 @@ class AdvancedModeBody extends StatefulWidget {
     required this.mainPlatform,
     required this.currentSimSlotNotifier,
     required this.updateIntervalNotifier,
+    required this.autoStartNetManagerDiagOnAdvancedModeNotifier,
     this.onUpdateButtonPressed,
   });
 
@@ -68,6 +79,9 @@ class _AdvancedModeBodyState extends State<AdvancedModeBody>
     'pw.dotto.netmanager/advanced',
   );
   static const int _isolateThreshold = 16384;
+  static const MethodChannel _networkLockChn = MethodChannel(
+    'pw.dotto.netmanager/locks',
+  );
 
   final PageController _pageController = PageController();
   Timer? _timer;
@@ -83,6 +97,8 @@ class _AdvancedModeBodyState extends State<AdvancedModeBody>
   bool _diagOk = false;
   bool _holdsDiagHub = false;
   bool _carrierEditInProgress = false;
+  bool _lockAvailable = false;
+  int _lockAvailabilityRequestId = 0;
 
   String _carrierSig = "";
   String _imsSig = "";
@@ -118,6 +134,12 @@ class _AdvancedModeBodyState extends State<AdvancedModeBody>
       icon: Icons.cell_tower_outlined,
       builder: (_) => ImsStatusPage(ims: _imsNotifier),
     ),
+    _PageType.networkLock: AdvancedSubpage(
+      title: (appLocalizations) => appLocalizations.networkLockTitle,
+      icon: Icons.lock_outline,
+      builder: (_) =>
+          NetworkLockPage(simSlotNotifier: widget.currentSimSlotNotifier),
+    ),
     _PageType.imsLogs: AdvancedSubpage(
       title: (appLocalizations) => appLocalizations.advancedModeImsLogs,
       icon: Icons.list_alt_outlined,
@@ -149,6 +171,7 @@ class _AdvancedModeBodyState extends State<AdvancedModeBody>
 
     WidgetsBinding.instance.addObserver(this);
     widget.currentSimSlotNotifier.addListener(_fetchData);
+    widget.currentSimSlotNotifier.addListener(_refreshLockAvailability);
     widget.updateIntervalNotifier.addListener(_restartTimer);
     widget.onUpdateButtonPressed?.call(_fetchData);
 
@@ -199,7 +222,10 @@ class _AdvancedModeBodyState extends State<AdvancedModeBody>
     if (diagChanged) {
       if (diagNow && !_holdsDiagHub) {
         _holdsDiagHub = true;
-        DiagHub.instance.acquire();
+        DiagHub.instance.acquire(
+          autoStartNetManagerDiagOnAdvancedModeNotifier:
+              widget.autoStartNetManagerDiagOnAdvancedModeNotifier,
+        );
       } else if (!diagNow && _holdsDiagHub) {
         _holdsDiagHub = false;
         DiagHub.instance.release();
@@ -209,15 +235,45 @@ class _AdvancedModeBodyState extends State<AdvancedModeBody>
     if (shizukuChanged) {
       if (shizukuNow) {
         _startTimer();
-        return;
+      } else {
+        _timer?.cancel();
+        _timer = null;
+        _clearShizukuData();
+        _lockAvailable = false;
       }
-      _timer?.cancel();
-      _timer = null;
-      _clearShizukuData();
     }
 
+    await _refreshLockAvailability();
     _loading = false;
     _refreshState();
+  }
+
+  Future<void> _refreshLockAvailability() async {
+    if (!mounted) return;
+
+    final requestId = ++_lockAvailabilityRequestId;
+    bool available = false;
+
+    try {
+      if (_shizukuOk) {
+        final capabilities = await _networkLockChn
+            .invokeMapMethod<String, dynamic>("getCapabilities");
+
+        available =
+            capabilities?["visible"] == true ||
+            capabilities?["available"] == true;
+      }
+    } on PlatformException {
+      available = false;
+    } catch (_) {
+      available = false;
+    }
+
+    if (!mounted || requestId != _lockAvailabilityRequestId) return;
+    if (_lockAvailable != available) {
+      _lockAvailable = available;
+      _refreshState();
+    }
   }
 
   void _clearShizukuData() {
@@ -239,6 +295,7 @@ class _AdvancedModeBodyState extends State<AdvancedModeBody>
 
   @override
   void dispose() {
+    _lockAvailabilityRequestId++;
     WidgetsBinding.instance.removeObserver(this);
     if (_holdsDiagHub) {
       _holdsDiagHub = false;
@@ -247,6 +304,7 @@ class _AdvancedModeBodyState extends State<AdvancedModeBody>
 
     _timer?.cancel();
     widget.currentSimSlotNotifier.removeListener(_fetchData);
+    widget.currentSimSlotNotifier.removeListener(_refreshLockAvailability);
     widget.updateIntervalNotifier.removeListener(_restartTimer);
     widget.onUpdateButtonPressed?.call(() {});
     _pageController.dispose();
@@ -431,7 +489,12 @@ class _AdvancedModeBodyState extends State<AdvancedModeBody>
         pageTypes.add(_PageType.carrier);
       }
       if (_imsNotifier.value.isNotEmpty) pageTypes.add(_PageType.imsStatus);
-      if (_logsNotifier.value.isNotEmpty) pageTypes.add(_PageType.imsLogs);
+    }
+
+    if (_lockAvailable) pageTypes.add(_PageType.networkLock);
+
+    if (_shizukuOk && _logsNotifier.value.isNotEmpty) {
+      pageTypes.add(_PageType.imsLogs);
     }
 
     if (_diagOk) {

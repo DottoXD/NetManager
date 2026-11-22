@@ -5,7 +5,7 @@ package pw.dotto.netmanager.core.mobile.celldatas;
  * info about Nr cells.
  *
  * @author DottoXD
- * @version 0.1.6
+ * @version 0.2.5
  */
 public class NrCellData extends CellData {
 
@@ -14,7 +14,7 @@ public class NrCellData extends CellData {
             int timingAdvance, int bandwidth,
             int band, boolean isRegistered) {
         super(
-                "Cell ID",
+                "NCI",
                 "gNodeB",
                 "CSI RSRP",
                 "SS RSRP",

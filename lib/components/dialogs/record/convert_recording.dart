@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:file_selector/file_selector.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/components/modals/record/record_modal.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/types/recording/recorded_data.dart';
+import 'package:netmanager/types/storage/storage_file.dart';
 import 'package:netmanager/utils/recording_export.dart';
+import 'package:netmanager/utils/storage_utils.dart';
 import 'package:path_provider/path_provider.dart';
 
 class ConvertRecording extends StatelessWidget {
@@ -25,19 +26,14 @@ class ConvertRecording extends StatelessWidget {
       title: Text(appLocalizations.convertRecording),
       subtitle: Text(appLocalizations.conversionDescription),
       onTap: () async {
-        const XTypeGroup typeGroup = XTypeGroup(
-          label: "NetManager Recording",
-          extensions: ["nmr"],
-        );
-
-        final XFile? recordingFile = await openFile(
-          acceptedTypeGroups: [typeGroup],
-        );
-        if (recordingFile == null) return;
-
+        StorageFile? recordingFile;
         RecordedData recordedData;
+
         try {
-          final String content = await recordingFile.readAsString();
+          recordingFile = await StorageUtils.pickFile(["nmr"]);
+          if (recordingFile == null) return;
+
+          final String content = await File(recordingFile.path).readAsString();
           final Map<String, dynamic> jsonData = json.decode(content);
           recordedData = RecordedData.fromJson(jsonData);
         } catch (e) {
@@ -52,6 +48,12 @@ class ConvertRecording extends StatelessWidget {
             );
           }
           return;
+        } finally {
+          if (recordingFile != null) {
+            try {
+              await StorageUtils.deleteCachedFile(recordingFile.path);
+            } catch (_) {}
+          }
         }
 
         if (!context.mounted) return;

@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
 
-import 'package:file_selector/file_selector.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:netmanager/components/dialogs/error.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/types/recording/recorded_data.dart';
+import 'package:netmanager/types/storage/storage_file.dart';
+import 'package:netmanager/utils/storage_utils.dart';
 
 class ReplayRecording extends StatelessWidget {
   const ReplayRecording({super.key, required this.onDataLoaded});
@@ -20,18 +22,13 @@ class ReplayRecording extends StatelessWidget {
       title: Text(appLocalizations.replayRecording),
       subtitle: Text(appLocalizations.selectRecording),
       onTap: () async {
-        const XTypeGroup typeGroup = XTypeGroup(
-          label: "NetManager Recording",
-          extensions: ["nmr"],
-        );
-
-        final XFile? recordingFile = await openFile(
-          acceptedTypeGroups: [typeGroup],
-        );
-        if (recordingFile == null) return;
+        StorageFile? recordingFile;
 
         try {
-          String content = await recordingFile.readAsString();
+          recordingFile = await StorageUtils.pickFile(["nmr"]);
+          if (recordingFile == null) return;
+
+          String content = await File(recordingFile.path).readAsString();
           final Map<String, dynamic> jsonData = json.decode(content);
           final recordedData = RecordedData.fromJson(jsonData);
 
@@ -51,6 +48,12 @@ class ReplayRecording extends StatelessWidget {
           }
 
           return;
+        } finally {
+          if (recordingFile != null) {
+            try {
+              await StorageUtils.deleteCachedFile(recordingFile.path);
+            } catch (_) {}
+          }
         }
       },
     );

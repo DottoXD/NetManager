@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:file_selector/file_selector.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -10,10 +9,13 @@ import 'package:netmanager/components/dialogs/speedtest/speedtest_detail.dart';
 import 'package:netmanager/database/speedtest_database.dart';
 import 'package:netmanager/l10n/app_localizations.dart';
 import 'package:netmanager/types/speedtest/history_result.dart';
+import 'package:netmanager/types/storage/storage_file.dart';
 import 'package:netmanager/utils/format_utils.dart';
 import 'package:netmanager/utils/gen_color.dart';
 import 'package:netmanager/utils/haptic_service.dart';
 import 'package:netmanager/utils/speed_methods.dart';
+import 'package:netmanager/utils/storage_utils.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -96,15 +98,24 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
   Future<void> _importHistory() async {
     final appLocalizations = AppLocalizations.of(context)!;
 
-    const XTypeGroup typeGroup = XTypeGroup(
-      label: "Speed test history",
-      extensions: ["csv"],
-    );
+    StorageFile? selectedFile;
 
-    final XFile? selectedFile = await openFile(acceptedTypeGroups: [typeGroup]);
+    try {
+      selectedFile = await StorageUtils.pickFile(["csv"]);
+    } catch (e) {
+      if (mounted) {
+        await showDialog(
+          context: context,
+          builder: (context) => ErrorDialog(e: e),
+        );
+      }
+      return;
+    }
     if (selectedFile == null) return;
-
-    if (!mounted) return;
+    if (!mounted) {
+      await StorageUtils.deleteCachedFile(selectedFile.path);
+      return;
+    }
 
     showDialog(
       context: context,
@@ -259,6 +270,10 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
           },
         );
       }
+    } finally {
+      try {
+        await StorageUtils.deleteCachedFile(selectedFile.path);
+      } catch (_) {}
     }
   }
 
@@ -277,9 +292,6 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
       return;
     }
 
-    final String? directoryPath = await getDirectoryPath();
-    if (directoryPath == null) return;
-
     const separator = ",";
     final StringBuffer buffer = StringBuffer();
     buffer.writeln(encodeRow(SpeedtestHistoryResult.csvHeader, separator));
@@ -289,32 +301,43 @@ class _SpeedtestHistoryModalState extends State<SpeedtestHistoryModal> {
 
     final String fileName =
         "NetManager_Speedtests_${DateTime.now().millisecondsSinceEpoch}.csv";
-    final File file = File("$directoryPath/$fileName");
+    File? temporary;
 
     try {
-      await file.writeAsString(buffer.toString());
-    } catch (e) {
+      final Directory directory = await getTemporaryDirectory();
+      temporary = File("${directory.path}/$fileName");
+      await temporary.writeAsString(buffer.toString());
+
+      final bool saved = await StorageUtils.saveFile(
+        name: fileName,
+        path: temporary.path,
+        mimeType: "text/csv",
+      );
+      if (!saved) return;
+
       if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) {
-            return ErrorDialog(
-              e: "${appLocalizations.speedtestExportHistory}: $e",
-            );
-          },
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              appLocalizations.speedtestExportSuccess(results.length),
+            ),
+          ),
         );
       }
-      return;
-    }
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            appLocalizations.speedtestExportSuccess(results.length),
-          ),
-        ),
-      );
+    } catch (e) {
+      if (mounted) {
+        await showDialog(
+          context: context,
+          builder: (context) =>
+              ErrorDialog(e: "${appLocalizations.speedtestExportHistory}: $e"),
+        );
+      }
+    } finally {
+      if (temporary != null) {
+        try {
+          if (temporary.existsSync()) await temporary.delete();
+        } catch (_) {}
+      }
     }
   }
 
