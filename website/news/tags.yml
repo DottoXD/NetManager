@@ -1,0 +1,14 @@
+app:
+  label: App
+  permalink: /app
+  description: News and guides related to the NetManager Android app.
+
+website:
+  label: Website
+  permalink: /website
+  description: Updates to the NetManager website and documentation.
+
+diag:
+  label: NetManagerDiag
+  permalink: /diag
+  description: Updates related to the NetManagerDiag project.

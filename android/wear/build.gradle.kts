@@ -15,7 +15,9 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "pw.dotto.netmanager"
     compileSdk {
-        version = release(37)
+        version = release(37) {
+            minorApiLevel = 2
+        }
     }
 
     compileOptions {
@@ -85,15 +87,15 @@ kotlin {
 dependencies {
     implementation("com.google.android.gms:play-services-wearable:20.0.1")
 
-    val composeBom = platform("androidx.compose:compose-bom:2026.09.00")
+    val composeBom = platform("androidx.compose:compose-bom:2026.11.01")
 
     implementation(composeBom)
     implementation("androidx.activity:activity-compose:1.13.0")
 
-    implementation("androidx.wear.compose:compose-material3:1.7.1")
-    implementation("androidx.wear.compose:compose-foundation:1.7.1")
-    implementation("androidx.wear.compose:compose-navigation:1.7.1")
-    implementation("androidx.wear.compose:compose-ui-tooling:1.7.1")
+    implementation("androidx.wear.compose:compose-material3:1.7.2")
+    implementation("androidx.wear.compose:compose-foundation:1.7.2")
+    implementation("androidx.wear.compose:compose-navigation:1.7.2")
+    implementation("androidx.wear.compose:compose-ui-tooling:1.7.2")
 
     implementation("androidx.compose.material:material-icons-core:1.7.8")
     implementation("androidx.compose.material:material-icons-extended:1.7.8")

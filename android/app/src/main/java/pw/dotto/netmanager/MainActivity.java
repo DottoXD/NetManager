@@ -1,6 +1,7 @@
 package pw.dotto.netmanager;
 
 import android.content.SharedPreferences;
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -12,6 +13,7 @@ import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodChannel;
 import pw.dotto.netmanager.core.Manager;
+import pw.dotto.netmanager.core.shizuku.TelephonyHiddenApiAccess;
 import pw.dotto.netmanager.core.mobile.SimReceiverManager;
 import pw.dotto.netmanager.core.processors.DevicePatches;
 import pw.dotto.netmanager.fetchers.Location;
@@ -22,7 +24,9 @@ import pw.dotto.netmanager.handlers.DiagEventStreamHandler;
 import pw.dotto.netmanager.handlers.DiagRuntime;
 import pw.dotto.netmanager.handlers.ImsRuntime;
 import pw.dotto.netmanager.handlers.MainChannelHandler;
+import pw.dotto.netmanager.handlers.NetworkLockChannelHandler;
 import pw.dotto.netmanager.speedtest.Client;
+import pw.dotto.netmanager.storage.StorageHandler;
 import pw.dotto.netmanager.utils.DeviceData;
 import pw.dotto.netmanager.utils.Permissions;
 import pw.dotto.netmanager.wearos.WearHandler;
@@ -37,7 +41,7 @@ import java.lang.ref.WeakReference;
  * events and coordination, along with managing various handlers.
  *
  * @author DottoXD
- * @version 0.2.3
+ * @version 0.2.5
  */
 public class MainActivity extends FlutterActivity {
     private static final String CHANNEL = "pw.dotto.netmanager/bridge";
@@ -45,6 +49,8 @@ public class MainActivity extends FlutterActivity {
     private static final String ADVANCED_CHANNEL = "pw.dotto.netmanager/advanced";
     private static final String DIAG_CHANNEL = "pw.dotto.netmanager/diag";
     private static final String DIAG_EVENTS_CHANNEL = "pw.dotto.netmanager/diag/events";
+    private static final String NETWORK_LOCK_CHANNEL = "pw.dotto.netmanager/locks";
+    private static final String STORAGE_CHANNEL = "pw.dotto.netmanager/storage";
     public static final int SHIZUKU_REQ_CODE = 23;
 
     public static String PACKAGE_NAME;
@@ -60,6 +66,10 @@ public class MainActivity extends FlutterActivity {
     private MethodChannel speedtestChn;
     private MethodChannel advancedChn;
     private MethodChannel diagChn;
+    private MethodChannel networkLockChn;
+    private MethodChannel storageChn;
+    private StorageHandler storageHandler;
+    private NetworkLockChannelHandler networkLockHandler;
     private EventChannel diagEventChn;
     private DiagEventStreamHandler diagEventStreamHandler;
 
@@ -78,11 +88,17 @@ public class MainActivity extends FlutterActivity {
         speedtestChn = new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), SPEEDTEST_CHANNEL);
         advancedChn = new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), ADVANCED_CHANNEL);
         diagChn = new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), DIAG_CHANNEL);
+        networkLockChn = new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), NETWORK_LOCK_CHANNEL);
+        storageChn = new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), STORAGE_CHANNEL);
         diagEventChn = new EventChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), DIAG_EVENTS_CHANNEL);
 
         chn.setMethodCallHandler(new MainChannelHandler(this));
+        storageHandler = new StorageHandler(this);
+        storageChn.setMethodCallHandler(storageHandler);
         advancedChn.setMethodCallHandler(new AdvancedChannelHandler(this));
         diagChn.setMethodCallHandler(new DiagChannelHandler(this));
+        networkLockHandler = new NetworkLockChannelHandler(this);
+        networkLockChn.setMethodCallHandler(networkLockHandler);
         diagEventStreamHandler = new DiagEventStreamHandler(this);
         diagEventChn.setStreamHandler(diagEventStreamHandler);
     }
@@ -216,6 +232,7 @@ public class MainActivity extends FlutterActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        TelephonyHiddenApiAccess.initializeIfAvailable();
 
         PACKAGE_NAME = getPackageName();
         DevicePatches.registerAll();
@@ -249,16 +266,35 @@ public class MainActivity extends FlutterActivity {
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (storageHandler != null && storageHandler.onActivityResult(requestCode, resultCode, data))
+            return;
+
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
     public void onDestroy() {
         if (diagEventStreamHandler != null)
             diagEventStreamHandler.dispose();
-
+        if (networkLockHandler != null) {
+            networkLockHandler.dispose();
+            networkLockHandler = null;
+        }
+        if (storageChn != null)
+            storageChn.setMethodCallHandler(null);
+        if (storageHandler != null) {
+            storageHandler.dispose();
+            storageHandler = null;
+        }
         if (chn != null)
             chn.setMethodCallHandler(null);
         if (advancedChn != null)
             advancedChn.setMethodCallHandler(null);
         if (diagChn != null)
             diagChn.setMethodCallHandler(null);
+        if (networkLockChn != null)
+            networkLockChn.setMethodCallHandler(null);
         if (diagEventChn != null)
             diagEventChn.setStreamHandler(null);
 

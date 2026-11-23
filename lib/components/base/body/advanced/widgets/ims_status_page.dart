@@ -208,12 +208,19 @@ class _RegistrationHero extends StatelessWidget {
               color: fgColor.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(100),
             ),
-            child: Text(
-              appLocalizations.advancedModeImsActiveRatTitle(regTech),
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: fgColor,
-                fontWeight: FontWeight.w600,
-              ),
+            child: Row(
+              // broken atm
+              children: [
+                Icon(Icons.call, size: 19, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Text(
+                  appLocalizations.advancedModeImsActiveRatTitle(regTech),
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: fgColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

@@ -45,7 +45,12 @@ class DiagHub {
 
   late ValueNotifier<bool> _autoStartNetManagerDiagOnAdvancedModeNotifier;
 
-  static const List<String> features = ["lte_serving_cell", "lte_bearers"];
+  static const List<String> features = [
+    "lte_serving_cell",
+    "lte_bearers",
+    "umts_serving_cell",
+    "gsm_serving_cell",
+  ];
   static const int _maxLogEntries = 500;
   static const Duration _flushDelay = Duration(milliseconds: 150);
 
@@ -61,6 +66,10 @@ class DiagHub {
 
   final Map<int?, Map<String, dynamic>> _servingMeasBySlot = {};
   final Map<int?, Map<String, dynamic>> _cellInfoBySlot = {};
+  final Map<int?, Map<String, dynamic>> _umtsCellBySlot = {};
+  final Map<int?, Map<String, dynamic>> _umtsMeasBySlot = {};
+  final Map<int?, Map<String, dynamic>> _gsmCellBySlot = {};
+  final Map<int?, Map<String, dynamic>> _gsmMeasBySlot = {};
 
   final Map<int?, Map<int, Map<String, dynamic>>> _bearersBySlot = {};
 
@@ -84,6 +93,18 @@ class DiagHub {
 
   Map<String, dynamic>? cellInfoFor(int slot) =>
       _cellInfoBySlot[slot] ?? _cellInfoBySlot[null];
+
+  Map<String, dynamic>? umtsCellFor(int slot) =>
+      _umtsCellBySlot[slot] ?? _umtsCellBySlot[null];
+
+  Map<String, dynamic>? umtsMeasFor(int slot) =>
+      _umtsMeasBySlot[slot] ?? _umtsMeasBySlot[null];
+
+  Map<String, dynamic>? gsmCellFor(int slot) =>
+      _gsmCellBySlot[slot] ?? _gsmCellBySlot[null];
+
+  Map<String, dynamic>? gsmMeasFor(int slot) =>
+      _gsmMeasBySlot[slot] ?? _gsmMeasBySlot[null];
 
   List<Map<String, dynamic>> bearersFor(int slot) {
     final merged = {...?_bearersBySlot[null], ...?_bearersBySlot[slot]};
@@ -162,6 +183,7 @@ class DiagHub {
     _flushTimer = null;
     _dataDirty = false;
     _logDirty = false;
+
     try {
       await _method.invokeMethod("requestFeatures", {
         "features": features,
@@ -170,6 +192,10 @@ class DiagHub {
     } on PlatformException catch (_) {}
     _servingMeasBySlot.clear();
     _cellInfoBySlot.clear();
+    _umtsCellBySlot.clear();
+    _umtsMeasBySlot.clear();
+    _gsmCellBySlot.clear();
+    _gsmMeasBySlot.clear();
     _bearersBySlot.clear();
   }
 
@@ -193,59 +219,139 @@ class DiagHub {
 
     switch (type) {
       case "status":
-        final s = data as Map<String, dynamic>?;
-        status.value = s;
-        if (s?["connected"] == true) connState.value = DiagConnState.connected;
+        final stat = data as Map<String, dynamic>?;
+
+        status.value = stat;
+        if (stat?["connected"] == true) {
+          connState.value = DiagConnState.connected;
+        }
+
         pushLog(
           "STATUS",
-          "vendor=${s?["vendor"]} transport=${s?["transport"]} "
-              "supported=${s?["supported"]} active=${s?["active"]} "
-              "protocol=${s?["protocol"] ?? 0} version=${s?["version"] ?? "-"}",
+          "vendor=${stat?["vendor"]} transport=${stat?["transport"]} "
+              "supported=${stat?["supported"]} active=${stat?["active"]} "
+              "protocol=${stat?["protocol"] ?? 0} version=${stat?["version"] ?? "-"}",
         );
         break;
       case "lteServingMeas":
         connState.value = DiagConnState.connected;
-        final m = data as Map<String, dynamic>?;
-        if (m != null) _servingMeasBySlot[m["slot"] as int?] = m;
+        final lteServingMeas = data as Map<String, dynamic>?;
+
+        if (lteServingMeas != null) {
+          _servingMeasBySlot[lteServingMeas["slot"] as int?] = lteServingMeas;
+        }
+
         pushLog(
           "LTE MEAS",
-          "earfcn=${m?["earfcn"]} pci=${m?["pci"]} "
-              "rsrp=${fmtNum(m?["rsrp_dbm"])} rsrq=${fmtNum(m?["rsrq_db"])} "
-              "rssi=${fmtNum(m?["rssi_dbm"])}",
-          slot: m?["slot"] as int?,
+          "earfcn=${lteServingMeas?["earfcn"]} pci=${lteServingMeas?["pci"]} "
+              "rsrp=${fmtNum(lteServingMeas?["rsrp_dbm"])} rsrq=${fmtNum(lteServingMeas?["rsrq_db"])} "
+              "rssi=${fmtNum(lteServingMeas?["rssi_dbm"])}",
+          slot: lteServingMeas?["slot"] as int?,
         );
         _markDirty(data: true);
         break;
       case "lteCellInfo":
         connState.value = DiagConnState.connected;
-        final c = data as Map<String, dynamic>?;
-        if (c != null) _cellInfoBySlot[c["slot"] as int?] = c;
+        final lteCell = data as Map<String, dynamic>?;
+
+        if (lteCell != null) _cellInfoBySlot[lteCell["slot"] as int?] = lteCell;
         pushLog(
           "CELL INFO",
-          "earfcn=${c?["earfcn"]} pci=${c?["pci"]} "
-              "bw=${fmtNum(c?["dl_bandwidth_mhz"])}MHz",
-          slot: c?["slot"] as int?,
+          "earfcn=${lteCell?["earfcn"]} pci=${lteCell?["pci"]} "
+              "bw=${fmtNum(lteCell?["dl_bandwidth_mhz"])}MHz "
+              "antennas=${lteCell?["num_antennas"] ?? "-"}",
+          slot: lteCell?["slot"] as int?,
         );
+
+        _markDirty(data: true);
+        break;
+      case "umtsCellInfo":
+        connState.value = DiagConnState.connected;
+        final umtsCell = data as Map<String, dynamic>?;
+
+        if (umtsCell != null) {
+          _umtsCellBySlot[umtsCell["slot"] as int?] = umtsCell;
+        }
+
+        pushLog(
+          "UMTS CELL",
+          "uarfcn=${umtsCell?["uarfcn_dl"]} psc=${umtsCell?["psc"]} rnc=${umtsCell?["rnc"]} "
+              "cell=${umtsCell?["cell_id"]} lac=${umtsCell?["lac"]} "
+              "plmn=${umtsCell?["mcc"]}-${umtsCell?["mnc"]}",
+          slot: umtsCell?["slot"] as int?,
+        );
+
+        _markDirty(data: true);
+        break;
+      case "umtsServingMeas":
+        connState.value = DiagConnState.connected;
+        final umtsServingMeas = data as Map<String, dynamic>?;
+
+        if (umtsServingMeas != null) {
+          _umtsMeasBySlot[umtsServingMeas["slot"] as int?] = umtsServingMeas;
+        }
+
+        pushLog(
+          "UMTS MEAS",
+          "uarfcn=${umtsServingMeas?["uarfcn"]} psc=${umtsServingMeas?["psc"]} "
+              "rscp=${umtsServingMeas?["rscp_dbm"]} ecio=${umtsServingMeas?["ecio_db"]}",
+          slot: umtsServingMeas?["slot"] as int?,
+        );
+
+        _markDirty(data: true);
+        break;
+      case "gsmCellInfo":
+        connState.value = DiagConnState.connected;
+        final gsmCell = data as Map<String, dynamic>?;
+
+        if (gsmCell != null) _gsmCellBySlot[gsmCell["slot"] as int?] = gsmCell;
+        pushLog(
+          "GSM CELL",
+          "arfcn=${gsmCell?["arfcn"]} bsic=${gsmCell?["bsic"]} cell=${gsmCell?["cell_id"]} "
+              "lac=${gsmCell?["lac"]} plmn=${gsmCell?["mcc"]}${gsmCell?["mnc"]}",
+          slot: gsmCell?["slot"] as int?,
+        );
+
+        _markDirty(data: true);
+        break;
+      case "gsmServingMeas":
+        connState.value = DiagConnState.connected;
+        final gsmServingMeas = data as Map<String, dynamic>?;
+
+        if (gsmServingMeas != null) {
+          _gsmMeasBySlot[gsmServingMeas["slot"] as int?] = gsmServingMeas;
+        }
+
+        pushLog(
+          "GSM MEAS",
+          "rssi=${fmtNum(gsmServingMeas?["rssi_dbm"])}",
+          slot: gsmServingMeas?["slot"] as int?,
+        );
+
         _markDirty(data: true);
         break;
       case "lteBearer":
         connState.value = DiagConnState.connected;
-        final b = data as Map<String, dynamic>?;
-        if (b != null) {
-          final id = b["eps_bearer_id"] as int;
-          (_bearersBySlot[b["slot"] as int?] ??= {})[id] = b;
+        final bearer = data as Map<String, dynamic>?;
+
+        if (bearer != null) {
+          final id = bearer["eps_bearer_id"] as int;
+
+          (_bearersBySlot[bearer["slot"] as int?] ??= {})[id] = bearer;
           pushLog(
             "BEARER",
-            "${b["dedicated"] == true ? "dedicated" : "default"} id=$id "
-                "qci=${b["qci"] ?? "-"} apn=${b["apn"] ?? "-"} "
-                "ambr=${fmtRate(b["apn_ambr_dl_kbps"])}/${fmtRate(b["apn_ambr_ul_kbps"])}",
-            slot: b["slot"] as int?,
+            "${bearer["dedicated"] == true ? "dedicated" : "default"} id=$id "
+                "qci=${bearer["qci"] ?? "-"} apn=${bearer["apn"] ?? "-"} "
+                "ambr=${fmtRate(bearer["apn_ambr_dl_kbps"])}/${fmtRate(bearer["apn_ambr_ul_kbps"])}",
+            slot: bearer["slot"] as int?,
           );
+
           _markDirty(data: true);
         }
         break;
       case "error":
         final err = data as String?;
+
         lastError.value = err;
         if (err == null) {
           pushLog("ERROR", "", code: DiagLogCode.unknownError);
@@ -257,8 +363,13 @@ class DiagHub {
         connState.value = DiagConnState.disconnected;
         _servingMeasBySlot.clear();
         _cellInfoBySlot.clear();
+        _umtsCellBySlot.clear();
+        _umtsMeasBySlot.clear();
+        _gsmCellBySlot.clear();
+        _gsmMeasBySlot.clear();
         _bearersBySlot.clear();
         pushLog("DISCONNECT", "", code: DiagLogCode.disconnected);
+
         _markDirty(data: true);
         break;
     }

@@ -5,6 +5,7 @@ import static pw.dotto.netmanager.core.sources.telephony.TelephonyCellDataSource
 import android.app.PictureInPictureParams;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.SharedPreferences;
 import android.location.LocationManager;
 import android.os.Build;
@@ -25,6 +26,7 @@ import io.flutter.plugin.common.MethodChannel;
 import pw.dotto.netmanager.core.events.EventManager;
 import pw.dotto.netmanager.core.events.NetManagerEvent;
 import pw.dotto.netmanager.core.Manager;
+import pw.dotto.netmanager.core.shizuku.ShizukuReflectionBridge;
 import pw.dotto.netmanager.core.mobile.celldatas.CellData;
 import pw.dotto.netmanager.core.mobile.SIMData;
 import pw.dotto.netmanager.core.notifications.Service;
@@ -32,6 +34,7 @@ import pw.dotto.netmanager.fetchers.Location;
 import pw.dotto.netmanager.fetchers.Sensors;
 import pw.dotto.netmanager.MainActivity;
 import pw.dotto.netmanager.speedtest.Client;
+import pw.dotto.netmanager.storage.StorageHandler;
 import pw.dotto.netmanager.speedtest.Scheduler;
 import pw.dotto.netmanager.utils.Activities;
 import pw.dotto.netmanager.utils.DebugLogger;
@@ -48,7 +51,7 @@ import rikka.shizuku.Shizuku;
  * more.
  *
  * @author DottoXD
- * @version 0.2.4
+ * @version 0.2.5
  */
 public class MainChannelHandler implements MethodChannel.MethodCallHandler {
     private final WeakReference<MainActivity> activityReference;
@@ -106,6 +109,17 @@ public class MainChannelHandler implements MethodChannel.MethodCallHandler {
             case "getDebugLogs":
                 result.success(activity.getGson().toJson(DebugLogger.getLogs()));
                 break;
+
+            case "addDebugLog": {
+                String message = call.argument("message");
+                if (message != null && !message.trim().isEmpty()) {
+                    DebugLogger.add(message.length() > 1000
+                            ? message.substring(0, 1000) + "..."
+                            : message);
+                }
+                result.success(null);
+                break;
+            }
 
             case "getLocation":
                 Location locationFetcher = Location.getInstance(activity);
@@ -358,20 +372,48 @@ public class MainChannelHandler implements MethodChannel.MethodCallHandler {
                 }
                 break;
 
-            case "checkShizuku":
-                int status = 0;
-                if (!Permissions.checkShizuku())
-                    status = 2;
-                if (!Shizuku.pingBinder())
-                    status = 1;
-                result.success(status);
+            case "checkShizuku": {
+                WeakReference<MainActivity> activityReference = this.activityReference;
+                
+                new Thread(() -> {
+                    int status;
+
+                    try {
+                        if (!Shizuku.pingBinder()) {
+                            status = 2;
+                            DebugLogger.add("Shizuku status: server is not running.");
+                        } else if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
+                            status = 1;
+                            DebugLogger.add("Shizuku status: permission has not been granted to NetManager.");
+                        } else if (!ShizukuReflectionBridge.isShellSessionAvailable()) {
+                            status = 3;
+                            DebugLogger.add("Shizuku status: the shell reflection service could not be started.");
+                        } else {
+                            status = 0;
+                            DebugLogger.add("Shizuku status: shell session is available (execution UID 2000).");
+                        }
+                    } catch (Throwable error) {
+                        DebugLogger.add("Shizuku status check failed: " + error.getClass().getSimpleName() + ": " + error.getMessage() + ".");
+                        status = 3;
+                    }
+
+                    MainActivity current = activityReference.get();
+                    if (current != null) {
+                        final int resultStatus = status;
+                        current.runOnUiThread(() -> result.success(resultStatus));
+                    }
+                }, "NetManagerShizukuStatus").start();
                 break;
+            }
 
             case "checkDiag":
                 DiagRuntime diagRuntime = activity.getDiagRuntime();
                 WeakReference<MainActivity> activityReference = this.activityReference;
                 new Thread(() -> {
                     int diagStatus = diagRuntime.checkDiagStatus();
+                    DebugLogger.add("NetManagerDiag status check completed: "
+                            + (diagStatus == 0 ? "available" : "unavailable") + " (code "
+                            + diagStatus + ").");
                     MainActivity currentActivity = activityReference.get();
                     if (currentActivity != null)
                         currentActivity.runOnUiThread(() -> result.success(diagStatus));
@@ -459,8 +501,14 @@ public class MainChannelHandler implements MethodChannel.MethodCallHandler {
         boolean dualSimMode = Boolean.TRUE.equals(call.argument("dualSimMode"));
         String usabilityTestUrl = call.argument("usabilityTestUrl");
 
-        if (recordingInterval < 1 || recordingInterval > 300 || recordingName == null || recordingPath == null) {
+        if (recordingInterval < 1 || recordingInterval > 300 || recordingName == null
+                || recordingName.trim().isEmpty() || recordingPath == null) {
             result.error("RECORDING_PARAMS", "Invalid recording params!", null);
+            return;
+        }
+
+        if (!StorageHandler.hasWritePermission(activity, recordingPath)) {
+            result.error("BACKEND_RECORDING", "The selected recording directory is no longer writable.", null);
             return;
         }
 
@@ -476,6 +524,7 @@ public class MainChannelHandler implements MethodChannel.MethodCallHandler {
             } catch (Exception ignored) {
                 result.error("BACKEND_RECORDING", "Location services are disabled. Enable them to start recording.",
                         null);
+                return;
             }
         }
 
@@ -501,18 +550,30 @@ public class MainChannelHandler implements MethodChannel.MethodCallHandler {
         result.success(null);
     }
 
-    private static void handleGetLiveRecording(MainActivity activity, MethodCall call, MethodChannel.Result result,
-            int selectedSim) {
-        pw.dotto.netmanager.recording.Service serviceInstance = pw.dotto.netmanager.recording.Service.getInstance();
+    private static void handleGetLiveRecording(
+            MainActivity activity,
+            MethodCall call,
+            MethodChannel.Result result,
+            int selectedSim
+    ) {
+        pw.dotto.netmanager.recording.Service serviceInstance =
+                pw.dotto.netmanager.recording.Service.getInstance();
+
         if (serviceInstance == null) {
             result.success(null);
             return;
         }
 
         Integer requestedSim = call.argument("simSlot");
-        int targetSlot = requestedSim != null ? requestedSim : selectedSim;
-        Object data = serviceInstance.getRecordedData(targetSlot);
-        result.success(data != null ? activity.getGson().toJson(data) : null);
+
+        int targetSlot = requestedSim != null
+                ? requestedSim
+                : selectedSim;
+
+        serviceInstance.getRecordedDataJson(
+                targetSlot,
+                result::success
+        );
     }
 
     private static void handleDebugReport(MainActivity activity, MethodChannel.Result result, Manager core,

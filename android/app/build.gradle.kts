@@ -29,7 +29,9 @@ android {
     ndkVersion = "28.2.13676358" //flutter.ndkVersion
 
     compileSdk {
-        version = release(37)
+        version = release(37) {
+            minorApiLevel = 2
+        }
     }
 
     compileOptions {
